@@ -219,6 +219,8 @@ def vehicles_pdf():
 @login_required
 def vehicles_excel():
     """تصدير تقرير المركبات إلى Excel"""
+    from utils.excel import generate_vehicles_excel
+    
     # الحصول على معلمات الفلتر
     vehicle_type = request.args.get('vehicle_type', '')
     status = request.args.get('status', '')
@@ -251,21 +253,8 @@ def vehicles_excel():
     # تحضير مخرجات التقرير
     output = BytesIO()
     
-    # إنشاء تقرير Excel للمركبات
-    data = []
-    for vehicle in vehicles:
-        data.append({
-            'رقم اللوحة': vehicle.plate_number,
-            'الشركة المصنعة': vehicle.make,
-            'الموديل': vehicle.model,
-            'اللون': vehicle.color,
-            'سنة الصنع': vehicle.year,
-            'الحالة': vehicle.status
-        })
-    
-    # استدعاء دالة إنشاء Excel للمركبات
-    df = pd.DataFrame(data)
-    export_vehicle_excel(output, df, "تقرير المركبات")
+    # استدعاء دالة إنشاء Excel الاحترافية للمركبات
+    generate_vehicles_excel(vehicles, output)
     
     # إرسال الملف كمرفق للتنزيل
     output.seek(0)
