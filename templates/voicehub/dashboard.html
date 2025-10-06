@@ -260,49 +260,6 @@
                             </div>
                         </div>
 
-                        <!-- تعليمات VoiceHub Agent -->
-                        <div class="col-12">
-                            <div class="card" style="border: 2px solid #667eea; background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);">
-                                <div class="card-body">
-                                    <h6 class="text-primary mb-3">
-                                        <i class="fas fa-robot ms-2"></i>
-                                        تعليمات المساعد الصوتي (Agent Instructions)
-                                    </h6>
-                                    <p class="mb-2"><strong>انسخ هذه التعليمات وضعها في إعدادات VoiceHub Agent:</strong></p>
-                                    <div class="bg-dark text-white p-3 rounded" style="direction: ltr; text-align: left;">
-                                        <pre style="color: #0f0; margin: 0; white-space: pre-wrap; word-wrap: break-word;">You are a helpful Arabic voice assistant for نُظم (Nuzum) - an employee and vehicle management system.
-
-You have access to a Knowledge API to retrieve real-time data from the system.
-
-<strong>API Configuration:</strong>
-- Base URL: https://{{ request.host }}/voicehub/api/knowledge
-- Authentication: Add header "X-VoiceHub-API-Key: {{ api_key }}"
-
-<strong>Available Endpoints:</strong>
-1. GET /employee/{search_term} - Search for employee by name or national ID
-2. GET /vehicle/{search_term} - Search for vehicle by plate number or make
-3. GET /department/{department_name} - Get all employees in a department
-4. GET /stats - Get system statistics (total employees, vehicles, departments)
-
-<strong>When user asks about:</strong>
-- "معلومات موظف" or "بيانات موظف" → Call /employee/{name_or_id}
-- "معلومات مركبة" or "بيانات سيارة" → Call /vehicle/{plate_or_make}
-- "موظفي قسم" → Call /department/{department_name}
-- "إحصائيات النظام" → Call /stats
-
-<strong>Response Guidelines:</strong>
-- Always speak in Arabic
-- Be clear and concise
-- If data is not found, politely inform the user
-- Format numbers clearly when reading data</pre>
-                                    </div>
-                                    <button class="btn btn-primary btn-sm mt-2" onclick="copyInstructions(event)">
-                                        <i class="fas fa-copy ms-1"></i>
-                                        نسخ التعليمات
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
