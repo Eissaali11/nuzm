@@ -37,7 +37,11 @@ def generate_comprehensive_employee_excel(employees):
                     'صورة إيبان': 'نعم' if employee.bank_iban_image else 'لا',
                     'صورة شخصية': 'نعم' if employee.profile_image else 'لا',
                     'صورة هوية': 'نعم' if employee.national_id_image else 'لا',
-                    'صورة رخصة': 'نعم' if employee.license_image else 'لا'
+                    'صورة رخصة': 'نعم' if employee.license_image else 'لا',
+                    'تفاصيل السكن': str(employee.residence_details) if employee.residence_details else '',
+                    'رابط موقع السكن': str(employee.residence_location_url) if employee.residence_location_url else '',
+                    'مقاس البنطلون': str(employee.pants_size) if employee.pants_size else '',
+                    'مقاس التيشرت': str(employee.shirt_size) if employee.shirt_size else ''
                 }
                 
                 # إضافة التواريخ بأمان
@@ -131,6 +135,10 @@ def generate_comprehensive_employee_excel(employees):
                     'صورة شخصية': '',
                     'صورة هوية': '',
                     'صورة رخصة': '',
+                    'تفاصيل السكن': '',
+                    'رابط موقع السكن': '',
+                    'مقاس البنطلون': '',
+                    'مقاس التيشرت': '',
                     'تاريخ الانضمام': '',
                     'تاريخ الميلاد': '',
                     'تاريخ الإنشاء': '',
