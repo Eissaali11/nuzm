@@ -1051,10 +1051,10 @@ def attendance_excel():
         sheet.cell(row=row_idx, column=2).value = employee.national_id or ""  # ID Number
         sheet.cell(row=row_idx, column=3).value = employee.employee_id or ""  # Emp.N
         sheet.cell(row=row_idx, column=4).value = employee.job_title or ""  # Job Title
-        sheet.cell(row=row_idx, column=5).value = employee.phone or ""  # No.Mobile
+        sheet.cell(row=row_idx, column=5).value = employee.mobile or ""  # No.Mobile
         sheet.cell(row=row_idx, column=6).value = ""  # car (فارغ حالياً)
-        sheet.cell(row=row_idx, column=7).value = employee.city or ""  # Location
-        sheet.cell(row=row_idx, column=8).value = ""  # Project (فارغ حالياً)
+        sheet.cell(row=row_idx, column=7).value = employee.location or ""  # Location
+        sheet.cell(row=row_idx, column=8).value = employee.project or ""  # Project
         
         # حساب إجمالي الحضور
         total_present = 0
