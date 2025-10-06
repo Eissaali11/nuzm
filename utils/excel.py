@@ -210,7 +210,7 @@ def export_employees_to_excel(employees, output=None):
     
 def generate_employee_excel(employees, output=None):
     """
-    Generate Excel file from employee data
+    Generate Professional Excel file from employee data with Dashboard
     
     Args:
         employees: List of Employee objects
@@ -220,75 +220,254 @@ def generate_employee_excel(employees, output=None):
         BytesIO object containing the Excel file
     """
     try:
-        # إنشاء بيانات لملف Excel بنفس ترتيب النموذج الأصلي
-        data = []
-        for employee in employees:
-            # ترتيب البيانات حسب النموذج الأصلي مع إضافة جميع الحقول المتاحة
-            row = {
-                'الاسم الكامل': employee.name,  # الاسم
-                'رقم الموظف': employee.employee_id,  # رقم الموظف
-                'رقم الهوية الوطنية': employee.national_id,  # رقم الهوية
-                'رقم الجوال': employee.mobile,  # رقم الجوال
-                'الجوال الشخصي': getattr(employee, 'mobilePersonal', '') or '',  # الجوال الشخصي
-                'المسمى الوظيفي': employee.job_title,  # المسمى الوظيفي
-                'الحالة الوظيفية': employee.status,  # الحالة
-                'الموقع': employee.location or '',  # الموقع
-                'المشروع': employee.project or '',  # المشروع
-                'البريد الإلكتروني': employee.email or '',  # البريد الإلكتروني
-                'الأقسام': ', '.join([dept.name for dept in employee.departments]) if employee.departments else '',  # الأقسام
-                'تاريخ الانضمام': employee.join_date.strftime('%Y-%m-%d') if employee.join_date else '',  # تاريخ الانضمام
-                'تاريخ انتهاء الإقامة': employee.license_end_date.strftime('%Y-%m-%d') if hasattr(employee, 'license_end_date') and employee.license_end_date else '',  # تاريخ انتهاء الإقامة
-                'حالة العقد': getattr(employee, 'contract_status', '') or '',  # حالة العقد
-                'حالة الرخصة': getattr(employee, 'license_status', '') or '',  # حالة الرخصة
-                'الجنسية': employee.nationality_rel.name_ar if hasattr(employee, 'nationality_rel') and employee.nationality_rel else (employee.nationality if hasattr(employee, 'nationality') and employee.nationality else ''),  # الجنسية
-                'تاريخ الإنشاء': employee.created_at.strftime('%Y-%m-%d %H:%M:%S') if hasattr(employee, 'created_at') and employee.created_at else '',  # تاريخ الإنشاء
-                'آخر تحديث': employee.updated_at.strftime('%Y-%m-%d %H:%M:%S') if hasattr(employee, 'updated_at') and employee.updated_at else '',  # آخر تحديث
-                'صورة الملف الشخصي': 'نعم' if hasattr(employee, 'profile_image') and employee.profile_image else 'لا',  # صورة الملف الشخصي
-                'صورة الهوية': 'نعم' if hasattr(employee, 'national_id_image') and employee.national_id_image else 'لا',  # صورة الهوية
-                'صورة الرخصة': 'نعم' if hasattr(employee, 'license_image') and employee.license_image else 'لا',  # صورة الرخصة
-                'رقم الإيبان البنكي': getattr(employee, 'bank_iban', '') or '',  # رقم الإيبان البنكي
-                'صورة الإيبان البنكي': 'نعم' if hasattr(employee, 'bank_iban_image') and employee.bank_iban_image else 'لا',  # صورة الإيبان البنكي
-                'نوع الموظف': getattr(employee, 'employee_type', '') or '',  # نوع الموظف (regular/driver)
-                'نوع العقد': getattr(employee, 'contract_type', '') or '',  # نوع العقد (saudi/foreign)
-                'الراتب الأساسي': getattr(employee, 'basic_salary', '') or '',  # الراتب الأساسي
-                'عهدة جوال': 'نعم' if getattr(employee, 'has_mobile_custody', False) else 'لا',  # عهدة جوال
-                'نوع الجوال': getattr(employee, 'mobile_type', '') or '',  # نوع الجوال
-                'رقم IMEI': getattr(employee, 'mobile_imei', '') or '',  # رقم IMEI
-                'حالة الكفالة': getattr(employee, 'sponsorship_status', '') or '',  # حالة الكفالة
-                'اسم الكفيل الحالي': getattr(employee, 'current_sponsor_name', '') or '',  # اسم الكفيل الحالي
-                'ملاحظات': getattr(employee, 'notes', '') or ''  # ملاحظات
-            }
-            data.append(row)
+        from openpyxl import Workbook
+        from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
+        from openpyxl.chart import BarChart, PieChart, Reference
+        from openpyxl.utils import get_column_letter
+        from collections import Counter
         
-        # Create DataFrame
-        df = pd.DataFrame(data)
-        
-        # Write to Excel using openpyxl engine
         if output is None:
-            # إذا لم يتم توفير output، قم بإنشاء كائن BytesIO جديد
             output = BytesIO()
-            
-        with pd.ExcelWriter(output, engine='openpyxl') as writer:
-            df.to_excel(writer, sheet_name='Employees', index=False)
-            
-            # Auto-adjust columns' width (openpyxl method)
-            worksheet = writer.sheets['Employees']
-            for i, col in enumerate(df.columns):
-                try:
-                    column_width = max(df[col].astype(str).map(len).max(), len(col)) + 2
-                    # For openpyxl, column dimensions are one-based
-                    if i < 26:  # Only handle up to column Z
-                        column_letter = chr(65 + i)  # A, B, C, ...
-                        worksheet.column_dimensions[column_letter].width = min(column_width, 50)  # Max width limit
-                except Exception as col_error:
-                    print(f"Error adjusting column {col}: {str(col_error)}")
-                    continue
         
+        workbook = Workbook()
+        
+        # ===== ورقة Dashboard الاحترافية =====
+        dashboard = workbook.active
+        dashboard.title = "Dashboard"
+        
+        # حساب الإحصائيات
+        total_employees = len(employees)
+        active_employees = sum(1 for e in employees if e.status == 'active')
+        inactive_employees = sum(1 for e in employees if e.status == 'inactive')
+        on_leave_employees = sum(1 for e in employees if e.status == 'on_leave')
+        
+        # إحصائيات الأقسام
+        dept_counter = Counter()
+        for emp in employees:
+            if emp.departments:
+                for dept in emp.departments:
+                    dept_counter[dept.name] += 1
+            else:
+                dept_counter['بدون قسم'] += 1
+        
+        # إحصائيات الوظائف
+        job_counter = Counter(e.job_title for e in employees if e.job_title)
+        
+        # تنسيقات Dashboard
+        title_fill = PatternFill(start_color="1F4788", end_color="1F4788", fill_type="solid")
+        title_font = Font(bold=True, color="FFFFFF", size=16, name='Calibri')
+        header_fill = PatternFill(start_color="4472C4", end_color="4472C4", fill_type="solid")
+        header_font = Font(bold=True, color="FFFFFF", size=12, name='Calibri')
+        stat_fill = PatternFill(start_color="E7E6E6", end_color="E7E6E6", fill_type="solid")
+        center_align = Alignment(horizontal='center', vertical='center')
+        border = Border(
+            left=Side(style='thin'), right=Side(style='thin'),
+            top=Side(style='thin'), bottom=Side(style='thin')
+        )
+        
+        # عنوان Dashboard
+        dashboard.merge_cells('A1:F1')
+        title_cell = dashboard['A1']
+        title_cell.value = f"تقرير الموظفين - لوحة التحكم | {datetime.now().strftime('%Y-%m-%d')}"
+        title_cell.font = title_fill = Font(bold=True, color="FFFFFF", size=18, name='Calibri')
+        title_cell.alignment = center_align
+        title_cell.fill = PatternFill(start_color="1F4788", end_color="1F4788", fill_type="solid")
+        
+        # كارت الإحصائيات الرئيسية
+        dashboard.merge_cells('A3:B3')
+        dashboard['A3'].value = "📊 إحصائيات عامة"
+        dashboard['A3'].font = header_font
+        dashboard['A3'].fill = header_fill
+        dashboard['A3'].alignment = center_align
+        
+        stats_data = [
+            ("إجمالي الموظفين", total_employees, "4472C4"),
+            ("الموظفون النشطون", active_employees, "70AD47"),
+            ("الموظفون غير النشطين", inactive_employees, "FFC000"),
+            ("في إجازة", on_leave_employees, "ED7D31")
+        ]
+        
+        row = 4
+        for label, value, color in stats_data:
+            dashboard.cell(row=row, column=1).value = label
+            dashboard.cell(row=row, column=1).font = Font(bold=True, size=11)
+            dashboard.cell(row=row, column=1).alignment = Alignment(horizontal='right')
+            
+            dashboard.cell(row=row, column=2).value = value
+            dashboard.cell(row=row, column=2).font = Font(bold=True, size=14, color=color)
+            dashboard.cell(row=row, column=2).alignment = center_align
+            dashboard.cell(row=row, column=2).fill = stat_fill
+            row += 1
+        
+        # إحصائيات الأقسام
+        dashboard.merge_cells('D3:F3')
+        dashboard['D3'].value = "🏢 توزيع الموظفين حسب الأقسام"
+        dashboard['D3'].font = header_font
+        dashboard['D3'].fill = header_fill
+        dashboard['D3'].alignment = center_align
+        
+        row = 4
+        for dept_name, count in dept_counter.most_common(10):
+            dashboard.cell(row=row, column=4).value = dept_name
+            dashboard.cell(row=row, column=4).alignment = Alignment(horizontal='right')
+            dashboard.cell(row=row, column=5).value = count
+            dashboard.cell(row=row, column=5).alignment = center_align
+            dashboard.cell(row=row, column=5).fill = stat_fill
+            
+            # نسبة مئوية
+            percentage = f"{(count/total_employees*100):.1f}%"
+            dashboard.cell(row=row, column=6).value = percentage
+            dashboard.cell(row=row, column=6).alignment = center_align
+            dashboard.cell(row=row, column=6).font = Font(bold=True, color="4472C4")
+            row += 1
+        
+        # أكثر الوظائف
+        dashboard.merge_cells('A10:B10')
+        dashboard['A10'].value = "💼 أكثر الوظائف شيوعاً"
+        dashboard['A10'].font = header_font
+        dashboard['A10'].fill = header_fill
+        dashboard['A10'].alignment = center_align
+        
+        row = 11
+        for job_title, count in job_counter.most_common(8):
+            dashboard.cell(row=row, column=1).value = job_title
+            dashboard.cell(row=row, column=1).alignment = Alignment(horizontal='right')
+            dashboard.cell(row=row, column=2).value = count
+            dashboard.cell(row=row, column=2).alignment = center_align
+            dashboard.cell(row=row, column=2).fill = stat_fill
+            row += 1
+        
+        # ضبط عرض الأعمدة في Dashboard
+        dashboard.column_dimensions['A'].width = 25
+        dashboard.column_dimensions['B'].width = 15
+        dashboard.column_dimensions['C'].width = 3
+        dashboard.column_dimensions['D'].width = 25
+        dashboard.column_dimensions['E'].width = 12
+        dashboard.column_dimensions['F'].width = 12
+        
+        # ===== ورقة بيانات الموظفين الاحترافية =====
+        employees_sheet = workbook.create_sheet(title="Employee Data")
+        
+        # العناوين الأساسية
+        headers = [
+            "الاسم الكامل", "رقم الموظف", "رقم الهوية", "رقم الجوال", 
+            "المسمى الوظيفي", "الحالة", "الموقع", "المشروع", 
+            "الأقسام", "البريد الإلكتروني", "تاريخ الانضمام"
+        ]
+        
+        # كتابة العناوين
+        for col_idx, header in enumerate(headers, start=1):
+            cell = employees_sheet.cell(row=1, column=col_idx)
+            cell.value = header
+            cell.font = Font(bold=True, color="FFFFFF", size=12, name='Calibri')
+            cell.fill = PatternFill(start_color="4472C4", end_color="4472C4", fill_type="solid")
+            cell.alignment = center_align
+            cell.border = border
+        
+        # كتابة البيانات
+        for row_idx, employee in enumerate(employees, start=2):
+            # البيانات الأساسية
+            data_row = [
+                employee.name,
+                employee.employee_id,
+                employee.national_id or "",
+                employee.mobile or "",
+                employee.job_title or "",
+                employee.status or "",
+                employee.location or "",
+                employee.project or "",
+                ', '.join([dept.name for dept in employee.departments]) if employee.departments else "",
+                employee.email or "",
+                employee.join_date.strftime('%Y-%m-%d') if employee.join_date else ""
+            ]
+            
+            for col_idx, value in enumerate(data_row, start=1):
+                cell = employees_sheet.cell(row=row_idx, column=col_idx)
+                cell.value = value
+                cell.alignment = center_align
+                cell.border = border
+                
+                # تلوين الصفوف بالتناوب
+                if row_idx % 2 == 0:
+                    cell.fill = PatternFill(start_color="F2F2F2", end_color="F2F2F2", fill_type="solid")
+                
+                # تلوين الحالة
+                if col_idx == 6:  # عمود الحالة
+                    if value == 'active':
+                        cell.fill = PatternFill(start_color="C6EFCE", end_color="C6EFCE", fill_type="solid")
+                        cell.font = Font(bold=True, color="006100")
+                    elif value == 'inactive':
+                        cell.fill = PatternFill(start_color="FFC7CE", end_color="FFC7CE", fill_type="solid")
+                        cell.font = Font(bold=True, color="9C0006")
+                    elif value == 'on_leave':
+                        cell.fill = PatternFill(start_color="FFEB9C", end_color="FFEB9C", fill_type="solid")
+                        cell.font = Font(bold=True, color="9C6500")
+        
+        # ضبط عرض الأعمدة
+        column_widths = [30, 15, 18, 16, 20, 12, 18, 18, 25, 25, 18]
+        for idx, width in enumerate(column_widths, start=1):
+            employees_sheet.column_dimensions[get_column_letter(idx)].width = width
+        
+        # ===== ورقة البيانات الكاملة =====
+        full_data_sheet = workbook.create_sheet(title="Complete Data")
+        
+        # جميع البيانات
+        all_headers = [
+            'الاسم الكامل', 'رقم الموظف', 'رقم الهوية الوطنية', 'رقم الجوال',
+            'الجوال الشخصي', 'المسمى الوظيفي', 'الحالة الوظيفية', 'الموقع',
+            'المشروع', 'البريد الإلكتروني', 'الأقسام', 'تاريخ الانضمام',
+            'الجنسية', 'نوع الموظف', 'نوع العقد', 'الراتب الأساسي'
+        ]
+        
+        for col_idx, header in enumerate(all_headers, start=1):
+            cell = full_data_sheet.cell(row=1, column=col_idx)
+            cell.value = header
+            cell.font = Font(bold=True, color="FFFFFF", size=11)
+            cell.fill = PatternFill(start_color="70AD47", end_color="70AD47", fill_type="solid")
+            cell.alignment = center_align
+            cell.border = border
+        
+        for row_idx, employee in enumerate(employees, start=2):
+            all_data = [
+                employee.name,
+                employee.employee_id,
+                employee.national_id or "",
+                employee.mobile or "",
+                getattr(employee, 'mobilePersonal', '') or '',
+                employee.job_title or "",
+                employee.status or "",
+                employee.location or "",
+                employee.project or "",
+                employee.email or "",
+                ', '.join([dept.name for dept in employee.departments]) if employee.departments else "",
+                employee.join_date.strftime('%Y-%m-%d') if employee.join_date else "",
+                employee.nationality_rel.name_ar if hasattr(employee, 'nationality_rel') and employee.nationality_rel else (employee.nationality if hasattr(employee, 'nationality') else ""),
+                getattr(employee, 'employee_type', '') or '',
+                getattr(employee, 'contract_type', '') or '',
+                str(getattr(employee, 'basic_salary', '') or '')
+            ]
+            
+            for col_idx, value in enumerate(all_data, start=1):
+                cell = full_data_sheet.cell(row=row_idx, column=col_idx)
+                cell.value = value
+                cell.alignment = center_align
+                cell.border = border
+                if row_idx % 2 == 0:
+                    cell.fill = PatternFill(start_color="E2EFDA", end_color="E2EFDA", fill_type="solid")
+        
+        # ضبط عرض الأعمدة
+        for idx in range(1, len(all_headers) + 1):
+            full_data_sheet.column_dimensions[get_column_letter(idx)].width = 18
+        
+        # حفظ الملف
+        workbook.save(output)
         output.seek(0)
         return output
     
     except Exception as e:
         print(f"خطأ في إنشاء ملف Excel: {str(e)}")
+        import traceback
+        traceback.print_exc()
         raise Exception(f"Error generating Excel file: {str(e)}")
 
 def parse_salary_excel(file, month, year):
