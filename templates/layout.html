@@ -481,6 +481,19 @@
                                     <span>التقارير</span>
                                 </a>
                             </li>
+                            
+                            {# VoiceHub - الذكاء الاصطناعي الصوتي #}
+                            {% if current_user.role == UserRole.ADMIN %}
+                            <li class="nav-item mb-1">
+                                <a
+                                    href="{{ url_for('voicehub.dashboard') }}"
+                                    class="nav-link nav-link-custom {% if '/voicehub' in request.path %}active{% endif %}"
+                                >
+                                    <i class="fas fa-microphone-alt me-2"></i>
+                                    <span>VoiceHub AI</span>
+                                </a>
+                            </li>
+                            {% endif %}
                             {% endif %} {# التحقق من صلاحيات المستخدمين #}
                             
                         
