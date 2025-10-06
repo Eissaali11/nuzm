@@ -415,8 +415,10 @@ def generate_employee_excel(employees, output=None):
         all_headers = [
             'الاسم الكامل', 'رقم الموظف', 'رقم الهوية الوطنية', 'رقم الجوال',
             'الجوال الشخصي', 'المسمى الوظيفي', 'الحالة الوظيفية', 'الموقع',
-            'المشروع', 'البريد الإلكتروني', 'الأقسام', 'تاريخ الانضمام',
-            'الجنسية', 'نوع الموظف', 'نوع العقد', 'الراتب الأساسي'
+            'المشروع', 'البريد الإلكتروني', 'الأقسام', 'تاريخ الانضمام', 'تاريخ الميلاد',
+            'الجنسية', 'نوع الموظف', 'نوع العقد', 'الراتب الأساسي', 'حالة العقد', 
+            'حالة الرخصة', 'نوع الجوال', 'رقم IMEI', 'حالة الكفالة', 'اسم الكفيل',
+            'رقم الإيبان', 'تفاصيل السكن', 'رابط موقع السكن', 'مقاس البنطلون', 'مقاس التيشرت'
         ]
         
         for col_idx, header in enumerate(all_headers, start=1):
@@ -441,10 +443,22 @@ def generate_employee_excel(employees, output=None):
                 employee.email or "",
                 ', '.join([dept.name for dept in employee.departments]) if employee.departments else "",
                 employee.join_date.strftime('%Y-%m-%d') if employee.join_date else "",
+                employee.birth_date.strftime('%Y-%m-%d') if employee.birth_date else "",
                 employee.nationality_rel.name_ar if hasattr(employee, 'nationality_rel') and employee.nationality_rel else (employee.nationality if hasattr(employee, 'nationality') else ""),
                 getattr(employee, 'employee_type', '') or '',
                 getattr(employee, 'contract_type', '') or '',
-                str(getattr(employee, 'basic_salary', '') or '')
+                str(getattr(employee, 'basic_salary', '') or ''),
+                getattr(employee, 'contract_status', '') or '',
+                getattr(employee, 'license_status', '') or '',
+                getattr(employee, 'mobile_type', '') or '',
+                getattr(employee, 'mobile_imei', '') or '',
+                getattr(employee, 'sponsorship_status', '') or '',
+                getattr(employee, 'current_sponsor_name', '') or '',
+                getattr(employee, 'bank_iban', '') or '',
+                getattr(employee, 'residence_details', '') or '',
+                getattr(employee, 'residence_location_url', '') or '',
+                getattr(employee, 'pants_size', '') or '',
+                getattr(employee, 'shirt_size', '') or ''
             ]
             
             for col_idx, value in enumerate(all_data, start=1):
