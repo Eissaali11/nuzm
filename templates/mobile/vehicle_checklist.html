@@ -375,7 +375,7 @@
     <template id="image-preview-template">
         <div class="col-6 preview-item">
             <div class="card">
-                <img src="" alt="معاينة" class="preview-image">
+                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect fill='%23f0f0f0' width='100' height='100'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%23999' font-size='14'%3Eجاري التحميل...%3C/text%3E%3C/svg%3E" alt="صورة" class="preview-image">
                 <button type="button" class="btn-close remove-file"></button>
             </div>
         </div>
@@ -645,29 +645,30 @@
                     $(clone).find('.pdf-filename').text(file.name);
                     appendPreviewToDOM(clone, file);
                 } else if (isImage) {
-                    // استخدام FileReader لقراءة الصورة بشكل آمن
+                    // تعيين الصورة باستخدام FileReader
+                    const imgElement = $(clone).find('.preview-image');
                     const reader = new FileReader();
+                    
                     reader.onload = function(e) {
-                        const imgElement = $(clone).find('img');
                         imgElement.attr('src', e.target.result);
-                        imgElement.on('error', function() {
-                            // في حالة فشل عرض الصورة، نضع أيقونة افتراضية
-                            console.warn('فشل عرض الصورة:', file.name);
-                            $(this).attr('src', 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100"%3E%3Crect fill="%23ddd" width="100" height="100"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" fill="%23999"%3E' + encodeURIComponent(file.name.substring(0, 10)) + '%3C/text%3E%3C/svg%3E');
-                        });
-                        appendPreviewToDOM(clone, file);
+                        console.log('تم تحميل الصورة:', file.name);
                     };
-                    reader.onerror = function() {
-                        console.error('خطأ في قراءة الملف:', file.name);
-                        // في حالة الفشل، نحاول URL.createObjectURL
+                    
+                    reader.onerror = function(error) {
+                        console.error('خطأ في قراءة الملف:', file.name, error);
+                        // محاولة استخدام URL.createObjectURL كخطة بديلة
                         try {
-                            $(clone).find('img').attr('src', URL.createObjectURL(file));
-                            appendPreviewToDOM(clone, file);
+                            const url = URL.createObjectURL(file);
+                            imgElement.attr('src', url);
                         } catch(err) {
-                            console.error('فشل تحميل الصورة بالكامل:', err);
+                            console.error('فشل تحميل الصورة:', err);
                         }
                     };
+                    
+                    // قراءة الملف كـ Data URL
                     reader.readAsDataURL(file);
+                    // إضافة العنصر فوراً مع صورة placeholder
+                    appendPreviewToDOM(clone, file);
                 } else {
                     // نوع ملف غير مدعوم
                     appendPreviewToDOM(clone, file);
