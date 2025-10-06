@@ -4224,31 +4224,30 @@ def detailed_list():
 @vehicles_bp.route('/report/export/excel')
 @login_required
 def export_vehicles_excel():
-        """تصدير بيانات السيارات إلى ملف Excel"""
-        import io
-        import pandas as pd
-        from flask import send_file
-        import datetime
+	"""تصدير بيانات السيارات إلى ملف Excel احترافي"""
+	import io
+	from flask import send_file
+	import datetime
+	from utils.excel import generate_vehicles_excel
 
-        status_filter = request.args.get('status', '')
-        make_filter = request.args.get('make', '')
+	status_filter = request.args.get('status', '')
+	make_filter = request.args.get('make', '')
 
-        # قاعدة الاستعلام الأساسية
-        query = Vehicle.query
+	# قاعدة الاستعلام الأساسية
+	query = Vehicle.query
 
-        # إضافة التصفية حسب الحالة إذا تم تحديدها
-        if status_filter:
-                query = query.filter(Vehicle.status == status_filter)
+	# إضافة التصفية حسب الحالة إذا تم تحديدها
+	if status_filter:
+		query = query.filter(Vehicle.status == status_filter)
 
-        # إضافة التصفية حسب الشركة المصنعة إذا تم تحديدها
-        if make_filter:
-                query = query.filter(Vehicle.make == make_filter)
+	# إضافة التصفية حسب الشركة المصنعة إذا تم تحديدها
+	if make_filter:
+		query = query.filter(Vehicle.make == make_filter)
 
 	# الحصول على قائمة السيارات
 	vehicles = query.order_by(Vehicle.status, Vehicle.plate_number).all()
 
 	# إنشاء ملف Excel احترافي في الذاكرة
-	from utils.excel import generate_vehicles_excel
 	output = io.BytesIO()
 	generate_vehicles_excel(vehicles, output)
 
@@ -4266,8 +4265,6 @@ def export_vehicles_excel():
 		as_attachment=True,
 		mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 	)
-
-
 
 # مسار عرض تفاصيل سجل الورشة
 @vehicles_bp.route('/workshop-details/<int:workshop_id>')
