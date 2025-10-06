@@ -1,0 +1,196 @@
+استدعاء Webhook
+عند إجراء مكالمات من خلال منصة VoiceHub أو الأداة أو واجهة برمجة التطبيقات ، يسمح Voicehub بإرسال عمليات إعادة الاتصال إلى الواجهة الخلفية لمساعدتك في تتبع حالة المكالمة وتسجيلات المكالمات وتحليل المكالمات.
+
+تكوين Webhook من خلال Voicehub
+في VoiceHub، يمكن تكوين كل عامل لإرسال طلبات الإخطار على الويب لكل مكالمات. يمكن العثور على هذا التكوين ضمن عنصر قائمة الشريط الجانبي لواجهة برمجة التطبيقات كما في لقطة الشاشة التالية
+
+
+في تكوين webhook ، سيكون لديك خيارات متعددة تحتاج إلى تكوينها لخطاف الويب. 
+
+عنوان URL لخطاف الويب: هذا هو عنوان url لنقطة النهاية الذي سيرسل إليه خطاف الويب طلبات POST من جانبك.
+
+السر: هذا هو أي مفتاح سري تريد استخدامه للتحقق من طلبات خطاف الويب. سيتم إرسالها من خلال رأس على طلب البريد x-webhook-secret 
+
+إعادة محاولة المحاولات والتأخير: سيتم إيقاف الطلبات عدة مرات إلى نقاط النهاية الخاصة بك مع تأخير بالمللي ثانية في الحقول
+
+مهلة الطلب قابلة للتكوين أيضا
+
+الأحداث المرسلة من خلال خطاف الويب للمكالمة
+حاليا، يقوم Voicehub بتشغيل ثلاثة أنواع مختلفة من الأحداث خلال دورة حياة المكالمة. 
+
+CallStatusChanged
+يتم تشغيل هذا الحدث كلما حدث تغيير في حالة مكالمتك. تحتوي حمولة نص المنشور على سلسلة jsonized التالية، وحالات الاستدعاء المتوقعة مذكورة أدناه
+
+
+نسخ
+{
+      eventType: WebhookEventType.CallStatusChanged,
+      timestamp: "Date iso string when event happened",
+      eventId: "Unique event Id",
+      status: "new call status",
+      callId: "call id",
+}
+بالنسبة إلى حالات المكالمات التي يتم إرجاعها من واجهة برمجة التطبيقات، يمكنك توقع أحد الخيارات التالية
+
+
+نسخ
+started -> When right when the call is connected
+queued -> When call is waiting to be started.
+completed -> when call completes
+in-progress -> When call is being in progress (user/agent are talking)
+failed -> Call failed due to some reason
+cancelled -> Call is canceled
+unanswered -> If call is not answered
+scheduled -> If call request had the schedule At parameter so that it is scheduled for a later time.
+busy -> If user is busy
+voicemail -> If call is forwarded to voicemail
+التسجيلاتمتاحة
+يتم تشغيل هذا الحدث بعد توفر التسجيلات الصوتية للمكالمة. جسم الحمولة هو
+
+
+نسخ
+{
+  eventType: WebhookEventType.RecordingsAvailable,
+  timestamp: "Date iso string when event happened",
+  eventId: "Unique event Id",
+  callId: "call id",
+}
+تحليلالنتيجةجاهز
+يتم تشغيل هذا الحدث كلما كان تحليل المكالمة متاحا. تحتوي حمولة معاودة الاتصال على ارتباط لجلب النتائج. احذر من أن طلب النتيجة يتطلب استخدام مفتاح واجهة برمجة التطبيقات كرأس x-dq-api-key
+
+
+نسخ
+{
+  eventType: WebhookEventType.AnalysisResultReady,
+  analysisId: "Analysis Id",
+  timestamp: "Date iso string when event happened",
+  eventId: "Unique event Id",
+  callId: "call id",
+  analysisResultUrl: 'URL for call analysis fetching',
+}
+تبدو البيانات التي تم إرجاعها من التحليل من analysisResultUrl كما يلي 
+
+
+نسخ
+{
+  "callId": "سلسلة"،
+  "تحليل النسخة": [
+    {
+      "text": "سلسلة",
+      "speaker": "مستخدم",
+      "المشاعر": {
+        "النتيجة": 0 ،
+        "label": "إيجابي",
+        "الكلمات الرئيسية الإيجابية": [
+          "سلسلة"
+        ],
+        "الكلمات الرئيسية السلبية": [
+          "سلسلة"
+        ]
+      },
+      "البدء": 0 ،
+      "النهاية": 0 ،
+      "المدة": 0 ،
+      "WPS": 0
+    }
+  ],
+  "الملخص": "سلسلة"،
+  "ملخص المستخدم": {
+    "totalSpeechDuration": 0,
+    "totalSilenceDuration": 0 ،
+    "totalInterruptionDuration": 0 ،
+    "WPS": 0 ،
+    "المشاعر": {
+      "النتيجة": 0 ،
+      "label": "إيجابي",
+      "الكلمات الرئيسية الإيجابية": [
+        "سلسلة"
+      ],
+      "الكلمات الرئيسية السلبية": [
+        "سلسلة"
+      ]
+    },
+    "العبارات الرئيسية": {
+      "إيجابي": [
+        "سلسلة"
+      ],
+      "سلبي": [
+        "سلسلة"
+      ]
+    }
+  },
+  "مساعد الملخص": {
+    "totalSpeechDuration": 0,
+    "totalSilenceDuration": 0 ،
+    "totalInterruptionDuration": 0 ،
+    "WPS": 0 ،
+    "المشاعر": {
+      "النتيجة": 0 ،
+      "label": "إيجابي",
+      "الكلمات الرئيسية الإيجابية": [
+        "سلسلة"
+      ],
+      "الكلمات الرئيسية السلبية": [
+        "سلسلة"
+      ]
+    },
+    "keyPhrases": {
+      "positive": [
+        "string"
+      ],
+      "negative": [
+        "string"
+      ]
+    }
+  },
+  "totalSummary": {
+    "totalSpeechDuration": 0,
+    "totalSilenceDuration": 0,
+    "totalInterruptionDuration": 0,
+    "wps": 0,
+    "sentiment": {
+      "score": 0,
+      "label": "positive",
+      "positiveKeywords": [
+        "string"
+      ],
+      "negativeKeywords": [
+        "string"
+      ]
+    },
+    "keyPhrases": {
+      "positive": [
+        "string"
+      ],
+      "negative": [
+        "string"
+      ]
+    }
+  },
+  "sentiment": {
+    "score": 0,
+    "label": "positive",
+    "positiveKeywords": [
+      "string"
+    ],
+    "negativeKeywords": [
+      "string"
+    ]
+  },
+  "المدة": 0 ،
+  "recordingUrls": [
+    "سلسلة"
+  ],
+  "المواضيع الرئيسية": [
+    "سلسلة"
+  ],
+  "مؤشرات الولاء": [
+    "سلسلة"
+  ],
+  "extractedVariables": {},
+  "EmpathyScore": 0 ،
+  "resolutionStatus": "تم حلها",
+  "userInterruptionsCount": 0 ،
+  "createdat": "2025-09-23T08:48:59.619Z",
+  "updatedat": "2025-09-23T08:48:59.619Z"
+}

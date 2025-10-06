@@ -1,0 +1,202 @@
+# Call Webhook
+
+### Configuring Webhook through Voicehub
+
+In voicehub, each agent can be configured to send webhook requests per calls. This configuration can be found under API Sidebar menu item as in the next screenshot
+
+<figure><img src="https://1583580785-files.gitbook.io/~/files/v0/b/gitbook-x-prod.appspot.com/o/spaces%2FVRUgVLmtuyNEZUgZ8LYH%2Fuploads%2FvfSvW7DCwESAZ3zHBQDQ%2FScreenshot%202025-07-31%20at%201.13.38%E2%80%AFPM.png?alt=media&#x26;token=6e4151f8-38c9-49bc-a74f-954a7dca071b" alt=""><figcaption></figcaption></figure>
+
+In the configuration of webhook, you will have multiple options that need to be configured for the webhook.&#x20;
+
+1. Webhook URL: This is the endpoint url that the webhook will send POST requests to on your end.
+2. Secret: This is any secret key you want to be used for verifying webhook requests. It will be sent through a header on the post request  `x-webhook-secret`&#x20;
+3. Retrying attempts and delays: Requests will be retired couple of times to your end points with delays in milliseconds sepcified in the fields
+4. Request timeout also is configurable
+
+### Events sent through call webhook
+
+Currently, voicehub triggers three different types of events through the lifecycle of a call.&#x20;
+
+#### CallStatusChanged
+
+This event is triggered whenever a change happens to your call status. The payload of the post body contains the following jsonized string, the expected call statuses are listed below
+
+<pre><code>{
+<strong>      eventType: WebhookEventType.CallStatusChanged,
+</strong>      timestamp: "Date iso string when event happened",
+      eventId: "Unique event Id",
+      status: "new call status",
+      callId: "call id",
+}
+</code></pre>
+
+For call statuses that are returned from the API, you can expect one of the following
+
+```
+started -> When right when the call is connected
+queued -> When call is waiting to be started.
+completed -> when call completes
+in-progress -> When call is being in progress (user/agent are talking)
+failed -> Call failed due to some reason
+cancelled -> Call is canceled
+unanswered -> If call is not answered
+scheduled -> If call request had the schedule At parameter so that it is scheduled for a later time.
+busy -> If user is busy
+voicemail -> If call is forwarded to voicemail
+
+```
+
+#### RecordingsAvailable
+
+This event is triggered upong having the call voice recordings available. The body of the payload is
+
+```
+{
+  eventType: WebhookEventType.RecordingsAvailable,
+  timestamp: "Date iso string when event happened",
+  eventId: "Unique event Id",
+  callId: "call id",
+}
+```
+
+#### AnalysisResultReady
+
+This event is triggered whenever the analysis of the call is available. Callback payload contains a link to fetch the results. Beware that the result request requires using the API Key as a header `x-dq-api-key`
+
+```
+{
+  eventType: WebhookEventType.AnalysisResultReady,
+  analysisId: "Analysis Id",
+  timestamp: "Date iso string when event happened",
+  eventId: "Unique event Id",
+  callId: "call id",
+  analysisResultUrl: 'URL for call analysis fetching',
+}
+```
+
+The returned data of the analysis from analysisResultUrl look like the following\\
+
+```json
+{
+  "callId": "string",
+  "transcriptAnalysis": [
+    {
+      "text": "string",
+      "speaker": "user",
+      "sentiment": {
+        "score": 0,
+        "label": "positive",
+        "positiveKeywords": [
+          "string"
+        ],
+        "negativeKeywords": [
+          "string"
+        ]
+      },
+      "start": 0,
+      "end": 0,
+      "duration": 0,
+      "wps": 0
+    }
+  ],
+  "summary": "string",
+  "userSummary": {
+    "totalSpeechDuration": 0,
+    "totalSilenceDuration": 0,
+    "totalInterruptionDuration": 0,
+    "wps": 0,
+    "sentiment": {
+      "score": 0,
+      "label": "positive",
+      "positiveKeywords": [
+        "string"
+      ],
+      "negativeKeywords": [
+        "string"
+      ]
+    },
+    "keyPhrases": {
+      "positive": [
+        "string"
+      ],
+      "negative": [
+        "string"
+      ]
+    }
+  },
+  "assistantSummary": {
+    "totalSpeechDuration": 0,
+    "totalSilenceDuration": 0,
+    "totalInterruptionDuration": 0,
+    "wps": 0,
+    "sentiment": {
+      "score": 0,
+      "label": "positive",
+      "positiveKeywords": [
+        "string"
+      ],
+      "negativeKeywords": [
+        "string"
+      ]
+    },
+    "keyPhrases": {
+      "positive": [
+        "string"
+      ],
+      "negative": [
+        "string"
+      ]
+    }
+  },
+  "totalSummary": {
+    "totalSpeechDuration": 0,
+    "totalSilenceDuration": 0,
+    "totalInterruptionDuration": 0,
+    "wps": 0,
+    "sentiment": {
+      "score": 0,
+      "label": "positive",
+      "positiveKeywords": [
+        "string"
+      ],
+      "negativeKeywords": [
+        "string"
+      ]
+    },
+    "keyPhrases": {
+      "positive": [
+        "string"
+      ],
+      "negative": [
+        "string"
+      ]
+    }
+  },
+  "sentiment": {
+    "score": 0,
+    "label": "positive",
+    "positiveKeywords": [
+      "string"
+    ],
+    "negativeKeywords": [
+      "string"
+    ]
+  },
+  "duration": 0,
+  "recordingUrls": [
+    "string"
+  ],
+  "mainTopics": [
+    "string"
+  ],
+  "loyaltyIndicators": [
+    "string"
+  ],
+  "extractedVariables": {},
+  "empathyScore": 0,
+  "resolutionStatus": "solved",
+  "userInterruptionsCount": 0,
+  "createdAt": "2025-09-23T08:48:59.619Z",
+  "updatedAt": "2025-09-23T08:48:59.619Z"
+}
+```

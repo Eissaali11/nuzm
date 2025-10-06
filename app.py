@@ -376,8 +376,10 @@ with app.app_context():
     from routes.integrated_simple import integrated_bp
     from routes.ai_services_simple import ai_services_bp
     from routes.email_queue import email_queue_bp
+    from routes.voicehub import voicehub_bp
 
     # تعطيل حماية CSRF لطرق معينة
+    csrf.exempt(voicehub_bp)
     csrf.exempt(auth_bp)
 
     app.register_blueprint(dashboard_bp, url_prefix='/dashboard')
@@ -410,6 +412,7 @@ with app.app_context():
     app.register_blueprint(accounting_ext_bp, url_prefix="/accounting")
     app.register_blueprint(analytics_simple_bp)
     app.register_blueprint(integrated_bp, url_prefix='/integrated')
+    app.register_blueprint(voicehub_bp, url_prefix="/voicehub")
     app.register_blueprint(ai_services_bp, url_prefix='/ai')
     app.register_blueprint(email_queue_bp)
     

@@ -1747,3 +1747,98 @@ class DeviceAssignment(db.Model):
             self.sim_card.employee_id = None
             self.sim_card.status = 'متاح'
 
+
+# نماذج VoiceHub للذكاء الاصطناعي الصوتي
+class VoiceHubCall(db.Model):
+    """نموذج لتخزين مكالمات VoiceHub"""
+    __tablename__ = 'voicehub_calls'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    call_id = db.Column(db.String(100), unique=True, nullable=False)  # معرف المكالمة من VoiceHub
+    
+    # معلومات المكالمة
+    status = db.Column(db.String(50), nullable=True)  # started, queued, completed, in-progress, failed, etc.
+    phone_number = db.Column(db.String(20), nullable=True)  # رقم الهاتف
+    direction = db.Column(db.String(20), nullable=True)  # inbound, outbound
+    duration = db.Column(db.Integer, nullable=True)  # مدة المكالمة بالثواني
+    
+    # معلومات الربط بالموظف/القسم
+    employee_id = db.Column(db.Integer, db.ForeignKey('employee.id', ondelete='SET NULL'), nullable=True)
+    department_id = db.Column(db.Integer, db.ForeignKey('department.id', ondelete='SET NULL'), nullable=True)
+    assigned_by = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='SET NULL'), nullable=True)
+    
+    # التسجيلات
+    has_recordings = db.Column(db.Boolean, default=False)
+    recording_urls = db.Column(db.Text, nullable=True)  # JSON list of URLs
+    
+    # التحليل
+    has_analysis = db.Column(db.Boolean, default=False)
+    analysis_id = db.Column(db.String(100), nullable=True)
+    
+    # بيانات إضافية
+    event_data = db.Column(db.Text, nullable=True)  # JSON للبيانات الكاملة من Webhook
+    notes = db.Column(db.Text, nullable=True)
+    
+    # تواريخ
+    call_started_at = db.Column(db.DateTime, nullable=True)
+    call_ended_at = db.Column(db.DateTime, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # العلاقات
+    employee = db.relationship('Employee', backref='voicehub_calls', lazy=True)
+    department = db.relationship('Department', backref='voicehub_calls', lazy=True)
+    assigned_by_user = db.relationship('User', backref='assigned_voicehub_calls', lazy=True)
+    analysis = db.relationship('VoiceHubAnalysis', backref='call', uselist=False, lazy=True)
+    
+    def __repr__(self):
+        return f'<VoiceHubCall {self.call_id} - {self.status}>'
+
+
+class VoiceHubAnalysis(db.Model):
+    """نموذج لتخزين تحليلات مكالمات VoiceHub"""
+    __tablename__ = 'voicehub_analysis'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    call_id = db.Column(db.Integer, db.ForeignKey('voicehub_calls.id', ondelete='CASCADE'), nullable=False, unique=True)
+    analysis_id = db.Column(db.String(100), unique=True, nullable=False)
+    
+    # الملخص
+    summary = db.Column(db.Text, nullable=True)
+    main_topics = db.Column(db.Text, nullable=True)  # JSON array
+    
+    # التحليل العاطفي
+    sentiment_score = db.Column(db.Float, nullable=True)
+    sentiment_label = db.Column(db.String(50), nullable=True)  # positive, negative, neutral
+    positive_keywords = db.Column(db.Text, nullable=True)  # JSON array
+    negative_keywords = db.Column(db.Text, nullable=True)  # JSON array
+    
+    # المقاييس
+    empathy_score = db.Column(db.Float, nullable=True)
+    resolution_status = db.Column(db.String(50), nullable=True)  # solved, unsolved
+    user_interruptions_count = db.Column(db.Integer, nullable=True)
+    
+    # ملخص المستخدم
+    user_speech_duration = db.Column(db.Integer, nullable=True)
+    user_silence_duration = db.Column(db.Integer, nullable=True)
+    user_wps = db.Column(db.Float, nullable=True)  # words per second
+    
+    # ملخص المساعد
+    assistant_speech_duration = db.Column(db.Integer, nullable=True)
+    assistant_silence_duration = db.Column(db.Integer, nullable=True)
+    assistant_wps = db.Column(db.Float, nullable=True)
+    
+    # البيانات الكاملة
+    full_analysis = db.Column(db.Text, nullable=True)  # JSON للتحليل الكامل
+    transcript = db.Column(db.Text, nullable=True)  # النص الكامل للمحادثة
+    
+    # مؤشرات الولاء
+    loyalty_indicators = db.Column(db.Text, nullable=True)  # JSON array
+    
+    # تواريخ
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def __repr__(self):
+        return f'<VoiceHubAnalysis {self.analysis_id}>'
+
