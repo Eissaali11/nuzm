@@ -1196,37 +1196,37 @@ def delete_external_safety_check(check_id):
         return render_template('admin_delete_safety_check.html', safety_check=safety_check)
     
     # POST method
-        try:
-            # حذف الصور المرتبطة من الخادم
-            import os
-            for image in safety_check.safety_images:
-                if image.image_path:
-                    image_full_path = os.path.join(current_app.root_path, image.image_path)
-                    if os.path.exists(image_full_path):
-                        os.remove(image_full_path)
-                        current_app.logger.info(f"تم حذف الصورة: {image_full_path}")
-            
-            # تسجيل العملية قبل الحذف
-            log_audit(
-                user_id=current_user.id,
-                action='delete',
-                entity_type='VehicleExternalSafetyCheck',
-                entity_id=safety_check.id,
-                details=f'تم حذف طلب فحص السلامة للسيارة {safety_check.vehicle_plate_number} - السائق: {safety_check.driver_name}'
-            )
-            
-            # حذف السجل من قاعدة البيانات
-            db.session.delete(safety_check)
-            db.session.commit()
-            
-            flash('تم حذف طلب فحص السلامة بنجاح', 'success')
-            return redirect(url_for('external_safety.admin_external_safety_checks'))
-            
-        except Exception as e:
-            db.session.rollback()
-            current_app.logger.error(f"خطأ في حذف طلب فحص السلامة: {str(e)}")
-            flash('حدث خطأ في حذف الطلب', 'error')
-            return redirect(url_for('external_safety.admin_view_safety_check', check_id=check_id))
+    try:
+        # حذف الصور المرتبطة من الخادم
+        import os
+        for image in safety_check.safety_images:
+            if image.image_path:
+                image_full_path = os.path.join(current_app.root_path, image.image_path)
+                if os.path.exists(image_full_path):
+                    os.remove(image_full_path)
+                    current_app.logger.info(f"تم حذف الصورة: {image_full_path}")
+        
+        # تسجيل العملية قبل الحذف
+        log_audit(
+            user_id=current_user.id,
+            action='delete',
+            entity_type='VehicleExternalSafetyCheck',
+            entity_id=safety_check.id,
+            details=f'تم حذف طلب فحص السلامة للسيارة {safety_check.vehicle_plate_number} - السائق: {safety_check.driver_name}'
+        )
+        
+        # حذف السجل من قاعدة البيانات
+        db.session.delete(safety_check)
+        db.session.commit()
+        
+        flash('تم حذف طلب فحص السلامة بنجاح', 'success')
+        return redirect(url_for('external_safety.admin_external_safety_checks'))
+        
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"خطأ في حذف طلب فحص السلامة: {str(e)}")
+        flash('حدث خطأ في حذف الطلب', 'error')
+        return redirect(url_for('external_safety.admin_view_safety_check', check_id=check_id))
 
 @external_safety_bp.route('/admin/external-safety-check/<int:check_id>/edit', methods=['GET', 'POST'])
 def edit_safety_check(check_id):
