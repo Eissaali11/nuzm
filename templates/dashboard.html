@@ -282,6 +282,11 @@
 
 {% block extra_js %}
 <script>
+// متغيرات عامة لتخزين مرجعيات المخططات
+let departmentChartInstance = null;
+let salaryChartInstance = null;
+let documentChartInstance = null;
+
 document.addEventListener('DOMContentLoaded', function() {
     console.log('بدء تحميل لوحة المعلومات...');
     
@@ -395,6 +400,12 @@ function initializeDepartmentChart() {
         return;
     }
     
+    // تدمير المخطط القديم إذا كان موجوداً
+    if (departmentChartInstance) {
+        departmentChartInstance.destroy();
+        departmentChartInstance = null;
+    }
+    
     console.log('data-labels:', departmentChartElement.getAttribute('data-labels'));
     console.log('data-values:', departmentChartElement.getAttribute('data-values'));
     
@@ -410,7 +421,7 @@ function initializeDepartmentChart() {
     ];
     
     if (labels.length === 0 || values.length === 0) {
-        new Chart(departmentChartElement, {
+        departmentChartInstance = new Chart(departmentChartElement, {
             type: 'doughnut',
             data: {
                 labels: ['لا توجد بيانات'],
@@ -438,7 +449,7 @@ function initializeDepartmentChart() {
         return;
     }
     
-    new Chart(departmentChartElement, {
+    departmentChartInstance = new Chart(departmentChartElement, {
         type: 'doughnut',
         data: {
             labels: labels,
@@ -496,11 +507,17 @@ function initializeSalaryChart() {
     const salaryChartElement = document.getElementById('salaryChart');
     if (!salaryChartElement) return;
     
+    // تدمير المخطط القديم إذا كان موجوداً
+    if (salaryChartInstance) {
+        salaryChartInstance.destroy();
+        salaryChartInstance = null;
+    }
+    
     const labels = JSON.parse(salaryChartElement.getAttribute('data-labels') || '[]');
     const values = JSON.parse(salaryChartElement.getAttribute('data-values') || '[]');
     
     if (labels.length === 0 || values.length === 0) {
-        new Chart(salaryChartElement, {
+        salaryChartInstance = new Chart(salaryChartElement, {
             type: 'bar',
             data: {
                 labels: ['لا توجد بيانات'],
@@ -533,7 +550,7 @@ function initializeSalaryChart() {
         return;
     }
     
-    new Chart(salaryChartElement, {
+    salaryChartInstance = new Chart(salaryChartElement, {
         type: 'bar',
         data: {
             labels: labels,
@@ -603,6 +620,12 @@ function initializeDocumentChart() {
         return;
     }
     
+    // تدمير المخطط القديم إذا كان موجوداً
+    if (documentChartInstance) {
+        documentChartInstance.destroy();
+        documentChartInstance = null;
+    }
+    
     const validCount = parseInt(documentChartElement.getAttribute('data-valid')) || 0;
     const expiringCount = parseInt(documentChartElement.getAttribute('data-expiring')) || 0;
     const expiredCount = parseInt(documentChartElement.getAttribute('data-expired')) || 0;
@@ -611,7 +634,7 @@ function initializeDocumentChart() {
     
     if (validCount === 0 && expiringCount === 0 && expiredCount === 0) {
         console.log('لا توجد بيانات وثائق - عرض رسم افتراضي');
-        new Chart(documentChartElement, {
+        documentChartInstance = new Chart(documentChartElement, {
             type: 'doughnut',
             data: {
                 labels: ['لا توجد بيانات'],
@@ -639,7 +662,7 @@ function initializeDocumentChart() {
         return;
     }
     
-    new Chart(documentChartElement, {
+    documentChartInstance = new Chart(documentChartElement, {
         type: 'doughnut',
         data: {
             labels: ['وثائق سارية', 'وثائق تنتهي قريباً', 'وثائق منتهية'],

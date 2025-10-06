@@ -257,9 +257,50 @@ def create():
                 flash(f"هذه المعلومات مسجلة مسبقاً: رقم الهوية موجود بالفعل في النظام", "danger")
             else:
                 flash("هذه المعلومات مسجلة مسبقاً، لا يمكن تكرار بيانات الموظفين", "danger")
+            
+            # إرجاع المستخدم للنموذج مع البيانات المدخلة
+            departments = Department.query.all()
+            nationalities = Nationality.query.order_by(Nationality.name_ar).all()
+            from models import ImportedPhoneNumber
+            available_phone_numbers = ImportedPhoneNumber.query.filter(
+                ImportedPhoneNumber.employee_id.is_(None)
+            ).order_by(ImportedPhoneNumber.phone_number).all()
+            from models import MobileDevice
+            available_imei_numbers = MobileDevice.query.filter(
+                MobileDevice.status == 'متاح',
+                MobileDevice.employee_id.is_(None)
+            ).order_by(MobileDevice.imei).all()
+            
+            return render_template('employees/create.html', 
+                                 departments=departments,
+                                 nationalities=nationalities,
+                                 available_phone_numbers=available_phone_numbers,
+                                 available_imei_numbers=available_imei_numbers,
+                                 form_data=request.form)
+                                 
         except Exception as e:
             db.session.rollback()
             flash(f'حدث خطأ: {str(e)}', 'danger')
+            
+            # إرجاع المستخدم للنموذج مع البيانات المدخلة
+            departments = Department.query.all()
+            nationalities = Nationality.query.order_by(Nationality.name_ar).all()
+            from models import ImportedPhoneNumber
+            available_phone_numbers = ImportedPhoneNumber.query.filter(
+                ImportedPhoneNumber.employee_id.is_(None)
+            ).order_by(ImportedPhoneNumber.phone_number).all()
+            from models import MobileDevice
+            available_imei_numbers = MobileDevice.query.filter(
+                MobileDevice.status == 'متاح',
+                MobileDevice.employee_id.is_(None)
+            ).order_by(MobileDevice.imei).all()
+            
+            return render_template('employees/create.html', 
+                                 departments=departments,
+                                 nationalities=nationalities,
+                                 available_phone_numbers=available_phone_numbers,
+                                 available_imei_numbers=available_imei_numbers,
+                                 form_data=request.form)
     
     # Get all departments for the dropdown
     departments = Department.query.all()

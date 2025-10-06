@@ -20,19 +20,19 @@
                     <div class="col-md-6">
                         <div class="form-group mb-3">
                             <label for="name" class="form-label required-field">الاسم الكامل</label>
-                            <input type="text" class="form-control" id="name" name="name" required>
+                            <input type="text" class="form-control" id="name" name="name" value="{{ form_data.get('name', '') if form_data else '' }}" required>
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="form-group mb-3">
                             <label for="employee_id" class="form-label required-field">الرقم الوظيفي</label>
-                            <input type="text" class="form-control" id="employee_id" name="employee_id" required>
+                            <input type="text" class="form-control" id="employee_id" name="employee_id" value="{{ form_data.get('employee_id', '') if form_data else '' }}" required>
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="form-group mb-3">
                             <label for="national_id" class="form-label required-field">رقم الهوية</label>
-                            <input type="text" class="form-control" id="national_id" name="national_id" required>
+                            <input type="text" class="form-control" id="national_id" name="national_id" value="{{ form_data.get('national_id', '') if form_data else '' }}" required>
                         </div>
                     </div>
                     <div class="col-md-3">
@@ -68,19 +68,19 @@
                     <div class="col-md-3">
                         <div class="form-group mb-3">
                             <label for="mobilePersonal" class="form-label">الجوال الشخصي</label>
-                            <input type="text" class="form-control" id="mobilePersonal" name="mobilePersonal">
+                            <input type="text" class="form-control" id="mobilePersonal" name="mobilePersonal" value="{{ form_data.get('mobilePersonal', '') if form_data else '' }}">
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="form-group mb-3">
                             <label for="email" class="form-label">البريد الإلكتروني</label>
-                            <input type="email" class="form-control" id="email" name="email">
+                            <input type="email" class="form-control" id="email" name="email" value="{{ form_data.get('email', '') if form_data else '' }}">
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="form-group mb-3">
                             <label for="job_title" class="form-label required-field">المسمى الوظيفي</label>
-                            <input type="text" class="form-control" id="job_title" name="job_title" required>
+                            <input type="text" class="form-control" id="job_title" name="job_title" value="{{ form_data.get('job_title', '') if form_data else '' }}" required>
                         </div>
                     </div>
 
@@ -91,7 +91,7 @@
                             <select class="form-select" id="nationality_id" name="nationality_id">
                                 <option value="" selected>- اختر الجنسية -</option>
                                 {% for nat in nationalities %}
-                                <option value="{{ nat.id }}">{{ nat.name_ar }}</option>
+                                <option value="{{ nat.id }}" {% if form_data and form_data.get('nationality_id') == nat.id|string %}selected{% endif %}>{{ nat.name_ar }}</option>
                                 {% endfor %}
                             </select>
                         </div>
