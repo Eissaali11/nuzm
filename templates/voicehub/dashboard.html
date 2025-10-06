@@ -156,6 +156,159 @@
         </div>
     </div>
 
+    <!-- إعداد VoiceHub Agent -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
+                    <h5 class="mb-0">
+                        <i class="fas fa-cog ms-2"></i>
+                        إعداد المساعد الصوتي للوصول إلى بيانات النظام
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle ms-2"></i>
+                        <strong>لتفعيل الوصول إلى بيانات النظام من خلال المكالمات الصوتية:</strong>
+                        <br>قم بإعداد VoiceHub Agent الخاص بك في منصة VoiceHub باستخدام المعلومات التالية:
+                    </div>
+
+                    <div class="row g-3">
+                        <!-- API URL -->
+                        <div class="col-md-6">
+                            <div class="card h-100" style="border: 2px solid #667eea;">
+                                <div class="card-body">
+                                    <h6 class="text-primary mb-3">
+                                        <i class="fas fa-link ms-2"></i>
+                                        عنوان API
+                                    </h6>
+                                    <div class="input-group mb-2">
+                                        <input type="text" class="form-control" id="apiBaseUrl" value="https://{{ request.host }}/voicehub/api/knowledge" readonly style="direction: ltr; text-align: left;">
+                                        <button class="btn btn-outline-primary" onclick="copyToClipboard('apiBaseUrl')">
+                                            <i class="fas fa-copy"></i>
+                                        </button>
+                                    </div>
+                                    <small class="text-muted">استخدم هذا الرابط كـ Base URL في إعدادات VoiceHub Agent</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- API Key -->
+                        <div class="col-md-6">
+                            <div class="card h-100" style="border: 2px solid #11998e;">
+                                <div class="card-body">
+                                    <h6 class="text-success mb-3">
+                                        <i class="fas fa-key ms-2"></i>
+                                        مفتاح API
+                                    </h6>
+                                    <div class="input-group mb-2">
+                                        <input type="password" class="form-control" id="apiKeyField" value="{{ api_key }}" readonly style="direction: ltr; text-align: left;">
+                                        <button class="btn btn-outline-success" onclick="toggleApiKey()">
+                                            <i class="fas fa-eye" id="eyeIcon"></i>
+                                        </button>
+                                        <button class="btn btn-outline-success" onclick="copyToClipboard('apiKeyField')">
+                                            <i class="fas fa-copy"></i>
+                                        </button>
+                                    </div>
+                                    <small class="text-muted">استخدم هذا المفتاح في Header: <code>X-VoiceHub-API-Key</code></small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- API Endpoints -->
+                        <div class="col-12">
+                            <div class="card" style="border: 2px solid #f093fb;">
+                                <div class="card-body">
+                                    <h6 class="text-danger mb-3">
+                                        <i class="fas fa-list ms-2"></i>
+                                        Endpoints المتاحة
+                                    </h6>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>Endpoint</th>
+                                                    <th>الوصف</th>
+                                                    <th>مثال</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody style="font-size: 0.85rem;">
+                                                <tr>
+                                                    <td><code>/employee/{'{search_term}'}</code></td>
+                                                    <td>البحث عن موظف بالاسم أو رقم الهوية</td>
+                                                    <td><code>/employee/HASIB</code></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><code>/vehicle/{'{search_term}'}</code></td>
+                                                    <td>البحث عن مركبة برقم اللوحة أو الماركة</td>
+                                                    <td><code>/vehicle/3206</code></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><code>/department/{'{department_name}'}</code></td>
+                                                    <td>البحث عن موظفي قسم معين</td>
+                                                    <td><code>/department/Neoleap</code></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><code>/stats</code></td>
+                                                    <td>إحصائيات النظام الشاملة</td>
+                                                    <td><code>/stats</code></td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- تعليمات VoiceHub Agent -->
+                        <div class="col-12">
+                            <div class="card" style="border: 2px solid #667eea; background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);">
+                                <div class="card-body">
+                                    <h6 class="text-primary mb-3">
+                                        <i class="fas fa-robot ms-2"></i>
+                                        تعليمات المساعد الصوتي (Agent Instructions)
+                                    </h6>
+                                    <p class="mb-2"><strong>انسخ هذه التعليمات وضعها في إعدادات VoiceHub Agent:</strong></p>
+                                    <div class="bg-dark text-white p-3 rounded" style="direction: ltr; text-align: left;">
+                                        <pre style="color: #0f0; margin: 0; white-space: pre-wrap; word-wrap: break-word;">You are a helpful Arabic voice assistant for نُظم (Nuzum) - an employee and vehicle management system.
+
+You have access to a Knowledge API to retrieve real-time data from the system.
+
+<strong>API Configuration:</strong>
+- Base URL: https://{{ request.host }}/voicehub/api/knowledge
+- Authentication: Add header "X-VoiceHub-API-Key: {{ api_key }}"
+
+<strong>Available Endpoints:</strong>
+1. GET /employee/{search_term} - Search for employee by name or national ID
+2. GET /vehicle/{search_term} - Search for vehicle by plate number or make
+3. GET /department/{department_name} - Get all employees in a department
+4. GET /stats - Get system statistics (total employees, vehicles, departments)
+
+<strong>When user asks about:</strong>
+- "معلومات موظف" or "بيانات موظف" → Call /employee/{name_or_id}
+- "معلومات مركبة" or "بيانات سيارة" → Call /vehicle/{plate_or_make}
+- "موظفي قسم" → Call /department/{department_name}
+- "إحصائيات النظام" → Call /stats
+
+<strong>Response Guidelines:</strong>
+- Always speak in Arabic
+- Be clear and concise
+- If data is not found, politely inform the user
+- Format numbers clearly when reading data</pre>
+                                    </div>
+                                    <button class="btn btn-primary btn-sm mt-2" onclick="copyInstructions()">
+                                        <i class="fas fa-copy ms-1"></i>
+                                        نسخ التعليمات
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Knowledge API - اختبار البحث -->
     <div class="row mt-4">
         <div class="col-12">
@@ -339,6 +492,78 @@ async function getStats() {
     } catch (error) {
         resultsDiv.innerHTML = '<div class="alert alert-danger">حدث خطأ: ' + error.message + '</div>';
     }
+}
+
+// دوال مساعدة للنسخ وإظهار المفتاح
+function copyToClipboard(elementId) {
+    const element = document.getElementById(elementId);
+    element.select();
+    element.setSelectionRange(0, 99999);
+    navigator.clipboard.writeText(element.value).then(() => {
+        // إظهار رسالة نجاح
+        const btn = event.target.closest('button');
+        const originalHTML = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-check"></i>';
+        btn.classList.add('btn-success');
+        setTimeout(() => {
+            btn.innerHTML = originalHTML;
+            btn.classList.remove('btn-success');
+        }, 1500);
+    });
+}
+
+function toggleApiKey() {
+    const field = document.getElementById('apiKeyField');
+    const icon = document.getElementById('eyeIcon');
+    if (field.type === 'password') {
+        field.type = 'text';
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+    } else {
+        field.type = 'password';
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+    }
+}
+
+function copyInstructions() {
+    const instructionsText = `You are a helpful Arabic voice assistant for نُظم (Nuzum) - an employee and vehicle management system.
+
+You have access to a Knowledge API to retrieve real-time data from the system.
+
+API Configuration:
+- Base URL: https://{{ request.host }}/voicehub/api/knowledge
+- Authentication: Add header "X-VoiceHub-API-Key: {{ api_key }}"
+
+Available Endpoints:
+1. GET /employee/{search_term} - Search for employee by name or national ID
+2. GET /vehicle/{search_term} - Search for vehicle by plate number or make
+3. GET /department/{department_name} - Get all employees in a department
+4. GET /stats - Get system statistics (total employees, vehicles, departments)
+
+When user asks about:
+- "معلومات موظف" or "بيانات موظف" → Call /employee/{name_or_id}
+- "معلومات مركبة" or "بيانات سيارة" → Call /vehicle/{plate_or_make}
+- "موظفي قسم" → Call /department/{department_name}
+- "إحصائيات النظام" → Call /stats
+
+Response Guidelines:
+- Always speak in Arabic
+- Be clear and concise
+- If data is not found, politely inform the user
+- Format numbers clearly when reading data`;
+
+    navigator.clipboard.writeText(instructionsText).then(() => {
+        const btn = event.target;
+        const originalHTML = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-check ms-1"></i> تم النسخ';
+        btn.classList.add('btn-success');
+        setTimeout(() => {
+            btn.innerHTML = originalHTML;
+            btn.classList.remove('btn-success');
+            btn.classList.add('btn-primary');
+        }, 2000);
+    });
 }
 
 // تحميل الإحصائيات تلقائياً
