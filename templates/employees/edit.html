@@ -359,16 +359,13 @@
                                     <div class="col-md-6">
                                         <div class="form-group mb-3">
                                             <label for="pants_size" class="form-label">مقاس البنطلون</label>
-                                            <select class="form-select" id="pants_size" name="pants_size">
-                                                <option value="">- اختر المقاس -</option>
-                                                <option value="XS" {% if employee.pants_size == 'XS' %}selected{% endif %}>XS</option>
-                                                <option value="S" {% if employee.pants_size == 'S' %}selected{% endif %}>S</option>
-                                                <option value="M" {% if employee.pants_size == 'M' %}selected{% endif %}>M</option>
-                                                <option value="L" {% if employee.pants_size == 'L' %}selected{% endif %}>L</option>
-                                                <option value="XL" {% if employee.pants_size == 'XL' %}selected{% endif %}>XL</option>
-                                                <option value="XXL" {% if employee.pants_size == 'XXL' %}selected{% endif %}>XXL</option>
-                                                <option value="XXXL" {% if employee.pants_size == 'XXXL' %}selected{% endif %}>XXXL</option>
-                                            </select>
+                                            <input type="text" class="form-control" id="pants_size" name="pants_size" 
+                                                   value="{{ employee.pants_size or '' }}"
+                                                   placeholder="مثال: 32، 34، 36...">
+                                            <div class="form-text text-muted">
+                                                <i class="fas fa-info-circle"></i>
+                                                أدخل مقاس البنطلون (رقمي)
+                                            </div>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
