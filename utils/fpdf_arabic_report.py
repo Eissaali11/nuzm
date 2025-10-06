@@ -637,3 +637,310 @@ def generate_workshop_report_pdf_fpdf(vehicle, workshop_records):
             # تأكد من حذف الملف المؤقت حتى في حالة حدوث خطأ
             if os.path.exists(temp_path):
                 os.unlink(temp_path)
+
+
+def generate_safety_check_report_pdf(safety_check):
+    """
+    إنشاء تقرير فحص السلامة الخارجي باستخدام FPDF مع تصميم احترافي
+    
+    Args:
+        safety_check: كائن فحص السلامة الخارجي
+    
+    Returns:
+        BytesIO: كائن بايت يحتوي على ملف PDF
+    """
+    # إنشاء كائن PDF مع دعم اللغة العربية
+    pdf = ProfessionalArabicPDF(orientation='P', unit='mm', format='A4')
+    pdf.set_title('تقرير فحص السلامة الخارجي')
+    pdf.set_author('نُظم - نظام إدارة المركبات')
+    
+    # إضافة صفحة جديدة
+    pdf.add_page()
+    
+    # ===== رأس الصفحة الاحترافي =====
+    pdf.draw_header_background()
+    
+    # إضافة الشعار في رأس الصفحة
+    possible_logo_paths = [
+        os.path.join(PROJECT_DIR, 'static', 'images', 'logo', 'logo_new.png'),
+        os.path.join(PROJECT_DIR, 'static', 'images', 'logo_new.png'),
+        os.path.join(PROJECT_DIR, 'static', 'images', 'logo.png')
+    ]
+    
+    # البحث عن أول ملف شعار موجود
+    logo_path = None
+    for path in possible_logo_paths:
+        if os.path.exists(path):
+            logo_path = path
+            break
+    
+    # إذا وجدنا شعارًا، قم بإضافته
+    if logo_path:
+        try:
+            pdf.image(logo_path, x=15, y=10, w=40, h=40)
+        except:
+            # شعار نصي بديل
+            pdf.set_fill_color(255, 255, 255)
+            pdf.rect(15, 20, 40, 20, 'F')
+            pdf.set_text_color(41, 128, 185)
+            if pdf.fonts_available:
+                pdf.set_font('Tajawal', 'B', 16)
+            else:
+                pdf.set_font('Arial', 'B', 16)
+            pdf.set_xy(15, 25)
+            pdf.cell(40, 10, 'نُظم', 0, 0, 'C')
+    else:
+        # شعار نصي بديل
+        pdf.set_fill_color(255, 255, 255)
+        pdf.rect(15, 15, 40, 30, 'F')
+        pdf.set_text_color(41, 128, 185)
+        if pdf.fonts_available:
+            pdf.set_font('Tajawal', 'B', 20)
+        else:
+            pdf.set_font('Arial', 'B', 20)
+        pdf.set_xy(15, 25)
+        pdf.cell(40, 10, 'نُظم', 0, 0, 'C')
+    
+    # عنوان التقرير
+    pdf.set_text_color(255, 255, 255)
+    if pdf.fonts_available:
+        pdf.set_font('Tajawal', 'B', 24)
+    else:
+        pdf.set_font('Arial', 'B', 24)
+    pdf.set_xy(70, 15)
+    pdf.cell(120, 12, 'تقرير فحص السلامة الخارجي', 0, 1, 'C')
+    
+    # رقم التقرير
+    if pdf.fonts_available:
+        pdf.set_font('Tajawal', 'B', 16)
+    else:
+        pdf.set_font('Arial', 'B', 16)
+    pdf.set_xy(70, 30)
+    pdf.cell(120, 10, f'رقم التقرير: {safety_check.id}', 0, 1, 'C')
+    
+    # تاريخ التقرير
+    if pdf.fonts_available:
+        pdf.set_font('Amiri', '', 12)
+    else:
+        pdf.set_font('Arial', '', 12)
+    pdf.set_xy(70, 42)
+    pdf.cell(120, 8, f'تاريخ الفحص: {safety_check.inspection_date.strftime("%Y-%m-%d %H:%M")}', 0, 1, 'C')
+    
+    # إعادة تعيين اللون للنص العادي
+    pdf.set_text_color(0, 0, 0)
+    pdf.set_y(70)
+    
+    # ===== معلومات السيارة =====
+    pdf.add_section_header('معلومات السيارة', '🚗')
+    
+    # جدول معلومات السيارة
+    vehicle_info = [
+        ['رقم اللوحة:', safety_check.vehicle_plate_number or 'غير محدد'],
+        ['نوع السيارة:', safety_check.vehicle_make_model or 'غير محدد'],
+        ['المفوض الحالي:', safety_check.current_delegate or 'غير محدد']
+    ]
+    
+    # رسم جدول معلومات السيارة
+    current_y = pdf.get_y()
+    pdf.set_fill_color_custom('white')
+    pdf.rect(15, current_y, 180, len(vehicle_info) * 8 + 4, 'F')
+    pdf.add_decorative_border(15, current_y, 180, len(vehicle_info) * 8 + 4)
+    pdf.set_y(current_y + 2)
+    
+    for i, info in enumerate(vehicle_info):
+        if i % 2 == 0:
+            pdf.set_fill_color(248, 249, 250)
+        else:
+            pdf.set_fill_color(255, 255, 255)
+        
+        pdf.set_x(17)
+        if pdf.fonts_available:
+            pdf.set_font('Tajawal', 'B', 11)
+        else:
+            pdf.set_font('Arial', 'B', 11)
+        pdf.set_color('text_dark')
+        pdf.cell(80, 8, info[0], 0, 0, 'R', True)
+        
+        if pdf.fonts_available:
+            pdf.set_font('Amiri', '', 11)
+        else:
+            pdf.set_font('Arial', '', 11)
+        pdf.set_color('primary')
+        pdf.cell(96, 8, info[1], 0, 1, 'R', True)
+    
+    pdf.ln(10)
+    
+    # ===== معلومات السائق =====
+    pdf.add_section_header('معلومات السائق', '👤')
+    
+    # جدول معلومات السائق
+    driver_info = [
+        ['اسم السائق:', safety_check.driver_name or 'غير محدد'],
+        ['رقم الهوية:', safety_check.driver_national_id or 'غير محدد'],
+        ['القسم:', safety_check.driver_department or 'غير محدد'],
+        ['المدينة:', safety_check.driver_city or 'غير محدد']
+    ]
+    
+    # رسم جدول معلومات السائق
+    current_y = pdf.get_y()
+    pdf.set_fill_color_custom('white')
+    pdf.rect(15, current_y, 180, len(driver_info) * 8 + 4, 'F')
+    pdf.add_decorative_border(15, current_y, 180, len(driver_info) * 8 + 4, 'success')
+    pdf.set_y(current_y + 2)
+    
+    for i, info in enumerate(driver_info):
+        if i % 2 == 0:
+            pdf.set_fill_color(248, 249, 250)
+        else:
+            pdf.set_fill_color(255, 255, 255)
+        
+        pdf.set_x(17)
+        if pdf.fonts_available:
+            pdf.set_font('Tajawal', 'B', 11)
+        else:
+            pdf.set_font('Arial', 'B', 11)
+        pdf.set_color('text_dark')
+        pdf.cell(80, 8, info[0], 0, 0, 'R', True)
+        
+        if pdf.fonts_available:
+            pdf.set_font('Amiri', '', 11)
+        else:
+            pdf.set_font('Arial', '', 11)
+        pdf.set_color('success')
+        pdf.cell(96, 8, info[1], 0, 1, 'R', True)
+    
+    pdf.ln(10)
+    
+    # ===== الملاحظات =====
+    if safety_check.notes:
+        pdf.add_section_header('الملاحظات والتوصيات', '📋')
+        
+        current_y = pdf.get_y()
+        pdf.set_fill_color(235, 248, 255)
+        pdf.rect(15, current_y, 180, 30, 'F')
+        pdf.add_decorative_border(15, current_y, 180, 30, 'primary')
+        
+        if pdf.fonts_available:
+            pdf.set_font('Amiri', '', 11)
+        else:
+            pdf.set_font('Arial', '', 11)
+        pdf.set_color('text_dark')
+        pdf.set_xy(20, current_y + 5)
+        pdf.multi_cell(170, 6, safety_check.notes, 0, 'R')
+        pdf.ln(5)
+    
+    # ===== حالة الاعتماد =====
+    if hasattr(safety_check, 'approved_by') and safety_check.approved_by:
+        pdf.add_section_header('حالة الاعتماد', '✅')
+        
+        status_color = 'success' if safety_check.approval_status == 'approved' else 'danger'
+        status_text = 'معتمدة ✓' if safety_check.approval_status == 'approved' else 'مرفوضة ✗'
+        
+        current_y = pdf.get_y()
+        pdf.set_fill_color_custom(status_color)
+        pdf.rect(15, current_y, 180, 12, 'F')
+        
+        pdf.set_text_color(255, 255, 255)
+        if pdf.fonts_available:
+            pdf.set_font('Tajawal', 'B', 14)
+        else:
+            pdf.set_font('Arial', 'B', 14)
+        pdf.set_xy(15, current_y + 2)
+        pdf.cell(180, 8, f'الحالة: {status_text}', 0, 1, 'C')
+        pdf.ln(5)
+    
+    # ===== صور فحص السلامة =====
+    if hasattr(safety_check, 'safety_images') and safety_check.safety_images:
+        pdf.add_section_header(f'صور فحص السلامة ({len(safety_check.safety_images)} صورة)', '📷')
+        
+        # عرض الصور في شبكة 2x2
+        images_per_row = 2
+        image_width = 80
+        image_height = 60
+        x_start = 20
+        y_start = pdf.get_y()
+        
+        for i, image in enumerate(safety_check.safety_images):
+            try:
+                # حساب الموقع
+                col = i % images_per_row
+                row = i // images_per_row
+                x = x_start + (col * 90)
+                y = y_start + (row * 75)
+                
+                # التحقق من المساحة المتبقية في الصفحة
+                if y + 75 > 270:
+                    pdf.add_page()
+                    y_start = pdf.get_y()
+                    y = y_start
+                
+                # المسار الكامل للصورة
+                image_path = image.image_path
+                if not image_path.startswith('/'):
+                    image_path = os.path.join(PROJECT_DIR, image_path)
+                
+                # التحقق من وجود الصورة
+                if os.path.exists(image_path):
+                    # رسم إطار للصورة
+                    pdf.set_draw_color(200, 200, 200)
+                    pdf.rect(x, y, image_width, image_height + 10)
+                    
+                    # إضافة الصورة
+                    pdf.image(image_path, x + 2, y + 2, image_width - 4, image_height - 4)
+                    
+                    # إضافة الوصف
+                    pdf.set_xy(x, y + image_height + 2)
+                    if pdf.fonts_available:
+                        pdf.set_font('Amiri', '', 9)
+                    else:
+                        pdf.set_font('Arial', '', 9)
+                    pdf.set_color('text_light')
+                    description = image.image_description or f'صورة {i+1}'
+                    pdf.cell(image_width, 6, description[:40], 0, 0, 'C')
+            except Exception as e:
+                import logging
+                logging.error(f"خطأ في إضافة الصورة: {str(e)}")
+                continue
+        
+        pdf.ln(80)
+    
+    # ===== تذييل التقرير =====
+    pdf.set_y(-30)
+    pdf.set_draw_color(41, 128, 185)
+    pdf.line(15, pdf.get_y(), 195, pdf.get_y())
+    pdf.ln(5)
+    
+    if pdf.fonts_available:
+        pdf.set_font('Amiri', '', 10)
+    else:
+        pdf.set_font('Arial', '', 10)
+    pdf.set_color('text_light')
+    pdf.cell(0, 6, f'تاريخ إنشاء التقرير: {datetime.now().strftime("%Y-%m-%d | %H:%M")}', 0, 1, 'C')
+    pdf.cell(0, 5, 'نُظم - نظام إدارة المركبات والموظفين الشامل', 0, 1, 'C')
+    pdf.cell(0, 5, 'تم إنشاؤه آلياً من النظام', 0, 0, 'C')
+    
+    # حفظ PDF إلى buffer
+    pdf_buffer = io.BytesIO()
+    try:
+        pdf_content = pdf.output(dest='S').encode('latin1')
+        pdf_buffer.write(pdf_content)
+        pdf_buffer.seek(0)
+        return pdf_buffer
+    except Exception as e:
+        import logging, traceback, tempfile
+        logging.error(f"خطأ عند إنشاء PDF: {str(e)}")
+        logging.error(traceback.format_exc())
+        
+        fd, temp_path = tempfile.mkstemp(suffix='.pdf')
+        os.close(fd)
+        
+        try:
+            pdf.output(temp_path)
+            with open(temp_path, 'rb') as f:
+                pdf_content = f.read()
+            pdf_buffer = io.BytesIO(pdf_content)
+            pdf_buffer.seek(0)
+            return pdf_buffer
+        finally:
+            if os.path.exists(temp_path):
+                os.unlink(temp_path)
