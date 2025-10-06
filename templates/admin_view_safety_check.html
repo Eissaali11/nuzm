@@ -382,12 +382,12 @@
                                             <div class="card">
                                                 {% if image.image_path.startswith('/') %}
                                                     {% set image_url = image.image_path %}
+                                                {% elif image.image_path.startswith('uploads/') %}
+                                                    {% set image_url = '/' + image.image_path %}
                                                 {% elif image.image_path.startswith('static/') %}
                                                     {% set image_url = '/' + image.image_path %}
-                                                {% elif image.image_path.startswith('uploads/') %}
-                                                    {% set image_url = '/static/' + image.image_path %}
                                                 {% else %}
-                                                    {% set image_url = '/static/uploads/safety_checks/' + image.image_path %}
+                                                    {% set image_url = '/uploads/safety_checks/' + image.image_path %}
                                                 {% endif %}
                                                 <img src="{{ image_url }}" 
                                                      class="card-img-top" 
