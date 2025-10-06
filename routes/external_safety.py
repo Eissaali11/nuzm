@@ -1071,20 +1071,6 @@ def admin_view_safety_check(check_id):
     
     current_app.logger.info(f'تم جلب فحص السلامة ID={check_id} مع {len(safety_check.safety_images)} صور')
     
-    # تحديث مسار الصور المحفوظة في قاعدة البيانات إذا لزم الأمر
-    if safety_check.safety_images:
-        for img in safety_check.safety_images:
-            # التأكد من أن المسار يحتوي على static/
-            if img.image_path and not img.image_path.startswith('static/'):
-                img.image_path = 'static/' + img.image_path
-                current_app.logger.info(f'تم تحديث مسار الصورة: {img.image_path}')
-            # تحديث مسارات قديمة قد تكون مكررة
-            elif img.image_path and img.image_path.startswith('static/static/'):
-                img.image_path = img.image_path.replace('static/static/', 'static/')
-                current_app.logger.info(f'تم إصلاح مسار مكرر: {img.image_path}')
-    
-    db.session.commit()
-    
     return render_template('admin_view_safety_check.html', safety_check=safety_check)
 
 @external_safety_bp.route('/admin/external-safety-check/<int:check_id>/reject', methods=['GET', 'POST'])
