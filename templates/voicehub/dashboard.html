@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+{% block title %}لوحة تحكم VoiceHub{% endblock %}
+
+{% block content %}
+<div class="container-fluid rtl">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 2rem; border-radius: 15px; color: white; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);">
+                <h1 class="mb-2">
+                    <i class="fas fa-microphone-alt ms-2"></i>
+                    لوحة تحكم VoiceHub
+                </h1>
+                <p class="mb-0 opacity-90">الذكاء الاصطناعي الصوتي | تحليل المكالمات والتفاعلات</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- إحصائيات سريعة -->
+    <div class="row g-4 mb-4">
+        <div class="col-lg-4 col-md-6">
+            <div class="card border-0 shadow-sm h-100" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <div class="card-body text-white">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <h6 class="opacity-90 mb-2">إجمالي المكالمات</h6>
+                            <h2 class="mb-0">{{ total_calls }}</h2>
+                        </div>
+                        <div style="font-size: 3rem; opacity: 0.5;">
+                            <i class="fas fa-phone"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4 col-md-6">
+            <div class="card border-0 shadow-sm h-100" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
+                <div class="card-body text-white">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <h6 class="opacity-90 mb-2">مكالمات مكتملة</h6>
+                            <h2 class="mb-0">{{ completed_calls }}</h2>
+                        </div>
+                        <div style="font-size: 3rem; opacity: 0.5;">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4 col-md-6">
+            <div class="card border-0 shadow-sm h-100" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                <div class="card-body text-white">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <h6 class="opacity-90 mb-2">مكالمات محللة</h6>
+                            <h2 class="mb-0">{{ calls_with_analysis }}</h2>
+                        </div>
+                        <div style="font-size: 3rem; opacity: 0.5;">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- آخر المكالمات -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-history text-primary ms-2"></i>
+                            آخر المكالمات
+                        </h5>
+                        <a href="{{ url_for('voicehub.calls_list') }}" class="btn btn-sm btn-outline-primary">
+                            عرض الكل <i class="fas fa-arrow-left me-1"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    {% if recent_calls %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>معرف المكالمة</th>
+                                    <th>الحالة</th>
+                                    <th>الموظف</th>
+                                    <th>القسم</th>
+                                    <th>التاريخ</th>
+                                    <th>التحليل</th>
+                                    <th>الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for call in recent_calls %}
+                                <tr>
+                                    <td>
+                                        <span class="badge bg-secondary">{{ call.call_id[:10] }}...</span>
+                                    </td>
+                                    <td>
+                                        {% if call.status == 'completed' %}
+                                        <span class="badge bg-success">مكتمل</span>
+                                        {% elif call.status == 'in-progress' %}
+                                        <span class="badge bg-info">جاري</span>
+                                        {% elif call.status == 'failed' %}
+                                        <span class="badge bg-danger">فشل</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">{{ call.status }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if call.employee %}
+                                        {{ call.employee.name }}
+                                        {% else %}
+                                        <span class="text-muted">غير محدد</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if call.department %}
+                                        {{ call.department.name }}
+                                        {% else %}
+                                        <span class="text-muted">غير محدد</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ call.created_at.strftime('%Y-%m-%d %H:%M') if call.created_at else '-' }}</td>
+                                    <td>
+                                        {% if call.has_analysis %}
+                                        <i class="fas fa-check-circle text-success"></i>
+                                        {% else %}
+                                        <i class="fas fa-times-circle text-muted"></i>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{{ url_for('voicehub.call_detail', call_id=call.id) }}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5 text-muted">
+                        <i class="fas fa-phone-slash fa-3x mb-3 opacity-50"></i>
+                        <p>لا توجد مكالمات مسجلة بعد</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.rtl {
+    direction: rtl;
+    text-align: right;
+}
+</style>
+{% endblock %}

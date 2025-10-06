@@ -1,0 +1,277 @@
+{% extends "base.html" %}
+{% block title %}تفاصيل المكالمة - {{ call.call_id }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid rtl">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 2rem; border-radius: 15px; color: white; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);">
+                <h1 class="mb-2">
+                    <i class="fas fa-phone-alt ms-2"></i>
+                    تفاصيل المكالمة
+                </h1>
+                <p class="mb-0 opacity-90 font-monospace">{{ call.call_id }}</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- معلومات المكالمة الأساسية -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0 py-3">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle text-primary ms-2"></i>
+                        معلومات المكالمة
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless mb-0">
+                        <tr>
+                            <th style="width: 40%;">الحالة:</th>
+                            <td>
+                                {% if call.status == 'completed' %}
+                                <span class="badge bg-success">مكتمل</span>
+                                {% elif call.status == 'in-progress' %}
+                                <span class="badge bg-info">جاري</span>
+                                {% elif call.status == 'failed' %}
+                                <span class="badge bg-danger">فشل</span>
+                                {% else %}
+                                <span class="badge bg-secondary">{{ call.status or 'غير محدد' }}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>رقم الهاتف:</th>
+                            <td>{{ call.phone_number or '-' }}</td>
+                        </tr>
+                        <tr>
+                            <th>الاتجاه:</th>
+                            <td>{{ call.direction or '-' }}</td>
+                        </tr>
+                        <tr>
+                            <th>المدة:</th>
+                            <td>
+                                {% if call.duration %}
+                                {{ (call.duration // 60) }} دقيقة {{ call.duration % 60 }} ثانية
+                                {% else %}
+                                -
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>وقت البداية:</th>
+                            <td>{{ call.call_started_at.strftime('%Y-%m-%d %H:%M:%S') if call.call_started_at else '-' }}</td>
+                        </tr>
+                        <tr>
+                            <th>وقت الانتهاء:</th>
+                            <td>{{ call.call_ended_at.strftime('%Y-%m-%d %H:%M:%S') if call.call_ended_at else '-' }}</td>
+                        </tr>
+                        <tr>
+                            <th>التسجيلات:</th>
+                            <td>
+                                {% if call.has_recordings %}
+                                <span class="badge bg-success"><i class="fas fa-check"></i> متوفر</span>
+                                {% else %}
+                                <span class="badge bg-secondary"><i class="fas fa-times"></i> غير متوفر</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>التحليل:</th>
+                            <td>
+                                {% if call.has_analysis %}
+                                <span class="badge bg-success"><i class="fas fa-check"></i> متوفر</span>
+                                {% else %}
+                                <span class="badge bg-secondary"><i class="fas fa-times"></i> غير متوفر</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- الربط بالموظف والقسم -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0 py-3">
+                    <h5 class="mb-0">
+                        <i class="fas fa-link text-primary ms-2"></i>
+                        الربط والتعيين
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <strong>الموظف:</strong>
+                        {% if call.employee %}
+                        <span class="badge bg-primary">{{ call.employee.name }}</span>
+                        {% else %}
+                        <span class="text-muted">غير مربوط</span>
+                        {% endif %}
+                    </div>
+                    <div class="mb-3">
+                        <strong>القسم:</strong>
+                        {% if call.department %}
+                        <span class="badge bg-info">{{ call.department.name }}</span>
+                        {% else %}
+                        <span class="text-muted">غير محدد</span>
+                        {% endif %}
+                    </div>
+                    <div class="mb-3">
+                        <strong>مُربوط بواسطة:</strong>
+                        {% if call.assigned_by_user %}
+                        <span class="badge bg-secondary">{{ call.assigned_by_user.username }}</span>
+                        {% else %}
+                        <span class="text-muted">-</span>
+                        {% endif %}
+                    </div>
+                    
+                    {% if call.notes %}
+                    <div class="alert alert-info">
+                        <strong>ملاحظات:</strong><br>
+                        {{ call.notes }}
+                    </div>
+                    {% endif %}
+                    
+                    <hr>
+                    <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#assignModal">
+                        <i class="fas fa-edit me-1"></i> تعديل الربط
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- التحليل -->
+        {% if call.analysis %}
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 py-3">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-line text-success ms-2"></i>
+                        تحليل المكالمة
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <div class="p-3 bg-light rounded text-center">
+                                <h6 class="text-muted small">التحليل العاطفي</h6>
+                                {% if call.analysis.sentiment_label == 'positive' %}
+                                <h3 class="text-success mb-0">إيجابي</h3>
+                                {% elif call.analysis.sentiment_label == 'negative' %}
+                                <h3 class="text-danger mb-0">سلبي</h3>
+                                {% else %}
+                                <h3 class="text-secondary mb-0">محايد</h3>
+                                {% endif %}
+                                <small>{{ '%.2f'|format(call.analysis.sentiment_score) if call.analysis.sentiment_score else '-' }}</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="p-3 bg-light rounded text-center">
+                                <h6 class="text-muted small">درجة التعاطف</h6>
+                                <h3 class="text-primary mb-0">{{ '%.1f'|format(call.analysis.empathy_score) if call.analysis.empathy_score else '-' }}</h3>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="p-3 bg-light rounded text-center">
+                                <h6 class="text-muted small">حالة الحل</h6>
+                                {% if call.analysis.resolution_status == 'solved' %}
+                                <h3 class="text-success mb-0">محلول</h3>
+                                {% else %}
+                                <h3 class="text-warning mb-0">غير محلول</h3>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="p-3 bg-light rounded text-center">
+                                <h6 class="text-muted small">مقاطعات المستخدم</h6>
+                                <h3 class="text-info mb-0">{{ call.analysis.user_interruptions_count or 0 }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {% if call.analysis.summary %}
+                    <div class="mt-4">
+                        <h6 class="text-primary">الملخص:</h6>
+                        <div class="alert alert-light">{{ call.analysis.summary }}</div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if call.analysis.transcript %}
+                    <div class="mt-4">
+                        <h6 class="text-primary">النص الكامل:</h6>
+                        <div class="card bg-light border-0">
+                            <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                                {{ call.analysis.transcript|nl2br }}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- أزرار الإجراءات -->
+        <div class="col-12">
+            <div class="d-flex gap-2">
+                <a href="{{ url_for('voicehub.calls_list') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-right me-1"></i> العودة للقائمة
+                </a>
+                <a href="{{ url_for('voicehub.dashboard') }}" class="btn btn-outline-primary">
+                    <i class="fas fa-home me-1"></i> لوحة التحكم
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal لتعديل الربط -->
+<div class="modal fade" id="assignModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('voicehub.assign_call', call_id=call.id) }}">
+                <div class="modal-header">
+                    <h5 class="modal-title">ربط المكالمة</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">الموظف</label>
+                        <select name="employee_id" class="form-select">
+                            <option value="">-- اختر موظف --</option>
+                            <!-- يمكن إضافة قائمة الموظفين هنا -->
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">القسم</label>
+                        <select name="department_id" class="form-select">
+                            <option value="">-- اختر قسم --</option>
+                            <!-- يمكن إضافة قائمة الأقسام هنا -->
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">ملاحظات</label>
+                        <textarea name="notes" class="form-control" rows="3">{{ call.notes or '' }}</textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-primary">حفظ</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+.rtl {
+    direction: rtl;
+    text-align: right;
+}
+.font-monospace {
+    font-family: monospace;
+}
+</style>
+{% endblock %}
