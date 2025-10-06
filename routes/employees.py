@@ -202,6 +202,10 @@ def create():
             residence_details = request.form.get('residence_details', '').strip() or None
             residence_location_url = request.form.get('residence_location_url', '').strip() or None
             
+            # مقاسات الزي الموحد
+            pants_size = request.form.get('pants_size', '').strip() or None
+            shirt_size = request.form.get('shirt_size', '').strip() or None
+            
             selected_dept_ids = {int(dept_id) for dept_id in request.form.getlist('department_ids')}
             
             # Convert empty department_id to None
@@ -233,7 +237,9 @@ def create():
                 sponsorship_status=sponsorship_status,
                 current_sponsor_name=current_sponsor_name,
                 residence_details=residence_details,
-                residence_location_url=residence_location_url
+                residence_location_url=residence_location_url,
+                pants_size=pants_size,
+                shirt_size=shirt_size
             )
             if selected_dept_ids:
                 departments_to_assign = Department.query.filter(Department.id.in_(selected_dept_ids)).all()
@@ -401,6 +407,10 @@ def edit(id):
             # تحديث معلومات السكن
             employee.residence_details = request.form.get('residence_details', '').strip() or None
             employee.residence_location_url = request.form.get('residence_location_url', '').strip() or None
+            
+            # تحديث مقاسات الزي الموحد
+            employee.pants_size = request.form.get('pants_size', '').strip() or None
+            employee.shirt_size = request.form.get('shirt_size', '').strip() or None
             
             # معالجة رفع صورة شهادة الإيبان
             bank_iban_image_file = request.files.get('bank_iban_image')

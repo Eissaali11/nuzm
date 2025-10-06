@@ -347,6 +347,49 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- قسم معلومات الزي الموحد -->
+                    <div class="col-12">
+                        <div class="card border-success">
+                            <div class="card-header bg-success text-white">
+                                <h6 class="mb-0"><i class="fas fa-tshirt me-2"></i>مقاسات الزي الموحد</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label for="pants_size" class="form-label">مقاس البنطلون</label>
+                                            <select class="form-select" id="pants_size" name="pants_size">
+                                                <option value="">- اختر المقاس -</option>
+                                                <option value="XS" {% if employee.pants_size == 'XS' %}selected{% endif %}>XS</option>
+                                                <option value="S" {% if employee.pants_size == 'S' %}selected{% endif %}>S</option>
+                                                <option value="M" {% if employee.pants_size == 'M' %}selected{% endif %}>M</option>
+                                                <option value="L" {% if employee.pants_size == 'L' %}selected{% endif %}>L</option>
+                                                <option value="XL" {% if employee.pants_size == 'XL' %}selected{% endif %}>XL</option>
+                                                <option value="XXL" {% if employee.pants_size == 'XXL' %}selected{% endif %}>XXL</option>
+                                                <option value="XXXL" {% if employee.pants_size == 'XXXL' %}selected{% endif %}>XXXL</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label for="shirt_size" class="form-label">مقاس التيشرت</label>
+                                            <select class="form-select" id="shirt_size" name="shirt_size">
+                                                <option value="">- اختر المقاس -</option>
+                                                <option value="XS" {% if employee.shirt_size == 'XS' %}selected{% endif %}>XS</option>
+                                                <option value="S" {% if employee.shirt_size == 'S' %}selected{% endif %}>S</option>
+                                                <option value="M" {% if employee.shirt_size == 'M' %}selected{% endif %}>M</option>
+                                                <option value="L" {% if employee.shirt_size == 'L' %}selected{% endif %}>L</option>
+                                                <option value="XL" {% if employee.shirt_size == 'XL' %}selected{% endif %}>XL</option>
+                                                <option value="XXL" {% if employee.shirt_size == 'XXL' %}selected{% endif %}>XXL</option>
+                                                <option value="XXXL" {% if employee.shirt_size == 'XXXL' %}selected{% endif %}>XXXL</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     
                     <!-- في ملف employees/edit.html -->
 

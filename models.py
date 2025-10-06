@@ -108,6 +108,10 @@ class Employee(db.Model):
     # معلومات السكن
     residence_details = db.Column(db.String(500), nullable=True)  # تفاصيل السكن (العنوان أو الوصف)
     residence_location_url = db.Column(db.String(500), nullable=True)  # رابط موقع السكن على خرائط Google
+    
+    # مقاسات الزي الموحد
+    pants_size = db.Column(db.String(20), nullable=True)  # مقاس البنطلون
+    shirt_size = db.Column(db.String(20), nullable=True)  # مقاس التيشرت
 
 
     def to_dict(self):
