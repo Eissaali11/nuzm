@@ -5,7 +5,7 @@ from datetime import datetime, date, timedelta
 from io import BytesIO
 from utils.pdf import create_pdf, arabic_text, create_data_table, get_styles
 from app import db
-from models import Department, Employee, Attendance, Salary, Document, SystemAudit, Vehicle, Fee, VehicleChecklist, VehicleDamageMarker, VehicleChecklistImage
+from models import Department, Employee, Attendance, Salary, Document, SystemAudit, Vehicle, Fee, VehicleChecklist, VehicleDamageMarker, VehicleChecklistImage, employee_departments
 from utils.date_converter import parse_date, format_date_hijri, format_date_gregorian, get_month_name_ar
 from utils.excel import generate_employee_excel, generate_salary_excel
 from utils.vehicles_export import export_vehicle_pdf, export_vehicle_excel
@@ -976,7 +976,7 @@ def attendance_pdf():
 
 @reports_bp.route('/attendance/excel')
 def attendance_excel():
-    """تصدير تقرير الحضور إلى Excel"""
+    """تصدير تقرير الحضور إلى Excel بتصميم احترافي"""
     # الحصول على معلمات الفلتر
     from_date_str = request.args.get('from_date', (datetime.now() - timedelta(days=7)).strftime('%Y-%m-%d'))
     to_date_str = request.args.get('to_date', datetime.now().strftime('%Y-%m-%d'))
@@ -991,26 +991,6 @@ def attendance_excel():
         from_date = datetime.now() - timedelta(days=7)
         to_date = datetime.now()
     
-    # استعلام الحضور
-    query = db.session.query(
-            Attendance, Employee
-        ).join(
-            Employee, Attendance.employee_id == Employee.id
-        ).filter(
-            Attendance.date.between(from_date, to_date)
-        )
-    
-    # تطبيق الفلاتر
-    if department_id:
-        query = query.filter(Employee.department_id == department_id)
-    if status:
-        query = query.filter(Attendance.status == status)
-    
-    # الحصول على النتائج النهائية
-    results = query.order_by(Attendance.date.desc()).all()
-    
-    # إنشاء كائن Pandas DataFrame
-    import pandas as pd
     import io
     from openpyxl import Workbook
     from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
@@ -1019,76 +999,125 @@ def attendance_excel():
     output = io.BytesIO()
     workbook = Workbook()
     sheet = workbook.active
-    sheet.title = "تقرير الحضور"
+    sheet.title = "Attendance Report"
     
-    # تنسيق العنوان
-    sheet.merge_cells('A1:H1')
-    title_cell = sheet['A1']
-    title_cell.value = f"تقرير الحضور والغياب: {format_date_gregorian(from_date)} إلى {format_date_gregorian(to_date)}"
-    title_cell.font = Font(size=16, bold=True, name='Calibri')
-    title_cell.alignment = Alignment(horizontal='center')
+    # توليد قائمة بكل الأيام في النطاق الزمني
+    date_list = []
+    current_date = from_date
+    while current_date <= to_date:
+        date_list.append(current_date)
+        current_date += timedelta(days=1)
     
-    # إضافة عناوين الأعمدة
-    headers = ["التاريخ", "الاسم", "الرقم الوظيفي", "وقت الحضور", "وقت الانصراف", "الحالة", "القسم", "ملاحظات"]
+    # الحصول على قائمة الموظفين
+    employees_query = Employee.query.filter(Employee.status == 'active')
+    if department_id:
+        employees_query = employees_query.join(
+            employee_departments
+        ).filter(employee_departments.c.department_id == department_id)
+    
+    employees = employees_query.order_by(Employee.name).all()
+    
+    # الخلفية التركوازية للعناوين
+    turquoise_fill = PatternFill(start_color="20B2AA", end_color="20B2AA", fill_type="solid")
+    white_font = Font(bold=True, color="FFFFFF", name='Calibri', size=11)
+    center_align = Alignment(horizontal='center', vertical='center')
+    thin_border = Border(
+        left=Side(style='thin', color='000000'),
+        right=Side(style='thin', color='000000'),
+        top=Side(style='thin', color='000000'),
+        bottom=Side(style='thin', color='000000')
+    )
+    
+    # العناوين الثابتة
+    headers = ["Name", "ID Number", "Emp.N", "Job Title", "No.Mobile", "car", "Location", "Project", "Total"]
+    
+    # إضافة أيام الشهر
+    for date in date_list:
+        headers.append(str(date.day))
+    
+    # كتابة العناوين
     for col, header in enumerate(headers, start=1):
-        cell = sheet.cell(row=2, column=col)
+        cell = sheet.cell(row=1, column=col)
         cell.value = header
-        cell.font = Font(bold=True, name='Calibri')
-        cell.alignment = Alignment(horizontal='center')
-        cell.fill = PatternFill(start_color="DDDDDD", end_color="DDDDDD", fill_type="solid")
-        
-        # تنسيق الحدود
-        thin_border = Border(
-            left=Side(style='thin'), 
-            right=Side(style='thin'), 
-            top=Side(style='thin'), 
-            bottom=Side(style='thin')
-        )
+        cell.font = white_font
+        cell.alignment = center_align
+        cell.fill = turquoise_fill
         cell.border = thin_border
     
-    # إضافة البيانات
-    for idx, (attendance, employee) in enumerate(results, start=3):
-        sheet.cell(row=idx, column=1).value = format_date_gregorian(attendance.date)
-        sheet.cell(row=idx, column=2).value = employee.name
-        sheet.cell(row=idx, column=3).value = employee.employee_id
-        sheet.cell(row=idx, column=4).value = str(attendance.check_in) if attendance.check_in else "---"
-        sheet.cell(row=idx, column=5).value = str(attendance.check_out) if attendance.check_out else "---"
+    # إضافة بيانات الموظفين
+    for row_idx, employee in enumerate(employees, start=2):
+        # معلومات الموظف
+        sheet.cell(row=row_idx, column=1).value = employee.name  # Name
+        sheet.cell(row=row_idx, column=2).value = employee.national_id or ""  # ID Number
+        sheet.cell(row=row_idx, column=3).value = employee.employee_id or ""  # Emp.N
+        sheet.cell(row=row_idx, column=4).value = employee.job_title or ""  # Job Title
+        sheet.cell(row=row_idx, column=5).value = employee.phone or ""  # No.Mobile
+        sheet.cell(row=row_idx, column=6).value = ""  # car (فارغ حالياً)
+        sheet.cell(row=row_idx, column=7).value = employee.city or ""  # Location
+        sheet.cell(row=row_idx, column=8).value = ""  # Project (فارغ حالياً)
         
-        # ترجمة حالة الحضور
-        status_ar = {
-            'present': 'حاضر',
-            'absent': 'غائب',
-            'leave': 'إجازة',
-            'sick': 'مرضي'
-        }
-        sheet.cell(row=idx, column=6).value = status_ar.get(attendance.status, attendance.status)
+        # حساب إجمالي الحضور
+        total_present = 0
         
-        # القسم
-        department_name = employee.department.name if employee.department else "---"
-        sheet.cell(row=idx, column=7).value = department_name
+        # جلب سجلات الحضور لهذا الموظف في النطاق الزمني
+        attendance_records = Attendance.query.filter(
+            Attendance.employee_id == employee.id,
+            Attendance.date.between(from_date, to_date)
+        ).all()
         
-        # ملاحظات
-        sheet.cell(row=idx, column=8).value = attendance.notes if attendance.notes else ""
+        # إنشاء dictionary لربط التاريخ بالحالة
+        attendance_dict = {record.date: record.status for record in attendance_records}
         
-        # تطبيق التنسيق على كل خلية
-        for col in range(1, 9):
-            cell = sheet.cell(row=idx, column=col)
-            cell.alignment = Alignment(horizontal='center')
+        # ملء أعمدة الأيام
+        for col_idx, date in enumerate(date_list, start=10):
+            cell = sheet.cell(row=row_idx, column=col_idx)
             
-            # تنسيق الحدود
-            cell.border = Border(
-                left=Side(style='thin'), 
-                right=Side(style='thin'), 
-                top=Side(style='thin'), 
-                bottom=Side(style='thin')
-            )
+            if date in attendance_dict:
+                status_map = {
+                    'present': 'p',
+                    'absent': 'a',
+                    'leave': 'l',
+                    'sick': 's'
+                }
+                cell.value = status_map.get(attendance_dict[date], '')
+                
+                # حساب الحضور
+                if attendance_dict[date] == 'present':
+                    total_present += 1
+            else:
+                cell.value = ""
+            
+            cell.alignment = center_align
+            cell.border = thin_border
+        
+        # كتابة الإجمالي
+        sheet.cell(row=row_idx, column=9).value = total_present
+        
+        # تطبيق التنسيق على خلايا معلومات الموظف
+        for col in range(1, 10):
+            cell = sheet.cell(row=row_idx, column=col)
+            cell.alignment = center_align
+            cell.border = thin_border
+            
+            # تلوين الصفوف بالتناوب
+            if row_idx % 2 == 0:
+                cell.fill = PatternFill(start_color="F0F0F0", end_color="F0F0F0", fill_type="solid")
     
-    # ضبط عرض الأعمدة باستخدام الدالة المساعدة
-    from utils.excel_utils import adjust_column_width
-    adjust_column_width(sheet)
+    # ضبط عرض الأعمدة
+    sheet.column_dimensions['A'].width = 25  # Name
+    sheet.column_dimensions['B'].width = 15  # ID Number
+    sheet.column_dimensions['C'].width = 10  # Emp.N
+    sheet.column_dimensions['D'].width = 15  # Job Title
+    sheet.column_dimensions['E'].width = 15  # No.Mobile
+    sheet.column_dimensions['F'].width = 10  # car
+    sheet.column_dimensions['G'].width = 12  # Location
+    sheet.column_dimensions['H'].width = 12  # Project
+    sheet.column_dimensions['I'].width = 8   # Total
     
-    # ضبط اتجاه الورقة للعربية (من اليمين لليسار)
-    sheet.sheet_view.rightToLeft = True
+    # ضبط عرض أعمدة الأيام
+    for col_idx in range(10, 10 + len(date_list)):
+        col_letter = sheet.cell(row=1, column=col_idx).column_letter
+        sheet.column_dimensions[col_letter].width = 4
     
     # حفظ الملف
     workbook.save(output)
