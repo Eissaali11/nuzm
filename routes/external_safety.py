@@ -457,8 +457,9 @@ def handle_safety_check_submission(vehicle):
         image_notes = request.form.get('image_notes', '')
         
         if camera_images:
-            # إنشاء مجلد الصور إذا لم يكن موجوداً
-            upload_dir = os.path.join(current_app.static_folder or 'static', 'uploads', 'safety_checks')
+            # إنشاء مجلد الصور في جذر المشروع (مجلد دائم)
+            project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            upload_dir = os.path.join(project_root, 'uploads', 'safety_checks')
             os.makedirs(upload_dir, exist_ok=True)
             
             import base64
