@@ -640,34 +640,51 @@
                 
                 const template = document.getElementById(isPdf ? 'pdf-preview-template' : 'image-preview-template');
                 const clone = template.content.cloneNode(true);
+                
                 if (isPdf) {
                     $(clone).find('.pdf-filename').text(file.name);
+                    appendPreviewToDOM(clone, file);
                 } else if (isImage) {
-                    // استخدام FileReader كبديل آمن لـ HEIC
+                    // استخدام FileReader لقراءة الصورة بشكل آمن
                     const reader = new FileReader();
                     reader.onload = function(e) {
-                        $(clone).find('img').attr('src', e.target.result);
+                        const imgElement = $(clone).find('img');
+                        imgElement.attr('src', e.target.result);
+                        imgElement.on('error', function() {
+                            // في حالة فشل عرض الصورة، نضع أيقونة افتراضية
+                            console.warn('فشل عرض الصورة:', file.name);
+                            $(this).attr('src', 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100"%3E%3Crect fill="%23ddd" width="100" height="100"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" fill="%23999"%3E' + encodeURIComponent(file.name.substring(0, 10)) + '%3C/text%3E%3C/svg%3E');
+                        });
+                        appendPreviewToDOM(clone, file);
                     };
                     reader.onerror = function() {
-                        // في حالة فشل القراءة، نستخدم URL.createObjectURL
+                        console.error('خطأ في قراءة الملف:', file.name);
+                        // في حالة الفشل، نحاول URL.createObjectURL
                         try {
                             $(clone).find('img').attr('src', URL.createObjectURL(file));
+                            appendPreviewToDOM(clone, file);
                         } catch(err) {
-                            console.error('خطأ في تحميل الصورة:', err);
+                            console.error('فشل تحميل الصورة بالكامل:', err);
                         }
                     };
                     reader.readAsDataURL(file);
+                } else {
+                    // نوع ملف غير مدعوم
+                    appendPreviewToDOM(clone, file);
                 }
-                $(clone).find('.remove-file').on('click', () => {
+            }
+            
+            function appendPreviewToDOM(clone, file) {
+                $(clone).find('.remove-file').on('click', function() {
                     const newDt = new DataTransfer();
                     Array.from(stagedFiles.files).forEach(f => { if (f !== file) newDt.items.add(f); });
                     stagedFiles = newDt;
                     try {
-                        filesInput.files = stagedFiles.files; // تحديث حقل الإدخال الأصلي بالملفات المتبقية
+                        filesInput.files = stagedFiles.files;
                     } catch (e) {
                         console.log('تم حذف الملف من المعاينة');
                     }
-                    $(clone).find('.preview-item').first().remove(); // إزالة العنصر من الواجهة
+                    $(this).closest('.preview-item').remove();
                 });
                 $(filePreviewsContainer).append(clone);
             }
