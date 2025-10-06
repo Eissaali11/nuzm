@@ -307,7 +307,7 @@
                             <h6>رفع مرفقات (صور, PDF)</h6>
                             <div class="d-grid mb-2">
                                 <button class="btn btn-outline-secondary" type="button" id="trigger-file-select"><i class="fas fa-paperclip me-1"></i> اختر ملفات</button>
-                                <input type="file" id="files" name="files" multiple class="d-none" accept="image/*,application/pdf">
+                                <input type="file" id="files" name="files" multiple class="d-none" accept="image/*,.heic,.heif,application/pdf">
                             </div>
                             <div id="file-previews" class="row g-2"></div>
                             <hr>
@@ -628,13 +628,35 @@
             function addFilePreview(file) {
                 for(let i=0; i<stagedFiles.files.length; i++) if(stagedFiles.files[i].name === file.name && stagedFiles.files[i].size === file.size) return; 
                 stagedFiles.items.add(file);
-                const isPdf = file.type === 'application/pdf';
+                
+                // التحقق من نوع الملف بناءً على الامتداد والـ MIME type
+                const fileName = file.name.toLowerCase();
+                const isPdf = file.type === 'application/pdf' || fileName.endsWith('.pdf');
+                const isImage = file.type.startsWith('image/') || 
+                                fileName.endsWith('.jpg') || fileName.endsWith('.jpeg') || 
+                                fileName.endsWith('.png') || fileName.endsWith('.gif') || 
+                                fileName.endsWith('.heic') || fileName.endsWith('.heif') || 
+                                fileName.endsWith('.webp');
+                
                 const template = document.getElementById(isPdf ? 'pdf-preview-template' : 'image-preview-template');
                 const clone = template.content.cloneNode(true);
                 if (isPdf) {
                     $(clone).find('.pdf-filename').text(file.name);
-                } else {
-                    $(clone).find('img').attr('src', URL.createObjectURL(file));
+                } else if (isImage) {
+                    // استخدام FileReader كبديل آمن لـ HEIC
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        $(clone).find('img').attr('src', e.target.result);
+                    };
+                    reader.onerror = function() {
+                        // في حالة فشل القراءة، نستخدم URL.createObjectURL
+                        try {
+                            $(clone).find('img').attr('src', URL.createObjectURL(file));
+                        } catch(err) {
+                            console.error('خطأ في تحميل الصورة:', err);
+                        }
+                    };
+                    reader.readAsDataURL(file);
                 }
                 $(clone).find('.remove-file').on('click', () => {
                     const newDt = new DataTransfer();
