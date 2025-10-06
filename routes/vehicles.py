@@ -4244,97 +4244,29 @@ def export_vehicles_excel():
         if make_filter:
                 query = query.filter(Vehicle.make == make_filter)
 
-        # الحصول على قائمة السيارات
-        vehicles = query.order_by(Vehicle.status, Vehicle.plate_number).all()
+	# الحصول على قائمة السيارات
+	vehicles = query.order_by(Vehicle.status, Vehicle.plate_number).all()
 
-        # تحويل حالة السيارة إلى نص مقروء بالعربية
-        status_map = {
-                'available': 'متاحة',
-                'rented': 'مؤجرة',
-                'in_project': 'في المشروع',
-                'in_workshop': 'في الورشة',
-                'accident': 'حادث'
-        }
+	# إنشاء ملف Excel احترافي في الذاكرة
+	from utils.excel import generate_vehicles_excel
+	output = io.BytesIO()
+	generate_vehicles_excel(vehicles, output)
 
-        # إنشاء قائمة بالبيانات
-        vehicle_data = []
-        for vehicle in vehicles:
-                # حساب تكاليف الصيانة الإجمالية
-                total_maintenance_cost = db.session.query(
-                        func.sum(VehicleWorkshop.cost)
-                ).filter(
-                        VehicleWorkshop.vehicle_id == vehicle.id
-                ).scalar() or 0
+	# التحضير لإرسال الملف
+	output.seek(0)
 
-                # الحصول على معلومات الإيجار النشط
-                active_rental = VehicleRental.query.filter_by(
-                        vehicle_id=vehicle.id, is_active=True
-                ).first()
+	# اسم الملف بالتاريخ الحالي
+	today = datetime.datetime.now().strftime('%Y-%m-%d')
+	filename = f"تقرير_المركبات_{today}.xlsx"
 
-                # الحصول على معلومات المشروع النشط
-                active_project = VehicleProject.query.filter_by(
-                        vehicle_id=vehicle.id, is_active=True
-                ).first()
+	# إرسال الملف كمرفق للتنزيل
+	return send_file(
+		output,
+		download_name=filename,
+		as_attachment=True,
+		mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+	)
 
-                vehicle_data.append({
-                        'رقم اللوحة': vehicle.plate_number,
-                        'الشركة المصنعة': vehicle.make,
-                        'الموديل': vehicle.model,
-                        'السنة': vehicle.year,
-                        'اللون': vehicle.color,
-                        'نوع السيارة': vehicle.type_of_car or 'سيارة عادية',
-                        'الحالة': status_map.get(vehicle.status, vehicle.status),
-                        'تكاليف الصيانة الإجمالية': total_maintenance_cost,
-                        'المؤجر': active_rental.lessor_name if active_rental else '',
-                        'تكلفة الإيجار الشهرية': active_rental.monthly_cost if active_rental else 0,
-                        'المشروع': active_project.project_name if active_project else '',
-                        'الموقع': active_project.location if active_project else '',
-                        'ملاحظات': vehicle.notes or ''
-                })
-
-        # إنشاء DataFrame من البيانات
-        df = pd.DataFrame(vehicle_data)
-
-        # إنشاء ملف Excel في الذاكرة
-        output = io.BytesIO()
-
-        # استخدام ExcelWriter مع خيارات لتحسين المظهر
-        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-                df.to_excel(writer, sheet_name='بيانات السيارات', index=False)
-
-                # الحصول على ورقة العمل وworkbook للتنسيق
-                workbook = writer.book
-                worksheet = writer.sheets['بيانات السيارات']
-
-                # تنسيق الخلايا
-                header_format = workbook.add_format({
-                        'bold': True,
-                        'text_wrap': True,
-                        'valign': 'top',
-                        'fg_color': '#D7E4BC',
-                        'border': 1
-                })
-
-                # تنسيق عناوين الأعمدة
-                for col_num, value in enumerate(df.columns.values):
-                        worksheet.write(0, col_num, value, header_format)
-                        # ضبط عرض العمود
-                        worksheet.set_column(col_num, col_num, 15)
-
-        # التحضير لإرسال الملف
-        output.seek(0)
-
-        # اسم الملف بالتاريخ الحالي
-        today = datetime.datetime.now().strftime('%Y-%m-%d')
-        filename = f"تقرير_السيارات_{today}.xlsx"
-
-        # إرسال الملف كمرفق للتنزيل
-        return send_file(
-                output,
-                download_name=filename,
-                as_attachment=True,
-                mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-        )
 
 
 # مسار عرض تفاصيل سجل الورشة
