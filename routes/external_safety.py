@@ -1375,14 +1375,13 @@ def export_safety_check_pdf(check_id):
             title=f"تقرير فحص السلامة رقم {safety_check.id}"
         )
         
-        # تسجيل خط عربي بترتيب أولوية
+        # تسجيل خط عربي - استخدام Amiri للحصول على أفضل عرض
         arabic_font = 'Helvetica'  # قيمة افتراضية
         font_paths = [
-            ('static/fonts/beIN-Normal.ttf', 'خط beIN-Normal.ttf'),
-            ('static/fonts/beIN Normal .ttf', 'خط beIN Normal .ttf'),
-            ('utils/beIN-Normal.ttf', 'خط beIN-Normal.ttf من utils'),
-            ('Cairo.ttf', 'خط Cairo.ttf'),
-            ('static/fonts/NotoSansArabic-Regular.ttf', 'خط NotoSansArabic'),
+            ('static/fonts/Amiri-Regular.ttf', 'Amiri Regular'),
+            ('static/fonts/beIN-Normal.ttf', 'beIN Normal'),
+            ('static/fonts/Cairo-Regular.ttf', 'Cairo Regular'),
+            ('static/fonts/NotoSansArabic-Regular.ttf', 'Noto Sans Arabic'),
         ]
         
         for font_path, font_name in font_paths:
@@ -1390,78 +1389,103 @@ def export_safety_check_pdf(check_id):
                 if os.path.exists(font_path):
                     pdfmetrics.registerFont(TTFont('Arabic', font_path))
                     arabic_font = 'Arabic'
-                    current_app.logger.info(f"تم تحميل {font_name} بنجاح من {font_path}")
+                    current_app.logger.info(f"✓ تم تحميل خط {font_name} من {font_path}")
                     break
-                else:
-                    current_app.logger.warning(f"الخط غير موجود: {font_path}")
             except Exception as e:
-                current_app.logger.error(f"فشل في تحميل {font_name}: {str(e)}")
+                current_app.logger.warning(f"✗ فشل تحميل {font_name}: {str(e)}")
                 continue
         
         if arabic_font == 'Helvetica':
-            current_app.logger.warning("لم يتم العثور على أي خط عربي، سيتم استخدام Helvetica")
+            current_app.logger.warning("⚠ لم يتم العثور على خط عربي، سيتم استخدام Helvetica")
         
-        current_app.logger.info(f"الخط المستخدم في PDF: {arabic_font}")
+        current_app.logger.info(f"📄 الخط المستخدم: {arabic_font}")
         
-        # تعريف الأنماط
+        # تعريف الأنماط الاحترافية
         styles = getSampleStyleSheet()
         
-        # نمط العنوان الرئيسي
+        # نمط العنوان الرئيسي - تصميم حديث
         title_style = ParagraphStyle(
             'CustomTitle',
             fontName=arabic_font,
-            fontSize=20,
+            fontSize=24,
+            leading=30,
             spaceAfter=30,
             alignment=TA_CENTER,
-            textColor=colors.HexColor('#2C3E50'),
-            borderWidth=2,
-            borderColor=colors.HexColor('#3498DB'),
-            borderPadding=10,
-            backColor=colors.HexColor('#ECF0F1')
+            textColor=colors.white,
+            borderWidth=0,
+            borderPadding=15,
+            backColor=colors.HexColor('#1e3a5c')  # أزرق داكن احترافي
         )
         
-        # نمط العناوين الفرعية
+        # نمط العناوين الفرعية - تدرج لوني
         subtitle_style = ParagraphStyle(
             'CustomSubtitle',
             fontName=arabic_font,
-            fontSize=14,
-            spaceAfter=15,
+            fontSize=16,
+            leading=20,
+            spaceAfter=12,
             alignment=TA_RIGHT,
-            textColor=colors.HexColor('#2C3E50'),
-            borderWidth=1,
-            borderColor=colors.HexColor('#BDC3C7'),
-            borderPadding=5,
-            backColor=colors.HexColor('#F8F9FA')
+            textColor=colors.white,
+            borderWidth=0,
+            borderPadding=8,
+            leftIndent=10,
+            backColor=colors.HexColor('#2c5282')  # أزرق متوسط
         )
         
         # نمط النص العادي
         normal_style = ParagraphStyle(
             'CustomNormal',
             fontName=arabic_font,
-            fontSize=11,
+            fontSize=12,
+            leading=16,
             spaceAfter=8,
             alignment=TA_RIGHT,
-            textColor=colors.HexColor('#34495E')
+            textColor=colors.HexColor('#2d3748'),
+            rightIndent=5
         )
         
         # نمط وصف الصور
         image_desc_style = ParagraphStyle(
             'ImageDesc',
             fontName=arabic_font,
-            fontSize=10,
+            fontSize=11,
+            leading=14,
             spaceAfter=5,
             alignment=TA_CENTER,
-            textColor=colors.HexColor('#7F8C8D'),
-            backColor=colors.HexColor('#F8F9FA')
+            textColor=colors.HexColor('#4a5568'),
+            backColor=colors.HexColor('#edf2f7'),
+            borderPadding=5
         )
         
         # محتوى الـ PDF
         story = []
         
-        # العنوان الرئيسي مع شعار
-        title_text = process_arabic_text(f"تقرير فحص السلامة الخارجي رقم {safety_check.id}")
+        # رأس الصفحة - تصميم احترافي
+        header_data = [
+            [
+                process_arabic_text("نُظم - نظام إدارة المركبات"),
+                process_arabic_text(f"رقم التقرير: {safety_check.id}")
+            ]
+        ]
+        header_table = Table(header_data, colWidths=[10*cm, 7*cm])
+        header_table.setStyle(TableStyle([
+            ('FONTNAME', (0, 0), (-1, -1), arabic_font),
+            ('FONTSIZE', (0, 0), (0, 0), 11),
+            ('FONTSIZE', (1, 0), (1, 0), 10),
+            ('TEXTCOLOR', (0, 0), (-1, -1), colors.HexColor('#718096')),
+            ('ALIGN', (0, 0), (0, 0), 'RIGHT'),
+            ('ALIGN', (1, 0), (1, 0), 'LEFT'),
+            ('TOPPADDING', (0, 0), (-1, -1), 6),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+            ('LINEBELOW', (0, 0), (-1, -1), 2, colors.HexColor('#1e3a5c'))
+        ]))
+        story.append(header_table)
+        story.append(Spacer(1, 15))
+        
+        # العنوان الرئيسي مع تصميم مميز
+        title_text = process_arabic_text(f"تقرير فحص السلامة الخارجي")
         story.append(Paragraph(title_text, title_style))
-        story.append(Spacer(1, 20))
+        story.append(Spacer(1, 25))
         
         # معلومات السيارة
         vehicle_section_title = process_arabic_text("معلومات السيارة")
@@ -1475,25 +1499,28 @@ def export_safety_check_pdf(check_id):
             [process_arabic_text('تاريخ الفحص'), safety_check.inspection_date.strftime('%Y-%m-%d %H:%M')]
         ]
         
-        vehicle_table = Table(vehicle_data, colWidths=[6*cm, 8*cm])
+        vehicle_table = Table(vehicle_data, colWidths=[7*cm, 10*cm])
         vehicle_table.setStyle(TableStyle([
-            # نمط الرأس
-            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#3498DB')),
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            # رأس الجدول - تصميم احترافي
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1e3a5c')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
             ('FONTNAME', (0, 0), (-1, -1), arabic_font),
-            ('FONTSIZE', (0, 0), (-1, 0), 12),
-            ('FONTSIZE', (0, 1), (-1, -1), 10),
-            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-            # نمط الصفوف
-            ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor('#ECF0F1')),
-            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#F8F9FA')]),
-            ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#BDC3C7')),
+            ('FONTSIZE', (0, 0), (-1, 0), 13),
+            ('FONTSIZE', (0, 1), (-1, -1), 11),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 14),
+            ('TOPPADDING', (0, 0), (-1, 0), 14),
+            # الصفوف - تدرج ألوان خفيف
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f7fafc')]),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#cbd5e0')),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('LEFTPADDING', (0, 0), (-1, -1), 10),
-            ('RIGHTPADDING', (0, 0), (-1, -1), 10),
-            ('TOPPADDING', (0, 0), (-1, -1), 8),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 8)
+            ('LEFTPADDING', (0, 0), (-1, -1), 12),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 12),
+            ('TOPPADDING', (0, 1), (-1, -1), 10),
+            ('BOTTOMPADDING', (0, 1), (-1, -1), 10),
+            # تنسيق العمود الأول (العناوين)
+            ('BACKGROUND', (0, 1), (0, -1), colors.HexColor('#edf2f7')),
+            ('TEXTCOLOR', (0, 1), (0, -1), colors.HexColor('#2d3748')),
         ]))
         
         story.append(vehicle_table)
@@ -1511,37 +1538,55 @@ def export_safety_check_pdf(check_id):
             [process_arabic_text('المدينة'), process_arabic_text(safety_check.driver_city)]
         ]
         
-        driver_table = Table(driver_data, colWidths=[6*cm, 8*cm])
+        driver_table = Table(driver_data, colWidths=[7*cm, 10*cm])
         driver_table.setStyle(TableStyle([
-            # نمط الرأس
-            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#27AE60')),
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            # رأس الجدول - تصميم احترافي
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#2c5282')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
             ('FONTNAME', (0, 0), (-1, -1), arabic_font),
-            ('FONTSIZE', (0, 0), (-1, 0), 12),
-            ('FONTSIZE', (0, 1), (-1, -1), 10),
-            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-            # نمط الصفوف
-            ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor('#ECF0F1')),
-            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#F8F9FA')]),
-            ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#BDC3C7')),
+            ('FONTSIZE', (0, 0), (-1, 0), 13),
+            ('FONTSIZE', (0, 1), (-1, -1), 11),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 14),
+            ('TOPPADDING', (0, 0), (-1, 0), 14),
+            # الصفوف - تدرج ألوان خفيف
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f7fafc')]),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#cbd5e0')),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('LEFTPADDING', (0, 0), (-1, -1), 10),
-            ('RIGHTPADDING', (0, 0), (-1, -1), 10),
-            ('TOPPADDING', (0, 0), (-1, -1), 8),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 8)
+            ('LEFTPADDING', (0, 0), (-1, -1), 12),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 12),
+            ('TOPPADDING', (0, 1), (-1, -1), 10),
+            ('BOTTOMPADDING', (0, 1), (-1, -1), 10),
+            # تنسيق العمود الأول (العناوين)
+            ('BACKGROUND', (0, 1), (0, -1), colors.HexColor('#edf2f7')),
+            ('TEXTCOLOR', (0, 1), (0, -1), colors.HexColor('#2d3748')),
         ]))
         
         story.append(driver_table)
         story.append(Spacer(1, 20))
         
-        # الملاحظات
+        # الملاحظات - تصميم مميز
         if safety_check.notes:
-            notes_title = process_arabic_text("الملاحظات والتوصيات")
+            notes_title = process_arabic_text("📋 الملاحظات والتوصيات")
             story.append(Paragraph(notes_title, subtitle_style))
+            
+            # صندوق الملاحظات
+            notes_box_style = ParagraphStyle(
+                'NotesBox',
+                fontName=arabic_font,
+                fontSize=11,
+                leading=16,
+                alignment=TA_RIGHT,
+                textColor=colors.HexColor('#2d3748'),
+                borderWidth=1.5,
+                borderColor=colors.HexColor('#4299e1'),
+                borderPadding=12,
+                backColor=colors.HexColor('#ebf8ff'),
+                leftIndent=10,
+                rightIndent=10
+            )
             notes_text = process_arabic_text(safety_check.notes)
-            notes_para = Paragraph(notes_text, normal_style)
-            story.append(notes_para)
+            story.append(Paragraph(notes_text, notes_box_style))
             story.append(Spacer(1, 20))
         
         # معلومات الحالة
@@ -1626,11 +1671,14 @@ def export_safety_check_pdf(check_id):
                     img_table.setStyle(TableStyle([
                         ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
                         ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-                        ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#BDC3C7')),
+                        ('BOX', (0, 0), (-1, -1), 1.5, colors.HexColor('#cbd5e0')),
                         ('BACKGROUND', (0, 0), (-1, 0), colors.white),
-                        ('BACKGROUND', (0, 1), (-1, 1), colors.HexColor('#F8F9FA')),
-                        ('TOPPADDING', (0, 0), (-1, -1), 5),
-                        ('BOTTOMPADDING', (0, 0), (-1, -1), 5)
+                        ('BACKGROUND', (0, 1), (-1, 1), colors.HexColor('#edf2f7')),
+                        ('TOPPADDING', (0, 0), (-1, 0), 8),
+                        ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
+                        ('TOPPADDING', (0, 1), (-1, 1), 6),
+                        ('BOTTOMPADDING', (0, 1), (-1, 1), 6),
+                        ('LINEBELOW', (0, 0), (-1, 0), 1, colors.HexColor('#cbd5e0'))
                     ]))
                     
                     current_row.append(img_table)
@@ -1660,24 +1708,36 @@ def export_safety_check_pdf(check_id):
                     current_app.logger.error(f"خطأ في إضافة الصورة للـ PDF: {str(e)}")
                     continue
         
-        # تذييل التقرير
+        # تذييل التقرير - تصميم احترافي
         story.append(Spacer(1, 30))
+        
+        # خط فاصل
+        separator_data = [[''], ]
+        separator_table = Table(separator_data, colWidths=[17*cm])
+        separator_table.setStyle(TableStyle([
+            ('LINEABOVE', (0, 0), (-1, -1), 2, colors.HexColor('#1e3a5c')),
+            ('TOPPADDING', (0, 0), (-1, -1), 2)
+        ]))
+        story.append(separator_table)
+        story.append(Spacer(1, 10))
+        
+        # معلومات التذييل
         footer_style = ParagraphStyle(
             'FooterStyle',
             fontName=arabic_font,
             fontSize=10,
             alignment=TA_CENTER,
-            textColor=colors.HexColor('#7F8C8D'),
-            borderWidth=1,
-            borderColor=colors.HexColor('#BDC3C7'),
-            borderPadding=5,
-            backColor=colors.HexColor('#F8F9FA')
+            textColor=colors.HexColor('#718096'),
+            spaceAfter=4
         )
         
-        footer_text1 = process_arabic_text(f"تم إنشاء هذا التقرير في: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
-        footer_text2 = process_arabic_text("نُظم - نظام إدارة المركبات والموظفين")
+        footer_text1 = process_arabic_text(f"تاريخ إنشاء التقرير: {datetime.now().strftime('%Y-%m-%d | %H:%M')}")
+        footer_text2 = process_arabic_text("نُظم - نظام إدارة المركبات والموظفين الشامل")
+        footer_text3 = process_arabic_text("تم إنشاؤه آلياً من النظام")
+        
         story.append(Paragraph(footer_text1, footer_style))
         story.append(Paragraph(footer_text2, footer_style))
+        story.append(Paragraph(footer_text3, footer_style))
         
         # بناء الـ PDF
         doc.build(story)
