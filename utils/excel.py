@@ -643,8 +643,8 @@ def generate_vehicles_excel(vehicles, output=None):
         # العناوين الأساسية
         headers = [
             "رقم اللوحة", "الشركة المصنعة", "الموديل", "اللون",
-            "سنة الصنع", "الحالة", "اسم السائق", "رقم الهيكل",
-            "تاريخ انتهاء التأمين", "تاريخ انتهاء الفحص"
+            "سنة الصنع", "الحالة", "اسم السائق", "نوع السيارة",
+            "تاريخ انتهاء الفحص", "تاريخ انتهاء الاستمارة"
         ]
         
         # كتابة العناوين
@@ -668,9 +668,9 @@ def generate_vehicles_excel(vehicles, output=None):
                 str(vehicle.year) if vehicle.year else "",
                 status_ar,
                 vehicle.driver_name or "",
-                vehicle.vin or "",
-                vehicle.insurance_expiry.strftime('%Y-%m-%d') if hasattr(vehicle, 'insurance_expiry') and vehicle.insurance_expiry else "",
-                vehicle.inspection_expiry.strftime('%Y-%m-%d') if hasattr(vehicle, 'inspection_expiry') and vehicle.inspection_expiry else ""
+                vehicle.type_of_car or "",
+                vehicle.inspection_expiry_date.strftime('%Y-%m-%d') if vehicle.inspection_expiry_date else "",
+                vehicle.registration_expiry_date.strftime('%Y-%m-%d') if vehicle.registration_expiry_date else ""
             ]
             
             for col_idx, value in enumerate(data_row, start=1):
@@ -706,8 +706,8 @@ def generate_vehicles_excel(vehicles, output=None):
         # جميع البيانات
         all_headers = [
             'رقم اللوحة', 'الشركة المصنعة', 'الموديل', 'اللون',
-            'سنة الصنع', 'الحالة', 'اسم السائق', 'رقم الهيكل',
-            'تاريخ انتهاء التأمين', 'تاريخ انتهاء الفحص', 'تاريخ انتهاء التسجيل',
+            'سنة الصنع', 'الحالة', 'اسم السائق', 'نوع السيارة',
+            'المشروع', 'تاريخ انتهاء الفحص', 'تاريخ انتهاء الاستمارة',
             'تاريخ انتهاء التفويض', 'رابط Google Drive', 'الملاحظات', 'تاريخ الإضافة'
         ]
         
@@ -729,14 +729,14 @@ def generate_vehicles_excel(vehicles, output=None):
                 str(vehicle.year) if vehicle.year else "",
                 status_ar,
                 vehicle.driver_name or "",
-                vehicle.vin or "",
-                vehicle.insurance_expiry.strftime('%Y-%m-%d') if hasattr(vehicle, 'insurance_expiry') and vehicle.insurance_expiry else "",
-                vehicle.inspection_expiry.strftime('%Y-%m-%d') if hasattr(vehicle, 'inspection_expiry') and vehicle.inspection_expiry else "",
-                vehicle.registration_expiry_date.strftime('%Y-%m-%d') if hasattr(vehicle, 'registration_expiry_date') and vehicle.registration_expiry_date else "",
-                vehicle.authorization_expiry_date.strftime('%Y-%m-%d') if hasattr(vehicle, 'authorization_expiry_date') and vehicle.authorization_expiry_date else "",
+                vehicle.type_of_car or "",
+                vehicle.project or "",
+                vehicle.inspection_expiry_date.strftime('%Y-%m-%d') if vehicle.inspection_expiry_date else "",
+                vehicle.registration_expiry_date.strftime('%Y-%m-%d') if vehicle.registration_expiry_date else "",
+                vehicle.authorization_expiry_date.strftime('%Y-%m-%d') if vehicle.authorization_expiry_date else "",
                 vehicle.drive_folder_link or "",
                 vehicle.notes or "",
-                vehicle.created_at.strftime('%Y-%m-%d') if hasattr(vehicle, 'created_at') and vehicle.created_at else ""
+                vehicle.created_at.strftime('%Y-%m-%d') if vehicle.created_at else ""
             ]
             
             for col_idx, value in enumerate(all_data, start=1):
