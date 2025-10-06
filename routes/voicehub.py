@@ -272,7 +272,8 @@ def dashboard():
                          total_calls=total_calls,
                          completed_calls=completed_calls,
                          calls_with_analysis=calls_with_analysis,
-                         recent_calls=recent_calls)
+                         recent_calls=recent_calls,
+                         api_key=VOICEHUB_API_KEY)
 
 
 # ==========================================
