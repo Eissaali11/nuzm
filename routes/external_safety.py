@@ -1195,7 +1195,7 @@ def delete_external_safety_check(check_id):
         # عرض صفحة تأكيد الحذف
         return render_template('admin_delete_safety_check.html', safety_check=safety_check)
     
-    if request.method == 'POST':
+    # POST method
         try:
             # حذف الصور المرتبطة من الخادم
             import os
@@ -1349,7 +1349,9 @@ def export_safety_check_pdf(check_id):
         
         # دالة لمعالجة النصوص العربية
         def process_arabic_text(text):
-            if not text or not arabic_support:
+            if not text:
+                return text
+            if not arabic_support:
                 return text
             try:
                 # تشكيل النص العربي
