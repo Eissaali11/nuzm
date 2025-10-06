@@ -378,14 +378,11 @@ def export_employees(id):
     employee_ids = request.args.get('ids', '')
     if employee_ids:
         employee_ids = [int(emp_id) for emp_id in employee_ids.split(',') if emp_id.isdigit()]
-        # Query only the selected employees that belong to this department
-        employees = Employee.query.filter(
-            Employee.id.in_(employee_ids),
-            Employee.department_id == id
-        ).all()
+        # Query only the selected employees that belong to this department (many-to-many)
+        employees = [emp for emp in department.employees if emp.id in employee_ids]
     else:
-        # If no IDs specified, export all employees in the department
-        employees = Employee.query.filter_by(department_id=id).all()
+        # If no IDs specified, export all employees in the department (many-to-many)
+        employees = department.employees
     
     if not employees:
         flash('لا يوجد موظفين للتصدير', 'warning')
@@ -454,11 +451,8 @@ def confirm_delete_employees(id):
     # تحويل المعرفات إلى أرقام صحيحة
     employee_ids = [int(emp_id) for emp_id in employee_ids if emp_id.isdigit()]
     
-    # الحصول على بيانات الموظفين
-    employees = Employee.query.filter(
-        Employee.id.in_(employee_ids),
-        Employee.department_id == id
-    ).all()
+    # الحصول على بيانات الموظفين من علاقة many-to-many
+    employees = [emp for emp in department.employees if emp.id in employee_ids]
     
     if not employees:
         flash('لم يتم العثور على أي موظف مطابق للمعرفات المحددة', 'warning')
@@ -552,11 +546,8 @@ def delete_employees(id):
     """
     # نتابع التنفيذ بغض النظر عن حالة CSRF مؤقتاً
     
-    # Query employees that belong to this department
-    employees = Employee.query.filter(
-        Employee.id.in_(employee_ids),
-        Employee.department_id == id
-    ).all()
+    # Query employees that belong to this department (many-to-many)
+    employees = [emp for emp in department.employees if emp.id in employee_ids]
     
     print(f"تم العثور على {len(employees)} موظف للحذف")
     
