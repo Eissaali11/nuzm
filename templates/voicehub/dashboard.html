@@ -184,7 +184,7 @@
                                     </h6>
                                     <div class="input-group mb-2">
                                         <input type="text" class="form-control" id="apiBaseUrl" value="https://{{ request.host }}/voicehub/api/knowledge" readonly style="direction: ltr; text-align: left;">
-                                        <button class="btn btn-outline-primary" onclick="copyToClipboard('apiBaseUrl')">
+                                        <button class="btn btn-outline-primary" onclick="copyToClipboard('apiBaseUrl', event)">
                                             <i class="fas fa-copy"></i>
                                         </button>
                                     </div>
@@ -206,7 +206,7 @@
                                         <button class="btn btn-outline-success" onclick="toggleApiKey()">
                                             <i class="fas fa-eye" id="eyeIcon"></i>
                                         </button>
-                                        <button class="btn btn-outline-success" onclick="copyToClipboard('apiKeyField')">
+                                        <button class="btn btn-outline-success" onclick="copyToClipboard('apiKeyField', event)">
                                             <i class="fas fa-copy"></i>
                                         </button>
                                     </div>
@@ -296,7 +296,7 @@ You have access to a Knowledge API to retrieve real-time data from the system.
 - If data is not found, politely inform the user
 - Format numbers clearly when reading data</pre>
                                     </div>
-                                    <button class="btn btn-primary btn-sm mt-2" onclick="copyInstructions()">
+                                    <button class="btn btn-primary btn-sm mt-2" onclick="copyInstructions(event)">
                                         <i class="fas fa-copy ms-1"></i>
                                         نسخ التعليمات
                                     </button>
@@ -495,7 +495,7 @@ async function getStats() {
 }
 
 // دوال مساعدة للنسخ وإظهار المفتاح
-function copyToClipboard(elementId) {
+function copyToClipboard(elementId, event) {
     const element = document.getElementById(elementId);
     element.select();
     element.setSelectionRange(0, 99999);
@@ -526,7 +526,7 @@ function toggleApiKey() {
     }
 }
 
-function copyInstructions() {
+function copyInstructions(event) {
     const instructionsText = `You are a helpful Arabic voice assistant for نُظم (Nuzum) - an employee and vehicle management system.
 
 You have access to a Knowledge API to retrieve real-time data from the system.
