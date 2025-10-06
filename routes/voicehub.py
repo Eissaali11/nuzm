@@ -273,3 +273,148 @@ def dashboard():
                          completed_calls=completed_calls,
                          calls_with_analysis=calls_with_analysis,
                          recent_calls=recent_calls)
+
+
+# ==========================================
+# VoiceHub Knowledge API
+# API للسماح لـ VoiceHub بالوصول لبيانات النظام
+# ==========================================
+
+def verify_knowledge_api_key():
+    """التحقق من مفتاح API للوصول إلى Knowledge API"""
+    api_key = request.headers.get('X-VoiceHub-API-Key')
+    if not api_key or api_key != VOICEHUB_API_KEY:
+        return False
+    return True
+
+
+@voicehub_bp.route('/api/knowledge/employee/<search_term>')
+def knowledge_employee(search_term):
+    """البحث عن موظف بالاسم أو رقم الهوية"""
+    if not verify_knowledge_api_key():
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    from models import Employee
+    
+    # البحث بالاسم أو رقم الهوية
+    employees = Employee.query.filter(
+        db.or_(
+            Employee.name.ilike(f'%{search_term}%'),
+            Employee.national_id.ilike(f'%{search_term}%')
+        )
+    ).limit(10).all()
+    
+    results = []
+    for emp in employees:
+        results.append({
+            'id': emp.id,
+            'name': emp.name,
+            'national_id': emp.national_id,
+            'mobile': emp.mobile if hasattr(emp, 'mobile') else None,
+            'email': emp.email if emp.email else None,
+            'job_title': emp.job_title if emp.job_title else None,
+            'department': emp.department.name if emp.department else None,
+            'basic_salary': float(emp.basic_salary) if emp.basic_salary else None
+        })
+    
+    return jsonify({
+        'success': True,
+        'count': len(results),
+        'employees': results
+    })
+
+
+@voicehub_bp.route('/api/knowledge/vehicle/<search_term>')
+def knowledge_vehicle(search_term):
+    """البحث عن مركبة برقم اللوحة أو رقم الهيكل"""
+    if not verify_knowledge_api_key():
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    from models import Vehicle
+    
+    # البحث برقم اللوحة أو الماركة
+    vehicles = Vehicle.query.filter(
+        db.or_(
+            Vehicle.plate_number.ilike(f'%{search_term}%'),
+            Vehicle.make.ilike(f'%{search_term}%'),
+            Vehicle.model.ilike(f'%{search_term}%')
+        )
+    ).limit(10).all()
+    
+    results = []
+    for veh in vehicles:
+        results.append({
+            'id': veh.id,
+            'plate_number': veh.plate_number,
+            'make': veh.make if hasattr(veh, 'make') else None,
+            'model': veh.model if hasattr(veh, 'model') else None,
+            'year': veh.year if hasattr(veh, 'year') else None,
+            'color': veh.color if hasattr(veh, 'color') else None,
+            'type': veh.type_of_car if hasattr(veh, 'type_of_car') else None,
+            'driver': veh.driver_name if hasattr(veh, 'driver_name') else None,
+            'status': veh.status if hasattr(veh, 'status') else None
+        })
+    
+    return jsonify({
+        'success': True,
+        'count': len(results),
+        'vehicles': results
+    })
+
+
+@voicehub_bp.route('/api/knowledge/department/<search_term>')
+def knowledge_department(search_term):
+    """البحث عن قسم"""
+    if not verify_knowledge_api_key():
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    # البحث بالاسم
+    departments = Department.query.filter(
+        Department.name.ilike(f'%{search_term}%')
+    ).limit(10).all()
+    
+    results = []
+    for dept in departments:
+        # حساب عدد الموظفين في القسم
+        employee_count = len(dept.employees) if dept.employees else 0
+        
+        results.append({
+            'id': dept.id,
+            'name': dept.name,
+            'employee_count': employee_count
+        })
+    
+    return jsonify({
+        'success': True,
+        'count': len(results),
+        'departments': results
+    })
+
+
+@voicehub_bp.route('/api/knowledge/stats')
+def knowledge_stats():
+    """إحصائيات عامة عن النظام"""
+    if not verify_knowledge_api_key():
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    from models import Employee, Vehicle
+    
+    stats = {
+        'total_employees': Employee.query.count(),
+        'total_vehicles': Vehicle.query.count(),
+        'total_departments': Department.query.count(),
+        'departments': []
+    }
+    
+    # إحصائيات الأقسام
+    departments = Department.query.all()
+    for dept in departments:
+        stats['departments'].append({
+            'name': dept.name,
+            'employee_count': len(dept.employees) if dept.employees else 0
+        })
+    
+    return jsonify({
+        'success': True,
+        'stats': stats
+    })

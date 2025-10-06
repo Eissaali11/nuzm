@@ -155,11 +155,197 @@
             </div>
         </div>
     </div>
+
+    <!-- Knowledge API - اختبار البحث -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                    <h5 class="mb-0">
+                        <i class="fas fa-brain ms-2"></i>
+                        اختبار Knowledge API - البحث الذكي
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <!-- بحث موظف -->
+                        <div class="col-md-4">
+                            <div class="card h-100" style="border: 2px solid #667eea;">
+                                <div class="card-body">
+                                    <h6 class="card-title">
+                                        <i class="fas fa-user text-primary ms-2"></i>
+                                        بحث عن موظف
+                                    </h6>
+                                    <input type="text" id="employeeSearch" class="form-control mb-2" placeholder="اسم أو رقم هوية">
+                                    <button onclick="searchEmployee()" class="btn btn-primary btn-sm w-100">
+                                        <i class="fas fa-search ms-1"></i> بحث
+                                    </button>
+                                    <div id="employeeResults" class="mt-3" style="max-height: 300px; overflow-y: auto;"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- بحث مركبة -->
+                        <div class="col-md-4">
+                            <div class="card h-100" style="border: 2px solid #11998e;">
+                                <div class="card-body">
+                                    <h6 class="card-title">
+                                        <i class="fas fa-car text-success ms-2"></i>
+                                        بحث عن مركبة
+                                    </h6>
+                                    <input type="text" id="vehicleSearch" class="form-control mb-2" placeholder="رقم لوحة أو ماركة">
+                                    <button onclick="searchVehicle()" class="btn btn-success btn-sm w-100">
+                                        <i class="fas fa-search ms-1"></i> بحث
+                                    </button>
+                                    <div id="vehicleResults" class="mt-3" style="max-height: 300px; overflow-y: auto;"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- إحصائيات -->
+                        <div class="col-md-4">
+                            <div class="card h-100" style="border: 2px solid #f093fb;">
+                                <div class="card-body">
+                                    <h6 class="card-title">
+                                        <i class="fas fa-chart-bar text-danger ms-2"></i>
+                                        إحصائيات النظام
+                                    </h6>
+                                    <button onclick="getStats()" class="btn btn-danger btn-sm w-100 mb-2">
+                                        <i class="fas fa-sync ms-1"></i> تحديث
+                                    </button>
+                                    <div id="statsResults" class="mt-3" style="max-height: 300px; overflow-y: auto;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- VoiceHub Widget - زر المكالمة الصوتية -->
 <dq-voice agent-id='68e413e795084704b11dec3d' api-key='dqKey_42db164f5c29f9ea350dc55f929161c0eed9e09d00a29b706b2b1038f0efeb7fo23fmqrht2h'></dq-voice>
 <script src='https://voicehub.dataqueue.ai/DqVoiceWidget.js'></script>
+
+<script>
+// Knowledge API Functions
+const API_KEY = 'dqKey_42db164f5c29f9ea350dc55f929161c0eed9e09d00a29b706b2b1038f0efeb7fo23fmqrht2h';
+
+async function searchEmployee() {
+    const searchTerm = document.getElementById('employeeSearch').value.trim();
+    const resultsDiv = document.getElementById('employeeResults');
+    
+    if (!searchTerm) {
+        resultsDiv.innerHTML = '<div class="alert alert-warning">الرجاء إدخال كلمة البحث</div>';
+        return;
+    }
+    
+    resultsDiv.innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin"></i> جاري البحث...</div>';
+    
+    try {
+        const response = await fetch(`/voicehub/api/knowledge/employee/${encodeURIComponent(searchTerm)}`, {
+            headers: { 'X-VoiceHub-API-Key': API_KEY }
+        });
+        const data = await response.json();
+        
+        if (data.success && data.count > 0) {
+            let html = `<div class="alert alert-info">عدد النتائج: ${data.count}</div>`;
+            data.employees.forEach(emp => {
+                html += `
+                    <div class="card mb-2">
+                        <div class="card-body p-2" style="font-size: 0.85rem;">
+                            <strong>${emp.name}</strong><br>
+                            <small>هوية: ${emp.national_id || '-'}</small><br>
+                            <small>قسم: ${emp.department || '-'}</small><br>
+                            <small>جوال: ${emp.mobile || '-'}</small>
+                        </div>
+                    </div>
+                `;
+            });
+            resultsDiv.innerHTML = html;
+        } else {
+            resultsDiv.innerHTML = '<div class="alert alert-warning">لم يتم العثور على نتائج</div>';
+        }
+    } catch (error) {
+        resultsDiv.innerHTML = '<div class="alert alert-danger">حدث خطأ: ' + error.message + '</div>';
+    }
+}
+
+async function searchVehicle() {
+    const searchTerm = document.getElementById('vehicleSearch').value.trim();
+    const resultsDiv = document.getElementById('vehicleResults');
+    
+    if (!searchTerm) {
+        resultsDiv.innerHTML = '<div class="alert alert-warning">الرجاء إدخال كلمة البحث</div>';
+        return;
+    }
+    
+    resultsDiv.innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin"></i> جاري البحث...</div>';
+    
+    try {
+        const response = await fetch(`/voicehub/api/knowledge/vehicle/${encodeURIComponent(searchTerm)}`, {
+            headers: { 'X-VoiceHub-API-Key': API_KEY }
+        });
+        const data = await response.json();
+        
+        if (data.success && data.count > 0) {
+            let html = `<div class="alert alert-info">عدد النتائج: ${data.count}</div>`;
+            data.vehicles.forEach(veh => {
+                html += `
+                    <div class="card mb-2">
+                        <div class="card-body p-2" style="font-size: 0.85rem;">
+                            <strong>${veh.plate_number}</strong><br>
+                            <small>${veh.make || ''} ${veh.model || ''} (${veh.year || '-'})</small><br>
+                            <small>سائق: ${veh.driver || '-'}</small><br>
+                            <small>حالة: ${veh.status || '-'}</small>
+                        </div>
+                    </div>
+                `;
+            });
+            resultsDiv.innerHTML = html;
+        } else {
+            resultsDiv.innerHTML = '<div class="alert alert-warning">لم يتم العثور على نتائج</div>';
+        }
+    } catch (error) {
+        resultsDiv.innerHTML = '<div class="alert alert-danger">حدث خطأ: ' + error.message + '</div>';
+    }
+}
+
+async function getStats() {
+    const resultsDiv = document.getElementById('statsResults');
+    resultsDiv.innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin"></i> جاري التحميل...</div>';
+    
+    try {
+        const response = await fetch('/voicehub/api/knowledge/stats', {
+            headers: { 'X-VoiceHub-API-Key': API_KEY }
+        });
+        const data = await response.json();
+        
+        if (data.success) {
+            const stats = data.stats;
+            let html = `
+                <div class="mb-2"><strong>الموظفون:</strong> ${stats.total_employees}</div>
+                <div class="mb-2"><strong>المركبات:</strong> ${stats.total_vehicles}</div>
+                <div class="mb-2"><strong>الأقسام:</strong> ${stats.total_departments}</div>
+                <hr>
+                <small><strong>تفصيل الأقسام:</strong></small>
+            `;
+            stats.departments.forEach(dept => {
+                html += `<div class="mb-1"><small>• ${dept.name}: ${dept.employee_count} موظف</small></div>`;
+            });
+            resultsDiv.innerHTML = html;
+        }
+    } catch (error) {
+        resultsDiv.innerHTML = '<div class="alert alert-danger">حدث خطأ: ' + error.message + '</div>';
+    }
+}
+
+// تحميل الإحصائيات تلقائياً
+document.addEventListener('DOMContentLoaded', function() {
+    getStats();
+});
+</script>
 
 <style>
 .rtl {
