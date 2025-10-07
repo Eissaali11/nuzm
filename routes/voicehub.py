@@ -437,7 +437,18 @@ def employee_inquiry():
         return jsonify({'error': 'Unauthorized', 'message': 'مفتاح API غير صحيح'}), 401
     
     try:
-        data = request.json
+        # محاولة قراءة البيانات من JSON أو form data
+        if request.is_json:
+            data = request.json
+        elif request.form:
+            data = request.form.to_dict()
+        else:
+            # محاولة قراءة JSON حتى لو لم يكن Content-Type صحيح
+            try:
+                data = request.get_json(force=True)
+            except:
+                data = {}
+        
         employee_name = data.get('employee_name', '').strip()
         employee_id = data.get('employee_id', '').strip()
         service_type = data.get('service_type', '').strip()
