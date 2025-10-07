@@ -419,3 +419,160 @@ def knowledge_stats():
         'success': True,
         'stats': stats
     })
+
+
+@voicehub_bp.route('/api/employee-inquiry', methods=['POST'])
+def employee_inquiry():
+    """
+    API استفسارات الموظفين - للاستخدام مع VoiceHub
+    
+    يستقبل:
+    - employee_name: اسم الموظف
+    - employee_id: رقم الموظف أو الهوية الوطنية
+    - service_type: نوع الخدمة (إجازات، راتب، قسم، تواصل)
+    
+    يرجع معلومات الموظف حسب نوع الخدمة المطلوبة
+    """
+    if not verify_knowledge_api_key():
+        return jsonify({'error': 'Unauthorized', 'message': 'مفتاح API غير صحيح'}), 401
+    
+    try:
+        data = request.json
+        employee_name = data.get('employee_name', '').strip()
+        employee_id = data.get('employee_id', '').strip()
+        service_type = data.get('service_type', '').strip()
+        
+        logger.info(f"Employee inquiry: name={employee_name}, id={employee_id}, service={service_type}")
+        
+        # البحث عن الموظف
+        employee = None
+        
+        if employee_id:
+            # البحث برقم الهوية أو رقم الموظف
+            employee = Employee.query.filter(
+                db.or_(
+                    Employee.national_id == employee_id,
+                    Employee.employee_number == employee_id
+                )
+            ).first()
+        
+        if not employee and employee_name:
+            # البحث بالاسم
+            employee = Employee.query.filter(
+                Employee.name.ilike(f'%{employee_name}%')
+            ).first()
+        
+        if not employee:
+            return jsonify({
+                'success': False,
+                'message': f'عذراً، لم أجد موظف باسم {employee_name or employee_id} في النظام',
+                'arabic_response': f'عذراً، لم أجد موظف باسم {employee_name or employee_id} في قاعدة البيانات. يرجى التأكد من الاسم أو رقم الهوية.'
+            }), 404
+        
+        # بناء الاستجابة حسب نوع الخدمة
+        response_data = {
+            'success': True,
+            'employee': {
+                'name': employee.name,
+                'employee_number': employee.employee_number,
+                'national_id': employee.national_id
+            }
+        }
+        
+        # استفسار عن الإجازات
+        if 'إجاز' in service_type or 'vacation' in service_type.lower() or 'leave' in service_type.lower():
+            total_leave_days = employee.total_leave_days if hasattr(employee, 'total_leave_days') and employee.total_leave_days else 30
+            used_leave_days = employee.used_leave_days if hasattr(employee, 'used_leave_days') and employee.used_leave_days else 0
+            remaining_leave = total_leave_days - used_leave_days
+            
+            response_data['leave_info'] = {
+                'total_leave_days': total_leave_days,
+                'used_leave_days': used_leave_days,
+                'remaining_leave_days': remaining_leave
+            }
+            
+            response_data['arabic_response'] = (
+                f'الموظف {employee.name}، '
+                f'رصيد إجازاتك الحالي هو {remaining_leave} يوم من أصل {total_leave_days} يوم. '
+                f'لقد استخدمت {used_leave_days} يوم حتى الآن.'
+            )
+        
+        # استفسار عن الراتب
+        elif 'راتب' in service_type or 'salary' in service_type.lower():
+            basic_salary = float(employee.basic_salary) if employee.basic_salary else 0
+            
+            response_data['salary_info'] = {
+                'basic_salary': basic_salary,
+                'currency': 'ريال سعودي'
+            }
+            
+            if basic_salary > 0:
+                response_data['arabic_response'] = (
+                    f'الموظف {employee.name}، '
+                    f'راتبك الأساسي المسجل في النظام هو {basic_salary:,.0f} ريال سعودي. '
+                    f'للاستفسار عن البدلات أو الخصومات، يرجى التواصل مع قسم الموارد البشرية.'
+                )
+            else:
+                response_data['arabic_response'] = (
+                    f'الموظف {employee.name}، '
+                    f'معلومات الراتب غير متوفرة في النظام حالياً. '
+                    f'يرجى التواصل مع قسم الموارد البشرية للحصول على التفاصيل.'
+                )
+        
+        # استفسار عن القسم
+        elif 'قسم' in service_type or 'department' in service_type.lower():
+            departments_list = []
+            if hasattr(employee, 'departments') and employee.departments:
+                for dept in employee.departments:
+                    departments_list.append(dept.name)
+                dept_names = '، '.join(departments_list)
+            else:
+                dept_names = 'غير محدد'
+            
+            job_title = employee.job_title if employee.job_title else 'غير محدد'
+            
+            response_data['department_info'] = {
+                'departments': departments_list if departments_list else ['غير محدد'],
+                'job_title': job_title
+            }
+            
+            response_data['arabic_response'] = (
+                f'الموظف {employee.name}، '
+                f'أنت تعمل في {"قسم " + dept_names if departments_list else "لا يوجد قسم محدد"}، '
+                f'ومسماك الوظيفي هو {job_title}.'
+            )
+        
+        # استفسار عن بيانات التواصل
+        elif 'تواصل' in service_type or 'contact' in service_type.lower():
+            mobile = employee.mobile if employee.mobile else 'غير مسجل'
+            email = employee.email if employee.email else 'غير مسجل'
+            
+            response_data['contact_info'] = {
+                'mobile': mobile,
+                'email': email
+            }
+            
+            response_data['arabic_response'] = (
+                f'الموظف {employee.name}، '
+                f'رقم الجوال المسجل: {mobile}، '
+                f'البريد الإلكتروني: {email}. '
+                f'إذا كنت ترغب بتحديث بياناتك، يرجى التواصل مع قسم الموارد البشرية.'
+            )
+        
+        # نوع خدمة غير معروف
+        else:
+            response_data['arabic_response'] = (
+                f'الموظف {employee.name}، '
+                f'يمكنني مساعدتك في الاستفسار عن: رصيد الإجازات، حالة الراتب، بيانات القسم، أو بيانات التواصل. '
+                f'أي نوع من المعلومات تحتاج؟'
+            )
+        
+        return jsonify(response_data), 200
+        
+    except Exception as e:
+        logger.error(f"Error in employee inquiry: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'arabic_response': 'عذراً، حدث خطأ أثناء معالجة طلبك. يرجى المحاولة مرة أخرى.'
+        }), 500
