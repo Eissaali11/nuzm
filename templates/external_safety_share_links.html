@@ -5,318 +5,290 @@
 {% block extra_css %}
 <style>
     :root {
-        --primary-color: #2563eb;
-        --primary-dark: #1e40af;
-        --success-color: #10b981;
-        --danger-color: #ef4444;
-        --warning-color: #f59e0b;
-        --info-color: #3b82f6;
-        --gray-50: #f9fafb;
-        --gray-100: #f3f4f6;
-        --gray-200: #e5e7eb;
-        --gray-700: #374151;
-        --gray-900: #111827;
-        --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-        --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-        --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        --primary: #1e40af;
+        --primary-light: #3b82f6;
+        --success: #059669;
+        --success-light: #10b981;
+        --danger: #dc2626;
+        --warning: #f59e0b;
+        --info: #0891b2;
+        --dark: #1f2937;
+        --gray: #6b7280;
+        --light: #f3f4f6;
+        --border: #e5e7eb;
     }
 
     body {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        min-height: 100vh;
+        background: #f8fafc;
     }
 
-    .page-container {
-        padding: 2rem 0;
+    .page-wrapper {
+        padding: 1.5rem 0;
     }
 
     .page-header {
         background: white;
-        border-radius: 16px;
-        padding: 2rem;
-        margin-bottom: 2rem;
-        box-shadow: var(--shadow-xl);
-        position: relative;
-        overflow: hidden;
-    }
-
-    .page-header::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 5px;
-        background: linear-gradient(90deg, #667eea, #764ba2);
-    }
-
-    .page-header h1 {
-        font-size: 2rem;
-        font-weight: 700;
-        color: var(--gray-900);
-        margin-bottom: 0.5rem;
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-    }
-
-    .page-header h1 i {
-        background: linear-gradient(135deg, #667eea, #764ba2);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }
-
-    .page-header p {
-        color: var(--gray-700);
-        font-size: 1rem;
-        margin: 0;
-    }
-
-    .info-card {
-        background: white;
         border-radius: 12px;
-        padding: 1.5rem;
-        margin-bottom: 2rem;
-        box-shadow: var(--shadow);
-        border-right: 4px solid var(--info-color);
-    }
-
-    .info-card h5 {
-        color: var(--info-color);
-        font-weight: 600;
-        margin-bottom: 1rem;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    .info-card ul {
-        margin: 0;
-        padding-right: 1.5rem;
-        color: var(--gray-700);
-    }
-
-    .info-card li {
-        margin-bottom: 0.5rem;
-        line-height: 1.6;
-    }
-
-    .filter-section {
-        background: white;
-        border-radius: 12px;
-        padding: 1.5rem;
-        margin-bottom: 2rem;
-        box-shadow: var(--shadow);
-    }
-
-    .filter-section h5 {
-        font-weight: 600;
-        color: var(--gray-900);
+        padding: 1.5rem 2rem;
         margin-bottom: 1.5rem;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        border-left: 4px solid var(--primary);
     }
 
-    .table-card {
-        background: white;
-        border-radius: 12px;
-        overflow: hidden;
-        box-shadow: var(--shadow-xl);
-    }
-
-    .table-header {
-        background: linear-gradient(135deg, #667eea, #764ba2);
-        color: white;
-        padding: 1.25rem 1.5rem;
-    }
-
-    .table-header h5 {
-        margin: 0;
-        font-weight: 600;
+    .page-header h2 {
+        color: var(--dark);
+        font-size: 1.75rem;
+        font-weight: 700;
+        margin: 0 0 0.5rem 0;
         display: flex;
         align-items: center;
         gap: 0.75rem;
     }
 
-    .table-wrapper {
-        max-height: 600px;
-        overflow-y: auto;
+    .page-header h2 i {
+        color: var(--primary);
     }
 
-    .table-wrapper::-webkit-scrollbar {
-        width: 8px;
-    }
-
-    .table-wrapper::-webkit-scrollbar-track {
-        background: var(--gray-100);
-    }
-
-    .table-wrapper::-webkit-scrollbar-thumb {
-        background: var(--gray-700);
-        border-radius: 4px;
-    }
-
-    .custom-table {
+    .page-header p {
+        color: var(--gray);
         margin: 0;
-        width: 100%;
-    }
-
-    .custom-table thead th {
-        background: var(--gray-50);
-        color: var(--gray-900);
-        font-weight: 600;
-        padding: 1rem 1.5rem;
-        border-bottom: 2px solid var(--gray-200);
-        position: sticky;
-        top: 0;
-        z-index: 10;
-    }
-
-    .custom-table tbody td {
-        padding: 1.25rem 1.5rem;
-        vertical-align: middle;
-        border-bottom: 1px solid var(--gray-200);
-    }
-
-    .custom-table tbody tr:hover {
-        background: var(--gray-50);
-        transition: background 0.2s ease;
-    }
-
-    .vehicle-plate {
-        font-weight: 600;
-        color: var(--primary-color);
-        font-size: 1.1rem;
-    }
-
-    .vehicle-type {
-        color: var(--gray-700);
         font-size: 0.95rem;
     }
 
-    .color-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        padding: 0.375rem 0.75rem;
-        background: var(--gray-100);
-        border-radius: 6px;
-        font-size: 0.875rem;
+    .info-box {
+        background: #eff6ff;
+        border: 1px solid #bfdbfe;
+        border-radius: 8px;
+        padding: 1.25rem;
+        margin-bottom: 1.5rem;
     }
 
-    .color-indicator {
-        width: 20px;
-        height: 20px;
-        border-radius: 4px;
-        border: 2px solid white;
-        box-shadow: 0 0 0 1px rgba(0,0,0,0.1);
+    .info-box h6 {
+        color: var(--primary);
+        font-weight: 600;
+        margin-bottom: 0.75rem;
+        font-size: 1rem;
     }
 
-    .driver-info {
+    .info-box ul {
+        margin: 0;
+        padding-right: 1.25rem;
+        color: #1e40af;
+    }
+
+    .info-box li {
+        margin-bottom: 0.4rem;
+        font-size: 0.9rem;
+        line-height: 1.5;
+    }
+
+    .filter-box {
+        background: white;
+        border-radius: 8px;
+        padding: 1.25rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .filter-box h6 {
+        color: var(--dark);
+        font-weight: 600;
+        margin-bottom: 1rem;
+        font-size: 1.05rem;
         display: flex;
         align-items: center;
         gap: 0.5rem;
     }
 
-    .driver-icon {
-        width: 32px;
-        height: 32px;
-        background: linear-gradient(135deg, #667eea, #764ba2);
+    .filter-box h6 i {
+        color: var(--primary);
+    }
+
+    .table-container {
+        background: white;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .table-header {
+        background: var(--primary);
+        color: white;
+        padding: 1rem 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .table-header h6 {
+        margin: 0;
+        font-weight: 600;
+        font-size: 1.05rem;
+    }
+
+    .table-scroll {
+        max-height: 600px;
+        overflow-y: auto;
+    }
+
+    .table-scroll::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .table-scroll::-webkit-scrollbar-track {
+        background: #f1f5f9;
+    }
+
+    .table-scroll::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 3px;
+    }
+
+    .data-table {
+        width: 100%;
+        margin: 0;
+    }
+
+    .data-table thead th {
+        background: #f8fafc;
+        color: var(--dark);
+        font-weight: 600;
+        padding: 0.875rem 1rem;
+        font-size: 0.875rem;
+        border-bottom: 2px solid var(--border);
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        white-space: nowrap;
+    }
+
+    .data-table tbody td {
+        padding: 1rem;
+        border-bottom: 1px solid var(--border);
+        font-size: 0.9rem;
+        vertical-align: middle;
+    }
+
+    .data-table tbody tr:hover {
+        background: #f9fafb;
+    }
+
+    .data-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .plate-number {
+        font-weight: 600;
+        color: var(--primary);
+        font-size: 1.05rem;
+    }
+
+    .vehicle-model {
+        color: var(--gray);
+        font-size: 0.875rem;
+    }
+
+    .color-box {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .color-dot {
+        width: 18px;
+        height: 18px;
+        border-radius: 3px;
+        border: 1px solid rgba(0,0,0,0.1);
+    }
+
+    .driver-cell {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .driver-avatar {
+        width: 30px;
+        height: 30px;
+        background: linear-gradient(135deg, var(--primary-light), var(--primary));
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
         color: white;
+        font-size: 0.75rem;
     }
 
-    .status-badge {
+    .status-pill {
         display: inline-block;
-        padding: 0.375rem 0.875rem;
-        border-radius: 20px;
+        padding: 0.35rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.8rem;
         font-weight: 600;
-        font-size: 0.8125rem;
         text-align: center;
-        min-width: 90px;
+        min-width: 75px;
     }
 
-    .status-available {
-        background: #d1fae5;
-        color: #065f46;
-    }
+    .status-available { background: #d1fae5; color: #065f46; }
+    .status-rented { background: #dbeafe; color: #1e40af; }
+    .status-project { background: #e0e7ff; color: #4338ca; }
+    .status-workshop { background: #fef3c7; color: #92400e; }
+    .status-accident { background: #fee2e2; color: #991b1b; }
 
-    .status-rented {
-        background: #dbeafe;
-        color: #1e40af;
-    }
-
-    .status-in-project {
-        background: #e0e7ff;
-        color: #4338ca;
-    }
-
-    .status-workshop {
-        background: #fef3c7;
-        color: #92400e;
-    }
-
-    .status-accident {
-        background: #fee2e2;
-        color: #991b1b;
-    }
-
-    .action-buttons {
+    .btn-group {
         display: flex;
+        gap: 0.375rem;
         flex-wrap: wrap;
-        gap: 0.5rem;
     }
 
-    .btn-modern {
+    .action-btn {
         display: inline-flex;
         align-items: center;
-        gap: 0.5rem;
-        padding: 0.5rem 1rem;
-        border-radius: 8px;
+        justify-content: center;
+        padding: 0.4rem 0.75rem;
+        border-radius: 6px;
+        font-size: 0.8125rem;
         font-weight: 500;
-        font-size: 0.875rem;
-        transition: all 0.2s ease;
         border: none;
         cursor: pointer;
+        transition: all 0.15s ease;
+        gap: 0.375rem;
+        white-space: nowrap;
     }
 
     .btn-copy {
-        background: var(--gray-100);
-        color: var(--gray-700);
+        background: #f3f4f6;
+        color: #4b5563;
     }
 
     .btn-copy:hover {
-        background: var(--gray-700);
-        color: white;
+        background: #e5e7eb;
+        color: #1f2937;
     }
 
     .btn-copy.copied {
-        background: var(--success-color);
+        background: var(--success);
         color: white;
     }
 
     .btn-share {
-        background: var(--primary-color);
+        background: var(--primary);
         color: white;
     }
 
     .btn-share:hover {
-        background: var(--primary-dark);
+        background: #1e3a8a;
     }
 
     .btn-email {
         background: white;
-        color: var(--gray-700);
-        border: 1px solid var(--gray-200);
+        color: #6b7280;
+        border: 1px solid #d1d5db;
     }
 
     .btn-email:hover {
-        background: var(--gray-50);
+        background: #f9fafb;
+        border-color: #9ca3af;
     }
 
     .btn-whatsapp {
@@ -325,101 +297,103 @@
     }
 
     .btn-whatsapp:hover {
-        background: #20BA5A;
+        background: #1ebd59;
     }
 
     .btn-open {
-        background: var(--success-color);
+        background: var(--success);
         color: white;
     }
 
     .btn-open:hover {
-        background: #059669;
+        background: #047857;
     }
 
-    .empty-state {
+    .empty-box {
         text-align: center;
-        padding: 4rem 2rem;
+        padding: 3rem 1.5rem;
     }
 
-    .empty-state i {
-        font-size: 4rem;
-        color: var(--gray-700);
-        margin-bottom: 1.5rem;
+    .empty-box i {
+        font-size: 3.5rem;
+        color: #9ca3af;
+        margin-bottom: 1rem;
     }
 
-    .empty-state h5 {
-        color: var(--gray-900);
+    .empty-box h6 {
+        color: var(--dark);
         margin-bottom: 0.5rem;
     }
 
-    .empty-state p {
-        color: var(--gray-700);
-        margin-bottom: 1.5rem;
+    .empty-box p {
+        color: var(--gray);
+        margin-bottom: 1.25rem;
     }
 
     @media (max-width: 768px) {
-        .page-header h1 {
-            font-size: 1.5rem;
+        .page-header {
+            padding: 1.25rem;
         }
 
-        .action-buttons {
+        .page-header h2 {
+            font-size: 1.4rem;
+        }
+
+        .btn-group {
             flex-direction: column;
         }
 
-        .btn-modern {
+        .action-btn {
             width: 100%;
-            justify-content: center;
         }
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid page-container">
-    <!-- Page Header -->
+<div class="container-fluid page-wrapper">
+    <!-- Header -->
     <div class="page-header">
         <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
             <div>
-                <h1>
-                    <i class="fas fa-share-nodes"></i>
+                <h2>
+                    <i class="fas fa-share-alt"></i>
                     مشاركة روابط فحص السلامة
-                </h1>
+                </h2>
                 <p>إنشاء وإدارة روابط الفحص الخارجي للمركبات</p>
             </div>
-            <a href="{{ url_for('vehicles.index') }}" class="btn btn-outline-secondary">
+            <a href="{{ url_for('vehicles.index') }}" class="btn btn-outline-secondary btn-sm">
                 <i class="fas fa-arrow-right ms-1"></i>
                 العودة
             </a>
         </div>
     </div>
 
-    <!-- Info Card -->
-    <div class="info-card">
-        <h5><i class="fas fa-info-circle"></i> كيفية الاستخدام</h5>
+    <!-- Info Box -->
+    <div class="info-box">
+        <h6><i class="fas fa-lightbulb ms-1"></i> كيفية الاستخدام</h6>
         <ul>
-            <li>انقر على <strong>"نسخ"</strong> لنسخ رابط النموذج إلى الحافظة</li>
+            <li>اضغط على <strong>"نسخ"</strong> لنسخ رابط النموذج إلى الحافظة</li>
             <li>استخدم <strong>"مشاركة"</strong> لإرسال الرابط عبر الوسائل المختلفة</li>
             <li>أرسل الرابط مباشرة عبر <strong>البريد الإلكتروني</strong> أو <strong>واتساب</strong></li>
-            <li>افتح النموذج مباشرة باستخدام <strong>"فتح النموذج"</strong></li>
+            <li>افتح النموذج مباشرة بالضغط على أيقونة <strong>"الفتح"</strong></li>
         </ul>
     </div>
 
-    <!-- Filter Section -->
-    <div class="filter-section">
-        <h5><i class="fas fa-filter"></i> البحث والتصفية</h5>
+    <!-- Filter Box -->
+    <div class="filter-box">
+        <h6><i class="fas fa-filter"></i> البحث والتصفية</h6>
         <form method="GET" action="{{ url_for('external_safety.share_links') }}">
-            <div class="row g-3">
+            <div class="row g-2">
                 <div class="col-md-3">
-                    <label class="form-label fw-semibold">رقم اللوحة</label>
-                    <input type="text" name="search_plate" class="form-control" 
-                           placeholder="ابحث برقم اللوحة..." 
-                           value="{{ search_plate }}">
+                    <label class="form-label small fw-semibold text-secondary">رقم اللوحة</label>
+                    <input type="text" name="search_plate" class="form-control form-control-sm" 
+                           placeholder="ابحث..." value="{{ search_plate }}">
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label fw-semibold">الحالة</label>
-                    <select name="status" class="form-select">
-                        <option value="">جميع الحالات</option>
+                    <label class="form-label small fw-semibold text-secondary">الحالة</label>
+                    <select name="status" class="form-select form-select-sm">
+                        <option value="">الكل</option>
                         {% for status in statuses %}
                         <option value="{{ status }}" {% if status_filter == status %}selected{% endif %}>
                             {% if status == 'available' %}متاحة
@@ -427,99 +401,93 @@
                             {% elif status == 'in_project' %}في المشروع
                             {% elif status == 'in_workshop' %}في الورشة
                             {% elif status == 'accident' %}حادث
-                            {% else %}{{ status }}
-                            {% endif %}
+                            {% else %}{{ status }}{% endif %}
                         </option>
                         {% endfor %}
                     </select>
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label fw-semibold">الشركة المصنعة</label>
-                    <select name="make" class="form-select">
-                        <option value="">جميع الشركات</option>
+                    <label class="form-label small fw-semibold text-secondary">الشركة المصنعة</label>
+                    <select name="make" class="form-select form-select-sm">
+                        <option value="">الكل</option>
                         {% for make in makes %}
-                        <option value="{{ make }}" {% if make_filter == make %}selected{% endif %}>
-                            {{ make }}
-                        </option>
+                        <option value="{{ make }}" {% if make_filter == make %}selected{% endif %}>{{ make }}</option>
                         {% endfor %}
                     </select>
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label fw-semibold">المشروع</label>
-                    <select name="project" class="form-select">
-                        <option value="">جميع المشاريع</option>
+                    <label class="form-label small fw-semibold text-secondary">المشروع</label>
+                    <select name="project" class="form-select form-select-sm">
+                        <option value="">الكل</option>
                         {% for project in projects %}
-                        <option value="{{ project }}" {% if project_filter == project %}selected{% endif %}>
-                            {{ project }}
-                        </option>
+                        <option value="{{ project }}" {% if project_filter == project %}selected{% endif %}>{{ project }}</option>
                         {% endfor %}
                     </select>
                 </div>
             </div>
-            <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-2">
+            <div class="d-flex justify-content-between align-items-center mt-3">
                 <div class="d-flex gap-2">
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-search ms-1"></i>
-                        بحث
+                    <button type="submit" class="btn btn-primary btn-sm px-3">
+                        <i class="fas fa-search ms-1"></i> بحث
                     </button>
-                    <a href="{{ url_for('external_safety.share_links') }}" class="btn btn-outline-secondary">
-                        <i class="fas fa-undo ms-1"></i>
-                        إعادة تعيين
+                    <a href="{{ url_for('external_safety.share_links') }}" class="btn btn-outline-secondary btn-sm px-3">
+                        <i class="fas fa-undo ms-1"></i> إعادة تعيين
                     </a>
                 </div>
-                <span class="text-muted">
+                <small class="text-muted">
                     <i class="fas fa-car ms-1"></i>
-                    عدد المركبات: <strong>{{ vehicles|length }}</strong>
-                </span>
+                    المجموع: <strong>{{ vehicles|length }}</strong>
+                </small>
             </div>
         </form>
     </div>
 
-    <!-- Vehicles Table -->
-    <div class="table-card">
+    <!-- Table -->
+    <div class="table-container">
         <div class="table-header">
-            <h5><i class="fas fa-list"></i> قائمة المركبات</h5>
+            <i class="fas fa-list"></i>
+            <h6>قائمة المركبات</h6>
         </div>
         
         {% if vehicles %}
-        <div class="table-wrapper">
-            <table class="custom-table">
+        <div class="table-scroll">
+            <table class="data-table">
                 <thead>
                     <tr>
-                        <th style="width: 12%">رقم اللوحة</th>
-                        <th style="width: 18%">النوع</th>
-                        <th style="width: 12%">اللون</th>
-                        <th style="width: 15%">السائق</th>
-                        <th style="width: 12%">المشروع</th>
-                        <th style="width: 10%">الحالة</th>
-                        <th style="width: 21%">الإجراءات</th>
+                        <th>رقم اللوحة</th>
+                        <th>النوع</th>
+                        <th>اللون</th>
+                        <th>السائق</th>
+                        <th>المشروع</th>
+                        <th>الحالة</th>
+                        <th style="width: 300px;">الإجراءات</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for vehicle in vehicles %}
                     <tr>
                         <td>
-                            <div class="vehicle-plate">{{ vehicle.plate_number }}</div>
+                            <div class="plate-number">{{ vehicle.plate_number }}</div>
                         </td>
                         <td>
-                            <div class="vehicle-type">{{ vehicle.make }} {{ vehicle.model }}</div>
+                            <div class="vehicle-model">{{ vehicle.make }} {{ vehicle.model }}</div>
                         </td>
                         <td>
-                            <div class="color-badge">
-                                <span class="color-indicator" style="background-color: {{ vehicle.color }};"></span>
-                                {{ vehicle.color }}
+                            <div class="color-box">
+                                <span class="color-dot" style="background-color: {{ vehicle.color }};"></span>
+                                <span>{{ vehicle.color }}</span>
                             </div>
                         </td>
                         <td>
                             {% if all_current_drivers_with_emil[vehicle.id] %}
-                            <div class="driver-info">
-                                <div class="driver-icon">
+                            <div class="driver-cell">
+                                <div class="driver-avatar">
                                     <i class="fas fa-user"></i>
                                 </div>
                                 <span>{{ all_current_drivers_with_emil[vehicle.id].name }}</span>
                             </div>
                             {% else %}
-                            <span class="text-muted">
+                            <span class="text-muted small">
                                 <i class="fas fa-user-slash ms-1"></i>
                                 غير مسند
                             </span>
@@ -527,57 +495,58 @@
                         </td>
                         <td>
                             {% if vehicle.project %}
-                            <span class="badge bg-info">{{ vehicle.project }}</span>
+                            <span class="badge bg-secondary">{{ vehicle.project }}</span>
                             {% else %}
-                            <span class="text-muted">-</span>
+                            <span class="text-muted small">-</span>
                             {% endif %}
                         </td>
                         <td>
                             {% if vehicle.status == 'available' %}
-                            <span class="status-badge status-available">متاحة</span>
+                            <span class="status-pill status-available">متاحة</span>
                             {% elif vehicle.status == 'rented' %}
-                            <span class="status-badge status-rented">مؤجرة</span>
+                            <span class="status-pill status-rented">مؤجرة</span>
                             {% elif vehicle.status == 'in_project' %}
-                            <span class="status-badge status-in-project">في مشروع</span>
+                            <span class="status-pill status-project">في مشروع</span>
                             {% elif vehicle.status == 'in_workshop' %}
-                            <span class="status-badge status-workshop">في ورشة</span>
+                            <span class="status-pill status-workshop">في ورشة</span>
                             {% elif vehicle.status == 'accident' %}
-                            <span class="status-badge status-accident">حادث</span>
+                            <span class="status-pill status-accident">حادث</span>
                             {% else %}
-                            <span class="status-badge bg-secondary text-white">{{ vehicle.status }}</span>
+                            <span class="status-pill bg-secondary text-white">{{ vehicle.status }}</span>
                             {% endif %}
                         </td>
                         <td>
-                            <div class="action-buttons">
-                                <button type="button" class="btn-modern btn-copy" 
-                                        title="نسخ الرابط"
-                                        onclick="copyToClipboard('{{ url_for('external_safety.external_safety_check_form', vehicle_id=vehicle.id, _external=True) }}', this)">
+                            <div class="btn-group">
+                                <button type="button" class="action-btn btn-copy" 
+                                        title="نسخ"
+                                        onclick="copyLink('{{ url_for('external_safety.external_safety_check_form', vehicle_id=vehicle.id, _external=True) }}', this)">
                                     <i class="fas fa-copy"></i>
-                                    <span class="d-none d-lg-inline">نسخ</span>
+                                    <span class="d-none d-xl-inline">نسخ</span>
                                 </button>
                                 
-                                <button class="btn-modern btn-share" 
-                                        onclick="shareSafetyCheckForm('{{ vehicle.id }}', '{{ vehicle.plate_number }}', '{{ vehicle.make }} {{ vehicle.model }}')">
-                                    <i class="fas fa-share-nodes"></i>
-                                    <span class="d-none d-lg-inline">مشاركة</span>
+                                <button class="action-btn btn-share" 
+                                        title="مشاركة"
+                                        onclick="shareForm('{{ vehicle.id }}', '{{ vehicle.plate_number }}', '{{ vehicle.make }} {{ vehicle.model }}')">
+                                    <i class="fas fa-share-alt"></i>
+                                    <span class="d-none d-xl-inline">مشاركة</span>
                                 </button>
 
-                                <button class="btn-modern btn-email"
-                                        title="إرسال بالبريد"
-                                        onclick="sendSafetyCheckEmail(this, '{{ vehicle.id }}', '{{ vehicle.plate_number }}', '{{ vehicle.make }} {{ vehicle.model }}')">
+                                <button class="action-btn btn-email"
+                                        title="بريد"
+                                        onclick="sendEmail(this, '{{ vehicle.id }}', '{{ vehicle.plate_number }}', '{{ vehicle.make }} {{ vehicle.model }}')">
                                     <i class="fas fa-envelope"></i>
                                 </button>
 
-                                <button class="btn-modern btn-whatsapp"
-                                        title="إرسال بواتساب"
-                                        onclick="sendSafetyCheckWhatsApp(this, '{{ vehicle.id }}', '{{ vehicle.plate_number }}', '{{ vehicle.make }} {{ vehicle.model }}')">
+                                <button class="action-btn btn-whatsapp"
+                                        title="واتساب"
+                                        onclick="sendWhatsApp(this, '{{ vehicle.id }}', '{{ vehicle.plate_number }}', '{{ vehicle.make }} {{ vehicle.model }}')">
                                     <i class="fab fa-whatsapp"></i>
                                 </button>
 
                                 <a href="{{ url_for('external_safety.external_safety_check_form', vehicle_id=vehicle.id) }}" 
-                                   class="btn-modern btn-open" 
+                                   class="action-btn btn-open" 
                                    target="_blank"
-                                   title="فتح النموذج">
+                                   title="فتح">
                                     <i class="fas fa-external-link-alt"></i>
                                 </a>
                             </div>
@@ -588,146 +557,106 @@
             </table>
         </div>
         {% else %}
-        <div class="empty-state">
-            <i class="fas fa-car"></i>
-            <h5>لا توجد مركبات</h5>
-            <p>لا توجد مركبات مطابقة للمعايير المحددة</p>
-            <a href="{{ url_for('vehicles.create') }}" class="btn btn-primary">
+        <div class="empty-box">
+            <i class="fas fa-inbox"></i>
+            <h6>لا توجد مركبات</h6>
+            <p>لا توجد مركبات مطابقة للمعايير</p>
+            <a href="{{ url_for('vehicles.create') }}" class="btn btn-primary btn-sm">
                 <i class="fas fa-plus ms-1"></i>
-                إضافة مركبة جديدة
+                إضافة مركبة
             </a>
         </div>
         {% endif %}
     </div>
 </div>
 
-<!-- Toast Container -->
 <div id="toast-container" class="position-fixed bottom-0 end-0 p-3" style="z-index: 9999"></div>
 
 <script>
-    const allDriversData = {{ all_current_drivers | tojson | safe }};
-    const allDriversDataWithEmil = {{ all_current_drivers_with_emil | tojson | safe }};
+    const driversData = {{ all_current_drivers | tojson | safe }};
+    const driversWithEmail = {{ all_current_drivers_with_emil | tojson | safe }};
 
-    function showToast(message, type = 'info') {
-        const toastContainer = document.getElementById('toast-container');
-        if (!toastContainer) {
-            alert(message);
-            return;
-        }
-
-        const toastId = 'toast-' + Math.random().toString(36).substr(2, 9);
-        const bgColor = type === 'success' ? 'bg-success' : (type === 'danger' ? 'bg-danger' : 'bg-info');
-
-        const toastHTML = `
-            <div id="${toastId}" class="toast show align-items-center text-white ${bgColor} border-0" role="alert">
+    function showMsg(msg, type = 'info') {
+        const container = document.getElementById('toast-container');
+        const id = 'toast-' + Date.now();
+        const bg = type === 'success' ? 'bg-success' : type === 'danger' ? 'bg-danger' : 'bg-info';
+        
+        container.insertAdjacentHTML('beforeend', `
+            <div id="${id}" class="toast show align-items-center text-white ${bg} border-0" role="alert">
                 <div class="d-flex">
-                    <div class="toast-body">${message}</div>
+                    <div class="toast-body">${msg}</div>
                     <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
                 </div>
             </div>
-        `;
+        `);
 
-        toastContainer.insertAdjacentHTML('beforeend', toastHTML);
-
-        const toastElement = document.getElementById(toastId);
-        const bsToast = new bootstrap.Toast(toastElement, { delay: 3000 });
-        bsToast.show();
-        toastElement.addEventListener('hidden.bs.toast', () => {
-            toastElement.remove();
-        });
+        const el = document.getElementById(id);
+        new bootstrap.Toast(el, { delay: 2500 }).show();
+        el.addEventListener('hidden.bs.toast', () => el.remove());
     }
 
-    function copyToClipboard(textToCopy, buttonElement) {
-        if (!navigator.clipboard) {
-            showToast('متصفحك لا يدعم النسخ التلقائي', 'danger');
-            return;
-        }
-
-        navigator.clipboard.writeText(textToCopy)
-            .then(() => {
-                const originalHTML = buttonElement.innerHTML;
-                buttonElement.classList.add('copied');
-                buttonElement.innerHTML = '<i class="fas fa-check"></i> <span class="d-none d-lg-inline">تم النسخ</span>';
-                showToast('تم نسخ الرابط بنجاح!', 'success');
-
-                setTimeout(() => {
-                    buttonElement.classList.remove('copied');
-                    buttonElement.innerHTML = originalHTML;
-                }, 2000);
-            })
-            .catch(err => {
-                showToast('فشل النسخ: ' + err.message, 'danger');
-            });
+    function copyLink(url, btn) {
+        navigator.clipboard.writeText(url).then(() => {
+            const orig = btn.innerHTML;
+            btn.classList.add('copied');
+            btn.innerHTML = '<i class="fas fa-check"></i> <span class="d-none d-xl-inline">تم</span>';
+            showMsg('تم النسخ بنجاح', 'success');
+            setTimeout(() => {
+                btn.classList.remove('copied');
+                btn.innerHTML = orig;
+            }, 1500);
+        }).catch(() => showMsg('فشل النسخ', 'danger'));
     }
 
-    function shareSafetyCheckForm(vehicleId, plateNumber, vehicleType) {
-        const url = `${window.location.origin}/external-safety/external-safety-check/${vehicleId}`;
-        const shareData = {
-            title: `فحص السلامة - ${plateNumber}`,
-            text: `نموذج فحص السلامة للمركبة ${vehicleType} - ${plateNumber}`,
-            url: url
-        };
-
+    function shareForm(id, plate, type) {
+        const url = `${window.location.origin}/external-safety/external-safety-check/${id}`;
         if (navigator.share) {
-            navigator.share(shareData)
-                .then(() => showToast('تمت المشاركة بنجاح', 'success'))
-                .catch(err => {
-                    if (err.name !== 'AbortError') {
-                        copyToClipboard(url, event.target);
-                    }
-                });
+            navigator.share({
+                title: `فحص السلامة - ${plate}`,
+                text: `نموذج فحص ${type} - ${plate}`,
+                url: url
+            }).then(() => showMsg('تمت المشاركة', 'success'))
+            .catch(() => {});
         } else {
-            copyToClipboard(url, event.target);
+            copyLink(url, event.target);
         }
     }
 
-    function sendSafetyCheckEmail(button, vehicleId, plateNumber, vehicleType) {
-        const driver = allDriversDataWithEmil[vehicleId];
-        
+    function sendEmail(btn, id, plate, type) {
+        const driver = driversWithEmail[id];
         if (!driver || !driver.email || driver.email === 'لايوجد') {
-            showToast('لا يوجد بريد إلكتروني مسجل للسائق', 'danger');
+            showMsg('لا يوجد بريد للسائق', 'danger');
             return;
         }
 
-        button.disabled = true;
-        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
 
         fetch('/external-safety/send-safety-check-email', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ vehicle_id: vehicleId })
+            body: JSON.stringify({ vehicle_id: id })
         })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                showToast(data.message, 'success');
-            } else {
-                showToast(data.message || 'فشل الإرسال', 'danger');
-            }
-        })
-        .catch(error => {
-            showToast('حدث خطأ أثناء الإرسال', 'danger');
-        })
+        .then(r => r.json())
+        .then(d => showMsg(d.message || (d.success ? 'تم الإرسال' : 'فشل'), d.success ? 'success' : 'danger'))
+        .catch(() => showMsg('خطأ في الإرسال', 'danger'))
         .finally(() => {
-            button.disabled = false;
-            button.innerHTML = '<i class="fas fa-envelope"></i>';
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-envelope"></i>';
         });
     }
 
-    function sendSafetyCheckWhatsApp(button, vehicleId, plateNumber, vehicleType) {
-        const driver = allDriversData[vehicleId];
-        
+    function sendWhatsApp(btn, id, plate, type) {
+        const driver = driversData[id];
         if (!driver || !driver.mobile || driver.mobile === 'لايوجد') {
-            showToast('لا يوجد رقم جوال مسجل للسائق', 'danger');
+            showMsg('لا يوجد جوال للسائق', 'danger');
             return;
         }
 
-        const url = `${window.location.origin}/external-safety/external-safety-check/${vehicleId}`;
-        const message = `السلام عليكم،\n\nالرجاء تعبئة نموذج فحص السلامة للمركبة:\n${vehicleType} - ${plateNumber}\n\nالرابط:\n${url}`;
-        const whatsappUrl = `https://wa.me/${driver.mobile.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(message)}`;
-        
-        window.open(whatsappUrl, '_blank');
-        showToast('تم فتح واتساب', 'success');
+        const url = `${window.location.origin}/external-safety/external-safety-check/${id}`;
+        const msg = `السلام عليكم\n\nالرجاء تعبئة نموذج فحص السلامة:\n${type} - ${plate}\n\n${url}`;
+        window.open(`https://wa.me/${driver.mobile.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(msg)}`, '_blank');
+        showMsg('تم فتح واتساب', 'success');
     }
 </script>
 {% endblock %}
