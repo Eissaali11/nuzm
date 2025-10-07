@@ -2416,9 +2416,9 @@ def create_handover_mobile(vehicle_id):
             handover_date = datetime.strptime(handover_date_str, '%Y-%m-%d').date() if handover_date_str else date.today()
             handover_time = datetime.strptime(handover_time_str, '%H:%M').time() if handover_time_str else None
 
-            saved_diagram_path = save_base64_image(request.form.get('damage_diagram_data'), 'diagrams')
-            saved_supervisor_sig_path = save_base64_image(request.form.get('supervisor_signature_data'), 'signatures')
-            saved_driver_sig_path = save_base64_image(request.form.get('driver_signature_data'), 'signatures')
+            saved_diagram_path = save_base64_image(request.form.get('damage_diagram_data'), 'diagrams') or None
+            saved_supervisor_sig_path = save_base64_image(request.form.get('supervisor_signature_data'), 'signatures') or None
+            saved_driver_sig_path = save_base64_image(request.form.get('driver_signature_data'), 'signatures') or None
             movement_officer_signature_path = save_base64_image(request.form.get('movement_officer_signature_data'), 'signatures') # تصحيح الاسم هنا
             custom_logo_file = request.files.get('custom_logo_file')
             saved_custom_logo_path = save_uploaded_file(custom_logo_file, 'logos')

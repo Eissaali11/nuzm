@@ -18,7 +18,7 @@ def generate_handover_report_pdf_weasyprint(handover):
         # Helper function to convert image file to base64
         def image_to_base64(file_path):
             """Convert image file to base64 data URL"""
-            if not file_path:
+            if not file_path or file_path == 'None' or file_path == 'null':
                 return None
             
             # Try multiple possible locations for the image
