@@ -171,9 +171,10 @@
                 {% for image in before_images %}
                 <div class="image-item">
                     <div class="image-container">
-                        <img src="/static/{{ image.image_path }}" 
+                        <img src="/{{ image.image_path }}" 
                              alt="صورة قبل الإصلاح" 
-                             onclick="showImageModal('/static/{{ image.image_path }}', '{{ image.notes or 'صورة قبل الإصلاح' }}')">
+                             onerror="this.src='/static/{{ image.image_path }}'"
+                             onclick="showImageModal('/{{ image.image_path }}', '{{ image.notes or 'صورة قبل الإصلاح' }}')">
                         <div class="image-overlay">
                             <i class="fas fa-search-plus"></i>
                         </div>
@@ -197,9 +198,10 @@
                 {% for image in after_images %}
                 <div class="image-item">
                     <div class="image-container">
-                        <img src="/static/{{ image.image_path }}" 
+                        <img src="/{{ image.image_path }}" 
                              alt="صورة بعد الإصلاح" 
-                             onclick="showImageModal('/static/{{ image.image_path }}', '{{ image.notes or 'صورة بعد الإصلاح' }}')">
+                             onerror="this.src='/static/{{ image.image_path }}'"
+                             onclick="showImageModal('/{{ image.image_path }}', '{{ image.notes or 'صورة بعد الإصلاح' }}')">
                         <div class="image-overlay">
                             <i class="fas fa-search-plus"></i>
                         </div>
