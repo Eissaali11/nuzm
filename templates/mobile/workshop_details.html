@@ -361,20 +361,28 @@ function showImageModal(imageSrc, imageTitle) {
 // مشاركة تفاصيل الورشة مع الصور المنظمة
 async function shareWorkshopDetails() {
     try {
-        // جمع معلومات الصور
+        // جمع معلومات الصور من valid_images
+        const allImagePaths = [];
         const beforeImages = [];
         const afterImages = [];
         
-        {% if workshop_record.images %}
-        {% for image in workshop_record.images %}
+        {% if workshop_record.valid_images %}
+        {% for image in workshop_record.valid_images %}
+        {% set img_path = '/' + image.image_path if not image.image_path.startswith('/') else image.image_path %}
+        allImagePaths.push({
+            url: '{{ img_path }}',
+            type: '{{ image.image_type }}',
+            notes: '{{ image.notes or "" }}'
+        });
+        
         {% if image.image_type == 'before' %}
         beforeImages.push({
-            path: '{{ image.image_path }}',
+            path: '{{ img_path }}',
             notes: '{{ image.notes or "" }}'
         });
         {% elif image.image_type == 'after' %}
         afterImages.push({
-            path: '{{ image.image_path }}',
+            path: '{{ img_path }}',
             notes: '{{ image.notes or "" }}'
         });
         {% endif %}
@@ -509,15 +517,63 @@ ${workshopData.notes}`;
 🕒 وقت التقرير: ${new Date().toLocaleTimeString('ar-SA')}
 🏢 نُظم - نظام إدارة المركبات`;
 
-        // محاولة المشاركة
+        // تحميل الصور كملفات للمشاركة
+        const imageFiles = [];
+        
+        if (allImagePaths.length > 0) {
+            showSuccessToast('جاري تحميل الصور...');
+            
+            for (let i = 0; i < allImagePaths.length; i++) {
+                try {
+                    const imgData = allImagePaths[i];
+                    const response = await fetch(imgData.url);
+                    
+                    if (response.ok) {
+                        const blob = await response.blob();
+                        
+                        // استخراج اسم الملف من المسار
+                        const urlParts = imgData.url.split('/');
+                        const originalFilename = urlParts[urlParts.length - 1];
+                        
+                        // إنشاء اسم ملف وصفي
+                        let typeLabel = '';
+                        if (imgData.type === 'before') typeLabel = 'قبل';
+                        else if (imgData.type === 'after') typeLabel = 'بعد';
+                        else if (imgData.type === 'pickup') typeLabel = 'استلام';
+                        else if (imgData.type === 'delivery') typeLabel = 'تسليم';
+                        else if (imgData.type === 'notes') typeLabel = 'ملاحظات';
+                        
+                        const filename = typeLabel ? `${workshopData.plateNumber}_${typeLabel}_${i + 1}.jpg` : originalFilename;
+                        
+                        const file = new File([blob], filename, { 
+                            type: blob.type || 'image/jpeg'
+                        });
+                        
+                        imageFiles.push(file);
+                    }
+                } catch (err) {
+                    console.log('تعذر تحميل الصورة:', imgData.url, err);
+                }
+            }
+        }
+
+        // محاولة المشاركة مع الصور
         if (navigator.share) {
-            await navigator.share({
+            const shareData = {
                 title: `تقرير سجل الورشة - ${workshopData.plateNumber}`,
                 text: shareText
-            });
+            };
+            
+            // إضافة الصور إذا كان المتصفح يدعم مشاركة الملفات
+            if (imageFiles.length > 0 && navigator.canShare && navigator.canShare({ files: imageFiles })) {
+                shareData.files = imageFiles;
+                showSuccessToast(`سيتم مشاركة ${imageFiles.length} صورة مع التقرير`);
+            }
+            
+            await navigator.share(shareData);
             
             // عرض رسالة نجاح
-            showSuccessToast('تم مشاركة التقرير بنجاح');
+            showSuccessToast('تم مشاركة التقرير بنجاح ✓');
             
         } else {
             fallbackShare(shareText);
