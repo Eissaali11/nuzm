@@ -346,7 +346,7 @@
         <div style="background-color: #065c5c; color: white; font-weight: bold; padding: 4px; font-size: 8pt;">
           رقم الشركة<br><span style="font-weight: normal;">Company No.</span>
         </div>
-        <div style="padding: 6px; font-weight: bold;">{{ handover.id or 'N/A' }}</div>
+        <div style="padding: 6px; font-weight: bold;">{{ handover.driver_company_id or 'N/A' }}</div>
       </td>
 
       <!-- خلية: رقم الهاتف -->
@@ -362,7 +362,7 @@
         <div style="background-color: #065c5c; color: white; font-weight: bold; padding: 4px; font-size: 8pt;">
           حالة المركبة<br><span style="font-weight: normal;">Status</span>
         </div>
-        <div style="padding: 6px; font-weight: bold;">{{ handover.vehicle_status or 'N/A' }}</div>
+        <div style="padding: 6px; font-weight: bold;">{{ handover.vehicle_status_summary or 'N/A' }}</div>
       </td>
 
    
