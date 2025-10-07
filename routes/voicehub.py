@@ -487,7 +487,7 @@ def employee_inquiry():
             employee = Employee.query.filter(
                 db.or_(
                     Employee.national_id == employee_id,
-                    Employee.employee_number == employee_id
+                    Employee.employee_id == employee_id
                 )
             ).first()
         
@@ -509,7 +509,7 @@ def employee_inquiry():
             'success': True,
             'employee': {
                 'name': employee.name,
-                'employee_number': employee.employee_number,
+                'employee_id': employee.employee_id,
                 'national_id': employee.national_id
             }
         }
