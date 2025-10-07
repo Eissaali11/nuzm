@@ -437,21 +437,33 @@ def employee_inquiry():
         return jsonify({'error': 'Unauthorized', 'message': 'مفتاح API غير صحيح'}), 401
     
     try:
+        # Log request details for debugging
+        logger.info(f"Request method: {request.method}")
+        logger.info(f"Content-Type: {request.content_type}")
+        logger.info(f"Request data: {request.data}")
+        logger.info(f"Request form: {request.form}")
+        logger.info(f"Request is_json: {request.is_json}")
+        
         # محاولة قراءة البيانات من JSON أو form data
+        data = {}
         if request.is_json:
             data = request.json
+            logger.info(f"Data from JSON: {data}")
         elif request.form:
             data = request.form.to_dict()
+            logger.info(f"Data from form: {data}")
         else:
             # محاولة قراءة JSON حتى لو لم يكن Content-Type صحيح
             try:
                 data = request.get_json(force=True)
-            except:
+                logger.info(f"Data from force JSON: {data}")
+            except Exception as e:
+                logger.error(f"Failed to parse JSON: {e}")
                 data = {}
         
-        employee_name = data.get('employee_name', '').strip()
-        employee_id = data.get('employee_id', '').strip()
-        service_type = data.get('service_type', '').strip()
+        employee_name = data.get('employee_name', '').strip() if data else ''
+        employee_id = data.get('employee_id', '').strip() if data else ''
+        service_type = data.get('service_type', '').strip() if data else ''
         
         logger.info(f"Employee inquiry: name={employee_name}, id={employee_id}, service={service_type}")
         
