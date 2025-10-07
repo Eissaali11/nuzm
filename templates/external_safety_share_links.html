@@ -661,7 +661,7 @@
     }
 
     function shareSafetyCheckForm(vehicleId, plateNumber, vehicleType) {
-        const url = `{{ url_for('external_safety.external_safety_check_form', vehicle_id='VEHICLE_ID', _external=True) }}`.replace('VEHICLE_ID', vehicleId);
+        const url = `${window.location.origin}/external-safety/external-safety-check/${vehicleId}`;
         const shareData = {
             title: `فحص السلامة - ${plateNumber}`,
             text: `نموذج فحص السلامة للمركبة ${vehicleType} - ${plateNumber}`,
@@ -692,7 +692,7 @@
         button.disabled = true;
         button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
 
-        fetch(`{{ url_for('external_safety.send_safety_check_email') }}`, {
+        fetch('/external-safety/send-safety-check-email', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ vehicle_id: vehicleId })
@@ -722,7 +722,7 @@
             return;
         }
 
-        const url = `{{ url_for('external_safety.external_safety_check_form', vehicle_id='VEHICLE_ID', _external=True) }}`.replace('VEHICLE_ID', vehicleId);
+        const url = `${window.location.origin}/external-safety/external-safety-check/${vehicleId}`;
         const message = `السلام عليكم،\n\nالرجاء تعبئة نموذج فحص السلامة للمركبة:\n${vehicleType} - ${plateNumber}\n\nالرابط:\n${url}`;
         const whatsappUrl = `https://wa.me/${driver.mobile.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(message)}`;
         
