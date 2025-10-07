@@ -444,34 +444,33 @@ def employee_inquiry():
         logger.info(f"Request form: {request.form}")
         logger.info(f"Request is_json: {request.is_json}")
         
-        # محاولة قراءة البيانات من مصادر متعددة
+        # محاولة قراءة البيانات من مصادر متعددة بالترتيب الصحيح
         data = {}
         
-        # 1. محاولة قراءة من query parameters (GET)
-        if request.args:
+        # 1. أولوية للـ JSON body إذا كان موجود وليس فارغ
+        if request.is_json:
+            try:
+                json_data = request.get_json(silent=True, force=True)
+                if json_data and any(json_data.values()):  # تحقق من أن JSON ليس فارغ
+                    data = json_data
+                    logger.info(f"Data from JSON: {data}")
+            except:
+                pass
+        
+        # 2. إذا لم يوجد JSON، حاول query parameters
+        if not data and request.args:
             data = request.args.to_dict()
             logger.info(f"Data from query params: {data}")
         
-        # 2. محاولة قراءة من JSON body
-        elif request.is_json and request.json:
-            data = request.json
-            logger.info(f"Data from JSON: {data}")
-        
-        # 3. محاولة قراءة من form data
-        elif request.form:
+        # 3. إذا لم يوجد، حاول form data
+        if not data and request.form:
             data = request.form.to_dict()
             logger.info(f"Data from form: {data}")
         
-        # 4. محاولة قراءة JSON حتى لو لم يكن Content-Type صحيح
-        else:
-            try:
-                data = request.get_json(force=True) or {}
-                logger.info(f"Data from force JSON: {data}")
-            except Exception as e:
-                logger.error(f"Failed to parse JSON: {e}")
-                # محاولة أخيرة من request.values (يجمع كل المصادر)
-                data = request.values.to_dict()
-                logger.info(f"Data from request.values: {data}")
+        # 4. آخر محاولة من request.values
+        if not data:
+            data = request.values.to_dict()
+            logger.info(f"Data from request.values: {data}")
         
         employee_name = data.get('employee_name', '').strip() if data else ''
         employee_id = data.get('employee_id', '').strip() if data else ''
