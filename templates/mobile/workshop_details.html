@@ -150,16 +150,16 @@
     {% endif %}
 
     <!-- الصور المرفقة - تصميم محسن -->
-    {% if workshop_record.images %}
+    {% if workshop_record.valid_images %}
     <div class="images-section">
         <div class="section-header">
             <i class="fas fa-camera"></i>
-            <span>الصور الموثقة ({{ workshop_record.images|length }})</span>
+            <span>الصور الموثقة ({{ workshop_record.valid_images|length }})</span>
         </div>
         
         <!-- فصل الصور حسب النوع -->
-        {% set before_images = workshop_record.images|selectattr("image_type", "equalto", "before")|list %}
-        {% set after_images = workshop_record.images|selectattr("image_type", "equalto", "after")|list %}
+        {% set before_images = workshop_record.valid_images|selectattr("image_type", "equalto", "before")|list %}
+        {% set after_images = workshop_record.valid_images|selectattr("image_type", "equalto", "after")|list %}
         
         {% if before_images %}
         <div class="image-category">
@@ -171,10 +171,11 @@
                 {% for image in before_images %}
                 <div class="image-item">
                     <div class="image-container">
-                        <img src="/{{ image.image_path }}" 
+                        {% set img_path = '/' + image.image_path if not image.image_path.startswith('/') else image.image_path %}
+                        <img src="{{ img_path }}" 
                              alt="صورة قبل الإصلاح" 
-                             onerror="this.src='/static/{{ image.image_path }}'"
-                             onclick="showImageModal('/{{ image.image_path }}', '{{ image.notes or 'صورة قبل الإصلاح' }}')">
+                             onerror="this.onerror=null; this.src='/static/images/image-not-found.svg';"
+                             onclick="showImageModal('{{ img_path }}', '{{ image.notes or 'صورة قبل الإصلاح' }}')">
                         <div class="image-overlay">
                             <i class="fas fa-search-plus"></i>
                         </div>
@@ -198,10 +199,11 @@
                 {% for image in after_images %}
                 <div class="image-item">
                     <div class="image-container">
-                        <img src="/{{ image.image_path }}" 
+                        {% set img_path = '/' + image.image_path if not image.image_path.startswith('/') else image.image_path %}
+                        <img src="{{ img_path }}" 
                              alt="صورة بعد الإصلاح" 
-                             onerror="this.src='/static/{{ image.image_path }}'"
-                             onclick="showImageModal('/{{ image.image_path }}', '{{ image.notes or 'صورة بعد الإصلاح' }}')">
+                             onerror="this.onerror=null; this.src='/static/images/image-not-found.svg';"
+                             onclick="showImageModal('{{ img_path }}', '{{ image.notes or 'صورة بعد الإصلاح' }}')">
                         <div class="image-overlay">
                             <i class="fas fa-search-plus"></i>
                         </div>
