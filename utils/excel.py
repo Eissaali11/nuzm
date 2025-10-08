@@ -411,14 +411,15 @@ def generate_employee_excel(employees, output=None):
         # ===== ورقة البيانات الكاملة =====
         full_data_sheet = workbook.create_sheet(title="Complete Data")
         
-        # جميع البيانات
+        # جميع البيانات بالترتيب المطلوب
         all_headers = [
-            'الاسم الكامل', 'رقم الموظف', 'رقم الهوية الوطنية', 'رقم الجوال',
-            'الجوال الشخصي', 'المسمى الوظيفي', 'الحالة الوظيفية', 'الموقع',
-            'المشروع', 'البريد الإلكتروني', 'الأقسام', 'تاريخ الانضمام', 'تاريخ الميلاد',
-            'الجنسية', 'نوع الموظف', 'نوع العقد', 'الراتب الأساسي', 'حالة العقد', 
-            'حالة الرخصة', 'نوع الجوال', 'رقم IMEI', 'حالة الكفالة', 'اسم الكفيل',
-            'رقم الإيبان', 'تفاصيل السكن', 'رابط موقع السكن', 'مقاس البنطلون', 'مقاس التيشرت'
+            'الاسم الكامل', 'رقم الهوية الوطنية', 'رقم الموظف', 'الجنسية',
+            'الجوال الشخصي', 'مقاس البنطلون', 'مقاس التيشرت', 'المسمى الوظيفي',
+            'الحالة الوظيفية', 'نوع الجوال', 'رقم IMEI', 'رقم الجوال',
+            'السيارة الحاليه', 'الموقع', 'المشروع', 'البريد الإلكتروني',
+            'الأقسام', 'تاريخ الانضمام', 'تاريخ الميلاد', 'نوع الموظف',
+            'نوع العقد', 'الراتب الأساسي', 'حالة العقد', 'حالة الرخصة',
+            'حالة الكفالة', 'اسم الكفيل', 'رقم الإيبان', 'تفاصيل السكن', 'رابط موقع السكن'
         ]
         
         for col_idx, header in enumerate(all_headers, start=1):
@@ -430,35 +431,49 @@ def generate_employee_excel(employees, output=None):
             cell.border = border
         
         for row_idx, employee in enumerate(employees, start=2):
+            # جلب السيارة الحالية (المسلمة للموظف)
+            current_vehicle = ""
+            try:
+                from models import VehicleHandover
+                active_handover = VehicleHandover.query.filter_by(
+                    employee_id=employee.id,
+                    status='مستلمة'
+                ).first()
+                if active_handover and active_handover.vehicle:
+                    current_vehicle = f"{active_handover.vehicle.plate_number}"
+            except:
+                pass
+            
             all_data = [
-                employee.name,
-                employee.employee_id,
-                employee.national_id or "",
-                employee.mobile or "",
-                getattr(employee, 'mobilePersonal', '') or '',
-                employee.job_title or "",
-                employee.status or "",
-                employee.location or "",
-                employee.project or "",
-                employee.email or "",
-                ', '.join([dept.name for dept in employee.departments]) if employee.departments else "",
-                employee.join_date.strftime('%Y-%m-%d') if employee.join_date else "",
-                employee.birth_date.strftime('%Y-%m-%d') if employee.birth_date else "",
-                employee.nationality_rel.name_ar if hasattr(employee, 'nationality_rel') and employee.nationality_rel else (employee.nationality if hasattr(employee, 'nationality') else ""),
-                getattr(employee, 'employee_type', '') or '',
-                getattr(employee, 'contract_type', '') or '',
-                str(getattr(employee, 'basic_salary', '') or ''),
-                getattr(employee, 'contract_status', '') or '',
-                getattr(employee, 'license_status', '') or '',
-                getattr(employee, 'mobile_type', '') or '',
-                getattr(employee, 'mobile_imei', '') or '',
-                getattr(employee, 'sponsorship_status', '') or '',
-                getattr(employee, 'current_sponsor_name', '') or '',
-                getattr(employee, 'bank_iban', '') or '',
-                getattr(employee, 'residence_details', '') or '',
-                getattr(employee, 'residence_location_url', '') or '',
-                getattr(employee, 'pants_size', '') or '',
-                getattr(employee, 'shirt_size', '') or ''
+                employee.name,  # 1. الاسم الكامل
+                employee.national_id or "",  # 2. رقم الهوية الوطنية
+                employee.employee_id,  # 3. رقم الموظف
+                employee.nationality_rel.name_ar if hasattr(employee, 'nationality_rel') and employee.nationality_rel else (employee.nationality if hasattr(employee, 'nationality') else ""),  # 4. الجنسية
+                getattr(employee, 'mobilePersonal', '') or '',  # 5. الجوال الشخصي
+                getattr(employee, 'pants_size', '') or '',  # 6. مقاس البنطلون
+                getattr(employee, 'shirt_size', '') or '',  # 7. مقاس التيشرت
+                employee.job_title or "",  # 8. المسمى الوظيفي
+                employee.status or "",  # 9. الحالة الوظيفية
+                getattr(employee, 'mobile_type', '') or '',  # 10. نوع الجوال
+                getattr(employee, 'mobile_imei', '') or '',  # 11. رقم IMEI
+                employee.mobile or "",  # 12. رقم الجوال (العمل)
+                current_vehicle,  # 13. السيارة الحالية
+                employee.location or "",  # 14. الموقع
+                employee.project or "",  # 15. المشروع
+                employee.email or "",  # 16. البريد الإلكتروني
+                ', '.join([dept.name for dept in employee.departments]) if employee.departments else "",  # 17. الأقسام
+                employee.join_date.strftime('%Y-%m-%d') if employee.join_date else "",  # 18. تاريخ الانضمام
+                employee.birth_date.strftime('%Y-%m-%d') if employee.birth_date else "",  # 19. تاريخ الميلاد
+                getattr(employee, 'employee_type', '') or '',  # 20. نوع الموظف
+                getattr(employee, 'contract_type', '') or '',  # 21. نوع العقد
+                str(getattr(employee, 'basic_salary', '') or ''),  # 22. الراتب الأساسي
+                getattr(employee, 'contract_status', '') or '',  # 23. حالة العقد
+                getattr(employee, 'license_status', '') or '',  # 24. حالة الرخصة
+                getattr(employee, 'sponsorship_status', '') or '',  # 25. حالة الكفالة
+                getattr(employee, 'current_sponsor_name', '') or '',  # 26. اسم الكفيل
+                getattr(employee, 'bank_iban', '') or '',  # 27. رقم الإيبان
+                getattr(employee, 'residence_details', '') or '',  # 28. تفاصيل السكن
+                getattr(employee, 'residence_location_url', '') or ''  # 29. رابط موقع السكن
             ]
             
             for col_idx, value in enumerate(all_data, start=1):
