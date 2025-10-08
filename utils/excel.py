@@ -435,12 +435,15 @@ def generate_employee_excel(employees, output=None):
             current_vehicle = ""
             try:
                 from models import VehicleHandover
-                active_handover = VehicleHandover.query.filter_by(
-                    employee_id=employee.id,
-                    status='مستلمة'
-                ).first()
-                if active_handover and active_handover.vehicle:
-                    current_vehicle = f"{active_handover.vehicle.plate_number}"
+                # البحث عن آخر سجل تسليم (delivery) للموظف
+                latest_delivery = VehicleHandover.query.filter_by(
+                    employee_id=employee.id
+                ).filter(
+                    VehicleHandover.handover_type.in_(['delivery', 'تسليم', 'handover'])
+                ).order_by(VehicleHandover.handover_date.desc()).first()
+                
+                if latest_delivery and latest_delivery.vehicle:
+                    current_vehicle = f"{latest_delivery.vehicle.plate_number}"
             except:
                 pass
             
