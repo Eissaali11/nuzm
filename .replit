@@ -49,16 +49,16 @@ localPort = 36735
 externalPort = 3001
 
 [[ports]]
-localPort = 37419
-externalPort = 4200
-
-[[ports]]
 localPort = 39567
 externalPort = 3003
 
 [[ports]]
 localPort = 40487
 externalPort = 3000
+
+[[ports]]
+localPort = 46481
+externalPort = 4200
 
 [agent]
 integrations = ["python_sendgrid==1.0.0", "python_openai==1.0.0"]

@@ -464,7 +464,7 @@ def generate_employee_excel(employees, output=None):
                     if active_assignment.device_id:
                         device = MobileDevice.query.get(active_assignment.device_id)
                         if device:
-                            mobile_type = f"{device.brand or ''} {device.model or ''}".strip()
+                            mobile_type = f"{device.device_brand or ''} {device.device_model or ''}".strip()
                             mobile_imei = device.imei or ""
                     
                     # جلب رقم الهاتف من SIM Card
@@ -472,7 +472,8 @@ def generate_employee_excel(employees, output=None):
                         sim = SimCard.query.get(active_assignment.sim_card_id)
                         if sim:
                             mobile_number = sim.phone_number or ""
-            except:
+            except Exception as e:
+                print(f"خطأ في جلب بيانات الجهاز للموظف {employee.id}: {str(e)}")
                 pass
             
             all_data = [
