@@ -1714,8 +1714,8 @@ class DeviceAssignment(db.Model):
     # العلاقات
     employee = db.relationship('Employee', backref='device_assignments', lazy=True)
     department = db.relationship('Department', backref='dept_device_assignments', lazy=True)
-    device = db.relationship('MobileDevice', backref='assignments', lazy=True)
-    sim_card = db.relationship('SimCard', backref='assignments', lazy=True)
+    device = db.relationship('MobileDevice', backref='assignments', lazy=True, foreign_keys=[device_id])
+    sim_card = db.relationship('SimCard', backref='assignments', lazy=True, foreign_keys=[sim_card_id])
     assigned_by_user = db.relationship('User', backref='assigned_devices', lazy=True)
     
     @property
