@@ -431,7 +431,7 @@ def generate_employee_excel(employees, output=None):
             cell.border = border
         
         for row_idx, employee in enumerate(employees, start=2):
-            # جلب السيارة الحالية (المسلمة للموظف)
+            # جلب السيارة الحالية (المسلمة للموظف) من نظام إدارة السيارات
             current_vehicle = ""
             try:
                 from models import VehicleHandover
@@ -447,6 +447,34 @@ def generate_employee_excel(employees, output=None):
             except:
                 pass
             
+            # جلب بيانات الجهاز المحمول من نظام إدارة الأجهزة المحمولة
+            mobile_type = ""
+            mobile_imei = ""
+            mobile_number = ""
+            try:
+                from models import DeviceAssignment, MobileDevice, SimCard
+                # البحث عن التعيين النشط للموظف
+                active_assignment = DeviceAssignment.query.filter_by(
+                    employee_id=employee.id,
+                    is_active=True
+                ).first()
+                
+                if active_assignment:
+                    # جلب معلومات الجهاز
+                    if active_assignment.device_id:
+                        device = MobileDevice.query.get(active_assignment.device_id)
+                        if device:
+                            mobile_type = f"{device.brand or ''} {device.model or ''}".strip()
+                            mobile_imei = device.imei or ""
+                    
+                    # جلب رقم الهاتف من SIM Card
+                    if active_assignment.sim_card_id:
+                        sim = SimCard.query.get(active_assignment.sim_card_id)
+                        if sim:
+                            mobile_number = sim.phone_number or ""
+            except:
+                pass
+            
             all_data = [
                 employee.name,  # 1. الاسم الكامل
                 employee.national_id or "",  # 2. رقم الهوية الوطنية
@@ -457,10 +485,10 @@ def generate_employee_excel(employees, output=None):
                 getattr(employee, 'shirt_size', '') or '',  # 7. مقاس التيشرت
                 employee.job_title or "",  # 8. المسمى الوظيفي
                 employee.status or "",  # 9. الحالة الوظيفية
-                getattr(employee, 'mobile_type', '') or '',  # 10. نوع الجوال
-                getattr(employee, 'mobile_imei', '') or '',  # 11. رقم IMEI
-                employee.mobile or "",  # 12. رقم الجوال (العمل)
-                current_vehicle,  # 13. السيارة الحالية
+                mobile_type,  # 10. نوع الجوال (من نظام إدارة الأجهزة)
+                mobile_imei,  # 11. رقم IMEI (من نظام إدارة الأجهزة)
+                mobile_number,  # 12. رقم الجوال (من نظام إدارة الأجهزة)
+                current_vehicle,  # 13. السيارة الحالية (من نظام إدارة السيارات)
                 employee.location or "",  # 14. الموقع
                 employee.project or "",  # 15. المشروع
                 employee.email or "",  # 16. البريد الإلكتروني
