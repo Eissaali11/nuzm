@@ -609,13 +609,32 @@ def edit(id):
         MobileDevice.employee_id.is_(None)  # غير مربوطة بموظف
     ).order_by(MobileDevice.imei).all()
     
+    # جلب بيانات الجهاز و SIM المربوط بالموظف من DeviceAssignment
+    from models import DeviceAssignment
+    active_assignment = DeviceAssignment.query.filter_by(
+        employee_id=employee.id,
+        is_active=True
+    ).first()
+    
+    # بيانات الجهاز و SIM المربوط (سيتم عرضها في الصفحة)
+    assigned_device = None
+    assigned_sim = None
+    
+    if active_assignment:
+        if active_assignment.device:
+            assigned_device = active_assignment.device
+        if active_assignment.sim_card:
+            assigned_sim = active_assignment.sim_card
+    
     print(f"Passing {len(all_nationalities)} nationalities to the template.")
     return render_template('employees/edit.html', 
                          employee=employee, 
                          nationalities=all_nationalities, 
                          departments=all_departments,
                          available_phone_numbers=available_phone_numbers,
-                         available_imei_numbers=available_imei_numbers)
+                         available_imei_numbers=available_imei_numbers,
+                         assigned_device=assigned_device,
+                         assigned_sim=assigned_sim)
 
 
 

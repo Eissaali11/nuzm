@@ -44,7 +44,7 @@
                                 <!-- حقل البحث -->
                                 <input type="text" class="form-control" id="mobile_search" 
                                        placeholder="ابحث عن رقم الجوال أو اكتب رقم جديد..." 
-                                       value="{{ employee.mobile or '' }}"
+                                       value="{{ assigned_sim.phone_number if assigned_sim else (employee.mobile or '') }}"
                                        autocomplete="off">
                                 
                                 <!-- القائمة المخفية للأرقام المتاحة -->
@@ -64,8 +64,14 @@
                                 </div>
                                 
                                 <!-- الحقل المخفي لحفظ القيمة -->
-                                <input type="hidden" id="mobile" name="mobile" value="{{ employee.mobile or '' }}" required>
+                                <input type="hidden" id="mobile" name="mobile" value="{{ assigned_sim.phone_number if assigned_sim else (employee.mobile or '') }}" required>
                             </div>
+                            {% if assigned_sim %}
+                            <div class="form-text text-success">
+                                <i class="fas fa-link"></i> مربوط من نظام تعيين الأجهزة
+                                {% if assigned_sim.carrier %} - {{ assigned_sim.carrier }}{% endif %}
+                            </div>
+                            {% endif %}
                         </div>
                     </div>
                     <div class="col-md-3">
@@ -165,19 +171,32 @@
                                     <div class="col-md-6">
                                         <div class="form-group mb-3">
                                             <div class="form-check">
-                                                <input class="form-check-input" type="checkbox" id="has_mobile_custody" name="has_mobile_custody" onchange="toggleMobileFields()" {% if employee.has_mobile_custody %}checked{% endif %}>
+                                                <input class="form-check-input" type="checkbox" id="has_mobile_custody" name="has_mobile_custody" onchange="toggleMobileFields()" {% if employee.has_mobile_custody or assigned_device %}checked{% endif %}>
                                                 <label class="form-check-label" for="has_mobile_custody">
                                                     عهدة جوال
                                                 </label>
                                             </div>
+                                            {% if assigned_device %}
+                                            <div class="form-text text-success mt-2">
+                                                <i class="fas fa-check-circle"></i> تم الربط من نظام تعيين الأجهزة
+                                            </div>
+                                            {% endif %}
                                         </div>
                                     </div>
                                 </div>
-                                <div class="row" id="mobile-fields" style="display: {% if employee.has_mobile_custody %}block{% else %}none{% endif %};">
+                                <div class="row" id="mobile-fields" style="display: {% if employee.has_mobile_custody or assigned_device %}block{% else %}none{% endif %};">
                                     <div class="col-md-6">
                                         <div class="form-group mb-3">
                                             <label for="mobile_type" class="form-label">نوع الجوال</label>
-                                            <input type="text" class="form-control" id="mobile_type" name="mobile_type" value="{{ employee.mobile_type or '' }}" placeholder="مثال: iPhone 15, Samsung Galaxy S24">
+                                            <input type="text" class="form-control" id="mobile_type" name="mobile_type" 
+                                                   value="{% if assigned_device %}{{ assigned_device.brand }} {{ assigned_device.model }}{% else %}{{ employee.mobile_type or '' }}{% endif %}" 
+                                                   placeholder="مثال: iPhone 15, Samsung Galaxy S24"
+                                                   {% if assigned_device %}readonly{% endif %}>
+                                            {% if assigned_device %}
+                                            <div class="form-text text-success">
+                                                <i class="fas fa-link"></i> مربوط من نظام تعيين الأجهزة
+                                            </div>
+                                            {% endif %}
                                         </div>
                                     </div>
                                     <div class="col-md-6">
@@ -187,9 +206,11 @@
                                                 <!-- حقل البحث -->
                                                 <input type="text" class="form-control" id="imei_search" 
                                                        placeholder="ابحث عن رقم IMEI أو اكتب رقم جديد..." 
-                                                       value="{{ employee.mobile_imei or '' }}"
-                                                       autocomplete="off" maxlength="15">
+                                                       value="{% if assigned_device %}{{ assigned_device.imei }}{% else %}{{ employee.mobile_imei or '' }}{% endif %}"
+                                                       autocomplete="off" maxlength="15"
+                                                       {% if assigned_device %}readonly{% endif %}>
                                                 
+                                                {% if not assigned_device %}
                                                 <!-- القائمة المخفية للأرقام المتاحة -->
                                                 <div class="imei-dropdown-list" id="imei_dropdown_list" style="display: none; position: absolute; top: 100%; left: 0; right: 0; z-index: 1000; max-height: 200px; overflow-y: auto; border: 1px solid #ccc; background: #ffffff; border-radius: 4px; box-shadow: 0 4px 8px rgba(0,0,0,0.15);">
                                                     {% for device in available_imei_numbers %}
@@ -205,10 +226,16 @@
                                                     </div>
                                                     {% endfor %}
                                                 </div>
+                                                {% endif %}
                                                 
                                                 <!-- الحقل المخفي لحفظ القيمة -->
-                                                <input type="hidden" id="mobile_imei" name="mobile_imei" value="{{ employee.mobile_imei or '' }}">
+                                                <input type="hidden" id="mobile_imei" name="mobile_imei" value="{% if assigned_device %}{{ assigned_device.imei }}{% else %}{{ employee.mobile_imei or '' }}{% endif %}">
                                             </div>
+                                            {% if assigned_device %}
+                                            <div class="form-text text-success">
+                                                <i class="fas fa-link"></i> مربوط من نظام تعيين الأجهزة
+                                            </div>
+                                            {% endif %}
                                         </div>
                                     </div>
                                 </div>
