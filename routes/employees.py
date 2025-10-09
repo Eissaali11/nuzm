@@ -794,23 +794,6 @@ def view(id):
         db.joinedload(DeviceAssignment.sim_card)
     ).all()
     
-    # Get current vehicle assigned to this employee
-    current_vehicle = None
-    latest_delivery = VehicleHandover.query.filter_by(
-        employee_id=id,
-        handover_type='delivery'
-    ).order_by(VehicleHandover.handover_date.desc()).first()
-    
-    if latest_delivery:
-        # Check if there's no return after this delivery
-        latest_return = VehicleHandover.query.filter_by(
-            vehicle_id=latest_delivery.vehicle_id,
-            handover_type='return'
-        ).order_by(VehicleHandover.handover_date.desc()).first()
-        
-        if not latest_return or latest_delivery.handover_date > latest_return.handover_date:
-            current_vehicle = latest_delivery.vehicle
-    
     all_departments = Department.query.order_by(Department.name).all()
     return render_template('employees/view.html', 
                           employee=employee, 
@@ -822,7 +805,6 @@ def view(id):
                           vehicle_handovers=vehicle_handovers,
                           mobile_devices=mobile_devices,
                           device_assignments=device_assignments,
-                          current_vehicle=current_vehicle,
                           departments=all_departments
                           )
 
