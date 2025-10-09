@@ -349,7 +349,9 @@ table {
 /* Custom sidebar styling */
 .sidebar {
     height: 100vh;
-    position: sticky;
+    position: fixed;
+    right: 0;
+    width: 16.66667%; /* col-lg-2 */
     top: 0;
     background: linear-gradient(to bottom, #1a4369, #2a5885);
     border-left: 1px solid rgba(255, 255, 255, 0.1);
@@ -804,7 +806,9 @@ table {
 }
 
 .table-fixed-header thead th {
-    position: sticky;
+    position: fixed;
+    right: 0;
+    width: 16.66667%; /* col-lg-2 */
     top: 0;
     z-index: 10;
     background-color: rgba(var(--bs-primary-rgb), 0.1);
@@ -1175,6 +1179,7 @@ table {
 
 /* Enhanced page layout */
 .content-wrapper {
+    margin-right: 16.66667%; /* space for fixed sidebar */
     padding: 1.5rem;
     min-height: 100vh;
 }
@@ -1716,4 +1721,17 @@ table {
 
 .form-label {
     color: white;
+}
+
+/* Responsive adjustments for fixed sidebar */
+@media (max-width: 991px) {
+    .sidebar {
+        position: relative;
+        width: 100%;
+        height: auto;
+    }
+    
+    .content-wrapper {
+        margin-right: 0;
+    }
 }
