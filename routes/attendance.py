@@ -1516,6 +1516,47 @@ def employee_attendance(employee_id):
                           hijri_today=hijri_today,
                           gregorian_today=gregorian_today)
 
+@attendance_bp.route('/edit-record', methods=['POST'])
+def edit_attendance_record():
+    """تعديل سجل حضور موجود"""
+    try:
+        attendance_id = request.form.get('attendance_id')
+        status = request.form.get('status')
+        notes = request.form.get('notes', '')
+        return_url = request.form.get('return_url', '/')
+        
+        # الحصول على السجل
+        attendance = Attendance.query.get_or_404(attendance_id)
+        
+        # تحديث البيانات
+        attendance.status = status
+        attendance.notes = notes
+        
+        # معالجة أوقات الحضور والانصراف
+        if status == 'present':
+            check_in = request.form.get('check_in')
+            check_out = request.form.get('check_out')
+            
+            if check_in:
+                hours, minutes = map(int, check_in.split(':'))
+                attendance.check_in = time(hours, minutes)
+            
+            if check_out:
+                hours, minutes = map(int, check_out.split(':'))
+                attendance.check_out = time(hours, minutes)
+        else:
+            attendance.check_in = None
+            attendance.check_out = None
+        
+        db.session.commit()
+        flash('تم تعديل سجل الحضور بنجاح', 'success')
+        
+    except Exception as e:
+        db.session.rollback()
+        flash(f'حدث خطأ: {str(e)}', 'danger')
+    
+    return redirect(return_url)
+
 @attendance_bp.route('/department-stats')
 def department_stats():
     """API لجلب إحصائيات الحضور حسب الأقسام"""
