@@ -502,6 +502,58 @@ def delete(device_id):
     
     return redirect(url_for('device_management.index'))
 
+@device_management_bp.route('/delete-multiple', methods=['POST'])
+def delete_multiple():
+    """حذف عدة أجهزة محمولة"""
+    try:
+        device_ids = request.form.getlist('device_ids[]')
+        
+        if not device_ids:
+            flash('لم يتم تحديد أي أجهزة للحذف', 'warning')
+            return redirect(url_for('device_management.index'))
+        
+        deleted_count = 0
+        skipped_count = 0
+        skipped_devices = []
+        
+        for device_id in device_ids:
+            try:
+                device = MobileDevice.query.get(int(device_id))
+                
+                if not device:
+                    continue
+                
+                # التحقق من عدم ربط الجهاز
+                if device.is_assigned:
+                    skipped_count += 1
+                    skipped_devices.append(device.imei)
+                    continue
+                
+                db.session.delete(device)
+                deleted_count += 1
+                
+            except Exception as e:
+                print(f"خطأ في حذف الجهاز {device_id}: {str(e)}")
+                continue
+        
+        db.session.commit()
+        
+        # رسائل النتيجة
+        if deleted_count > 0:
+            flash(f'تم حذف {deleted_count} جهاز بنجاح', 'success')
+        
+        if skipped_count > 0:
+            flash(f'تم تخطي {skipped_count} جهاز مربوط بموظفين: {", ".join(skipped_devices[:5])}{"..." if len(skipped_devices) > 5 else ""}', 'warning')
+        
+        if deleted_count == 0 and skipped_count == 0:
+            flash('لم يتم حذف أي أجهزة', 'info')
+        
+    except Exception as e:
+        db.session.rollback()
+        flash(f'حدث خطأ في حذف الأجهزة: {str(e)}', 'error')
+    
+    return redirect(url_for('device_management.index'))
+
 @device_management_bp.route('/assign/<int:device_id>', methods=['POST'])
 def assign_to_employee(device_id):
     """ربط الجهاز بموظف"""

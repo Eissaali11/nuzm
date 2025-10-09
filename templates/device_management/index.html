@@ -462,6 +462,20 @@
             <i class="fas fa-link"></i>
             تفاصيل الربط
         </a>
+        
+        <!-- أزرار التحديد والحذف المتعدد -->
+        <button type="button" class="action-btn btn-info" onclick="selectAll()" id="selectAllBtn">
+            <i class="fas fa-check-square"></i>
+            تحديد الكل
+        </button>
+        <button type="button" class="action-btn btn-secondary" onclick="deselectAll()" id="deselectAllBtn" style="display:none;">
+            <i class="fas fa-square"></i>
+            إلغاء التحديد
+        </button>
+        <button type="button" class="action-btn btn-danger" onclick="deleteSelected()" id="deleteSelectedBtn" style="display:none;">
+            <i class="fas fa-trash-alt"></i>
+            حذف المحدد (<span id="selectedCount">0</span>)
+        </button>
     </div>
             
     <!-- فلاتر البحث -->
@@ -550,6 +564,9 @@
                 <table class="table table-hover mb-0">
                     <thead>
                         <tr>
+                            <th style="width: 50px;">
+                                <input type="checkbox" id="selectAllCheckbox" onclick="toggleSelectAll()" class="form-check-input" style="cursor: pointer; width: 20px; height: 20px;">
+                            </th>
                             <th>IMEI</th>
                             <th>البراند</th>
                             <th>الموديل</th>
@@ -563,6 +580,14 @@
                             <tbody>
                                 {% for device in devices %}
                                 <tr>
+                                    <td>
+                                        <input type="checkbox" class="device-checkbox form-check-input" 
+                                               value="{{ device.id }}" 
+                                               data-assigned="{{ device.is_assigned|lower }}"
+                                               onchange="updateSelection()" 
+                                               style="cursor: pointer; width: 20px; height: 20px;"
+                                               {{ 'disabled' if device.is_assigned else '' }}>
+                                    </td>
                                     <td>
                                         <div class="imei-text">{{ device.imei }}</div>
                                         {% if device.serial_number %}
@@ -753,6 +778,88 @@ function confirmUnassign(deviceId, imei) {
         const form = document.createElement('form');
         form.method = 'POST';
         form.action = `/device-management/unassign/${deviceId}`;
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+// وظائف التحديد المتعدد
+function toggleSelectAll() {
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+    const checkboxes = document.querySelectorAll('.device-checkbox:not([disabled])');
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = selectAllCheckbox.checked;
+    });
+    
+    updateSelection();
+}
+
+function selectAll() {
+    const checkboxes = document.querySelectorAll('.device-checkbox:not([disabled])');
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = true;
+    });
+    document.getElementById('selectAllCheckbox').checked = true;
+    updateSelection();
+}
+
+function deselectAll() {
+    const checkboxes = document.querySelectorAll('.device-checkbox');
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = false;
+    });
+    document.getElementById('selectAllCheckbox').checked = false;
+    updateSelection();
+}
+
+function updateSelection() {
+    const checkboxes = document.querySelectorAll('.device-checkbox:checked');
+    const count = checkboxes.length;
+    
+    // تحديث عداد الأجهزة المحددة
+    document.getElementById('selectedCount').textContent = count;
+    
+    // إظهار/إخفاء الأزرار
+    const selectAllBtn = document.getElementById('selectAllBtn');
+    const deselectAllBtn = document.getElementById('deselectAllBtn');
+    const deleteBtn = document.getElementById('deleteSelectedBtn');
+    
+    if (count > 0) {
+        selectAllBtn.style.display = 'none';
+        deselectAllBtn.style.display = 'inline-flex';
+        deleteBtn.style.display = 'inline-flex';
+    } else {
+        selectAllBtn.style.display = 'inline-flex';
+        deselectAllBtn.style.display = 'none';
+        deleteBtn.style.display = 'none';
+    }
+}
+
+function deleteSelected() {
+    const checkboxes = document.querySelectorAll('.device-checkbox:checked');
+    const deviceIds = Array.from(checkboxes).map(cb => cb.value);
+    
+    if (deviceIds.length === 0) {
+        alert('الرجاء تحديد جهاز واحد على الأقل');
+        return;
+    }
+    
+    if (confirm(`هل أنت متأكد من حذف ${deviceIds.length} جهاز؟\n\nتنبيه: لن يتم حذف الأجهزة المربوطة بموظفين`)) {
+        // إنشاء نموذج للحذف المتعدد
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/device-management/delete-multiple';
+        
+        // إضافة IDs كـ hidden inputs
+        deviceIds.forEach(id => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'device_ids[]';
+            input.value = id;
+            form.appendChild(input);
+        });
+        
         document.body.appendChild(form);
         form.submit();
     }
