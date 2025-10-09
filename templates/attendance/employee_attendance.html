@@ -17,6 +17,12 @@
         background: linear-gradient(to bottom, #0f0c29, #302b63, #24243e);
         min-height: 100vh;
         color: #fff;
+        overflow-x: hidden;
+    }
+    
+    .container-fluid {
+        max-width: 100%;
+        overflow-x: hidden;
     }
 
     /* Employee Header Card */
@@ -204,8 +210,10 @@
 
     .month-calendar {
         width: 100%;
+        max-width: 100%;
         border-collapse: separate;
         border-spacing: 8px;
+        table-layout: fixed;
     }
 
     .month-calendar th {
@@ -221,13 +229,16 @@
     .month-calendar td {
         border-radius: 12px;
         text-align: center;
-        padding: 15px;
-        min-height: 80px;
+        padding: 10px 5px;
+        min-height: 70px;
+        max-width: 14%;
         vertical-align: top;
         transition: all 0.3s ease;
         background: rgba(255, 255, 255, 0.03);
         border: 1px solid rgba(255, 255, 255, 0.1);
         cursor: pointer;
+        overflow: hidden;
+        word-wrap: break-word;
     }
 
     .month-calendar td:hover {
@@ -390,6 +401,80 @@
             width: 80px;
             height: 80px;
         }
+        
+        .month-calendar {
+            border-spacing: 4px;
+        }
+        
+        .month-calendar td {
+            padding: 8px 3px;
+            min-height: 60px;
+            font-size: 0.85rem;
+        }
+        
+        .month-calendar th {
+            padding: 10px;
+            font-size: 0.9rem;
+        }
+        
+        .calendar-day-number {
+            width: 30px;
+            height: 30px;
+            line-height: 30px;
+            font-size: 1em;
+        }
+        
+        .badge-glow {
+            font-size: 0.75rem;
+            padding: 4px 8px;
+        }
+        
+        .section-title {
+            font-size: 1.4rem;
+        }
+        
+        .chart-container {
+            padding: 20px;
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .month-calendar {
+            border-spacing: 2px;
+        }
+        
+        .month-calendar td {
+            padding: 5px 2px;
+            min-height: 50px;
+            font-size: 0.75rem;
+        }
+        
+        .month-calendar th {
+            padding: 8px 5px;
+            font-size: 0.8rem;
+        }
+        
+        .calendar-day-number {
+            width: 25px;
+            height: 25px;
+            line-height: 25px;
+            font-size: 0.9em;
+        }
+        
+        .employee-header-card {
+            padding: 20px;
+        }
+        
+        .stats-card {
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .stats-icon {
+            width: 50px;
+            height: 50px;
+            font-size: 1.5rem;
+        }
     }
 </style>
 {% endblock %}
@@ -527,7 +612,7 @@
         <!-- Year Selection -->
         <div class="mb-4">
             <h5 class="mb-3" style="opacity: 0.9;">السنة:</h5>
-            <div class="btn-group flex-wrap">
+            <div class="btn-group flex-wrap" style="max-width: 100%; overflow-x: auto;">
                 {% for y in attendance_periods.keys()|sort(reverse=true) %}
                 <a href="{{ url_for('attendance.employee_attendance', employee_id=employee.id, year=y, month=selected_month) }}" 
                     class="btn btn-month {% if y == selected_year %}btn-primary{% else %}btn-outline-light{% endif %}">
@@ -542,7 +627,7 @@
         <!-- Month Selection -->
         <div>
             <h5 class="mb-3" style="opacity: 0.9;">الشهر:</h5>
-            <div class="btn-group flex-wrap">
+            <div class="btn-group flex-wrap" style="max-width: 100%; overflow-x: auto;">
                 {% set months = {
                     1: 'يناير', 2: 'فبراير', 3: 'مارس', 4: 'أبريل', 
                     5: 'مايو', 6: 'يونيو', 7: 'يوليو', 8: 'أغسطس',
@@ -571,7 +656,7 @@
         </h3>
         
         {% if attendances %}
-        <div class="table-responsive">
+        <div class="table-responsive" style="overflow-x: auto; max-width: 100%;">
             <table class="month-calendar">
                 <thead>
                     <tr>
