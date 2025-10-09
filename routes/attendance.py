@@ -1429,47 +1429,89 @@ def dashboard():
 
 @attendance_bp.route('/employee/<int:employee_id>')
 def employee_attendance(employee_id):
-    """عرض سجلات الحضور التفصيلية للموظف مرتبة حسب الشهر والسنة"""
+    """عرض سجلات الحضور التفصيلية للموظف مرتبة حسب الشهر والسنة - Dashboard مميز"""
     # الحصول على الموظف
     employee = Employee.query.get_or_404(employee_id)
     
     # الحصول على التاريخ الحالي
     today = datetime.now().date()
     
-    # تحديد فترة الاستعلام (الشهر الحالي)
-    start_of_month = today.replace(day=1)
-    last_day = calendar.monthrange(today.year, today.month)[1]
-    end_of_month = today.replace(day=last_day)
+    # الحصول على السنة والشهر من URL أو استخدام الحالي
+    selected_year = request.args.get('year', today.year, type=int)
+    selected_month = request.args.get('month', today.month, type=int)
     
-    # الحصول على سجلات الحضور مرتبة حسب التاريخ (الأحدث أولاً)
-    attendance_records = Attendance.query.filter(
+    # تحديد فترة الاستعلام (الشهر المختار)
+    year = selected_year
+    month = selected_month
+    start_of_month = date(year, month, 1)
+    last_day = calendar.monthrange(year, month)[1]
+    end_of_month = date(year, month, last_day)
+    
+    # الحصول على سجلات الحضور للشهر المختار
+    attendances = Attendance.query.filter(
         Attendance.employee_id == employee_id,
         Attendance.date >= start_of_month,
         Attendance.date <= end_of_month
-    ).order_by(Attendance.date.desc()).all()
+    ).order_by(Attendance.date).all()
     
-    # تنظيم السجلات حسب الشهر والسنة
-    attendance_by_month = {}
+    # تنظيم السجلات حسب اليوم للتقويم
+    attendance_by_day = {}
+    for record in attendances:
+        attendance_by_day[record.date.day] = record
     
-    for record in attendance_records:
-        year = record.date.year
-        month = record.date.month
-        
-        # مفتاح القاموس هو tuple (سنة, شهر)
-        key = (year, month)
-        
-        if key not in attendance_by_month:
-            attendance_by_month[key] = []
-        
-        attendance_by_month[key].append(record)
+    # حساب الإحصائيات الشاملة
+    present_count = sum(1 for a in attendances if a.status == 'present')
+    absent_count = sum(1 for a in attendances if a.status == 'absent')
+    leave_count = sum(1 for a in attendances if a.status == 'leave')
+    sick_count = sum(1 for a in attendances if a.status == 'sick')
+    total_records = len(attendances)
+    
+    # حساب النسب المئوية
+    present_percentage = (present_count / total_records * 100) if total_records > 0 else 0
+    absent_percentage = (absent_count / total_records * 100) if total_records > 0 else 0
+    leave_percentage = (leave_count / total_records * 100) if total_records > 0 else 0
+    sick_percentage = (sick_count / total_records * 100) if total_records > 0 else 0
+    
+    # حساب معدل الحضور
+    attendance_rate = round(present_percentage, 1) if total_records > 0 else 0
+    
+    # جمع كل الفترات المتاحة (السنوات والأشهر التي لديها سجلات)
+    all_records = Attendance.query.filter(Attendance.employee_id == employee_id).all()
+    attendance_periods = {}
+    for record in all_records:
+        if record.date.year not in attendance_periods:
+            attendance_periods[record.date.year] = set()
+        attendance_periods[record.date.year].add(record.date.month)
+    
+    # معلومات التقويم
+    first_day_weekday = calendar.monthrange(year, month)[0]
+    days_in_month = last_day
     
     # تنسيق التواريخ للعرض
     hijri_today = format_date_hijri(today)
     gregorian_today = format_date_gregorian(today)
     
-    return render_template('attendance/employee.html',
+    return render_template('attendance/employee_attendance.html',
                           employee=employee,
-                          attendance_by_month=attendance_by_month,
+                          attendances=attendances,
+                          attendance_by_day=attendance_by_day,
+                          year=year,
+                          month=month,
+                          selected_year=selected_year,
+                          selected_month=selected_month,
+                          first_day_weekday=first_day_weekday,
+                          days_in_month=days_in_month,
+                          attendance_periods=attendance_periods,
+                          present_count=present_count,
+                          absent_count=absent_count,
+                          leave_count=leave_count,
+                          sick_count=sick_count,
+                          total_records=total_records,
+                          present_percentage=present_percentage,
+                          absent_percentage=absent_percentage,
+                          leave_percentage=leave_percentage,
+                          sick_percentage=sick_percentage,
+                          attendance_rate=attendance_rate,
                           today=today,
                           hijri_today=hijri_today,
                           gregorian_today=gregorian_today)

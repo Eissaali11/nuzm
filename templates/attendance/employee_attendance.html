@@ -1,382 +1,799 @@
 {% extends 'layout.html' %}
 
-{% block title %}سجلات حضور {{ employee.name }}{% endblock %}
+{% block title %}لوحة حضور {{ employee.name }}{% endblock %}
 
 {% block styles %}
 <style>
+    :root {
+        --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --success-gradient: linear-gradient(135deg, #0cebeb 0%, #20e3b2 100%);
+        --danger-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        --warning-gradient: linear-gradient(135deg, #ffd89b 0%, #19547b 100%);
+        --info-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        --dark-gradient: linear-gradient(135deg, #434343 0%, #000000 100%);
+    }
+
+    body {
+        background: linear-gradient(to bottom, #0f0c29, #302b63, #24243e);
+        min-height: 100vh;
+        color: #fff;
+    }
+
+    /* Employee Header Card */
+    .employee-header-card {
+        background: linear-gradient(135deg, rgba(103, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+        border: 1px solid rgba(103, 126, 234, 0.3);
+        border-radius: 20px;
+        padding: 30px;
+        margin-bottom: 30px;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5), 0 0 50px rgba(103, 126, 234, 0.2);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .employee-header-card::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(103, 126, 234, 0.1) 0%, transparent 70%);
+        animation: pulse 8s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); opacity: 0.5; }
+        50% { transform: scale(1.1); opacity: 0.8; }
+    }
+
+    .employee-photo {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        border: 4px solid rgba(103, 126, 234, 0.5);
+        box-shadow: 0 0 30px rgba(103, 126, 234, 0.6);
+        object-fit: cover;
+        animation: photo-glow 3s ease-in-out infinite;
+    }
+
+    @keyframes photo-glow {
+        0%, 100% { box-shadow: 0 0 30px rgba(103, 126, 234, 0.6); }
+        50% { box-shadow: 0 0 50px rgba(103, 126, 234, 1); }
+    }
+
+    /* Stats Cards */
+    .stats-card {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        padding: 25px;
+        margin-bottom: 20px;
+        backdrop-filter: blur(10px);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stats-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: var(--gradient);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .stats-card:hover::before {
+        opacity: 0.1;
+    }
+
+    .stats-card:hover {
+        transform: translateY(-10px) scale(1.02);
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    .stats-card.success {
+        --gradient: var(--success-gradient);
+        border-color: rgba(12, 235, 235, 0.3);
+    }
+
+    .stats-card.danger {
+        --gradient: var(--danger-gradient);
+        border-color: rgba(245, 87, 108, 0.3);
+    }
+
+    .stats-card.warning {
+        --gradient: var(--warning-gradient);
+        border-color: rgba(255, 216, 155, 0.3);
+    }
+
+    .stats-card.info {
+        --gradient: var(--info-gradient);
+        border-color: rgba(79, 172, 254, 0.3);
+    }
+
+    .stats-icon {
+        width: 70px;
+        height: 70px;
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        margin-bottom: 15px;
+        background: var(--gradient);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    .stats-number {
+        font-size: 3rem;
+        font-weight: 800;
+        background: var(--gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin: 10px 0;
+    }
+
+    /* Progress Bar */
+    .custom-progress {
+        height: 12px;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.1);
+        overflow: hidden;
+        box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.3);
+    }
+
+    .custom-progress-bar {
+        height: 100%;
+        border-radius: 10px;
+        background: var(--gradient);
+        transition: width 1.5s ease, opacity 0.3s ease;
+        animation: progressGlow 2s ease-in-out infinite;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .custom-progress-bar::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+        animation: shimmer 2s infinite;
+    }
+
+    @keyframes shimmer {
+        0% { left: -100%; }
+        100% { left: 100%; }
+    }
+
+    @keyframes progressGlow {
+        0%, 100% { box-shadow: 0 0 10px rgba(255, 255, 255, 0.3); }
+        50% { box-shadow: 0 0 20px rgba(255, 255, 255, 0.6); }
+    }
+
+    /* Chart Container */
+    .chart-container {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        padding: 30px;
+        margin-bottom: 30px;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Calendar Styles */
+    .calendar-card {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        padding: 25px;
+        backdrop-filter: blur(10px);
+        margin-top: 30px;
+    }
+
     .month-calendar {
         width: 100%;
         border-collapse: separate;
-        border-spacing: 2px;
+        border-spacing: 8px;
     }
-    .month-calendar th, .month-calendar td {
-        border-radius: 4px;
-        text-align: center;
-        padding: 8px;
-    }
+
     .month-calendar th {
-        background-color: #3a4b5c;
+        background: linear-gradient(135deg, rgba(103, 126, 234, 0.3) 0%, rgba(118, 75, 162, 0.3) 100%);
         color: white;
         font-weight: bold;
-        border-radius: 6px;
+        padding: 15px;
+        border-radius: 12px;
+        text-align: center;
+        font-size: 1.1rem;
     }
+
     .month-calendar td {
-        cursor: pointer;
-        height: 60px;
+        border-radius: 12px;
+        text-align: center;
+        padding: 15px;
+        min-height: 80px;
         vertical-align: top;
-        transition: all 0.2s;
-        background-color: #f5f5f5;
-        border: 1px solid #e9e9e9;
+        transition: all 0.3s ease;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        cursor: pointer;
     }
+
     .month-calendar td:hover {
-        box-shadow: 0 0 10px rgba(0,0,0,0.2);
-        transform: scale(1.03);
+        transform: scale(1.05);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        z-index: 10;
     }
-    .month-calendar td:empty {
-        background-color: #f0f0f0;
-        border: none;
-    }
-    .empty-day {
-        background-color: #f9f9f9 !important;
-        border: 1px dashed #ddd !important;
-        opacity: 0.8;
-    }
-    .weekend-day {
-        background-color: #f8f6ff !important;
-        border: 1px solid #e8e3f7 !important;
-    }
-    .weekend-header {
-        background-color: #7952b3 !important;
-        color: white !important;
-        border-color: #6a46a0 !important;
-        border-radius: 6px 6px 0 0 !important;
-        position: relative;
-    }
-    .month-calendar th {
-        min-width: 100px;
-    }
-    .status-present {
-        background-color: rgba(40, 167, 69, 0.15);
-        border: 2px solid rgba(40, 167, 69, 0.6);
-        box-shadow: 0 2px 6px rgba(40, 167, 69, 0.1);
-    }
-    .status-absent {
-        background-color: rgba(220, 53, 69, 0.15);
-        border: 2px solid rgba(220, 53, 69, 0.6);
-        box-shadow: 0 2px 6px rgba(220, 53, 69, 0.1);
-    }
-    .status-leave {
-        background-color: rgba(255, 193, 7, 0.15);
-        border: 2px solid rgba(255, 193, 7, 0.6);
-        box-shadow: 0 2px 6px rgba(255, 193, 7, 0.1);
-    }
-    .status-sick {
-        background-color: rgba(23, 162, 184, 0.15);
-        border: 2px solid rgba(23, 162, 184, 0.6);
-        box-shadow: 0 2px 6px rgba(23, 162, 184, 0.1);
-    }
+
     .calendar-day-number {
         font-weight: bold;
-        font-size: 1.2em;
+        font-size: 1.3em;
         display: block;
-        margin-bottom: 5px;
-        color: #444;
-        background-color: rgba(255, 255, 255, 0.5);
+        margin-bottom: 8px;
+        color: #fff;
+        background: rgba(255, 255, 255, 0.1);
         border-radius: 50%;
-        width: 30px;
-        height: 30px;
-        line-height: 30px;
-        text-align: center;
-        margin: 0 auto 8px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        width: 40px;
+        height: 40px;
+        line-height: 40px;
+        margin: 0 auto 10px;
     }
-    .calendar-status {
-        margin-top: 5px;
-        display: inline-block;
+
+    .status-present {
+        background: linear-gradient(135deg, rgba(12, 235, 235, 0.2) 0%, rgba(32, 227, 178, 0.2) 100%);
+        border: 2px solid rgba(12, 235, 235, 0.5);
     }
-    .time-info {
-        font-size: 0.85em;
-        background-color: rgba(255, 255, 255, 0.6);
-        border-radius: 4px;
-        padding: 2px 4px;
-        margin-top: 2px;
-        display: inline-block;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+
+    .status-absent {
+        background: linear-gradient(135deg, rgba(240, 147, 251, 0.2) 0%, rgba(245, 87, 108, 0.2) 100%);
+        border: 2px solid rgba(245, 87, 108, 0.5);
     }
+
+    .status-leave {
+        background: linear-gradient(135deg, rgba(255, 216, 155, 0.2) 0%, rgba(25, 84, 123, 0.2) 100%);
+        border: 2px solid rgba(255, 216, 155, 0.5);
+    }
+
+    .status-sick {
+        background: linear-gradient(135deg, rgba(79, 172, 254, 0.2) 0%, rgba(0, 242, 254, 0.2) 100%);
+        border: 2px solid rgba(79, 172, 254, 0.5);
+    }
+
+    .weekend-day {
+        background: linear-gradient(135deg, rgba(118, 75, 162, 0.15) 0%, rgba(103, 126, 234, 0.15) 100%);
+        border: 2px solid rgba(118, 75, 162, 0.3);
+    }
+
+    /* Month Year Selector */
     .month-year-selector {
-        padding: 15px;
-        background-color: #f8f9fa;
-        border-radius: 5px;
-        margin-bottom: 20px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        padding: 25px;
+        margin-bottom: 30px;
+        backdrop-filter: blur(10px);
     }
+
     .btn-month {
-        margin: 3px;
-        min-width: 45px;
+        margin: 5px;
+        min-width: 80px;
+        border-radius: 12px;
+        transition: all 0.3s ease;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: #fff;
+    }
+
+    .btn-month:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px rgba(103, 126, 234, 0.4);
+        background: var(--primary-gradient);
+        border-color: transparent;
+    }
+
+    .btn-month.btn-primary {
+        background: var(--primary-gradient);
+        border: none;
+        box-shadow: 0 5px 20px rgba(103, 126, 234, 0.4);
+    }
+
+    /* Badge Styles */
+    .badge-glow {
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    .badge-glow.bg-success {
+        background: var(--success-gradient) !important;
+    }
+
+    .badge-glow.bg-danger {
+        background: var(--danger-gradient) !important;
+    }
+
+    .badge-glow.bg-warning {
+        background: var(--warning-gradient) !important;
+    }
+
+    .badge-glow.bg-info {
+        background: var(--info-gradient) !important;
+    }
+
+    /* Buttons */
+    .btn-gradient {
+        background: var(--primary-gradient);
+        border: none;
+        border-radius: 12px;
+        padding: 12px 30px;
+        color: white;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 5px 20px rgba(103, 126, 234, 0.4);
+    }
+
+    .btn-gradient:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 15px 35px rgba(103, 126, 234, 0.6);
+        color: white;
+    }
+
+    .btn-gradient.secondary {
+        background: var(--dark-gradient);
+    }
+
+    .btn-gradient.success {
+        background: var(--success-gradient);
+    }
+
+    /* Section Titles */
+    .section-title {
+        font-size: 1.8rem;
+        font-weight: 800;
+        background: var(--primary-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 25px;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .section-title i {
+        background: var(--primary-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .stats-number {
+            font-size: 2rem;
+        }
+        
+        .employee-photo {
+            width: 80px;
+            height: 80px;
+        }
     }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="container-fluid py-4">
-    <!-- معلومات الموظف والعنوان -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h1>سجلات حضور {{ employee.name }}</h1>
-            <p class="text-muted">{{ employee.job_title }} - {{ employee.department.name if employee.department else "غير محدد" }}</p>
-        </div>
-        <div>
-            <a href="{{ url_for('employees.view', id=employee.id) }}" class="btn btn-secondary">
-                <i class="fas fa-arrow-right ml-1"></i> العودة لبيانات الموظف
-            </a>
-            <a href="{{ url_for('employees.export_attendance_excel', id=employee.id) }}" class="btn btn-success">
-                <i class="fas fa-file-excel ml-1"></i> تصدير إلى إكسل
-            </a>
-        </div>
-    </div>
-
-    <!-- محدد الشهر والسنة -->
-    <div class="card mb-4">
-        <div class="card-header bg-primary text-white">
-            <h5 class="mb-0"><i class="fas fa-calendar-alt ml-2"></i> اختر الشهر والسنة</h5>
-        </div>
-        <div class="card-body">
-            <div class="month-year-selector">
-                <!-- اختيار السنة -->
+    <!-- Employee Header -->
+    <div class="employee-header-card">
+        <div class="row align-items-center position-relative">
+            <div class="col-md-2 text-center">
+                {% if employee.profile_image %}
+                <img src="{{ url_for('static', filename='uploads/' + employee.profile_image) }}" alt="{{ employee.name }}" class="employee-photo">
+                {% else %}
+                <div class="employee-photo d-flex align-items-center justify-content-center" style="background: var(--primary-gradient);">
+                    <i class="fas fa-user fa-3x"></i>
+                </div>
+                {% endif %}
+            </div>
+            <div class="col-md-7">
+                <h1 class="mb-2" style="font-size: 2.5rem; font-weight: 800;">{{ employee.name }}</h1>
+                <p class="mb-1" style="font-size: 1.2rem; opacity: 0.9;">
+                    <i class="fas fa-briefcase ml-2"></i>{{ employee.job_title or 'غير محدد' }}
+                </p>
+                <p class="mb-0" style="font-size: 1.1rem; opacity: 0.8;">
+                    <i class="fas fa-building ml-2"></i>
+                    {% if employee.departments %}
+                        {{ ', '.join(employee.departments|map(attribute='name')) }}
+                    {% else %}
+                        غير محدد
+                    {% endif %}
+                </p>
+            </div>
+            <div class="col-md-3 text-end">
                 <div class="mb-3">
-                    <h6>السنة:</h6>
-                    <div class="btn-group">
-                        {% for y in attendance_periods.keys()|sort(reverse=true) %}
-                        <a href="{{ url_for('attendance.employee_attendance', employee_id=employee.id, year=y, month=month) }}" 
-                            class="btn {% if y == selected_year %}btn-primary{% else %}btn-outline-primary{% endif %}">
-                            {{ y }}
-                        </a>
-                        {% else %}
-                        <span class="text-muted">لا توجد بيانات</span>
-                        {% endfor %}
+                    <div style="font-size: 3rem; font-weight: 800; background: var(--success-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+                        {{ attendance_rate }}%
                     </div>
+                    <div style="opacity: 0.8;">معدل الحضور</div>
                 </div>
-                
-                <!-- اختيار الشهر -->
-                <div>
-                    <h6>الشهر:</h6>
-                    <div class="btn-group flex-wrap">
-                        {% set months = {
-                            1: 'يناير', 2: 'فبراير', 3: 'مارس', 4: 'أبريل', 
-                            5: 'مايو', 6: 'يونيو', 7: 'يوليو', 8: 'أغسطس',
-                            9: 'سبتمبر', 10: 'أكتوبر', 11: 'نوفمبر', 12: 'ديسمبر'
-                        } %}
-                        
-                        {% for m in range(1, 13) %}
-                        <a href="{{ url_for('attendance.employee_attendance', employee_id=employee.id, year=selected_year, month=m) }}"
-                            class="btn btn-month {% if m == selected_month %}btn-primary{% else %}btn-outline-primary{% endif %} {% if selected_year in attendance_periods and m not in attendance_periods[selected_year] %}disabled opacity-50{% endif %}">
-                            {{ months[m] }}
-                        </a>
-                        {% endfor %}
-                    </div>
-                </div>
+                <a href="{{ url_for('employees.view', id=employee.id) }}" class="btn btn-gradient secondary me-2">
+                    <i class="fas fa-arrow-right ml-1"></i> الملف الشخصي
+                </a>
+                <a href="{{ url_for('employees.export_attendance_excel', id=employee.id) }}" class="btn btn-gradient success">
+                    <i class="fas fa-file-excel ml-1"></i> تصدير
+                </a>
             </div>
         </div>
     </div>
 
-    <!-- عرض تقويم الشهر -->
-    <div class="card">
-        <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">
-                <i class="fas fa-calendar-check ml-2"></i>
-                سجلات حضور شهر {{ {
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="stats-card success">
+                <div class="stats-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stats-number">{{ present_count }}</div>
+                <h5 class="mb-3">أيام الحضور</h5>
+                <div class="custom-progress">
+                    <div class="custom-progress-bar" style="width: {{ present_percentage }}%; --gradient: var(--success-gradient);"></div>
+                </div>
+                <div class="text-center mt-2" style="font-size: 1.1rem; opacity: 0.9;">{{ "%.1f"|format(present_percentage) }}%</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card danger">
+                <div class="stats-icon">
+                    <i class="fas fa-times-circle"></i>
+                </div>
+                <div class="stats-number">{{ absent_count }}</div>
+                <h5 class="mb-3">أيام الغياب</h5>
+                <div class="custom-progress">
+                    <div class="custom-progress-bar" style="width: {{ absent_percentage }}%; --gradient: var(--danger-gradient);"></div>
+                </div>
+                <div class="text-center mt-2" style="font-size: 1.1rem; opacity: 0.9;">{{ "%.1f"|format(absent_percentage) }}%</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card warning">
+                <div class="stats-icon">
+                    <i class="fas fa-umbrella-beach"></i>
+                </div>
+                <div class="stats-number">{{ leave_count }}</div>
+                <h5 class="mb-3">أيام الإجازة</h5>
+                <div class="custom-progress">
+                    <div class="custom-progress-bar" style="width: {{ leave_percentage }}%; --gradient: var(--warning-gradient);"></div>
+                </div>
+                <div class="text-center mt-2" style="font-size: 1.1rem; opacity: 0.9;">{{ "%.1f"|format(leave_percentage) }}%</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card info">
+                <div class="stats-icon">
+                    <i class="fas fa-notes-medical"></i>
+                </div>
+                <div class="stats-number">{{ sick_count }}</div>
+                <h5 class="mb-3">أيام المرض</h5>
+                <div class="custom-progress">
+                    <div class="custom-progress-bar" style="width: {{ sick_percentage }}%; --gradient: var(--info-gradient);"></div>
+                </div>
+                <div class="text-center mt-2" style="font-size: 1.1rem; opacity: 0.9;">{{ "%.1f"|format(sick_percentage) }}%</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart Section -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="chart-container">
+                <h3 class="section-title">
+                    <i class="fas fa-chart-pie"></i>
+                    <span>توزيع الحضور</span>
+                </h3>
+                <canvas id="attendanceChart" height="250"></canvas>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="chart-container">
+                <h3 class="section-title">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>الإحصائيات التفصيلية</span>
+                </h3>
+                <canvas id="statsChart" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Month Year Selector -->
+    <div class="month-year-selector">
+        <h3 class="section-title mb-4">
+            <i class="fas fa-calendar-alt"></i>
+            <span>اختر الشهر والسنة</span>
+        </h3>
+        
+        <!-- Year Selection -->
+        <div class="mb-4">
+            <h5 class="mb-3" style="opacity: 0.9;">السنة:</h5>
+            <div class="btn-group flex-wrap">
+                {% for y in attendance_periods.keys()|sort(reverse=true) %}
+                <a href="{{ url_for('attendance.employee_attendance', employee_id=employee.id, year=y, month=selected_month) }}" 
+                    class="btn btn-month {% if y == selected_year %}btn-primary{% else %}btn-outline-light{% endif %}">
+                    {{ y }}
+                </a>
+                {% else %}
+                <span class="text-muted">لا توجد بيانات</span>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Month Selection -->
+        <div>
+            <h5 class="mb-3" style="opacity: 0.9;">الشهر:</h5>
+            <div class="btn-group flex-wrap">
+                {% set months = {
                     1: 'يناير', 2: 'فبراير', 3: 'مارس', 4: 'أبريل', 
                     5: 'مايو', 6: 'يونيو', 7: 'يوليو', 8: 'أغسطس',
                     9: 'سبتمبر', 10: 'أكتوبر', 11: 'نوفمبر', 12: 'ديسمبر'
-                }[month] }} {{ year }}
-            </h5>
-            <span class="badge bg-light text-dark">
-                <i class="fas fa-user-clock ml-1"></i>
-                إجمالي السجلات: {{ attendances|length }}
-            </span>
+                } %}
+                
+                {% for m in range(1, 13) %}
+                <a href="{{ url_for('attendance.employee_attendance', employee_id=employee.id, year=selected_year, month=m) }}"
+                    class="btn btn-month {% if m == selected_month %}btn-primary{% else %}btn-outline-light{% endif %} {% if selected_year in attendance_periods and m not in attendance_periods[selected_year] %}disabled opacity-50{% endif %}">
+                    {{ months[m] }}
+                </a>
+                {% endfor %}
+            </div>
         </div>
-        <div class="card-body">
-            {% if attendances %}
-            <div class="table-responsive">
-                <!-- جدول تقويم الشهر -->
-                <table class="month-calendar">
-                    <thead>
-                        <tr>
-                            <th>الأحد</th>
-                            <th>الاثنين</th>
-                            <th>الثلاثاء</th>
-                            <th>الأربعاء</th>
-                            <th>الخميس</th>
-                            <th class="weekend-header">الجمعة <i class="fas fa-moon small ms-1"></i></th>
-                            <th class="weekend-header">السبت <i class="fas fa-moon small ms-1"></i></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% set adjusted_weekday = (first_day_weekday + 1) % 7 %}  <!-- تعديل لبدء الأسبوع من الأحد -->
+    </div>
+
+    <!-- Calendar -->
+    <div class="calendar-card">
+        <h3 class="section-title mb-4">
+            <i class="fas fa-calendar-check"></i>
+            <span>تقويم شهر {{ {
+                1: 'يناير', 2: 'فبراير', 3: 'مارس', 4: 'أبريل', 
+                5: 'مايو', 6: 'يونيو', 7: 'يوليو', 8: 'أغسطس',
+                9: 'سبتمبر', 10: 'أكتوبر', 11: 'نوفمبر', 12: 'ديسمبر'
+            }[month] }} {{ year }}</span>
+        </h3>
+        
+        {% if attendances %}
+        <div class="table-responsive">
+            <table class="month-calendar">
+                <thead>
+                    <tr>
+                        <th>الأحد</th>
+                        <th>الاثنين</th>
+                        <th>الثلاثاء</th>
+                        <th>الأربعاء</th>
+                        <th>الخميس</th>
+                        <th>الجمعة</th>
+                        <th>السبت</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% set adjusted_weekday = (first_day_weekday + 1) % 7 %}
+                    
+                    <tr>
+                        {% for i in range(adjusted_weekday) %}
+                        <td style="background: transparent; border: none;"></td>
+                        {% endfor %}
                         
+                        {% for day in range(1, days_in_month + 1) %}
+                        {% set current_weekday = (adjusted_weekday + day - 1) % 7 %}
+                        {% set is_weekend = current_weekday >= 5 %}
+                        
+                        {% if day == 1 or current_weekday == 0 %}
+                        {% if day != 1 %}</tr>{% endif %}
                         <tr>
-                            {% for i in range(adjusted_weekday) %}
-                            <td></td>
-                            {% endfor %}
-                            
-                            {% for day in range(1, days_in_month + 1) %}
-                            {% set current_weekday = (adjusted_weekday + day - 1) % 7 %}
-                            {% set is_weekend = current_weekday >= 5 %}  <!-- الجمعة والسبت -->
-                            
-                            {% if day == 1 or current_weekday == 0 %}
-                            {% if day != 1 %}</tr>{% endif %}
-                            <tr>
-                            {% endif %}
-                            
-                            {% if day in attendance_by_day %}
-                            {% set attendance = attendance_by_day[day] %}
-                            <td class="status-{{ attendance.status }} {% if is_weekend %}weekend-day{% endif %}" 
-                                data-bs-toggle="tooltip" 
-                                title="{{ attendance.date.strftime('%d/%m/%Y') }} - {{ {
+                        {% endif %}
+                        
+                        {% if day in attendance_by_day %}
+                        {% set attendance = attendance_by_day[day] %}
+                        <td class="status-{{ attendance.status }} {% if is_weekend %}weekend-day{% endif %}" 
+                            data-bs-toggle="tooltip" 
+                            title="{{ attendance.date.strftime('%d/%m/%Y') }} - {{ {
+                                'present': 'حاضر',
+                                'absent': 'غائب',
+                                'leave': 'إجازة',
+                                'sick': 'مرضي'
+                            }[attendance.status] }}">
+                            <span class="calendar-day-number">{{ day }}</span>
+                            <span class="badge badge-glow bg-{{ {
+                                'present': 'success',
+                                'absent': 'danger',
+                                'leave': 'warning',
+                                'sick': 'info'
+                            }[attendance.status] }}">
+                                {{ {
                                     'present': 'حاضر',
                                     'absent': 'غائب',
                                     'leave': 'إجازة',
                                     'sick': 'مرضي'
-                                }[attendance.status] }}{% if is_weekend %} - عطلة نهاية الأسبوع{% endif %}">
-                                <span class="calendar-day-number">{{ day }}</span>
-                                <span class="calendar-status badge bg-{{ {
-                                    'present': 'success',
-                                    'absent': 'danger',
-                                    'leave': 'warning',
-                                    'sick': 'info'
-                                }[attendance.status] }}">
-                                    {{ {
-                                        'present': 'حاضر',
-                                        'absent': 'غائب',
-                                        'leave': 'إجازة',
-                                        'sick': 'مرضي'
-                                    }[attendance.status] }}
-                                </span>
-                                {% if attendance.check_in %}
-                                <div class="time-info">
-                                    <i class="fas fa-sign-in-alt"></i> {{ attendance.check_in.strftime('%H:%M') }}
-                                </div>
-                                {% endif %}
-                                {% if attendance.check_out %}
-                                <div class="time-info">
-                                    <i class="fas fa-sign-out-alt"></i> {{ attendance.check_out.strftime('%H:%M') }}
-                                </div>
-                                {% endif %}
-                            </td>
-                            {% else %}
-                            <td class="empty-day {% if is_weekend %}weekend-day{% endif %}">
-                                <span class="calendar-day-number text-muted">{{ day }}</span>
-                                <div class="text-center mt-2 small text-muted">
-                                    <i class="fas fa-minus-circle"></i>
-                                    <div class="mt-1">
-                                        {% if is_weekend %}عطلة نهاية الأسبوع{% else %}لا يوجد سجل{% endif %}
-                                    </div>
-                                </div>
-                            </td>
+                                }[attendance.status] }}
+                            </span>
+                            {% if attendance.check_in %}
+                            <div class="mt-2" style="font-size: 0.85rem; opacity: 0.9;">
+                                <i class="fas fa-sign-in-alt"></i> {{ attendance.check_in.strftime('%H:%M') }}
+                            </div>
                             {% endif %}
-                            
-                            {% if day == days_in_month %}
-                            {% for i in range(6 - current_weekday) %}
-                            <td></td>
-                            {% endfor %}
-                            </tr>
+                            {% if attendance.check_out %}
+                            <div style="font-size: 0.85rem; opacity: 0.9;">
+                                <i class="fas fa-sign-out-alt"></i> {{ attendance.check_out.strftime('%H:%M') }}
+                            </div>
                             {% endif %}
-                            {% endfor %}
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-            
-            <!-- مفتاح الألوان -->
-            <div class="d-flex justify-content-center mt-4 flex-wrap">
-                <div class="me-3 mb-2 d-flex align-items-center">
-                    <div class="status-present" style="width: 20px; height: 20px; border-radius: 4px; margin-left: 5px;"></div>
-                    <span>حاضر</span>
-                </div>
-                <div class="me-3 mb-2 d-flex align-items-center">
-                    <div class="status-absent" style="width: 20px; height: 20px; border-radius: 4px; margin-left: 5px;"></div>
-                    <span>غائب</span>
-                </div>
-                <div class="me-3 mb-2 d-flex align-items-center">
-                    <div class="status-leave" style="width: 20px; height: 20px; border-radius: 4px; margin-left: 5px;"></div>
-                    <span>إجازة</span>
-                </div>
-                <div class="me-3 mb-2 d-flex align-items-center">
-                    <div class="status-sick" style="width: 20px; height: 20px; border-radius: 4px; margin-left: 5px;"></div>
-                    <span>مرضي</span>
-                </div>
-                <div class="me-3 mb-2 d-flex align-items-center">
-                    <div class="weekend-day" style="width: 20px; height: 20px; border-radius: 4px; margin-left: 5px;"></div>
-                    <span>عطلة نهاية الأسبوع</span>
-                </div>
-            </div>
-            
-            {% else %}
-            <div class="alert alert-warning text-center">
-                <i class="fas fa-exclamation-triangle ml-2"></i>
-                لا توجد سجلات حضور لهذا الشهر
-            </div>
-            {% endif %}
-        </div>
-    </div>
-    
-    <!-- جدول تفصيلي لسجلات الحضور -->
-    {% if attendances %}
-    <div class="card mt-4">
-        <div class="card-header bg-success text-white">
-            <h5 class="mb-0"><i class="fas fa-list-ul ml-2"></i> قائمة تفصيلية بسجلات الحضور</h5>
-        </div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-hover table-striped">
-                    <thead>
-                        <tr>
-                            <th>التاريخ</th>
-                            <th>الحالة</th>
-                            <th>وقت الحضور</th>
-                            <th>وقت الانصراف</th>
-                            <th>ملاحظات</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for attendance in attendances %}
-                        <tr>
-                            <td>{{ attendance.date.strftime('%d/%m/%Y') }}</td>
-                            <td>
-                                <span class="badge bg-{{ {
-                                    'present': 'success',
-                                    'absent': 'danger',
-                                    'leave': 'warning',
-                                    'sick': 'info'
-                                }[attendance.status] }}">
-                                    {{ {
-                                        'present': 'حاضر',
-                                        'absent': 'غائب',
-                                        'leave': 'إجازة',
-                                        'sick': 'مرضي'
-                                    }[attendance.status] }}
-                                </span>
-                            </td>
-                            <td>{{ attendance.check_in.strftime('%H:%M') if attendance.check_in else '-' }}</td>
-                            <td>{{ attendance.check_out.strftime('%H:%M') if attendance.check_out else '-' }}</td>
-                            <td>{{ attendance.notes or '-' }}</td>
-                        </tr>
+                        </td>
+                        {% else %}
+                        <td class="{% if is_weekend %}weekend-day{% endif %}">
+                            <span class="calendar-day-number" style="opacity: 0.5;">{{ day }}</span>
+                            <div class="text-center mt-2" style="opacity: 0.6; font-size: 0.9rem;">
+                                <i class="fas fa-minus-circle"></i>
+                                <div class="mt-1">
+                                    {% if is_weekend %}عطلة{% else %}لا يوجد{% endif %}
+                                </div>
+                            </div>
+                        </td>
+                        {% endif %}
+                        
+                        {% if day == days_in_month %}
+                        {% for i in range(6 - current_weekday) %}
+                        <td style="background: transparent; border: none;"></td>
                         {% endfor %}
-                    </tbody>
-                </table>
+                        </tr>
+                        {% endif %}
+                        {% endfor %}
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Legend -->
+        <div class="d-flex justify-content-center mt-4 flex-wrap gap-3">
+            <div class="d-flex align-items-center">
+                <div class="status-present" style="width: 25px; height: 25px; border-radius: 8px; margin-left: 8px;"></div>
+                <span>حاضر</span>
+            </div>
+            <div class="d-flex align-items-center">
+                <div class="status-absent" style="width: 25px; height: 25px; border-radius: 8px; margin-left: 8px;"></div>
+                <span>غائب</span>
+            </div>
+            <div class="d-flex align-items-center">
+                <div class="status-leave" style="width: 25px; height: 25px; border-radius: 8px; margin-left: 8px;"></div>
+                <span>إجازة</span>
+            </div>
+            <div class="d-flex align-items-center">
+                <div class="status-sick" style="width: 25px; height: 25px; border-radius: 8px; margin-left: 8px;"></div>
+                <span>مرضي</span>
+            </div>
+            <div class="d-flex align-items-center">
+                <div class="weekend-day" style="width: 25px; height: 25px; border-radius: 8px; margin-left: 8px;"></div>
+                <span>عطلة</span>
             </div>
         </div>
+        
+        {% else %}
+        <div class="alert alert-warning text-center" style="background: rgba(255, 193, 7, 0.1); border: 1px solid rgba(255, 193, 7, 0.3); color: #ffd89b;">
+            <i class="fas fa-exclamation-triangle ml-2"></i>
+            لا توجد سجلات حضور لهذا الشهر
+        </div>
+        {% endif %}
     </div>
-    {% endif %}
 </div>
 {% endblock %}
 
 {% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // تفعيل التلميحات
-        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        // Tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
         var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-            return new bootstrap.Tooltip(tooltipTriggerEl)
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+
+        // Pie Chart
+        const pieCtx = document.getElementById('attendanceChart').getContext('2d');
+        new Chart(pieCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['حاضر', 'غائب', 'إجازة', 'مرضي'],
+                datasets: [{
+                    data: [{{ present_count }}, {{ absent_count }}, {{ leave_count }}, {{ sick_count }}],
+                    backgroundColor: [
+                        'rgba(12, 235, 235, 0.8)',
+                        'rgba(245, 87, 108, 0.8)',
+                        'rgba(255, 216, 155, 0.8)',
+                        'rgba(79, 172, 254, 0.8)'
+                    ],
+                    borderColor: [
+                        'rgba(12, 235, 235, 1)',
+                        'rgba(245, 87, 108, 1)',
+                        'rgba(255, 216, 155, 1)',
+                        'rgba(79, 172, 254, 1)'
+                    ],
+                    borderWidth: 3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            color: '#fff',
+                            font: { size: 14, family: 'Cairo, sans-serif' },
+                            padding: 15
+                        }
+                    }
+                }
+            }
+        });
+
+        // Bar Chart
+        const barCtx = document.getElementById('statsChart').getContext('2d');
+        new Chart(barCtx, {
+            type: 'bar',
+            data: {
+                labels: ['حاضر', 'غائب', 'إجازة', 'مرضي'],
+                datasets: [{
+                    label: 'عدد الأيام',
+                    data: [{{ present_count }}, {{ absent_count }}, {{ leave_count }}, {{ sick_count }}],
+                    backgroundColor: [
+                        'rgba(12, 235, 235, 0.6)',
+                        'rgba(245, 87, 108, 0.6)',
+                        'rgba(255, 216, 155, 0.6)',
+                        'rgba(79, 172, 254, 0.6)'
+                    ],
+                    borderColor: [
+                        'rgba(12, 235, 235, 1)',
+                        'rgba(245, 87, 108, 1)',
+                        'rgba(255, 216, 155, 1)',
+                        'rgba(79, 172, 254, 1)'
+                    ],
+                    borderWidth: 2,
+                    borderRadius: 10
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { 
+                            color: '#fff',
+                            font: { size: 12, family: 'Cairo, sans-serif' }
+                        },
+                        grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                    },
+                    x: {
+                        ticks: { 
+                            color: '#fff',
+                            font: { size: 12, family: 'Cairo, sans-serif' }
+                        },
+                        grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
         });
     });
 </script>
