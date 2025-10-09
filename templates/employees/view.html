@@ -1131,6 +1131,18 @@ document.addEventListener('DOMContentLoaded', function() {
                             <p class="mb-1 text-muted">الموقع</p>
                             <p class="fs-5">{{ employee.location or '-' }}</p>
                         </div>
+                        <div class="col-md-6">
+                            <p class="mb-1 text-muted"><i class="fas fa-money-bill-wave me-1"></i>الراتب الأساسي</p>
+                            <p class="fs-5">
+                                {% if employee.basic_salary and employee.basic_salary > 0 %}
+                                <span class="text-success fw-bold">
+                                    {{ "{:,.2f}".format(employee.basic_salary) }} ريال
+                                </span>
+                                {% else %}
+                                <span class="text-muted">غير محدد</span>
+                                {% endif %}
+                            </p>
+                        </div>
                         <!-- <div class="col-md-6"> -->
                             <!-- <p class="mb-1 text-muted">المشروع</p> -->
                             <!-- <p class="fs-5">{{ employee.project or '-' }}</p> -->
