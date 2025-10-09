@@ -279,220 +279,164 @@ def generate_employee_comprehensive_pdf(employee_id):
 
 def generate_employee_comprehensive_excel(employee_id):
     """
-    إنشاء تقرير Excel شامل للموظف
+    إنشاء تقرير Excel شامل واحترافي للموظف بـ 29 عمود
     
     :param employee_id: معرف الموظف
     :return: مخرجات ملف Excel
     """
-    # استعلام بيانات الموظف
-    employee = Employee.query.get(employee_id)
-    if not employee:
-        return None
-    
-    # استعلام بيانات الحضور
-    attendances = Attendance.query.filter_by(employee_id=employee_id).order_by(Attendance.date.desc()).all()
-    
-    # استعلام بيانات الرواتب
-    salaries = Salary.query.filter_by(employee_id=employee_id).order_by(Salary.year.desc(), Salary.month.desc()).all()
-    
-    # لا نستعلم عن المركبات في هذه النسخة
-    vehicles = []
-    
-    # إنشاء ExcelWriter
-    output = BytesIO()
-    writer = pd.ExcelWriter(output, engine='xlsxwriter')
-    
-    # إنشاء ورقة معلومات الموظف
-    employee_data = {
-        'المعلومة': [
-            'اسم الموظف', 'الرقم الوظيفي', 'رقم الهوية', 'تاريخ الالتحاق', 'الجنسية',
-            'القسم', 'المشروع', 'الموقع', 'البريد الإلكتروني', 'رقم الجوال',
-            'حالة الكفالة', 'اسم الكفيل الحالي'
-        ],
-        'القيمة': [
-            employee.name,
-            employee.employee_id,
-            employee.national_id,
-            employee.join_date.strftime('%Y-%m-%d') if employee.join_date else '-',
-            employee.nationality,
-            # الحصول على أسماء الأقسام (many-to-many relationship)
-            ', '.join([dept.name for dept in employee.departments]) if employee.departments else '-',
-            employee.project,
-            employee.location,
-            employee.email,
-            employee.mobile,
-            'على الكفالة' if employee.sponsorship_status != 'outside' else 'خارج الكفالة',
-            employee.current_sponsor_name if employee.sponsorship_status != 'outside' and employee.current_sponsor_name else 'غير محدد'
+    try:
+        from openpyxl import Workbook
+        from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
+        from openpyxl.utils import get_column_letter
+        
+        # استعلام بيانات الموظف
+        employee = Employee.query.get(employee_id)
+        if not employee:
+            return None
+        
+        output = BytesIO()
+        workbook = Workbook()
+        
+        # ===== ورقة معلومات الموظف الكاملة =====
+        sheet = workbook.active
+        sheet.title = "معلومات الموظف الكاملة"
+        
+        # التنسيقات
+        title_fill = PatternFill(start_color="1F4788", end_color="1F4788", fill_type="solid")
+        title_font = Font(bold=True, color="FFFFFF", size=16, name='Calibri')
+        header_fill = PatternFill(start_color="4472C4", end_color="4472C4", fill_type="solid")
+        header_font = Font(bold=True, color="FFFFFF", size=12, name='Calibri')
+        center_align = Alignment(horizontal='center', vertical='center')
+        right_align = Alignment(horizontal='right', vertical='center')
+        border = Border(
+            left=Side(style='thin'), right=Side(style='thin'),
+            top=Side(style='thin'), bottom=Side(style='thin')
+        )
+        
+        # عنوان التقرير
+        sheet.merge_cells('A1:B1')
+        title_cell = sheet['A1']
+        title_cell.value = f"تقرير شامل - {employee.name}"
+        title_cell.font = title_font
+        title_cell.alignment = center_align
+        title_cell.fill = title_fill
+        
+        # التاريخ
+        sheet.merge_cells('A2:B2')
+        date_cell = sheet['A2']
+        date_cell.value = f"تاريخ التقرير: {datetime.now().strftime('%Y-%m-%d %H:%M')}"
+        date_cell.font = Font(bold=True, size=11, name='Calibri')
+        date_cell.alignment = center_align
+        date_cell.fill = PatternFill(start_color="E7E6E6", end_color="E7E6E6", fill_type="solid")
+        
+        # جلب السيارة الحالية
+        current_vehicle = ""
+        try:
+            from models import VehicleHandover
+            latest_delivery = VehicleHandover.query.filter_by(
+                employee_id=employee.id
+            ).filter(
+                VehicleHandover.handover_type.in_(['delivery', 'تسليم', 'handover'])
+            ).order_by(VehicleHandover.handover_date.desc()).first()
+            
+            if latest_delivery and latest_delivery.vehicle:
+                current_vehicle = f"{latest_delivery.vehicle.plate_number}"
+        except:
+            pass
+        
+        # جلب بيانات الجهاز المحمول
+        mobile_type = ""
+        mobile_imei = ""
+        mobile_number = ""
+        try:
+            from models import DeviceAssignment, MobileDevice, SimCard
+            active_assignment = DeviceAssignment.query.filter_by(
+                employee_id=employee.id,
+                is_active=True
+            ).first()
+            
+            if active_assignment:
+                if active_assignment.device_id:
+                    device = MobileDevice.query.get(active_assignment.device_id)
+                    if device:
+                        mobile_type = f"{device.device_brand or ''} {device.device_model or ''}".strip()
+                        mobile_imei = device.imei or ""
+                
+                if active_assignment.sim_card_id:
+                    sim = SimCard.query.get(active_assignment.sim_card_id)
+                    if sim:
+                        mobile_number = sim.phone_number or ""
+        except:
+            pass
+        
+        # البيانات الكاملة بالترتيب المطلوب (29 حقل)
+        employee_full_data = [
+            ("الاسم الكامل", employee.name),
+            ("رقم الهوية الوطنية", employee.national_id or ""),
+            ("رقم الموظف", employee.employee_id),
+            ("الجنسية", employee.nationality_rel.name_ar if hasattr(employee, 'nationality_rel') and employee.nationality_rel else (employee.nationality if hasattr(employee, 'nationality') else "")),
+            ("الجوال الشخصي", getattr(employee, 'mobilePersonal', '') or ''),
+            ("مقاس البنطلون", getattr(employee, 'pants_size', '') or ''),
+            ("مقاس التيشرت", getattr(employee, 'shirt_size', '') or ''),
+            ("المسمى الوظيفي", employee.job_title or ""),
+            ("الحالة الوظيفية", employee.status or ""),
+            ("نوع الجوال", mobile_type),
+            ("رقم IMEI", mobile_imei),
+            ("رقم الجوال", mobile_number),
+            ("السيارة الحالية", current_vehicle),
+            ("الموقع", employee.location or ""),
+            ("المشروع", employee.project or ""),
+            ("البريد الإلكتروني", employee.email or ""),
+            ("الأقسام", ', '.join([dept.name for dept in employee.departments]) if employee.departments else ""),
+            ("تاريخ الانضمام", employee.join_date.strftime('%Y-%m-%d') if employee.join_date else ""),
+            ("تاريخ الميلاد", employee.birth_date.strftime('%Y-%m-%d') if employee.birth_date else ""),
+            ("نوع الموظف", getattr(employee, 'employee_type', '') or ''),
+            ("نوع العقد", getattr(employee, 'contract_type', '') or ''),
+            ("الراتب الأساسي", f"{getattr(employee, 'basic_salary', 0):,.2f} ريال" if getattr(employee, 'basic_salary', 0) else ""),
+            ("حالة العقد", getattr(employee, 'contract_status', '') or ''),
+            ("حالة الرخصة", getattr(employee, 'license_status', '') or ''),
+            ("حالة الكفالة", getattr(employee, 'sponsorship_status', '') or ''),
+            ("اسم الكفيل", getattr(employee, 'current_sponsor_name', '') or ''),
+            ("رقم الإيبان", getattr(employee, 'bank_iban', '') or ''),
+            ("تفاصيل السكن", getattr(employee, 'residence_details', '') or ''),
+            ("رابط موقع السكن", getattr(employee, 'residence_location_url', '') or '')
         ]
-    }
-    
-    df_employee = pd.DataFrame(employee_data)
-    df_employee.to_excel(writer, sheet_name='معلومات الموظف', index=False)
-    
-    # تنسيق ورقة معلومات الموظف
-    worksheet = writer.sheets['معلومات الموظف']
-    worksheet.set_column('A:A', 25)
-    worksheet.set_column('B:B', 40)
-    
-    # إنشاء ورقة الوثائق
-    if employee.documents:
-        doc_data = {
-            'نوع الوثيقة': [],
-            'تاريخ الإصدار': [],
-            'تاريخ الانتهاء': [],
-            'رقم الوثيقة': [],
-            'ملاحظات': []
-        }
         
-        doc_type_map = {
-            'national_id': 'الهوية الوطنية',
-            'passport': 'جواز السفر',
-            'visa': 'التأشيرة',
-            'health_certificate': 'الشهادة الصحية',
-            'driving_license': 'رخصة القيادة',
-            'contract': 'عقد العمل',
-            'other': 'أخرى'
-        }
-        
-        for doc in employee.documents:
-            doc_data['نوع الوثيقة'].append(doc_type_map.get(doc.document_type, doc.document_type))
-            doc_data['تاريخ الإصدار'].append(doc.issue_date.strftime('%Y-%m-%d') if doc.issue_date else '-')
-            doc_data['تاريخ الانتهاء'].append(doc.expiry_date.strftime('%Y-%m-%d') if doc.expiry_date else '-')
-            doc_data['رقم الوثيقة'].append(doc.document_number or '-')
-            doc_data['ملاحظات'].append(doc.notes or '-')
-        
-        df_documents = pd.DataFrame(doc_data)
-        df_documents.to_excel(writer, sheet_name='الوثائق', index=False)
-        
-        # تنسيق ورقة الوثائق
-        worksheet = writer.sheets['الوثائق']
-        worksheet.set_column('A:E', 20)
-    
-    # إنشاء ورقة المركبات (إذا كان هناك مركبات)
-    if vehicles:
-        vehicle_data = {
-            'رقم اللوحة': [],
-            'الطراز': [],
-            'الموديل': [],
-            'اللون': [],
-            'سنة الصنع': [],
-            'رقم الهيكل': [],
-            'تاريخ انتهاء الفحص': []
-        }
-        
-        for vehicle in vehicles:
-            vehicle_data['رقم اللوحة'].append(vehicle.plate_number)
-            vehicle_data['الطراز'].append(vehicle.make)
-            vehicle_data['الموديل'].append(vehicle.model)
-            vehicle_data['اللون'].append(vehicle.color)
-            vehicle_data['سنة الصنع'].append(vehicle.year)
-            vehicle_data['رقم الهيكل'].append(vehicle.vin or '-')
-            vehicle_data['تاريخ انتهاء الفحص'].append(
-                vehicle.inspection_expiry.strftime('%Y-%m-%d') if hasattr(vehicle, 'inspection_expiry') and vehicle.inspection_expiry else '-'
-            )
-        
-        df_vehicles = pd.DataFrame(vehicle_data)
-        df_vehicles.to_excel(writer, sheet_name='المركبات', index=False)
-        
-        # تنسيق ورقة المركبات
-        worksheet = writer.sheets['المركبات']
-        worksheet.set_column('A:G', 18)
-    
-    # إنشاء ورقة الحضور
-    if attendances:
-        status_map = {
-            'present': 'حاضر',
-            'absent': 'غائب',
-            'leave': 'إجازة',
-            'sick': 'مرضي'
-        }
-        
-        attendance_data = {
-            'التاريخ': [],
-            'اليوم': [],
-            'الحالة': [],
-            'الملاحظات': []
-        }
-        
-        for attendance in attendances:
-            day_name_map = {
-                0: 'الاثنين',
-                1: 'الثلاثاء',
-                2: 'الأربعاء',
-                3: 'الخميس',
-                4: 'الجمعة',
-                5: 'السبت',
-                6: 'الأحد'
-            }
+        # كتابة البيانات
+        row_num = 4
+        for label, value in employee_full_data:
+            # العمود الأول: التسمية
+            label_cell = sheet.cell(row=row_num, column=1)
+            label_cell.value = label
+            label_cell.font = Font(bold=True, size=11, name='Calibri')
+            label_cell.fill = header_fill
+            label_cell.alignment = right_align
+            label_cell.border = border
             
-            day_name = day_name_map.get(attendance.date.weekday(), '-')
+            # العمود الثاني: القيمة
+            value_cell = sheet.cell(row=row_num, column=2)
+            value_cell.value = value if value else "-"
+            value_cell.font = Font(size=11, name='Calibri')
+            value_cell.alignment = right_align
+            value_cell.border = border
             
-            attendance_data['التاريخ'].append(attendance.date.strftime('%Y-%m-%d'))
-            attendance_data['اليوم'].append(day_name)
-            attendance_data['الحالة'].append(status_map.get(attendance.status, attendance.status))
-            attendance_data['الملاحظات'].append(attendance.notes or '-')
+            # تلوين الصفوف بالتناوب
+            if row_num % 2 == 0:
+                value_cell.fill = PatternFill(start_color="F2F2F2", end_color="F2F2F2", fill_type="solid")
+            
+            row_num += 1
         
-        df_attendance = pd.DataFrame(attendance_data)
-        df_attendance.to_excel(writer, sheet_name='سجل الحضور', index=False)
+        # ضبط عرض الأعمدة
+        sheet.column_dimensions['A'].width = 25
+        sheet.column_dimensions['B'].width = 50
         
-        # تنسيق ورقة الحضور
-        worksheet = writer.sheets['سجل الحضور']
-        worksheet.set_column('A:D', 20)
-        
-        # إنشاء ورقة ملخص الحضور
-        present_count = sum(1 for a in attendances if a.status == 'present')
-        absent_count = sum(1 for a in attendances if a.status == 'absent')
-        leave_count = sum(1 for a in attendances if a.status == 'leave')
-        sick_count = sum(1 for a in attendances if a.status == 'sick')
-        total_count = len(attendances)
-        
-        attendance_summary = {
-            'الحالة': ['حاضر', 'غائب', 'إجازة', 'مرضي', 'الإجمالي'],
-            'العدد': [present_count, absent_count, leave_count, sick_count, total_count],
-            'النسبة': [
-                f"{(present_count / total_count * 100):.2f}%" if total_count else "0%",
-                f"{(absent_count / total_count * 100):.2f}%" if total_count else "0%",
-                f"{(leave_count / total_count * 100):.2f}%" if total_count else "0%",
-                f"{(sick_count / total_count * 100):.2f}%" if total_count else "0%",
-                "100%"
-            ]
-        }
-        
-        df_summary = pd.DataFrame(attendance_summary)
-        df_summary.to_excel(writer, sheet_name='ملخص الحضور', index=False)
-        
-        # تنسيق ورقة ملخص الحضور
-        worksheet = writer.sheets['ملخص الحضور']
-        worksheet.set_column('A:C', 15)
+        # حفظ الملف
+        workbook.save(output)
+        output.seek(0)
+        return output
     
-    # إنشاء ورقة الرواتب
-    if salaries:
-        salary_data = {
-            'الشهر': [],
-            'السنة': [],
-            'الراتب الأساسي': [],
-            'البدلات': [],
-            'الخصومات': [],
-            'صافي الراتب': []
-        }
-        
-        for salary in salaries:
-            salary_data['الشهر'].append(salary.month)
-            salary_data['السنة'].append(salary.year)
-            salary_data['الراتب الأساسي'].append(salary.basic_salary)
-            salary_data['البدلات'].append(salary.allowances)
-            salary_data['الخصومات'].append(salary.deductions)
-            salary_data['صافي الراتب'].append(salary.net_salary)
-        
-        df_salary = pd.DataFrame(salary_data)
-        df_salary.to_excel(writer, sheet_name='سجل الرواتب', index=False)
-        
-        # تنسيق ورقة الرواتب
-        worksheet = writer.sheets['سجل الرواتب']
-        worksheet.set_column('A:F', 15)
-    
-    # حفظ الملف
-    writer.close()
-    
-    output.seek(0)
-    return output
+    except Exception as e:
+        print(f"خطأ في إنشاء ملف Excel: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return None
