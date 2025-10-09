@@ -673,12 +673,9 @@
                         {% set attendance = attendance_by_day[day] %}
                         <td class="status-{{ attendance.status }} {% if is_weekend %}weekend-day{% endif %} attendance-cell" 
                             data-bs-toggle="tooltip" 
-                            data-attendance-id="{{ attendance.id }}"
+                            data-employee-id="{{ employee.id }}"
                             data-date="{{ attendance.date.strftime('%Y-%m-%d') }}"
-                            data-status="{{ attendance.status }}"
-                            data-check-in="{{ attendance.check_in.strftime('%H:%M') if attendance.check_in else '' }}"
-                            data-check-out="{{ attendance.check_out.strftime('%H:%M') if attendance.check_out else '' }}"
-                            onclick="openEditModal(this)"
+                            onclick="window.location.href='{{ url_for('attendance.record') }}?employee_id={{ employee.id }}&date={{ attendance.date.strftime('%Y-%m-%d') }}'"
                             style="cursor: pointer;"
                             title="{{ attendance.date.strftime('%d/%m/%Y') }} - {{ {
                                 'present': 'حاضر',
@@ -769,115 +766,17 @@
         </div>
         {% endif %}
     </div>
-    
-    <!-- Edit Attendance Modal -->
-    <div class="modal fade" id="editAttendanceModal" tabindex="-1" aria-labelledby="editAttendanceModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content" style="background: var(--bs-card-bg, #2c3034); border: 1px solid var(--bs-border-color, #495057);">
-                <div class="modal-header" style="border-bottom: 1px solid var(--bs-border-color, #495057);">
-                    <h5 class="modal-title" id="editAttendanceModalLabel">تعديل سجل الحضور</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <form id="editAttendanceForm" method="POST" action="{{ url_for('attendance.edit_attendance_record') }}">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <input type="hidden" name="attendance_id" id="edit_attendance_id">
-                    <input type="hidden" name="employee_id" value="{{ employee.id }}">
-                    <input type="hidden" name="return_url" value="{{ request.url }}">
-                    
-                    <div class="modal-body">
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">التاريخ</label>
-                            <input type="text" class="form-control" id="edit_date" readonly>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">الحالة</label>
-                            <select class="form-select" name="status" id="edit_status" required>
-                                <option value="present">حاضر</option>
-                                <option value="absent">غائب</option>
-                                <option value="leave">إجازة</option>
-                                <option value="sick">مرضي</option>
-                            </select>
-                        </div>
-                        
-                        <div id="timeFields">
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label fw-bold">وقت الحضور</label>
-                                    <input type="time" class="form-control" name="check_in" id="edit_check_in">
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label fw-bold">وقت الانصراف</label>
-                                    <input type="time" class="form-control" name="check_out" id="edit_check_out">
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">ملاحظات</label>
-                            <textarea class="form-control" name="notes" id="edit_notes" rows="3"></textarea>
-                        </div>
-                    </div>
-                    
-                    <div class="modal-footer" style="border-top: 1px solid var(--bs-border-color, #495057);">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
-                        <button type="submit" class="btn btn-primary">حفظ التعديلات</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    // Open Edit Modal
-    function openEditModal(cell) {
-        const attendanceId = cell.dataset.attendanceId;
-        const date = cell.dataset.date;
-        const status = cell.dataset.status;
-        const checkIn = cell.dataset.checkIn;
-        const checkOut = cell.dataset.checkOut;
-        
-        // Set form values
-        document.getElementById('edit_attendance_id').value = attendanceId;
-        document.getElementById('edit_date').value = date;
-        document.getElementById('edit_status').value = status;
-        document.getElementById('edit_check_in').value = checkIn;
-        document.getElementById('edit_check_out').value = checkOut;
-        
-        // Show/hide time fields based on status
-        toggleTimeFields(status);
-        
-        // Show modal
-        const modal = new bootstrap.Modal(document.getElementById('editAttendanceModal'));
-        modal.show();
-    }
-    
-    // Toggle time fields visibility
-    function toggleTimeFields(status) {
-        const timeFields = document.getElementById('timeFields');
-        if (status === 'present') {
-            timeFields.style.display = 'block';
-        } else {
-            timeFields.style.display = 'none';
-            document.getElementById('edit_check_in').value = '';
-            document.getElementById('edit_check_out').value = '';
-        }
-    }
-    
     document.addEventListener('DOMContentLoaded', function() {
         // Tooltips
         var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
         var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
             return new bootstrap.Tooltip(tooltipTriggerEl);
-        });
-        
-        // Status change event
-        document.getElementById('edit_status').addEventListener('change', function() {
-            toggleTimeFields(this.value);
         });
 
         // Pie Chart
