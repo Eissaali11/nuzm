@@ -14,9 +14,6 @@
     }
 
     body {
-        background: linear-gradient(to bottom, #0f0c29, #302b63, #24243e);
-        min-height: 100vh;
-        color: #fff;
         overflow-x: hidden;
     }
     
@@ -27,13 +24,12 @@
 
     /* Employee Header Card */
     .employee-header-card {
-        background: linear-gradient(135deg, rgba(103, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
-        border: 1px solid rgba(103, 126, 234, 0.3);
-        border-radius: 20px;
-        padding: 30px;
-        margin-bottom: 30px;
-        backdrop-filter: blur(10px);
-        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5), 0 0 50px rgba(103, 126, 234, 0.2);
+        background: var(--bs-card-bg, #2c3034);
+        border: 1px solid var(--bs-border-color, #495057);
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         position: relative;
         overflow: hidden;
     }
@@ -41,45 +37,33 @@
     .employee-header-card::before {
         content: '';
         position: absolute;
-        top: -50%;
-        right: -50%;
-        width: 200%;
-        height: 200%;
-        background: radial-gradient(circle, rgba(103, 126, 234, 0.1) 0%, transparent 70%);
-        animation: pulse 8s ease-in-out infinite;
-    }
-
-    @keyframes pulse {
-        0%, 100% { transform: scale(1); opacity: 0.5; }
-        50% { transform: scale(1.1); opacity: 0.8; }
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: var(--primary-gradient);
     }
 
     .employee-photo {
         width: 120px;
         height: 120px;
         border-radius: 50%;
-        border: 4px solid rgba(103, 126, 234, 0.5);
-        box-shadow: 0 0 30px rgba(103, 126, 234, 0.6);
+        border: 3px solid var(--bs-primary, #0d6efd);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         object-fit: cover;
-        animation: photo-glow 3s ease-in-out infinite;
-    }
-
-    @keyframes photo-glow {
-        0%, 100% { box-shadow: 0 0 30px rgba(103, 126, 234, 0.6); }
-        50% { box-shadow: 0 0 50px rgba(103, 126, 234, 1); }
     }
 
     /* Stats Cards */
     .stats-card {
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 20px;
-        padding: 25px;
-        margin-bottom: 20px;
-        backdrop-filter: blur(10px);
+        background: var(--bs-card-bg, #2c3034);
+        border: 1px solid var(--bs-border-color, #495057);
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
         transition: all 0.3s ease;
         position: relative;
         overflow: hidden;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     }
 
     .stats-card::before {
@@ -88,20 +72,13 @@
         top: 0;
         left: 0;
         width: 100%;
-        height: 100%;
+        height: 4px;
         background: var(--gradient);
-        opacity: 0;
-        transition: opacity 0.3s ease;
-    }
-
-    .stats-card:hover::before {
-        opacity: 0.1;
     }
 
     .stats-card:hover {
-        transform: translateY(-10px) scale(1.02);
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-        border-color: rgba(255, 255, 255, 0.3);
+        transform: translateY(-5px);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
     }
 
     .stats-card.success {
@@ -189,13 +166,12 @@
 
     /* Chart Container */
     .chart-container {
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 20px;
-        padding: 30px;
-        margin-bottom: 30px;
-        backdrop-filter: blur(10px);
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        background: var(--bs-card-bg, #2c3034);
+        border: 1px solid var(--bs-border-color, #495057);
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         max-height: 400px;
     }
     
@@ -206,12 +182,12 @@
 
     /* Calendar Styles */
     .calendar-card {
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 20px;
-        padding: 25px;
-        backdrop-filter: blur(10px);
-        margin-top: 30px;
+        background: var(--bs-card-bg, #2c3034);
+        border: 1px solid var(--bs-border-color, #495057);
+        border-radius: 16px;
+        padding: 2rem;
+        margin-top: 2rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     }
 
     .month-calendar {
@@ -223,25 +199,25 @@
     }
 
     .month-calendar th {
-        background: linear-gradient(135deg, rgba(103, 126, 234, 0.3) 0%, rgba(118, 75, 162, 0.3) 100%);
+        background: var(--bs-primary, #0d6efd);
         color: white;
         font-weight: bold;
-        padding: 15px;
-        border-radius: 12px;
+        padding: 12px;
+        border-radius: 8px;
         text-align: center;
-        font-size: 1.1rem;
+        font-size: 1rem;
     }
 
     .month-calendar td {
-        border-radius: 12px;
+        border-radius: 8px;
         text-align: center;
         padding: 10px 5px;
         min-height: 70px;
         max-width: 14%;
         vertical-align: top;
         transition: all 0.3s ease;
-        background: rgba(255, 255, 255, 0.03);
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: var(--bs-secondary-bg, #343a40);
+        border: 1px solid var(--bs-border-color, #495057);
         cursor: pointer;
         overflow: hidden;
         word-wrap: break-word;
@@ -294,12 +270,12 @@
 
     /* Month Year Selector */
     .month-year-selector {
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 20px;
-        padding: 25px;
-        margin-bottom: 30px;
-        backdrop-filter: blur(10px);
+        background: var(--bs-card-bg, #2c3034);
+        border: 1px solid var(--bs-border-color, #495057);
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     }
 
     .btn-month {
@@ -491,7 +467,7 @@
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4">
+<div class="container-fluid mt-4">
     <!-- Employee Header -->
     <div class="employee-header-card">
         <div class="row align-items-center position-relative">
