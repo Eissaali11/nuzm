@@ -406,6 +406,18 @@
                             </div>
                         </div>
                     </div>
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label for="basic_salary" class="form-label">الراتب الأساسي</label>
+                            <input type="number" step="0.01" class="form-control" id="basic_salary" name="basic_salary" 
+                                   value="{{ form_data.get('basic_salary', '') if form_data else '' }}" 
+                                   placeholder="0.00">
+                            <div class="form-text text-muted">
+                                <i class="fas fa-money-bill-wave"></i>
+                                الراتب الأساسي للموظف (ريال سعودي)
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="mt-4">
