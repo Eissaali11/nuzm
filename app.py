@@ -132,7 +132,7 @@ else:
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 # إعدادات لحجم الطلبات والملفات المرفوعة
-app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100 MB
+app.config['MAX_CONTENT_LENGTH'] = 500 * 1024 * 1024  # 500 MB - لدعم رفع عدد كبير من الصور
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 
 # Add execution options only for PostgreSQL/MySQL
@@ -142,7 +142,7 @@ if not database_url.startswith("sqlite"):
     app.config["SQLALCHEMY_ENGINE_OPTIONS"]["execution_options"]["isolation_level"] = "READ COMMITTED"
 
 # Provide default values for uploads and other configurations
-app.config["MAX_CONTENT_LENGTH"] = 100 * 1024 * 1024  # 100 MB - Increased for file uploads
+app.config["MAX_CONTENT_LENGTH"] = 500 * 1024 * 1024  # 500 MB - لدعم رفع عدد كبير من الصور
 app.config["UPLOAD_FOLDER"] = "uploads"
 
 # Initialize SQLAlchemy with the app
