@@ -523,8 +523,13 @@ def delete_multiple():
                 if not device:
                     continue
                 
-                # التحقق من عدم ربط الجهاز
-                if device.is_assigned:
+                # التحقق من وجود ربط نشط فعلياً في DeviceAssignment
+                active_assignment = DeviceAssignment.query.filter_by(
+                    device_id=device.id,
+                    is_active=True
+                ).first()
+                
+                if active_assignment:
                     skipped_count += 1
                     skipped_devices.append(device.imei)
                     continue
