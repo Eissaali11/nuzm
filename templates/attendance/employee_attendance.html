@@ -196,6 +196,12 @@
         margin-bottom: 30px;
         backdrop-filter: blur(10px);
         box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        max-height: 400px;
+    }
+    
+    .chart-container canvas {
+        max-height: 280px !important;
+        width: 100% !important;
     }
 
     /* Calendar Styles */
@@ -435,6 +441,11 @@
         
         .chart-container {
             padding: 20px;
+            max-height: 350px;
+        }
+        
+        .chart-container canvas {
+            max-height: 220px !important;
         }
     }
     
@@ -588,7 +599,7 @@
                     <i class="fas fa-chart-pie"></i>
                     <span>توزيع الحضور</span>
                 </h3>
-                <canvas id="attendanceChart" height="250"></canvas>
+                <canvas id="attendanceChart" style="max-height: 280px; height: 280px;"></canvas>
             </div>
         </div>
         <div class="col-md-6">
@@ -597,7 +608,7 @@
                     <i class="fas fa-chart-bar"></i>
                     <span>الإحصائيات التفصيلية</span>
                 </h3>
-                <canvas id="statsChart" height="250"></canvas>
+                <canvas id="statsChart" style="max-height: 280px; height: 280px;"></canvas>
             </div>
         </div>
     </div>
