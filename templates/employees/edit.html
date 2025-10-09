@@ -370,6 +370,61 @@
                                             {% endif %}
                                         </div>
                                     </div>
+                                    
+                                    <!-- صور توضيحية للسكن -->
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label for="housing_images" class="form-label">صور توضيحية للسكن</label>
+                                            <input type="file" class="form-control" id="housing_images" name="housing_images" 
+                                                   accept="image/*,.heic" multiple>
+                                            <div class="form-text text-muted">
+                                                <i class="fas fa-images"></i>
+                                                يمكنك رفع عدة صور توضيحية للسكن (اختياري)
+                                            </div>
+                                            {% if employee.housing_images %}
+                                            <div class="mt-2">
+                                                {% set image_files = employee.housing_images.split(',') if employee.housing_images else [] %}
+                                                {% if image_files %}
+                                                <div class="d-flex flex-wrap gap-2">
+                                                    {% for image in image_files %}
+                                                    <div class="position-relative" style="width: 80px; height: 80px;">
+                                                        <img src="{{ url_for('static', filename=image.strip()) }}" 
+                                                             class="img-thumbnail" 
+                                                             style="width: 100%; height: 100%; object-fit: cover;"
+                                                             onclick="window.open('{{ url_for('static', filename=image.strip()) }}', '_blank')">
+                                                    </div>
+                                                    {% endfor %}
+                                                </div>
+                                                {% endif %}
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- روابط Google Drive -->
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label for="housing_drive_links" class="form-label">روابط Google Drive للسكن</label>
+                                            <textarea class="form-control" id="housing_drive_links" name="housing_drive_links" 
+                                                      rows="3" placeholder="https://drive.google.com/...&#10;https://drive.google.com/...">{{ employee.housing_drive_links or '' }}</textarea>
+                                            <div class="form-text text-muted">
+                                                <i class="fab fa-google-drive"></i>
+                                                يمكنك إضافة روابط Google Drive للملفات والصور (كل رابط في سطر منفصل)
+                                            </div>
+                                            {% if employee.housing_drive_links %}
+                                            <div class="mt-2">
+                                                {% set drive_links = employee.housing_drive_links.split('\n') if employee.housing_drive_links else [] %}
+                                                {% for link in drive_links %}
+                                                {% if link.strip() %}
+                                                <a href="{{ link.strip() }}" target="_blank" class="btn btn-sm btn-outline-primary mb-1 d-block">
+                                                    <i class="fab fa-google-drive me-1"></i> فتح الرابط {{ loop.index }}
+                                                </a>
+                                                {% endif %}
+                                                {% endfor %}
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>

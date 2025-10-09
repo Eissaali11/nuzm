@@ -14,7 +14,7 @@
             <h5 class="card-title mb-0">بيانات الموظف الجديد</h5>
         </div>
         <div class="card-body">
-            <form action="{{ url_for('employees.create') }}" method="post">
+            <form action="{{ url_for('employees.create') }}" method="post" enctype="multipart/form-data">
                 <div class="row">
                     <!-- معلومات أساسية -->
                     <div class="col-md-6">
@@ -304,6 +304,32 @@
                                             <div class="form-text text-muted">
                                                 <i class="fas fa-map-marker-alt"></i>
                                                 الصق رابط موقع السكن من خرائط Google لسهولة الوصول إليه
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- صور توضيحية للسكن -->
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label for="housing_images" class="form-label">صور توضيحية للسكن</label>
+                                            <input type="file" class="form-control" id="housing_images" name="housing_images" 
+                                                   accept="image/*,.heic" multiple>
+                                            <div class="form-text text-muted">
+                                                <i class="fas fa-images"></i>
+                                                يمكنك رفع عدة صور توضيحية للسكن (اختياري)
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- روابط Google Drive -->
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label for="housing_drive_links" class="form-label">روابط Google Drive للسكن</label>
+                                            <textarea class="form-control" id="housing_drive_links" name="housing_drive_links" 
+                                                      rows="3" placeholder="https://drive.google.com/...&#10;https://drive.google.com/..."></textarea>
+                                            <div class="form-text text-muted">
+                                                <i class="fab fa-google-drive"></i>
+                                                يمكنك إضافة روابط Google Drive للملفات والصور (كل رابط في سطر منفصل)
                                             </div>
                                         </div>
                                     </div>

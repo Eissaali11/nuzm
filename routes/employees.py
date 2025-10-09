@@ -202,6 +202,9 @@ def create():
             residence_details = request.form.get('residence_details', '').strip() or None
             residence_location_url = request.form.get('residence_location_url', '').strip() or None
             
+            # معالجة روابط Google Drive
+            housing_drive_links = request.form.get('housing_drive_links', '').strip() or None
+            
             # مقاسات الزي الموحد
             pants_size = request.form.get('pants_size', '').strip() or None
             shirt_size = request.form.get('shirt_size', '').strip() or None
@@ -242,6 +245,7 @@ def create():
                 current_sponsor_name=current_sponsor_name,
                 residence_details=residence_details,
                 residence_location_url=residence_location_url,
+                housing_drive_links=housing_drive_links,
                 pants_size=pants_size,
                 shirt_size=shirt_size,
                 basic_salary=basic_salary
@@ -252,6 +256,23 @@ def create():
             
             db.session.add(employee)
             db.session.commit()
+            
+            # معالجة رفع صور السكن بعد حفظ الموظف (للحصول على ID)
+            housing_images_files = request.files.getlist('housing_images')
+            if housing_images_files and any(f.filename for f in housing_images_files):
+                saved_images = []
+                for img_file in housing_images_files:
+                    if img_file and img_file.filename:
+                        try:
+                            saved_path = save_employee_image(img_file, employee.id, 'housing')
+                            if saved_path:
+                                saved_images.append(saved_path)
+                        except Exception as img_error:
+                            print(f"Error saving housing image: {str(img_error)}")
+                
+                if saved_images:
+                    employee.housing_images = ','.join(saved_images)
+                    db.session.commit()
             
             # Log the action
             log_activity('create', 'Employee', employee.id, f'تم إنشاء موظف جديد: {name}')
@@ -412,6 +433,30 @@ def edit(id):
             # تحديث معلومات السكن
             employee.residence_details = request.form.get('residence_details', '').strip() or None
             employee.residence_location_url = request.form.get('residence_location_url', '').strip() or None
+            
+            # معالجة رفع صور السكن (multiple images)
+            housing_images_files = request.files.getlist('housing_images')
+            if housing_images_files and any(f.filename for f in housing_images_files):
+                saved_images = []
+                # الاحتفاظ بالصور القديمة إذا كانت موجودة
+                if employee.housing_images:
+                    saved_images = [img.strip() for img in employee.housing_images.split(',') if img.strip()]
+                
+                # حفظ الصور الجديدة
+                for img_file in housing_images_files:
+                    if img_file and img_file.filename:
+                        try:
+                            saved_path = save_employee_image(img_file, id, 'housing')
+                            if saved_path:
+                                saved_images.append(saved_path)
+                        except Exception as img_error:
+                            print(f"Error saving housing image: {str(img_error)}")
+                
+                # حفظ قائمة الصور كنص مفصول بفواصل
+                employee.housing_images = ','.join(saved_images) if saved_images else None
+            
+            # معالجة روابط Google Drive
+            employee.housing_drive_links = request.form.get('housing_drive_links', '').strip() or None
             
             # تحديث مقاسات الزي الموحد
             employee.pants_size = request.form.get('pants_size', '').strip() or None

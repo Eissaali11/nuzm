@@ -108,6 +108,8 @@ class Employee(db.Model):
     # معلومات السكن
     residence_details = db.Column(db.String(500), nullable=True)  # تفاصيل السكن (العنوان أو الوصف)
     residence_location_url = db.Column(db.String(500), nullable=True)  # رابط موقع السكن على خرائط Google
+    housing_images = db.Column(db.Text, nullable=True)  # أسماء ملفات الصور التوضيحية للسكن (مفصولة بفواصل)
+    housing_drive_links = db.Column(db.Text, nullable=True)  # روابط Google Drive للسكن (مفصولة بفواصل)
     
     # مقاسات الزي الموحد
     pants_size = db.Column(db.String(20), nullable=True)  # مقاس البنطلون
