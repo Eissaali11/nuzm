@@ -453,28 +453,39 @@ def generate_employee_excel(employees, output=None):
             mobile_number = ""
             try:
                 from models import DeviceAssignment, MobileDevice, SimCard
+                
                 # البحث عن التعيين النشط للموظف
                 active_assignment = DeviceAssignment.query.filter_by(
                     employee_id=employee.id,
                     is_active=True
                 ).first()
                 
+                print(f"🔍 الموظف {employee.name} (ID: {employee.id}): التعيين النشط = {active_assignment}")
+                
                 if active_assignment:
                     # جلب معلومات الجهاز
                     if active_assignment.device_id:
                         device = MobileDevice.query.get(active_assignment.device_id)
+                        print(f"   📱 الجهاز: {device}")
                         if device:
                             mobile_type = f"{device.device_brand or ''} {device.device_model or ''}".strip()
                             mobile_imei = device.imei or ""
+                            print(f"   ✅ نوع الجوال: {mobile_type}, IMEI: {mobile_imei}")
                     
                     # جلب رقم الهاتف من SIM Card
                     if active_assignment.sim_card_id:
                         sim = SimCard.query.get(active_assignment.sim_card_id)
+                        print(f"   📞 SIM Card: {sim}")
                         if sim:
                             mobile_number = sim.phone_number or ""
+                            print(f"   ✅ رقم الجوال: {mobile_number}")
+                else:
+                    print(f"   ❌ لا يوجد تعيين نشط للموظف")
+                    
             except Exception as e:
-                print(f"خطأ في جلب بيانات الجهاز للموظف {employee.id}: {str(e)}")
-                pass
+                import traceback
+                print(f"❌ خطأ في جلب بيانات الجهاز للموظف {employee.name} ({employee.id}): {str(e)}")
+                print(traceback.format_exc())
             
             all_data = [
                 employee.name,  # 1. الاسم الكامل
