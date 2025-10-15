@@ -4,6 +4,7 @@ from flask_login import login_required, current_user
 from flask_wtf import FlaskForm
 from werkzeug.utils import secure_filename
 from sqlalchemy import extract, func, or_, and_, not_, exists, case
+from sqlalchemy.orm import joinedload
 from forms.vehicle_forms import VehicleAccidentForm, VehicleDocumentsForm
 import os
 import uuid
@@ -3924,10 +3925,42 @@ def dashboard():
                 func.sum(VehicleRental.monthly_cost)
         ).filter_by(is_active=True).scalar() or 0
 
-        # السيارات في الورشة حالياً
-        vehicles_in_workshop = VehicleWorkshop.query.filter(
+        # السيارات في الورشة حالياً (من سجلات الورشة الفعلية مع تحميل مسبق)
+        workshop_records = db.session.query(VehicleWorkshop).join(
+                Vehicle, VehicleWorkshop.vehicle_id == Vehicle.id
+        ).filter(
                 VehicleWorkshop.exit_date.is_(None)
-        ).count()
+        ).options(
+                joinedload(VehicleWorkshop.vehicle)
+        ).all()
+        
+        vehicles_in_workshop = len(workshop_records)
+        
+        # قائمة السيارات الموجودة في الورشة مع تفاصيلها
+        workshop_vehicles_list = []
+        for record in workshop_records:
+                vehicle = record.vehicle
+                if vehicle:
+                        # حساب عدد الأيام بشكل آمن
+                        days_in_workshop = 0
+                        if record.entry_date:
+                                try:
+                                        days_in_workshop = (datetime.now().date() - record.entry_date).days
+                                except:
+                                        days_in_workshop = 0
+                        
+                        workshop_vehicles_list.append({
+                                'id': vehicle.id,
+                                'plate_number': vehicle.plate_number,
+                                'make': vehicle.make,
+                                'model': vehicle.model,
+                                'entry_date': record.entry_date,
+                                'reason': record.reason,
+                                'cost': record.cost or 0,
+                                'workshop_name': record.workshop_name,
+                                'status': vehicle.status,  # لمقارنة الحالة الفعلية
+                                'days_in_workshop': days_in_workshop
+                        })
 
         # تكاليف الصيانة الإجمالية (للسنة الحالية)
         current_year = datetime.now().year
@@ -4115,6 +4148,7 @@ def dashboard():
                 expired_registration_vehicles=expired_registration_vehicles,
                 expired_inspection_vehicles=expired_inspection_vehicles,
                 expired_authorization_vehicles=expired_authorization_vehicles,
+                workshop_vehicles_list=workshop_vehicles_list,
                 today=today
         )
 
