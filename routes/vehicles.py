@@ -1572,16 +1572,36 @@ def edit_documents(id):
                 form.registration_expiry_date.data = vehicle.registration_expiry_date
                 form.inspection_expiry_date.data = vehicle.inspection_expiry_date
 
-        if form.validate_on_submit():
-                # تحديث البيانات
-                vehicle.authorization_expiry_date = form.authorization_expiry_date.data
-                
-                # إذا لم يكن قادماً من العمليات، حفظ جميع الحقول
-                if not from_operations:
-                    vehicle.registration_expiry_date = form.registration_expiry_date.data
-                    vehicle.inspection_expiry_date = form.inspection_expiry_date.data
-                
-                vehicle.updated_at = datetime.utcnow()
+        if request.method == 'POST':
+                try:
+                    # محاولة استخدام بيانات النموذج أولاً
+                    if form.validate_on_submit():
+                        # تحديث البيانات من النموذج
+                        vehicle.authorization_expiry_date = form.authorization_expiry_date.data
+                        
+                        # إذا لم يكن قادماً من العمليات، حفظ جميع الحقول
+                        if not from_operations:
+                            vehicle.registration_expiry_date = form.registration_expiry_date.data
+                            vehicle.inspection_expiry_date = form.inspection_expiry_date.data
+                    else:
+                        # في حالة فشل التحقق، استخدم request.form مباشرة
+                        print(f"❌ فشل التحقق من النموذج: {form.errors}")
+                        
+                        # تحديث التواريخ من request.form مباشرة
+                        auth_date = request.form.get('authorization_expiry_date')
+                        if auth_date:
+                            vehicle.authorization_expiry_date = datetime.strptime(auth_date, '%Y-%m-%d').date() if auth_date else None
+                        
+                        if not from_operations:
+                            reg_date = request.form.get('registration_expiry_date')
+                            if reg_date:
+                                vehicle.registration_expiry_date = datetime.strptime(reg_date, '%Y-%m-%d').date() if reg_date else None
+                            
+                            insp_date = request.form.get('inspection_expiry_date')
+                            if insp_date:
+                                vehicle.inspection_expiry_date = datetime.strptime(insp_date, '%Y-%m-%d').date() if insp_date else None
+                    
+                    vehicle.updated_at = datetime.utcnow()
 
 
 
@@ -1640,22 +1660,29 @@ def edit_documents(id):
                         flash('تم تحديث التفويض ولكن حدث خطأ في إنشاء سجل التسليم', 'warning')
                 
 
-                # حفظ التغييرات للوثائق إذا لم تكن محفوظة مسبقاً
-                if not from_operations or not operation_id:
-                    db.session.commit()
-                
+                    # حفظ التغييرات للوثائق إذا لم تكن محفوظة مسبقاً
+                    if not from_operations or not operation_id:
+                        db.session.commit()
+                    
 
-                # تسجيل الإجراء
+                    # تسجيل الإجراء
 
-                log_audit('update', 'vehicle_documents', vehicle.id, 
-                        f'تم تحديث تواريخ وثائق المركبة: {vehicle.plate_number}')
-                
-                if from_operations:
-                    flash('تم تحديد فترة التفويض وإنشاء سجل التسليم بنجاح!', 'success')
-                    return redirect('/operations')
-                else:
-                    flash('تم تحديث تواريخ الوثائق بنجاح!', 'success')
-                    return redirect(url_for('vehicles.view', id=id))
+                    log_audit('update', 'vehicle_documents', vehicle.id, 
+                            f'تم تحديث تواريخ وثائق المركبة: {vehicle.plate_number}')
+                    
+                    if from_operations:
+                        flash('تم تحديد فترة التفويض وإنشاء سجل التسليم بنجاح!', 'success')
+                        return redirect('/operations')
+                    else:
+                        flash('تم تحديث تواريخ الوثائق بنجاح!', 'success')
+                        return redirect(url_for('vehicles.view', id=id))
+                        
+                except Exception as e:
+                    import traceback
+                    print(f"❌ خطأ في تحديث تواريخ الوثائق: {str(e)}")
+                    print(traceback.format_exc())
+                    db.session.rollback()
+                    flash(f'حدث خطأ في تحديث التواريخ: {str(e)}', 'danger')
         
         return render_template('vehicles/edit_documents.html', 
                              form=form, vehicle=vehicle, 
@@ -4224,47 +4251,47 @@ def detailed_list():
 @vehicles_bp.route('/report/export/excel')
 @login_required
 def export_vehicles_excel():
-	"""تصدير بيانات السيارات إلى ملف Excel احترافي"""
-	import io
-	from flask import send_file
-	import datetime
-	from utils.excel import generate_vehicles_excel
+        """تصدير بيانات السيارات إلى ملف Excel احترافي"""
+        import io
+        from flask import send_file
+        import datetime
+        from utils.excel import generate_vehicles_excel
 
-	status_filter = request.args.get('status', '')
-	make_filter = request.args.get('make', '')
+        status_filter = request.args.get('status', '')
+        make_filter = request.args.get('make', '')
 
-	# قاعدة الاستعلام الأساسية
-	query = Vehicle.query
+        # قاعدة الاستعلام الأساسية
+        query = Vehicle.query
 
-	# إضافة التصفية حسب الحالة إذا تم تحديدها
-	if status_filter:
-		query = query.filter(Vehicle.status == status_filter)
+        # إضافة التصفية حسب الحالة إذا تم تحديدها
+        if status_filter:
+                query = query.filter(Vehicle.status == status_filter)
 
-	# إضافة التصفية حسب الشركة المصنعة إذا تم تحديدها
-	if make_filter:
-		query = query.filter(Vehicle.make == make_filter)
+        # إضافة التصفية حسب الشركة المصنعة إذا تم تحديدها
+        if make_filter:
+                query = query.filter(Vehicle.make == make_filter)
 
-	# الحصول على قائمة السيارات
-	vehicles = query.order_by(Vehicle.status, Vehicle.plate_number).all()
+        # الحصول على قائمة السيارات
+        vehicles = query.order_by(Vehicle.status, Vehicle.plate_number).all()
 
-	# إنشاء ملف Excel احترافي في الذاكرة
-	output = io.BytesIO()
-	generate_vehicles_excel(vehicles, output)
+        # إنشاء ملف Excel احترافي في الذاكرة
+        output = io.BytesIO()
+        generate_vehicles_excel(vehicles, output)
 
-	# التحضير لإرسال الملف
-	output.seek(0)
+        # التحضير لإرسال الملف
+        output.seek(0)
 
-	# اسم الملف بالتاريخ الحالي
-	today = datetime.datetime.now().strftime('%Y-%m-%d')
-	filename = f"تقرير_المركبات_{today}.xlsx"
+        # اسم الملف بالتاريخ الحالي
+        today = datetime.datetime.now().strftime('%Y-%m-%d')
+        filename = f"تقرير_المركبات_{today}.xlsx"
 
-	# إرسال الملف كمرفق للتنزيل
-	return send_file(
-		output,
-		download_name=filename,
-		as_attachment=True,
-		mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-	)
+        # إرسال الملف كمرفق للتنزيل
+        return send_file(
+                output,
+                download_name=filename,
+                as_attachment=True,
+                mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
 
 # مسار عرض تفاصيل سجل الورشة
 @vehicles_bp.route('/workshop-details/<int:workshop_id>')
