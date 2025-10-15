@@ -561,10 +561,10 @@
                             {% elif status == 'in_project' %}في المشروع
                             {% elif status == 'in_workshop' %}في الورشة
                             {% elif status == 'accident' %}حادث
-                            {% else %}{{ status }}{% endif %}
                             {% elif status == 'out_of_service' %}خارج الخدمة
                             {% elif status == 'out_of_work_area' %}خارج منطقة العمل
                             {% elif status == 'out_of_qassim_management' %}خارج إدارة القصيم
+                            {% else %}{{ status }}{% endif %}
                         </option>
                         {% endfor %}
                     </select>
