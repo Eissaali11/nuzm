@@ -400,6 +400,12 @@ function initializeDepartmentChart() {
         return;
     }
     
+    // تدمير أي chart موجود على canvas
+    const existingChart = Chart.getChart(departmentChartElement);
+    if (existingChart) {
+        existingChart.destroy();
+    }
+    
     // تدمير المخطط القديم إذا كان موجوداً
     if (departmentChartInstance) {
         departmentChartInstance.destroy();
@@ -506,6 +512,12 @@ function initializeDepartmentChart() {
 function initializeSalaryChart() {
     const salaryChartElement = document.getElementById('salaryChart');
     if (!salaryChartElement) return;
+    
+    // تدمير أي chart موجود على canvas
+    const existingChart = Chart.getChart(salaryChartElement);
+    if (existingChart) {
+        existingChart.destroy();
+    }
     
     // تدمير المخطط القديم إذا كان موجوداً
     if (salaryChartInstance) {
@@ -618,6 +630,12 @@ function initializeDocumentChart() {
     if (!documentChartElement) {
         console.log('عنصر مخطط الوثائق غير موجود');
         return;
+    }
+    
+    // تدمير أي chart موجود على canvas
+    const existingChart = Chart.getChart(documentChartElement);
+    if (existingChart) {
+        existingChart.destroy();
     }
     
     // تدمير المخطط القديم إذا كان موجوداً

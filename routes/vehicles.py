@@ -1602,62 +1602,59 @@ def edit_documents(id):
                                 vehicle.inspection_expiry_date = datetime.strptime(insp_date, '%Y-%m-%d').date() if insp_date else None
                     
                     vehicle.updated_at = datetime.utcnow()
-
-
-
-                
-                # إذا كان قادماً من العمليات، إنشاء سجل تسليم/استلام جديد
-                if from_operations and operation_id:
-                    try:
-                        # البحث عن العملية
-                        from models import Operation
-                        operation = Operation.query.get(int(operation_id))
-                        
-                        if operation:
-                            # إنشاء سجل تسليم/استلام جديد
-                            handover = VehicleHandover(
-                                vehicle_id=vehicle.id,
-                                handover_type='delivery',  # تسليم
-                                handover_date=datetime.utcnow(),
-                                person_name=operation.employee.name if operation.employee else 'غير محدد',
-                                notes=f'تفويض من العملية #{operation_id} - صالح حتى {form.authorization_expiry_date.data}',
-                                created_by=current_user.id,
-                                updated_at=datetime.utcnow()
-                            )
-                            
-                            # إضافة معلومات إضافية إذا توفرت
-                            if operation.employee:
-                                handover.employee_id = operation.employee.id
-                                if hasattr(operation.employee, 'mobile'):
-                                    handover.driver_phone_number = operation.employee.mobile
-                                if hasattr(operation.employee, 'national_id'):
-                                    handover.driver_residency_number = operation.employee.national_id
-                            
-                            db.session.add(handover)
-                            
-                            # تحديث حالة العملية إلى مكتملة
-                            operation.status = 'completed'
-                            operation.completed_at = datetime.utcnow()
-                            operation.reviewer_id = current_user.id
-                            operation.review_notes = f'تم تحديد فترة التفويض وإنشاء سجل التسليم'
-                            
-                            # حفظ التغييرات أولاً
-                            db.session.commit()
-                            
-                            # تحديث اسم السائق في معلومات السيارة الأساسية
-                            update_vehicle_driver(vehicle.id)
-                            
-                            # تسجيل في العمليات
-                            log_audit('create', 'vehicle_handover', handover.id, 
-                                     f'تم إنشاء سجل تسليم من العملية #{operation_id}')
-                            log_audit('update', 'operation', operation.id, 
-                                     f'تم إكمال العملية وإنشاء سجل التسليم')
-                            log_audit('update', 'vehicle', vehicle.id, 
-                                     f'تم تحديث اسم السائق تلقائياً بعد إنشاء سجل التسليم')
                     
-                    except Exception as e:
-                        current_app.logger.error(f'خطأ في إنشاء سجل التسليم: {str(e)}')
-                        flash('تم تحديث التفويض ولكن حدث خطأ في إنشاء سجل التسليم', 'warning')
+                    # إذا كان قادماً من العمليات، إنشاء سجل تسليم/استلام جديد
+                    if from_operations and operation_id:
+                        try:
+                            # البحث عن العملية
+                            from models import Operation
+                            operation = Operation.query.get(int(operation_id))
+                            
+                            if operation:
+                                # إنشاء سجل تسليم/استلام جديد
+                                handover = VehicleHandover(
+                                    vehicle_id=vehicle.id,
+                                    handover_type='delivery',  # تسليم
+                                    handover_date=datetime.utcnow(),
+                                    person_name=operation.employee.name if operation.employee else 'غير محدد',
+                                    notes=f'تفويض من العملية #{operation_id} - صالح حتى {form.authorization_expiry_date.data}',
+                                    created_by=current_user.id,
+                                    updated_at=datetime.utcnow()
+                                )
+                                
+                                # إضافة معلومات إضافية إذا توفرت
+                                if operation.employee:
+                                    handover.employee_id = operation.employee.id
+                                    if hasattr(operation.employee, 'mobile'):
+                                        handover.driver_phone_number = operation.employee.mobile
+                                    if hasattr(operation.employee, 'national_id'):
+                                        handover.driver_residency_number = operation.employee.national_id
+                                
+                                db.session.add(handover)
+                                
+                                # تحديث حالة العملية إلى مكتملة
+                                operation.status = 'completed'
+                                operation.completed_at = datetime.utcnow()
+                                operation.reviewer_id = current_user.id
+                                operation.review_notes = f'تم تحديد فترة التفويض وإنشاء سجل التسليم'
+                                
+                                # حفظ التغييرات أولاً
+                                db.session.commit()
+                                
+                                # تحديث اسم السائق في معلومات السيارة الأساسية
+                                update_vehicle_driver(vehicle.id)
+                                
+                                # تسجيل في العمليات
+                                log_audit('create', 'vehicle_handover', handover.id, 
+                                         f'تم إنشاء سجل تسليم من العملية #{operation_id}')
+                                log_audit('update', 'operation', operation.id, 
+                                         f'تم إكمال العملية وإنشاء سجل التسليم')
+                                log_audit('update', 'vehicle', vehicle.id, 
+                                         f'تم تحديث اسم السائق تلقائياً بعد إنشاء سجل التسليم')
+                        
+                        except Exception as e:
+                            current_app.logger.error(f'خطأ في إنشاء سجل التسليم: {str(e)}')
+                            flash('تم تحديث التفويض ولكن حدث خطأ في إنشاء سجل التسليم', 'warning')
                 
 
                     # حفظ التغييرات للوثائق إذا لم تكن محفوظة مسبقاً
