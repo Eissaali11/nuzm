@@ -243,8 +243,8 @@
                                     <!-- **الحالة ب: عرض نموذج البحث العادي (في وضع التسليم)** -->
                                     <div class="mb-3">
                                         <label for="person_name" class="form-label required">الاسم</label>
-                                        <input type="text" class="form-control" id="person_name" name="person_name" required autocomplete="off" placeholder="اكتب الاسم أو اختر موظف من القائمة أدناه">
-                                        <input type="hidden" id="employee_id" name="employee_id">
+                                        <input type="text" class="form-control" id="person_name" name="person_name" required autocomplete="off" placeholder="اكتب الاسم أو اختر موظف من القائمة أدناه" value="{% if edit_mode and handover.person_name %}{{ handover.person_name }}{% endif %}">
+                                        <input type="hidden" id="employee_id" name="employee_id" value="{% if edit_mode and handover.employee_id %}{{ handover.employee_id }}{% endif %}">
                                     </div>
 
                                     <div class="accordion" id="employeeSearchAccordion">
@@ -317,9 +317,9 @@
     <div class="card-body">
         <div class="mb-3">
             <label for="supervisor_name" class="form-label">اسم المشرف</label>
-            <input type="text" class="form-control" id="supervisor_name" name="supervisor_name" autocomplete="off" placeholder="اكتب اسم المشرف أو اختر من القائمة أدناه">
+            <input type="text" class="form-control" id="supervisor_name" name="supervisor_name" autocomplete="off" placeholder="اكتب اسم المشرف أو اختر من القائمة أدناه" value="{% if edit_mode and handover.supervisor_name %}{{ handover.supervisor_name }}{% endif %}">
             <!-- حقل مخفي ومهم لمعرف الموظف الخاص بالمشرف -->
-            <input type="hidden" id="supervisor_employee_id" name="supervisor_employee_id">
+            <input type="hidden" id="supervisor_employee_id" name="supervisor_employee_id" value="{% if edit_mode and handover.supervisor_employee_id %}{{ handover.supervisor_employee_id }}{% endif %}">
         </div>
 
         <div class="accordion" id="supervisorSearchAccordion">
