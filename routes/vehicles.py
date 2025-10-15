@@ -3552,8 +3552,25 @@ def edit_handover(id):
                         handover.has_tools = has_tools
                         handover.updated_at = datetime.utcnow()
 
+                        # حفظ الصور الجديدة إن وُجدت
+                        files = request.files.getlist('files')
+                        for file in files:
+                            if file and file.filename:
+                                file_path, file_type = save_file(file, 'handover')
+                                if file_path:
+                                    file_description = request.form.get(f'description_{file.filename}', '')
+                                    file_record = VehicleHandoverImage(
+                                        handover_record_id=handover.id, 
+                                        image_path=file_path,
+                                        image_description=file_description,
+                                        file_path=file_path, 
+                                        file_type=file_type, 
+                                        file_description=file_description
+                                    )
+                                    db.session.add(file_record)
+
                         db.session.commit()
-                        update_vehicle_state(id)
+                        update_vehicle_state(vehicle.id)
 
                         # تسجيل الإجراء
                         log_audit('update', 'vehicle_handover', handover.id, f'تم تعديل نموذج {handover_type_name} للسيارة: {vehicle.plate_number}')
@@ -3571,14 +3588,16 @@ def edit_handover(id):
         departments = Department.query.order_by(Department.name).all()
 
         return render_template(
-                'vehicles/edit_handover.html',
+                'vehicles/handover_create.html',
                 handover=handover,
                 vehicle=vehicle,
                 images=images,
                 handover_date=handover_date_str,
                 handover_type_name=handover_type_name,
                 employees=employees,
-                departments=departments
+                departments=departments,
+                edit_mode=True,
+                handover_types=[handover.handover_type]
         )
 
 @vehicles_bp.route('/<int:vehicle_id>/handovers/confirm-delete', methods=['POST'])

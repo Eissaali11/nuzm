@@ -80,7 +80,9 @@
         <div class="card-header d-flex justify-content-between align-items-center py-3">
             <h3 class="mb-0" id="form-main-title">
                 <i class="fas fa-file-alt me-2 text-primary"></i>
-                {% if force_mode == 'return' %}
+                {% if edit_mode %}
+                    تعديل نموذج {{ handover_type_name }}: <span class="text-dark">{{ vehicle.plate_number }}</span>
+                {% elif force_mode == 'return' %}
                     نموذج استلام: <span class="text-dark">{{ vehicle.plate_number }}</span>
                 {% else %}
                     نموذج تسليم: <span class="text-dark">{{ vehicle.plate_number }}</span>
@@ -97,7 +99,7 @@
         </div>
 
         <div class="card-body p-lg-4">
-            <form method="post" action="{{ url_for('vehicles.create_handover', id=vehicle.id) }}" enctype="multipart/form-data" id="main-handover-form">
+            <form method="post" action="{% if edit_mode %}{{ url_for('vehicles.edit_handover', id=handover.id) }}{% else %}{{ url_for('vehicles.create_handover', id=vehicle.id) }}{% endif %}" enctype="multipart/form-data" id="main-handover-form">
 
                 {% if info_message %}
                 <div class="alert alert-info border-0 shadow-sm" role="alert">
@@ -615,7 +617,7 @@
 
                         <!-- زر الحفظ النهائي -->
                         <div class="d-grid gap-2 pt-4 mt-4 border-top">
-                            <button type="submit" class="btn btn-primary btn-lg"><i class="fas fa-save me-2"></i>حفظ وإنشاء التقرير</button>
+                            <button type="submit" class="btn btn-primary btn-lg"><i class="fas fa-save me-2"></i>{% if edit_mode %}حفظ التعديلات{% else %}حفظ وإنشاء التقرير{% endif %}</button>
                         </div>
                     </div>
                 </div>
