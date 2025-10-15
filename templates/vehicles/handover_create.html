@@ -667,6 +667,13 @@
 
 <script>
         document.addEventListener('DOMContentLoaded', function () {
+            // التحقق من وجود عنصر canvas قبل تنفيذ كود الرسم
+            const canvasElement = document.getElementById('damage-canvas');
+            if (!canvasElement) {
+                console.log('Canvas not found, skipping canvas initialization');
+                return;
+            }
+
             // 1. تهيئة لوحة الرسم (Canvas)
             const canvas = new fabric.Canvas('damage-canvas', {
                 isDrawingMode: false, // ابدأ في وضع التحديد وليس الرسم
@@ -699,13 +706,17 @@
             const form = document.querySelector('form'); // الحصول على النموذج الرئيسي
 
             // تفعيل/إلغاء وضع الرسم
-            drawModeBtn.addEventListener('click', () => {
-                canvas.isDrawingMode = true;
-            });
+            if (drawModeBtn) {
+                drawModeBtn.addEventListener('click', () => {
+                    canvas.isDrawingMode = true;
+                });
+            }
 
-            selectModeBtn.addEventListener('click', () => {
-                canvas.isDrawingMode = false;
-            });
+            if (selectModeBtn) {
+                selectModeBtn.addEventListener('click', () => {
+                    canvas.isDrawingMode = false;
+                });
+            }
 
             // تغيير لون الفرشاة
             colorPicker.addEventListener('change', (event) => {
@@ -1289,16 +1300,23 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
         // تصفية الملفات حسب النوع (صور فقط)
-        filterImagesBtn.addEventListener('click', function() {
-            filesInput.setAttribute('accept', 'image/*');
-            filesInput.click();
-            filesInput.setAttribute('accept', 'image/*,.pdf');
-        });
+        const filterImagesBtn = document.getElementById('filterImages');
+        if (filterImagesBtn) {
+            filterImagesBtn.addEventListener('click', function() {
+                filesInput.setAttribute('accept', 'image/*');
+                filesInput.click();
+                filesInput.setAttribute('accept', 'image/*,.pdf');
+            });
+        }
         
         // تصفية الملفات حسب النوع (PDF فقط)
-        filterPdfsBtn.addEventListener('click', function() {
-            pdfFilesInput.click();
-        });
+        const filterPdfsBtn = document.getElementById('filterPdfs');
+        if (filterPdfsBtn) {
+            filterPdfsBtn.addEventListener('click', function() {
+                const pdfFilesInput = document.getElementById('pdf-files');
+                if (pdfFilesInput) pdfFilesInput.click();
+            });
+        }
         
         // إدارة حذف الملفات عند النقر على زر الحذف
         filePreviews.addEventListener('click', function(e) {

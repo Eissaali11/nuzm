@@ -3597,7 +3597,10 @@ def edit_handover(id):
                 employees=employees,
                 departments=departments,
                 edit_mode=True,
-                handover_types=[handover.handover_type]
+                handover_types=[handover.handover_type],
+                force_mode=None,
+                info_message=None,
+                current_driver_info=None
         )
 
 @vehicles_bp.route('/<int:vehicle_id>/handovers/confirm-delete', methods=['POST'])
