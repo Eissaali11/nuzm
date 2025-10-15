@@ -547,7 +547,7 @@ def delete(user_id):
 
 @users_bp.route('/<int:user_id>/permissions', methods=['POST'])
 @login_required
-# @admin_required # من الأفضل حماية هذا المسار بصلاحية مدير
+@admin_required
 def update_permissions(user_id):
     """
     تحديث صلاحيات مستخدم معين.
