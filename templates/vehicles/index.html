@@ -562,6 +562,9 @@
                             {% elif status == 'in_workshop' %}في الورشة
                             {% elif status == 'accident' %}حادث
                             {% else %}{{ status }}{% endif %}
+                            {% elif status == 'out_of_service' %}خارج الخدمة
+                            {% elif status == 'out_of_work_area' %}خارج منطقة العمل
+                            {% elif status == 'out_of_qassim_management' %}خارج إدارة القصيم
                         </option>
                         {% endfor %}
                     </select>
@@ -667,6 +670,12 @@
                                         <span class="status-badge bg-warning text-dark">في الورشة</span>
                                     {% elif vehicle.status == 'accident' %}
                                         <span class="status-badge bg-danger">حادث</span>
+                                    {% elif vehicle.status == 'out_of_service' %}
+                                        <span class="status-badge bg-dark text-white">خارج الخدمة</span>
+                                    {% elif vehicle.status == 'out_of_work_area' %}
+                                        <span class="status-badge" style="background-color: #6c757d; color: white;">خارج منطقة العمل</span>
+                                    {% elif vehicle.status == 'out_of_qassim_management' %}
+                                        <span class="status-badge" style="background-color: #495057; color: white;">خارج إدارة القصيم</span>
                                     {% else %}
                                         <span class="status-badge bg-secondary">{{ vehicle.status }}</span>
                                     {% endif %}
