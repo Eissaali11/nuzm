@@ -174,7 +174,7 @@
     </div>
     <div class="col-md-4">
         <label for="handover_date" class="form-label required">التاريخ</label>
-        <input type="date" class="form-control" id="handover_date" name="handover_date" required>
+        <input type="date" class="form-control" id="handover_date" name="handover_date" required value="{% if edit_mode and handover_date %}{{ handover_date }}{% endif %}">
     </div>
     <div class="col-md-4">
         <label for="handover_time" class="form-label">الوقت (اختياري)</label>
@@ -194,17 +194,17 @@
     <!-- الصف الثالث: عداد الكيلومترات ومستوى الوقود -->
     <div class="col-md-6">
         <label for="mileage" class="form-label required">قراءة العداد (كم)</label>
-        <input type="number" class="form-control" id="mileage" name="mileage" min="0" required>
+        <input type="number" class="form-control" id="mileage" name="mileage" min="0" required value="{% if edit_mode and handover.mileage %}{{ handover.mileage }}{% endif %}">
     </div>
     <div class="col-md-6">
         <label for="fuel_level" class="form-label required">مستوى الوقود</label>
         <select class="form-select" id="fuel_level" name="fuel_level" required>
-            <option value="" disabled selected>-- اختر --</option>
-            <option value="ممتلئ">ممتلئ (Full)</option>
-            <option value="3/4">ثلاثة أرباع (3/4)</option>
-            <option value="1/2">نصف (1/2)</option>
-            <option value="1/4">ربع (1/4)</option>
-            <option value="منخفض">فارغ (Empty)</option>
+            <option value="" disabled {% if not (edit_mode and handover.fuel_level) %}selected{% endif %}>-- اختر --</option>
+            <option value="ممتلئ" {% if edit_mode and handover.fuel_level == 'ممتلئ' %}selected{% endif %}>ممتلئ (Full)</option>
+            <option value="3/4" {% if edit_mode and handover.fuel_level == '3/4' %}selected{% endif %}>ثلاثة أرباع (3/4)</option>
+            <option value="1/2" {% if edit_mode and handover.fuel_level == '1/2' %}selected{% endif %}>نصف (1/2)</option>
+            <option value="1/4" {% if edit_mode and handover.fuel_level == '1/4' %}selected{% endif %}>ربع (1/4)</option>
+            <option value="منخفض" {% if edit_mode and handover.fuel_level == 'منخفض' %}selected{% endif %}>فارغ (Empty)</option>
         </select>
     </div>
 
@@ -441,7 +441,7 @@
     
     <div class="mb-3">
         <label for="vehicle_condition" class="form-label required">حالة السيارة عند التسليم/الاستلام</label>
-        <textarea class="form-control" id="vehicle_condition" name="vehicle_condition" rows="3" required placeholder="وصف تفصيلي لحالة السيارة الخارجية والداخلية، الخدوش، الأضرار البسيطة، حالة النظافة..."></textarea>
+        <textarea class="form-control" id="vehicle_condition" name="vehicle_condition" rows="3" required placeholder="وصف تفصيلي لحالة السيارة الخارجية والداخلية، الخدوش، الأضرار البسيطة، حالة النظافة...">{% if edit_mode and handover.vehicle_condition %}{{ handover.vehicle_condition }}{% endif %}</textarea>
     </div>
 <div class="mb-3">
     <label for="vehicle_status_summary" class="form-label">ملخص حالة المركبة</label>
@@ -479,6 +479,37 @@
     <!-- المعاينات تظهر هنا -->
 </div>
 
+{% if edit_mode and images %}
+<!-- عرض الصور الموجودة في وضع التعديل -->
+<div class="mt-4">
+    <h5 class="mb-3"><i class="fas fa-images me-2"></i>الصور الموجودة ({{ images|length }})</h5>
+    <div class="row g-3">
+        {% for image in images %}
+        <div class="col-md-4">
+            <div class="card shadow-sm h-100">
+                {% if image.is_pdf() %}
+                <!-- عرض ملف PDF -->
+                <div class="card-body text-center d-flex flex-column justify-content-center align-items-center">
+                    <i class="fas fa-file-pdf fa-3x text-danger mb-2"></i>
+                    <h6 class="text-truncate small">{{ image.file_description or image.image_description or 'ملف PDF' }}</h6>
+                    <a href="/{{ image.get_path() }}" target="_blank" class="btn btn-sm btn-outline-primary mt-2">
+                        <i class="fas fa-eye me-1"></i>عرض
+                    </a>
+                </div>
+                {% else %}
+                <!-- عرض صورة عادية -->
+                <img src="/{{ image.get_path() }}" alt="صورة توثيقية" class="card-img-top" style="height:120px; object-fit: cover;">
+                <div class="card-body p-2">
+                    <small class="text-muted">{{ image.file_description or image.image_description or 'صورة توثيقية' }}</small>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
 <!-- قوالب المعاينة المخفية (ضرورية) -->
 <div class="d-none">
     <div id="image-preview-template">
@@ -502,7 +533,7 @@
     
     <div class="mb-3 mt-3">
         <label for="notes" class="form-label">ملاحظات إضافية</p></label>
-        <textarea class="form-control" id="notes" name="notes" rows="2" placeholder="أي ملاحظات أخرى غير متعلقة مباشرة بحالة السيارة..."></textarea>
+        <textarea class="form-control" id="notes" name="notes" rows="2" placeholder="أي ملاحظات أخرى غير متعلقة مباشرة بحالة السيارة...">{% if edit_mode and handover.notes %}{{ handover.notes }}{% endif %}</textarea>
     </div>
 </div>
                         
