@@ -293,15 +293,26 @@
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label for="status" class="form-label-enhanced required">الحالة</label>
-                        <select class="form-select form-select-enhanced" id="status" name="status" required>
+                        <select class="form-select form-select-enhanced status-select" id="status" name="status" required>
                             {% for status in statuses %}
-                            <option value="{{ status }}" {% if status == vehicle.status %}selected{% endif %}>
+                            <option value="{{ status }}" {% if status == vehicle.status %}selected{% endif %} 
+                                    data-color="{% if status == 'available' %}success
+                                               {% elif status == 'rented' %}info
+                                               {% elif status == 'in_project' %}primary
+                                               {% elif status == 'in_workshop' %}warning
+                                               {% elif status == 'accident' %}danger
+                                               {% elif status == 'out_of_service' %}dark
+                                               {% elif status == 'out_of_work_area' %}secondary
+                                               {% elif status == 'out_of_qassim_management' %}secondary
+                                               {% else %}secondary{% endif %}">
                                 {% if status == 'available' %}متاحة
                                 {% elif status == 'rented' %}مؤجرة
                                 {% elif status == 'in_project' %}في المشروع
                                 {% elif status == 'in_workshop' %}في الورشة
                                 {% elif status == 'accident' %}حادث
                                 {% elif status == 'out_of_service' %}خارج الخدمة
+                                {% elif status == 'out_of_work_area' %}خارج منطقة العمل
+                                {% elif status == 'out_of_qassim_management' %}خارج إدارة القصيم
                                 {% else %}{{ status }}{% endif %}
                             </option>
                             {% endfor %}
@@ -426,6 +437,52 @@
 {% endblock %}
 
 {% block scripts %}
+<style>
+    /* ألوان حالة السيارة */
+    .status-select.status-available {
+        background-color: #d1f2eb !important;
+        color: #0f5132 !important;
+        border-color: #0f5132 !important;
+    }
+    
+    .status-select.status-rented {
+        background-color: #cff4fc !important;
+        color: #055160 !important;
+        border-color: #055160 !important;
+    }
+    
+    .status-select.status-in_project {
+        background-color: #cfe2ff !important;
+        color: #084298 !important;
+        border-color: #084298 !important;
+    }
+    
+    .status-select.status-in_workshop {
+        background-color: #fff3cd !important;
+        color: #664d03 !important;
+        border-color: #664d03 !important;
+    }
+    
+    .status-select.status-accident {
+        background-color: #f8d7da !important;
+        color: #842029 !important;
+        border-color: #842029 !important;
+    }
+    
+    .status-select.status-out_of_service {
+        background-color: #d3d3d4 !important;
+        color: #141619 !important;
+        border-color: #141619 !important;
+    }
+    
+    .status-select.status-out_of_work_area,
+    .status-select.status-out_of_qassim_management {
+        background-color: #e2e3e5 !important;
+        color: #41464b !important;
+        border-color: #41464b !important;
+    }
+</style>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize tooltips
@@ -444,6 +501,34 @@ document.addEventListener('DOMContentLoaded', function() {
                 e.preventDefault();
             }
         });
+    }
+    
+    // تلوين حقل الحالة بناءً على القيمة المحددة
+    const statusSelect = document.getElementById('status');
+    
+    function updateStatusColor() {
+        if (!statusSelect) return;
+        
+        // إزالة جميع الكلاسات السابقة
+        statusSelect.classList.remove(
+            'status-available', 'status-rented', 'status-in_project', 
+            'status-in_workshop', 'status-accident', 'status-out_of_service',
+            'status-out_of_work_area', 'status-out_of_qassim_management'
+        );
+        
+        // إضافة الكلاس المناسب بناءً على القيمة المحددة
+        const selectedValue = statusSelect.value;
+        if (selectedValue) {
+            statusSelect.classList.add('status-' + selectedValue);
+        }
+    }
+    
+    // تحديث اللون عند التحميل
+    updateStatusColor();
+    
+    // تحديث اللون عند تغيير القيمة
+    if (statusSelect) {
+        statusSelect.addEventListener('change', updateStatusColor);
     }
     
     console.log('تم تحميل صفحة تعديل السيارة بنجاح');
