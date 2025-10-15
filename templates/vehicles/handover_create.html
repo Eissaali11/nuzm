@@ -483,24 +483,37 @@
 <!-- عرض الصور الموجودة في وضع التعديل -->
 <div class="mt-4">
     <h5 class="mb-3"><i class="fas fa-images me-2"></i>الصور الموجودة ({{ images|length }})</h5>
-    <div class="row g-3">
+    <div class="row g-3" id="existing-images-container">
         {% for image in images %}
-        <div class="col-md-4">
+        <div class="col-md-4" id="existing-image-{{ image.id }}">
             <div class="card shadow-sm h-100">
                 {% if image.is_pdf() %}
                 <!-- عرض ملف PDF -->
                 <div class="card-body text-center d-flex flex-column justify-content-center align-items-center">
                     <i class="fas fa-file-pdf fa-3x text-danger mb-2"></i>
                     <h6 class="text-truncate small">{{ image.file_description or image.image_description or 'ملف PDF' }}</h6>
-                    <a href="/{{ image.get_path() }}" target="_blank" class="btn btn-sm btn-outline-primary mt-2">
-                        <i class="fas fa-eye me-1"></i>عرض
-                    </a>
+                    <div class="btn-group mt-2">
+                        <a href="/{{ image.get_path() }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-eye me-1"></i>عرض
+                        </a>
+                        <button type="button" class="btn btn-sm btn-outline-danger delete-existing-image" data-image-id="{{ image.id }}">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
                 </div>
                 {% else %}
                 <!-- عرض صورة عادية -->
-                <img src="/{{ image.get_path() }}" alt="صورة توثيقية" class="card-img-top" style="height:120px; object-fit: cover;">
+                <img src="/{{ image.get_path() }}" alt="صورة توثيقية" class="card-img-top" style="height:120px; object-fit: cover; cursor: pointer;" onclick="window.open('/{{ image.get_path() }}', '_blank')">
                 <div class="card-body p-2">
-                    <small class="text-muted">{{ image.file_description or image.image_description or 'صورة توثيقية' }}</small>
+                    <small class="text-muted d-block mb-2">{{ image.file_description or image.image_description or 'صورة توثيقية' }}</small>
+                    <div class="btn-group w-100">
+                        <a href="/{{ image.get_path() }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-external-link-alt me-1"></i>عرض
+                        </a>
+                        <button type="button" class="btn btn-sm btn-outline-danger delete-existing-image" data-image-id="{{ image.id }}">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
                 </div>
                 {% endif %}
             </div>
