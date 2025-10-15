@@ -506,12 +506,33 @@
                                                     </div>
                                                 {% else %}
                                                     <!-- عرض صورة عادية -->
-                                                    <img src="/{{ image.get_path() }}" 
-                                                         alt="صورة توثيقية" 
-                                                         class="img-fluid rounded shadow">
-                                                    {% if image.file_description or image.image_description %}
-                                                        <div class="image-caption">{{ image.file_description or image.image_description }}</div>
-                                                    {% endif %}
+                                                    <div class="position-relative">
+                                                        <img src="/{{ image.get_path() }}" 
+                                                             alt="صورة توثيقية" 
+                                                             class="img-fluid rounded shadow"
+                                                             style="cursor: pointer;"
+                                                             onclick="window.open('/{{ image.get_path() }}', '_blank')">
+                                                        
+                                                        {% if image.file_description or image.image_description %}
+                                                            <div class="image-caption">{{ image.file_description or image.image_description }}</div>
+                                                        {% endif %}
+                                                        
+                                                        <!-- أزرار التفاعل -->
+                                                        <div class="d-flex justify-content-center gap-2 mt-2">
+                                                            <a href="/{{ image.get_path() }}" 
+                                                               target="_blank" 
+                                                               class="btn btn-outline-primary btn-sm">
+                                                                <i class="fas fa-external-link-alt ms-1"></i>
+                                                                عرض في نافذة جديدة
+                                                            </a>
+                                                            <a href="/{{ image.get_path() }}" 
+                                                               download 
+                                                               class="btn btn-outline-success btn-sm">
+                                                                <i class="fas fa-download ms-1"></i>
+                                                                تحميل
+                                                            </a>
+                                                        </div>
+                                                    </div>
                                                 {% endif %}
                                             </div>
                                         </div>
