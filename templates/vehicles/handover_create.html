@@ -1521,6 +1521,55 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 // ===== نهاية كود تفعيل قسم المشرف =====
+
+// ===== حذف الصور الموجودة =====
+document.addEventListener('DOMContentLoaded', function() {
+    const deleteButtons = document.querySelectorAll('.delete-existing-image');
+    
+    deleteButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const imageId = this.getAttribute('data-image-id');
+            const imageContainer = document.getElementById('existing-image-' + imageId);
+            
+            if (confirm('هل أنت متأكد من حذف هذه الصورة؟ لا يمكن التراجع عن هذا الإجراء.')) {
+                // إرسال طلب حذف للخادم
+                fetch(`/vehicles/handover/image/${imageId}/delete`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // إخفاء الصورة من الواجهة
+                        imageContainer.style.display = 'none';
+                        
+                        // عرض رسالة نجاح
+                        const alertDiv = document.createElement('div');
+                        alertDiv.className = 'alert alert-success alert-dismissible fade show';
+                        alertDiv.innerHTML = `
+                            <i class="fas fa-check-circle me-2"></i>
+                            تم حذف الصورة بنجاح
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        `;
+                        document.querySelector('.container').insertBefore(alertDiv, document.querySelector('.container').firstChild);
+                        
+                        // إزالة التنبيه بعد 3 ثواني
+                        setTimeout(() => alertDiv.remove(), 3000);
+                    } else {
+                        alert('حدث خطأ أثناء حذف الصورة: ' + (data.message || 'خطأ غير معروف'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('حدث خطأ أثناء حذف الصورة');
+                });
+            }
+        });
+    });
+});
+// ===== نهاية حذف الصور =====
 </script>
 
 

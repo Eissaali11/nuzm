@@ -6263,3 +6263,35 @@ def view_workshop_image(image_id):
                 vehicle=vehicle,
                 image_type_arabic=image_type_arabic
         )
+
+@vehicles_bp.route('/handover/image/<int:image_id>/delete', methods=['POST'])
+@login_required
+def delete_handover_image(image_id):
+        """حذف صورة من سجل التسليم/الاستلام"""
+        try:
+                # الحصول على الصورة
+                image = VehicleHandoverImage.query.get_or_404(image_id)
+                
+                # حذف الملف من النظام إذا كان موجوداً
+                import os
+                file_path = image.get_path()
+                if file_path:
+                        # محاولة حذف من المسار الكامل
+                        full_path = os.path.join('static', file_path) if not file_path.startswith('static') else file_path
+                        if os.path.exists(full_path):
+                                os.remove(full_path)
+                                current_app.logger.info(f"تم حذف الملف: {full_path}")
+                
+                # حذف السجل من قاعدة البيانات
+                db.session.delete(image)
+                db.session.commit()
+                
+                # تسجيل الإجراء
+                log_audit('delete', 'handover_image', image_id, f'تم حذف صورة من سجل التسليم/الاستلام رقم {image.handover_record_id}')
+                
+                return jsonify({'success': True, 'message': 'تم حذف الصورة بنجاح'})
+                
+        except Exception as e:
+                db.session.rollback()
+                current_app.logger.error(f"خطأ في حذف صورة التسليم/الاستلام: {str(e)}")
+                return jsonify({'success': False, 'message': str(e)}), 500
