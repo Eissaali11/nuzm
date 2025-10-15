@@ -484,18 +484,18 @@
                                                             
                                                             <!-- اسم الملف -->
                                                             <div class="pdf-filename mb-3">
-                                                                {{ image.filename or 'ملف PDF' }}
+                                                                {{ image.file_description or image.image_description or 'ملف PDF' }}
                                                             </div>
                                                             
                                                             <!-- أزرار التفاعل -->
                                                             <div class="d-flex justify-content-center gap-2">
-                                                                <a href="{{ url_for('static', filename='uploads/vehicles/handovers/' + image.image_path.split('/')[-1]) }}" 
+                                                                <a href="{{ url_for('static', filename=image.get_path()) }}" 
                                                                    target="_blank" 
                                                                    class="btn btn-outline-primary btn-sm">
                                                                     <i class="fas fa-eye ms-1"></i>
                                                                     عرض
                                                                 </a>
-                                                                <a href="{{ url_for('static', filename='uploads/vehicles/handovers/' + image.image_path.split('/')[-1]) }}" 
+                                                                <a href="{{ url_for('static', filename=image.get_path()) }}" 
                                                                    download 
                                                                    class="btn btn-outline-success btn-sm">
                                                                     <i class="fas fa-download ms-1"></i>
@@ -506,11 +506,11 @@
                                                     </div>
                                                 {% else %}
                                                     <!-- عرض صورة عادية -->
-                                                    <img src="{{ url_for('static', filename='uploads/vehicles/handovers/' + image.image_path.split('/')[-1]) }}" 
+                                                    <img src="{{ url_for('static', filename=image.get_path()) }}" 
                                                          alt="صورة توثيقية" 
                                                          class="img-fluid rounded shadow">
-                                                    {% if image.filename %}
-                                                        <div class="image-caption">{{ image.filename }}</div>
+                                                    {% if image.file_description or image.image_description %}
+                                                        <div class="image-caption">{{ image.file_description or image.image_description }}</div>
                                                     {% endif %}
                                                 {% endif %}
                                             </div>
