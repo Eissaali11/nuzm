@@ -482,11 +482,27 @@
 {% if edit_mode and images %}
 <!-- عرض الصور الموجودة في وضع التعديل -->
 <div class="mt-4">
-    <h5 class="mb-3"><i class="fas fa-images me-2"></i>الصور الموجودة ({{ images|length }})</h5>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0"><i class="fas fa-images me-2"></i>الصور الموجودة ({{ images|length }})</h5>
+        <div class="d-flex align-items-center gap-3">
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="selectAllImages">
+                <label class="form-check-label" for="selectAllImages">
+                    تحديد الكل
+                </label>
+            </div>
+            <button type="button" class="btn btn-sm btn-danger" id="deleteSelectedImages" style="display: none;">
+                <i class="fas fa-trash me-1"></i>حذف المحدد (<span id="selectedCount">0</span>)
+            </button>
+        </div>
+    </div>
     <div class="row g-3" id="existing-images-container">
         {% for image in images %}
         <div class="col-md-4" id="existing-image-{{ image.id }}">
             <div class="card shadow-sm h-100">
+                <div class="position-absolute top-0 start-0 m-2" style="z-index: 10;">
+                    <input class="form-check-input image-checkbox" type="checkbox" data-image-id="{{ image.id }}" style="width: 20px; height: 20px;">
+                </div>
                 {% if image.is_pdf() %}
                 <!-- عرض ملف PDF -->
                 <div class="card-body text-center d-flex flex-column justify-content-center align-items-center">
@@ -1524,15 +1540,102 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // ===== حذف الصور الموجودة =====
 document.addEventListener('DOMContentLoaded', function() {
+    const selectAllCheckbox = document.getElementById('selectAllImages');
+    const imageCheckboxes = document.querySelectorAll('.image-checkbox');
+    const deleteSelectedBtn = document.getElementById('deleteSelectedImages');
+    const selectedCountSpan = document.getElementById('selectedCount');
     const deleteButtons = document.querySelectorAll('.delete-existing-image');
     
+    // تحديد الكل
+    if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', function() {
+            imageCheckboxes.forEach(checkbox => {
+                checkbox.checked = this.checked;
+            });
+            updateDeleteButton();
+        });
+    }
+    
+    // تحديث عداد الصور المحددة وإظهار زر الحذف
+    function updateDeleteButton() {
+        const checkedCount = document.querySelectorAll('.image-checkbox:checked').length;
+        if (selectedCountSpan) selectedCountSpan.textContent = checkedCount;
+        
+        if (deleteSelectedBtn) {
+            deleteSelectedBtn.style.display = checkedCount > 0 ? 'inline-block' : 'none';
+        }
+        
+        // تحديث حالة تحديد الكل
+        if (selectAllCheckbox) {
+            const allChecked = imageCheckboxes.length > 0 && 
+                             Array.from(imageCheckboxes).every(cb => cb.checked);
+            selectAllCheckbox.checked = allChecked;
+        }
+    }
+    
+    // تحديث عند تغيير أي صورة
+    imageCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', updateDeleteButton);
+    });
+    
+    // حذف الصور المحددة
+    if (deleteSelectedBtn) {
+        deleteSelectedBtn.addEventListener('click', function() {
+            const checkedBoxes = document.querySelectorAll('.image-checkbox:checked');
+            const imageIds = Array.from(checkedBoxes).map(cb => cb.dataset.imageId);
+            
+            if (imageIds.length === 0) return;
+            
+            if (confirm(`هل أنت متأكد من حذف ${imageIds.length} صورة؟ لا يمكن التراجع عن هذا الإجراء.`)) {
+                // حذف كل صورة محددة
+                let deletedCount = 0;
+                imageIds.forEach(imageId => {
+                    fetch(`/vehicles/handover/image/${imageId}/delete`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            const imageContainer = document.getElementById('existing-image-' + imageId);
+                            if (imageContainer) {
+                                imageContainer.style.display = 'none';
+                            }
+                            deletedCount++;
+                            
+                            // عرض رسالة نجاح بعد حذف جميع الصور
+                            if (deletedCount === imageIds.length) {
+                                const alertDiv = document.createElement('div');
+                                alertDiv.className = 'alert alert-success alert-dismissible fade show';
+                                alertDiv.innerHTML = `
+                                    <i class="fas fa-check-circle me-2"></i>
+                                    تم حذف ${deletedCount} صورة بنجاح
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                `;
+                                document.querySelector('.container-fluid').insertBefore(alertDiv, document.querySelector('.container-fluid').firstChild);
+                                setTimeout(() => alertDiv.remove(), 3000);
+                                updateDeleteButton();
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('حدث خطأ أثناء حذف الصورة');
+                    });
+                });
+            }
+        });
+    }
+    
+    // حذف صورة واحدة
     deleteButtons.forEach(button => {
         button.addEventListener('click', function() {
             const imageId = this.getAttribute('data-image-id');
             const imageContainer = document.getElementById('existing-image-' + imageId);
             
             if (confirm('هل أنت متأكد من حذف هذه الصورة؟ لا يمكن التراجع عن هذا الإجراء.')) {
-                // إرسال طلب حذف للخادم
                 fetch(`/vehicles/handover/image/${imageId}/delete`, {
                     method: 'POST',
                     headers: {
@@ -1542,10 +1645,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        // إخفاء الصورة من الواجهة
                         imageContainer.style.display = 'none';
                         
-                        // عرض رسالة نجاح
                         const alertDiv = document.createElement('div');
                         alertDiv.className = 'alert alert-success alert-dismissible fade show';
                         alertDiv.innerHTML = `
@@ -1553,10 +1654,9 @@ document.addEventListener('DOMContentLoaded', function() {
                             تم حذف الصورة بنجاح
                             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                         `;
-                        document.querySelector('.container').insertBefore(alertDiv, document.querySelector('.container').firstChild);
-                        
-                        // إزالة التنبيه بعد 3 ثواني
+                        document.querySelector('.container-fluid').insertBefore(alertDiv, document.querySelector('.container-fluid').firstChild);
                         setTimeout(() => alertDiv.remove(), 3000);
+                        updateDeleteButton();
                     } else {
                         alert('حدث خطأ أثناء حذف الصورة: ' + (data.message || 'خطأ غير معروف'));
                     }
