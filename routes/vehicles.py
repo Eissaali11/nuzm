@@ -309,7 +309,9 @@ VEHICLE_STATUS_CHOICES = [
         'in_project',  # في المشروع
         'in_workshop',  # في الورشة
         'accident',  # حادث
-        'out_of_service'  # خارج الخدمة
+        'out_of_service',  # خارج الخدمة
+        'out_of_work_area',  # خارج منطقة العمل
+        'out_of_qassim_management'  # خارج إدارة القصيم
 ]
 
 # قائمة بأسباب دخول الورشة
