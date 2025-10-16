@@ -135,42 +135,103 @@
                 إضافة موظف قاطن - {{ property.city }}
             </div>
             <div class="card-body">
-                <form method="POST" action="{{ url_for('properties.add_resident', property_id=property.id) }}">
-                    <div class="mb-4">
-                        <label for="employeeSelect" class="form-label">
-                            <i class="fas fa-user me-2"></i>
-                            اختر الموظف
+                <form method="POST" action="{{ url_for('properties.add_resident', property_id=property.id) }}" id="addResidentForm">
+                    <!-- فلتر القسم -->
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="fas fa-filter me-2"></i>
+                            فلتر حسب القسم
                         </label>
-                        <select class="form-select form-select-lg" id="employeeSelect" name="employee_id" required>
-                            <option value="">-- اختر موظف --</option>
-                            
+                        <select class="form-select" id="departmentFilter">
+                            <option value="">جميع الأقسام</option>
+                            {% for dept in departments %}
+                                <option value="{{ dept.id }}">{{ dept.name }}</option>
+                            {% endfor %}
+                            <option value="none">بدون قسم</option>
+                        </select>
+                    </div>
+
+                    <!-- بحث -->
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="fas fa-search me-2"></i>
+                            بحث عن موظف
+                        </label>
+                        <input type="text" class="form-control" id="employeeSearch" placeholder="ابحث بالاسم، رقم الموظف، أو الوظيفة...">
+                    </div>
+
+                    <!-- قائمة الموظفين مع checkboxes -->
+                    <div class="mb-4">
+                        <label class="form-label">
+                            <i class="fas fa-users me-2"></i>
+                            اختر الموظفين (<span id="selectedCount">0</span> محدد)
+                        </label>
+                        <div id="employeesList" style="max-height: 400px; overflow-y: auto; background-color: #323e5f; border-radius: 8px; padding: 15px;">
                             {% for dept in departments %}
                                 {% set dept_employees = employees|selectattr('department_id', 'equalto', dept.id)|list %}
                                 {% if dept_employees %}
-                                <optgroup label="{{ dept.name }}" class="department-label">
                                     {% for emp in dept_employees if emp.id not in current_resident_ids %}
-                                        <option value="{{ emp.id }}">
-                                            {{ emp.name }} - {{ emp.employee_id }} - {{ emp.job_title }}
-                                        </option>
+                                    <div class="employee-item form-check mb-2 p-2" 
+                                         data-dept-id="{{ dept.id }}" 
+                                         data-search="{{ emp.name|lower }} {{ emp.employee_id|lower }} {{ emp.job_title|lower }}"
+                                         style="background-color: #2a3654; border-radius: 6px;">
+                                        <input class="form-check-input employee-checkbox" 
+                                               type="checkbox" 
+                                               name="employee_ids" 
+                                               value="{{ emp.id }}" 
+                                               id="emp{{ emp.id }}">
+                                        <label class="form-check-label w-100" for="emp{{ emp.id }}" style="cursor: pointer;">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <strong class="text-white">{{ emp.name }}</strong>
+                                                    <br>
+                                                    <small class="text-muted">
+                                                        <i class="fas fa-id-card me-1"></i>{{ emp.employee_id }}
+                                                        <span class="mx-2">|</span>
+                                                        <i class="fas fa-briefcase me-1"></i>{{ emp.job_title }}
+                                                    </small>
+                                                </div>
+                                                <span class="badge bg-info">{{ dept.name }}</span>
+                                            </div>
+                                        </label>
+                                    </div>
                                     {% endfor %}
-                                </optgroup>
                                 {% endif %}
                             {% endfor %}
                             
                             {% set no_dept_employees = employees|selectattr('department_id', 'equalto', None)|list %}
                             {% if no_dept_employees %}
-                            <optgroup label="بدون قسم" class="department-label">
                                 {% for emp in no_dept_employees if emp.id not in current_resident_ids %}
-                                    <option value="{{ emp.id }}">
-                                        {{ emp.name }} - {{ emp.employee_id }} - {{ emp.job_title }}
-                                    </option>
+                                <div class="employee-item form-check mb-2 p-2" 
+                                     data-dept-id="none" 
+                                     data-search="{{ emp.name|lower }} {{ emp.employee_id|lower }} {{ emp.job_title|lower }}"
+                                     style="background-color: #2a3654; border-radius: 6px;">
+                                    <input class="form-check-input employee-checkbox" 
+                                           type="checkbox" 
+                                           name="employee_ids" 
+                                           value="{{ emp.id }}" 
+                                           id="emp{{ emp.id }}">
+                                    <label class="form-check-label w-100" for="emp{{ emp.id }}" style="cursor: pointer;">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <strong class="text-white">{{ emp.name }}</strong>
+                                                <br>
+                                                <small class="text-muted">
+                                                    <i class="fas fa-id-card me-1"></i>{{ emp.employee_id }}
+                                                    <span class="mx-2">|</span>
+                                                    <i class="fas fa-briefcase me-1"></i>{{ emp.job_title }}
+                                                </small>
+                                            </div>
+                                            <span class="badge bg-secondary">بدون قسم</span>
+                                        </div>
+                                    </label>
+                                </div>
                                 {% endfor %}
-                            </optgroup>
                             {% endif %}
-                        </select>
+                        </div>
                         <small class="text-muted mt-2 d-block">
                             <i class="fas fa-info-circle me-1"></i>
-                            الموظفون مرتبون حسب الأقسام
+                            يمكنك تحديد عدة موظفين واستخدام البحث والفلترة
                         </small>
                     </div>
 
@@ -179,9 +240,9 @@
                             <i class="fas fa-times me-1"></i>
                             إلغاء
                         </a>
-                        <button type="submit" class="btn btn-primary">
+                        <button type="submit" class="btn btn-primary" id="submitBtn">
                             <i class="fas fa-plus me-1"></i>
-                            إضافة الموظف
+                            إضافة الموظفين
                         </button>
                     </div>
                 </form>
@@ -189,4 +250,57 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const departmentFilter = document.getElementById('departmentFilter');
+    const employeeSearch = document.getElementById('employeeSearch');
+    const employeeItems = document.querySelectorAll('.employee-item');
+    const checkboxes = document.querySelectorAll('.employee-checkbox');
+    const selectedCountSpan = document.getElementById('selectedCount');
+    const form = document.getElementById('addResidentForm');
+    
+    // تحديث عدد المحدد
+    function updateSelectedCount() {
+        const count = document.querySelectorAll('.employee-checkbox:checked').length;
+        selectedCountSpan.textContent = count;
+    }
+    
+    // فلترة الموظفين
+    function filterEmployees() {
+        const deptValue = departmentFilter.value;
+        const searchValue = employeeSearch.value.toLowerCase();
+        
+        employeeItems.forEach(item => {
+            const deptId = item.dataset.deptId;
+            const searchText = item.dataset.search;
+            
+            let showByDept = !deptValue || deptId === deptValue;
+            let showBySearch = !searchValue || searchText.includes(searchValue);
+            
+            if (showByDept && showBySearch) {
+                item.style.display = 'block';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+    }
+    
+    // الاستماع للتغييرات
+    departmentFilter.addEventListener('change', filterEmployees);
+    employeeSearch.addEventListener('input', filterEmployees);
+    checkboxes.forEach(cb => cb.addEventListener('change', updateSelectedCount));
+    
+    // التحقق قبل الإرسال
+    form.addEventListener('submit', function(e) {
+        const checkedCount = document.querySelectorAll('.employee-checkbox:checked').length;
+        if (checkedCount === 0) {
+            e.preventDefault();
+            alert('الرجاء تحديد موظف واحد على الأقل');
+            return false;
+        }
+    });
+});
+</script>
+
 {% endblock %}

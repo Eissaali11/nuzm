@@ -1532,29 +1532,40 @@ def add_resident_page(property_id):
 @properties_bp.route('/<int:property_id>/add-resident', methods=['POST'])
 @login_required
 def add_resident(property_id):
-    """إضافة موظف إلى العقار"""
+    """إضافة موظفين إلى العقار"""
     property = RentalProperty.query.get_or_404(property_id)
     
-    employee_id = request.form.get('employee_id')
+    # قبول عدة موظفين
+    employee_ids = request.form.getlist('employee_ids')
     
-    if employee_id:
-        employee = Employee.query.get_or_404(employee_id)
+    if employee_ids:
+        added_count = 0
+        employee_names = []
         
-        # التحقق من عدم وجود الموظف مسبقاً
-        if employee not in property.residents:
-            property.residents.append(employee)
-            db.session.commit()
+        for employee_id in employee_ids:
+            employee = Employee.query.get_or_404(employee_id)
             
+            # التحقق من عدم وجود الموظف مسبقاً
+            if employee not in property.residents:
+                property.residents.append(employee)
+                added_count += 1
+                employee_names.append(employee.name)
+        
+        db.session.commit()
+        
+        if added_count > 0:
             log_activity(
-                action='إضافة موظف للعقار',
+                action='إضافة موظفين للعقار',
                 entity_type='RentalProperty',
                 entity_id=property_id,
-                details=f'تم إضافة الموظف {employee.name} للعقار {property.city}'
+                details=f'تم إضافة {added_count} موظف للعقار {property.city}: {", ".join(employee_names[:5])}'
             )
             
-            flash(f'تم إضافة الموظف {employee.name} للعقار بنجاح', 'success')
+            flash(f'تم إضافة {added_count} موظف للعقار بنجاح', 'success')
         else:
-            flash('الموظف مضاف مسبقاً للعقار', 'warning')
+            flash('جميع الموظفين المحددين مضافين مسبقاً للعقار', 'warning')
+    else:
+        flash('الرجاء تحديد موظف واحد على الأقل', 'warning')
     
     return redirect(url_for('properties.view', property_id=property_id))
 
