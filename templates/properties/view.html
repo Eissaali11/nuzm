@@ -429,7 +429,8 @@
             </div>
             <div class="card-body">
                 {% if property.payments %}
-                    {% for payment in property.payments|sort(attribute='payment_date', reverse=True)[:3] %}
+                    {% for payment in property.payments|sort(attribute='payment_date', reverse=True) %}
+                    {% if loop.index <= 3 %}
                     <div class="payment-item {{ 'payment-paid' if payment.status == 'paid' else 'payment-pending' }}">
                         <div>
                             <div class="info-label">{{ payment.payment_date.strftime('%Y-%m-%d') }}</div>
@@ -443,6 +444,7 @@
                             {% endif %}
                         </div>
                     </div>
+                    {% endif %}
                     {% endfor %}
                     {% if property.payments|length > 3 %}
                     <div class="text-center mt-3">
