@@ -1,0 +1,254 @@
+{% extends 'layout.html' %}
+
+{% block title %}دفعات العقار - {{ property.city }}{% endblock %}
+
+{% block styles %}
+<style>
+    .main-wrapper {
+        min-height: 100vh;
+        background: linear-gradient(135deg, #1a2035 0%, #2a3654 100%);
+        padding: 20px 0;
+    }
+
+    .card {
+        border: none;
+        border-radius: 15px;
+        overflow: hidden;
+        margin-bottom: 25px;
+        background-color: #202940;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        transition: all 0.3s;
+    }
+    
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+    }
+    
+    .card .card-header {
+        border: none;
+        padding: 20px;
+        font-weight: bold;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    
+    .card .card-body {
+        background-color: #202940;
+        color: #e9ecef;
+        padding: 25px;
+    }
+    
+    .payment-card {
+        background: #2a3654;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 15px;
+        border-right: 5px solid;
+        transition: all 0.3s;
+    }
+    
+    .payment-card:hover {
+        transform: translateX(-5px);
+        box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+    }
+    
+    .payment-card.paid {
+        border-color: #28a745;
+        background: linear-gradient(135deg, #2a3654 0%, rgba(40, 167, 69, 0.1) 100%);
+    }
+    
+    .payment-card.pending {
+        border-color: #ffc107;
+        background: linear-gradient(135deg, #2a3654 0%, rgba(255, 193, 7, 0.1) 100%);
+    }
+    
+    .payment-card.overdue {
+        border-color: #dc3545;
+        background: linear-gradient(135deg, #2a3654 0%, rgba(220, 53, 69, 0.1) 100%);
+    }
+    
+    .badge {
+        padding: 8px 15px;
+        font-size: 0.9rem;
+        border-radius: 20px;
+    }
+    
+    .stats-box {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 12px;
+        padding: 20px;
+        text-align: center;
+        color: white;
+        margin-bottom: 15px;
+    }
+    
+    .stats-box h3 {
+        margin: 0;
+        font-size: 2rem;
+        font-weight: bold;
+    }
+    
+    .stats-box p {
+        margin: 5px 0 0 0;
+        opacity: 0.9;
+    }
+    
+    .btn {
+        border-radius: 8px;
+        padding: 10px 20px;
+        font-weight: 600;
+        transition: all 0.3s;
+    }
+    
+    .btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid main-wrapper">
+    <div class="container">
+        <!-- العنوان -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h2 class="text-white mb-2">
+                            <i class="fas fa-dollar-sign ms-2"></i>
+                            دفعات الإيجار
+                        </h2>
+                        <p class="text-white-50">{{ property.city }} - {{ property.contract_number or 'بدون رقم عقد' }}</p>
+                    </div>
+                    <div>
+                        <a href="{{ url_for('properties.add_payment', property_id=property.id) }}" class="btn btn-success">
+                            <i class="fas fa-plus ms-1"></i>
+                            إضافة دفعة جديدة
+                        </a>
+                        <a href="{{ url_for('properties.view', property_id=property.id) }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-right ms-1"></i>
+                            رجوع للعقار
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- القسم الأيسر - الإحصائيات -->
+            <div class="col-lg-4 mb-4">
+                <div class="stats-box">
+                    <i class="fas fa-money-bill-wave fa-2x mb-3"></i>
+                    <h3>{{ payments|length }}</h3>
+                    <p>إجمالي الدفعات</p>
+                </div>
+                
+                <div class="stats-box" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+                    <i class="fas fa-check-circle fa-2x mb-3"></i>
+                    <h3>{{ paid_count }}</h3>
+                    <p>دفعات مدفوعة</p>
+                </div>
+                
+                <div class="stats-box" style="background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);">
+                    <i class="fas fa-clock fa-2x mb-3"></i>
+                    <h3>{{ pending_count }}</h3>
+                    <p>دفعات معلقة</p>
+                </div>
+                
+                <div class="stats-box" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);">
+                    <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
+                    <h3>{{ overdue_count }}</h3>
+                    <p>دفعات متأخرة</p>
+                </div>
+            </div>
+
+            <!-- القسم الأيمن - قائمة الدفعات -->
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-list ms-2"></i>
+                        قائمة جميع الدفعات
+                    </div>
+                    <div class="card-body">
+                        {% if payments %}
+                            {% for payment in payments %}
+                            <div class="payment-card {{ payment.status }}">
+                                <div class="row align-items-center">
+                                    <div class="col-md-8">
+                                        <h5 class="mb-2">
+                                            <i class="fas fa-calendar-alt text-primary ms-2"></i>
+                                            {{ payment.payment_date.strftime('%Y-%m-%d') }}
+                                        </h5>
+                                        <p class="mb-2">
+                                            <strong>المبلغ:</strong> 
+                                            <span class="text-success" style="font-size: 1.2rem;">{{ "{:,.0f}".format(payment.amount) }} ريال</span>
+                                        </p>
+                                        {% if payment.actual_payment_date %}
+                                        <p class="mb-2">
+                                            <strong>تاريخ الدفع الفعلي:</strong> {{ payment.actual_payment_date.strftime('%Y-%m-%d') }}
+                                        </p>
+                                        {% endif %}
+                                        {% if payment.payment_method %}
+                                        <p class="mb-2">
+                                            <strong>طريقة الدفع:</strong> {{ payment.payment_method }}
+                                        </p>
+                                        {% endif %}
+                                        {% if payment.reference_number %}
+                                        <p class="mb-2">
+                                            <strong>الرقم المرجعي:</strong> {{ payment.reference_number }}
+                                        </p>
+                                        {% endif %}
+                                        {% if payment.notes %}
+                                        <p class="mb-0 text-muted">
+                                            <i class="fas fa-sticky-note ms-1"></i>
+                                            {{ payment.notes }}
+                                        </p>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-4 text-center">
+                                        {% if payment.status == 'paid' %}
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-check-circle ms-1"></i>
+                                            مدفوع
+                                        </span>
+                                        {% elif payment.status == 'overdue' %}
+                                        <span class="badge bg-danger">
+                                            <i class="fas fa-exclamation-triangle ms-1"></i>
+                                            متأخر
+                                        </span>
+                                        {% else %}
+                                        <span class="badge bg-warning">
+                                            <i class="fas fa-clock ms-1"></i>
+                                            معلق
+                                        </span>
+                                        {% endif %}
+                                        
+                                        <div class="mt-3">
+                                            <a href="{{ url_for('properties.edit_payment', property_id=property.id, payment_id=payment.id) }}" class="btn btn-sm btn-outline-warning">
+                                                <i class="fas fa-edit"></i>
+                                                تعديل
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="alert alert-info text-center">
+                                <i class="fas fa-info-circle fa-2x mb-3"></i>
+                                <p class="mb-0">لا توجد دفعات مسجلة لهذا العقار</p>
+                                <a href="{{ url_for('properties.add_payment', property_id=property.id) }}" class="btn btn-primary mt-3">
+                                    <i class="fas fa-plus ms-1"></i>
+                                    إضافة دفعة الآن
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
