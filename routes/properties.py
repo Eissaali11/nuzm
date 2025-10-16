@@ -179,8 +179,9 @@ def create():
             
             # تسجيل النشاط
             log_activity(
-                user_id=current_user.id,
                 action='إضافة عقار مستأجر',
+                entity_type='RentalProperty',
+                entity_id=property.id,
                 details=f'تم إضافة عقار جديد: {property.contract_number} - {property.city}'
             )
             
@@ -271,8 +272,9 @@ def edit(property_id):
             
             # تسجيل النشاط
             log_activity(
-                user_id=current_user.id,
                 action='تعديل عقار مستأجر',
+                entity_type='RentalProperty',
+                entity_id=property.id,
                 details=f'تم تعديل العقار: {property.contract_number}'
             )
             
@@ -298,8 +300,9 @@ def delete(property_id):
         
         # تسجيل النشاط
         log_activity(
-            user_id=current_user.id,
             action='حذف عقار مستأجر',
+            entity_type='RentalProperty',
+            entity_id=property.id,
             details=f'تم حذف العقار: {property.contract_number}'
         )
         
@@ -347,8 +350,9 @@ def upload_images(property_id):
         
         # تسجيل النشاط
         log_activity(
-            user_id=current_user.id,
             action='رفع صور عقار',
+            entity_type='RentalProperty',
+            entity_id=property.id,
             details=f'تم رفع {uploaded_count} صورة للعقار: {property.contract_number}'
         )
         
@@ -408,8 +412,9 @@ def add_payment(property_id):
             
             # تسجيل النشاط
             log_activity(
-                user_id=current_user.id,
                 action='إضافة دفعة إيجار',
+                entity_type='PropertyPayment',
+                entity_id=payment.id,
                 details=f'تم إضافة دفعة بقيمة {payment.amount} ريال للعقار: {property.contract_number}'
             )
             
@@ -445,8 +450,9 @@ def edit_payment(payment_id):
             
             # تسجيل النشاط
             log_activity(
-                user_id=current_user.id,
                 action='تعديل دفعة إيجار',
+                entity_type='PropertyPayment',
+                entity_id=payment.id,
                 details=f'تم تعديل دفعة بقيمة {payment.amount} ريال للعقار: {property.contract_number}'
             )
             
@@ -509,8 +515,9 @@ def manage_furnishing(property_id):
             
             # تسجيل النشاط
             log_activity(
-                user_id=current_user.id,
                 action='تحديث تجهيزات عقار',
+                entity_type='PropertyFurnishing',
+                entity_id=furnishing.id,
                 details=f'تم تحديث تجهيزات العقار: {property.contract_number}'
             )
             
