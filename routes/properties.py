@@ -470,6 +470,40 @@ def edit_payment(payment_id):
     return render_template('properties/edit_payment.html', form=form, payment=payment, property=property)
 
 
+@properties_bp.route('/<int:property_id>/payments')
+@login_required
+def payments_list(property_id):
+    """عرض جميع دفعات العقار"""
+    property = RentalProperty.query.get_or_404(property_id)
+    payments = PropertyPayment.query.filter_by(property_id=property_id).order_by(
+        PropertyPayment.payment_date.desc()
+    ).all()
+    
+    # حساب الإحصائيات
+    paid_count = sum(1 for p in payments if p.status == 'paid')
+    pending_count = sum(1 for p in payments if p.status == 'pending')
+    overdue_count = sum(1 for p in payments if p.status == 'overdue')
+    
+    return render_template('properties/payments_list.html', 
+                         property=property,
+                         payments=payments,
+                         paid_count=paid_count,
+                         pending_count=pending_count,
+                         overdue_count=overdue_count)
+
+
+@properties_bp.route('/<int:property_id>/furnishing-view')
+@login_required
+def furnishing_view(property_id):
+    """عرض تجهيزات العقار"""
+    property = RentalProperty.query.get_or_404(property_id)
+    furnishing = PropertyFurnishing.query.filter_by(property_id=property_id).first()
+    
+    return render_template('properties/furnishing_view.html',
+                         property=property,
+                         furnishing=furnishing)
+
+
 @properties_bp.route('/payments/<int:payment_id>/delete', methods=['POST'])
 @login_required
 def delete_payment(payment_id):
