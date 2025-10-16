@@ -377,6 +377,7 @@ with app.app_context():
     from routes.ai_services_simple import ai_services_bp
     from routes.email_queue import email_queue_bp
     from routes.voicehub import voicehub_bp
+    from routes.properties import properties_bp
 
     # تعطيل حماية CSRF لطرق معينة
     csrf.exempt(voicehub_bp)
@@ -415,6 +416,7 @@ with app.app_context():
     app.register_blueprint(voicehub_bp, url_prefix="/voicehub")
     app.register_blueprint(ai_services_bp, url_prefix='/ai')
     app.register_blueprint(email_queue_bp)
+    app.register_blueprint(properties_bp, url_prefix='/properties')
     
     # استيراد وتسجيل مسار صفحة الهبوط - مسار منفصل عن النظام
     from routes.landing import landing_bp
