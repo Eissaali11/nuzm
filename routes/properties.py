@@ -1571,10 +1571,16 @@ def add_department_page(property_id):
     # جلب جميع الموظفين النشطين
     employees = Employee.query.filter_by(status='active').all()
     
-    # حساب عدد الموظفين لكل قسم
+    # حساب عدد الموظفين لكل قسم (باستخدام العلاقة many-to-many)
     dept_employee_counts = {}
     for dept in departments:
-        count = Employee.query.filter_by(department_id=dept.id, status='active').count()
+        # حساب الموظفين النشطين المرتبطين بهذا القسم عبر employee_departments
+        count = Employee.query.join(
+            Employee.departments
+        ).filter(
+            Department.id == dept.id,
+            Employee.status == 'active'
+        ).count()
         dept_employee_counts[dept.id] = count
     
     return render_template('properties/add_department.html',
@@ -1595,10 +1601,12 @@ def add_department_residents(property_id):
     if department_id:
         department = Department.query.get_or_404(department_id)
         
-        # جلب جميع موظفي القسم النشطين
-        dept_employees = Employee.query.filter_by(
-            department_id=department_id,
-            status='active'
+        # جلب جميع موظفي القسم النشطين (باستخدام العلاقة many-to-many)
+        dept_employees = Employee.query.join(
+            Employee.departments
+        ).filter(
+            Department.id == department_id,
+            Employee.status == 'active'
         ).all()
         
         added_count = 0
