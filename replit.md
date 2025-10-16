@@ -42,6 +42,7 @@ Preferred communication style: Simple, everyday language.
 - **Email System**: Comprehensive email sharing with SendGrid integration, local fallback, professional Arabic templates, Excel/PDF attachment support, and a multi-tier delivery system.
 - **VoiceHub Integration**: Webhook endpoint for real-time call events, database models for call metadata and analysis, management interface with detailed analysis view, and department-based access control. Features include emotional analysis, keyword extraction, and full Arabic conversation transcripts.
 - **VoiceHub Knowledge API**: Secure REST endpoints for querying system data (employee, vehicle, department, statistics) with API key authentication, and an interactive setup interface in the VoiceHub Dashboard for agent instructions.
+- **Rental Property Management**: Comprehensive system for managing company-rented properties including contract management, payment tracking, property images upload with HEIC support, furnishing inventory, contract expiry alerts, payment reminders, and detailed financial reporting.
 
 ## External Dependencies
 - **Web Framework**: Flask 3.1.0

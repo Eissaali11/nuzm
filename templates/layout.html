@@ -482,6 +482,19 @@
                                 </a>
                             </li>
                             
+                            {# إدارة العقارات المستأجرة #}
+                            {% if current_user.role == UserRole.ADMIN %}
+                            <li class="nav-item mb-1">
+                                <a
+                                    href="{{ url_for('properties.dashboard') }}"
+                                    class="nav-link nav-link-custom {% if '/properties' in request.path %}active{% endif %}"
+                                >
+                                    <i class="fas fa-building me-2"></i>
+                                    <span>العقارات المستأجرة</span>
+                                </a>
+                            </li>
+                            {% endif %}
+                            
                             {# VoiceHub - الذكاء الاصطناعي الصوتي #}
                             {% if current_user.role == UserRole.ADMIN %}
                             <li class="nav-item mb-1">

@@ -1,0 +1,254 @@
+{% extends 'layout.html' %}
+
+{% block title %}لوحة معلومات العقارات المستأجرة{% endblock %}
+
+{% block styles %}
+<style>
+    .info-box {
+        transition: all 0.3s ease;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    .info-box:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+    }
+    .info-box .icon {
+        width: 65px;
+        height: 65px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 30px;
+        border-radius: 50%;
+        margin-bottom: 15px;
+        color: white;
+    }
+    .property-card {
+        transition: all 0.3s ease;
+        border-right: 4px solid;
+    }
+    .property-card:hover {
+        transform: translateX(-5px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    .badge-status {
+        font-size: 0.8rem;
+        padding: 5px 10px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4 px-4">
+    <!-- العنوان وأزرار الإجراءات -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">
+            <i class="fas fa-building ms-2"></i>
+            لوحة معلومات العقارات المستأجرة
+        </h2>
+        <div>
+            <a href="{{ url_for('properties.create') }}" class="btn btn-success">
+                <i class="fas fa-plus ms-1"></i>
+                إضافة عقار جديد
+            </a>
+        </div>
+    </div>
+
+    <!-- صف البطاقات الإحصائية العلوية -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card shadow-sm info-box">
+                <div class="card-body text-center p-4">
+                    <div class="icon bg-primary mx-auto">
+                        <i class="fas fa-building"></i>
+                    </div>
+                    <h5>إجمالي العقارات</h5>
+                    <h2>{{ total_properties }}</h2>
+                    <div class="text-muted small">عقار نشط</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card shadow-sm info-box">
+                <div class="card-body text-center p-4">
+                    <div class="icon bg-success mx-auto">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <h5>عقود نشطة</h5>
+                    <h2>{{ active_properties }}</h2>
+                    <div class="text-muted small">عقد سار</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card shadow-sm info-box">
+                <div class="card-body text-center p-4">
+                    <div class="icon bg-warning mx-auto">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <h5>قريبة من الانتهاء</h5>
+                    <h2>{{ expiring_soon }}</h2>
+                    <div class="text-muted small">خلال 60 يوم</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card shadow-sm info-box">
+                <div class="card-body text-center p-4">
+                    <div class="icon bg-danger mx-auto">
+                        <i class="fas fa-times-circle"></i>
+                    </div>
+                    <h5>عقود منتهية</h5>
+                    <h2>{{ expired_properties }}</h2>
+                    <div class="text-muted small">عقد منتهي</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- صف الإحصائيات المالية -->
+    <div class="row mb-4">
+        <div class="col-md-4 mb-3">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <h5><i class="fas fa-chart-line text-primary ms-1"></i> إجمالي الإيجار السنوي</h5>
+                    <h2 class="text-primary">{{ "{:,.0f}".format(total_annual_rent) }}</h2>
+                    <small class="text-muted">ريال سعودي</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <h5><i class="fas fa-money-bill-wave text-success ms-1"></i> إجمالي المدفوع</h5>
+                    <h2 class="text-success">{{ "{:,.0f}".format(total_paid) }}</h2>
+                    <small class="text-muted">ريال سعودي</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <h5><i class="fas fa-clock text-warning ms-1"></i> دفعات معلقة/متأخرة</h5>
+                    <h2 class="text-warning">{{ pending_payments }} / {{ overdue_payments }}</h2>
+                    <small class="text-muted">دفعة</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- قائمة العقارات -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="fas fa-list ms-1"></i> قائمة العقارات</h5>
+                </div>
+                <div class="card-body">
+                    {% if properties %}
+                        {% for property in properties %}
+                        <div class="property-card card mb-3" style="border-right-color: 
+                            {% if property.status == 'active' %}#28a745
+                            {% elif property.status == 'expired' %}#dc3545
+                            {% else %}#ffc107{% endif %}">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <h5 class="mb-1">
+                                            <i class="fas fa-map-marker-alt text-primary ms-1"></i>
+                                            {{ property.city }} - {{ property.address[:50] }}...
+                                        </h5>
+                                        <p class="mb-1 text-muted">
+                                            <strong>رقم العقد:</strong> {{ property.contract_number }} |
+                                            <strong>المالك:</strong> {{ property.owner_name }}
+                                        </p>
+                                        <p class="mb-1">
+                                            <strong>الإيجار السنوي:</strong> {{ "{:,.0f}".format(property.annual_rent_amount) }} ريال
+                                            {% if property.includes_utilities %}
+                                            <span class="badge bg-info">يشمل الماء والكهرباء</span>
+                                            {% endif %}
+                                        </p>
+                                        <p class="mb-0 text-muted">
+                                            <strong>تاريخ الانتهاء:</strong> {{ property.contract_end_date.strftime('%Y-%m-%d') }}
+                                            <span class="badge 
+                                                {% if property.is_expired %}bg-danger
+                                                {% elif property.is_expiring_soon %}bg-warning
+                                                {% else %}bg-success{% endif %}">
+                                                {% if property.is_expired %}منتهي
+                                                {% elif property.is_expiring_soon %}قريب من الانتهاء ({{ property.remaining_days }} يوم)
+                                                {% else %}{{ property.remaining_days }} يوم متبقي{% endif %}
+                                            </span>
+                                        </p>
+                                    </div>
+                                    <div class="text-start">
+                                        <a href="{{ url_for('properties.view', id=property.id) }}" class="btn btn-sm btn-outline-primary mb-1">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{{ url_for('properties.edit', id=property.id) }}" class="btn btn-sm btn-outline-warning mb-1">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="alert alert-info text-center">
+                            <i class="fas fa-info-circle ms-1"></i>
+                            لا توجد عقارات مسجلة. قم بإضافة عقار جديد للبدء.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- العمود الجانبي -->
+        <div class="col-lg-4">
+            <!-- العقود القريبة من الانتهاء -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-warning text-white">
+                    <h6 class="mb-0"><i class="fas fa-exclamation-triangle ms-1"></i> عقود تحتاج متابعة</h6>
+                </div>
+                <div class="card-body p-2">
+                    {% if expiring_properties %}
+                        {% for property in expiring_properties %}
+                        <div class="alert alert-warning mb-2 p-2">
+                            <small>
+                                <strong>{{ property.city }}</strong><br>
+                                رقم العقد: {{ property.contract_number }}<br>
+                                ينتهي بعد: <strong>{{ property.remaining_days }} يوم</strong>
+                            </small>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted small mb-0">لا توجد عقود قريبة من الانتهاء</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- الدفعات القادمة -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0"><i class="fas fa-calendar-alt ms-1"></i> دفعات قادمة (30 يوم)</h6>
+                </div>
+                <div class="card-body p-2">
+                    {% if upcoming_payments %}
+                        {% for payment in upcoming_payments %}
+                        <div class="alert alert-info mb-2 p-2">
+                            <small>
+                                <strong>{{ payment.rental_property.city }}</strong><br>
+                                المبلغ: {{ "{:,.0f}".format(payment.amount) }} ريال<br>
+                                الموعد: {{ payment.payment_date.strftime('%Y-%m-%d') }}
+                            </small>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted small mb-0">لا توجد دفعات قادمة</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
