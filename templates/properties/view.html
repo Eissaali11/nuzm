@@ -417,13 +417,19 @@
 
         <!-- سجل الدفعات -->
         <div class="card">
-            <div class="card-header">
-                <i class="fas fa-money-bill-wave me-2"></i>
-                سجل الدفعات ({{ property.payments|length }})
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>
+                    <i class="fas fa-money-bill-wave me-2"></i>
+                    سجل الدفعات ({{ property.payments|length }})
+                </span>
+                <a href="{{ url_for('properties.payments_list', property_id=property.id) }}" class="btn btn-sm btn-light">
+                    <i class="fas fa-eye me-1"></i>
+                    عرض الكل
+                </a>
             </div>
             <div class="card-body">
                 {% if property.payments %}
-                    {% for payment in property.payments|sort(attribute='payment_date', reverse=True) %}
+                    {% for payment in property.payments|sort(attribute='payment_date', reverse=True)[:3] %}
                     <div class="payment-item {{ 'payment-paid' if payment.status == 'paid' else 'payment-pending' }}">
                         <div>
                             <div class="info-label">{{ payment.payment_date.strftime('%Y-%m-%d') }}</div>
@@ -438,6 +444,14 @@
                         </div>
                     </div>
                     {% endfor %}
+                    {% if property.payments|length > 3 %}
+                    <div class="text-center mt-3">
+                        <a href="{{ url_for('properties.payments_list', property_id=property.id) }}" class="btn btn-outline-primary">
+                            <i class="fas fa-list me-1"></i>
+                            عرض جميع الدفعات ({{ property.payments|length }})
+                        </a>
+                    </div>
+                    {% endif %}
                 {% else %}
                     <p class="text-center text-muted">لا توجد دفعات مسجلة</p>
                 {% endif %}
@@ -446,9 +460,17 @@
 
         <!-- التجهيزات -->
         <div class="card">
-            <div class="card-header">
-                <i class="fas fa-couch me-2"></i>
-                التجهيزات
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>
+                    <i class="fas fa-couch me-2"></i>
+                    التجهيزات
+                </span>
+                {% if furnishing %}
+                <a href="{{ url_for('properties.furnishing_view', property_id=property.id) }}" class="btn btn-sm btn-light">
+                    <i class="fas fa-eye me-1"></i>
+                    عرض الكل
+                </a>
+                {% endif %}
             </div>
             <div class="card-body">
                 {% if furnishing %}
@@ -475,6 +497,12 @@
                         <p>{{ furnishing.notes }}</p>
                     </div>
                     {% endif %}
+                    <div class="text-center mt-3">
+                        <a href="{{ url_for('properties.furnishing_view', property_id=property.id) }}" class="btn btn-outline-primary">
+                            <i class="fas fa-couch me-1"></i>
+                            عرض التجهيزات بشكل تفصيلي
+                        </a>
+                    </div>
                 {% else %}
                     <p class="text-center text-muted">لا توجد تجهيزات مسجلة</p>
                 {% endif %}
