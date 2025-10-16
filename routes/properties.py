@@ -735,42 +735,227 @@ def export_excel(property_id):
             ws[f'B{row}'].border = border
             row += 1
     
-    # الدفعات
-    if payments:
-        row += 2
-        ws[f'A{row}'] = "الدفعات"
-        ws.merge_cells(f'A{row}:E{row}')
-        ws[f'A{row}'].font = header_font
-        ws[f'A{row}'].fill = header_fill
-        row += 1
-        
-        # عناوين جدول الدفعات
-        headers = ['التاريخ المتوقع', 'المبلغ', 'الحالة', 'تاريخ الدفع الفعلي', 'ملاحظات']
+    # ========== تفاصيل الدفعات بتصميم مميز ==========
+    row += 2
+    
+    # عنوان رئيسي للدفعات مع تصميم مميز
+    ws.merge_cells(f'A{row}:F{row}')
+    cell = ws[f'A{row}']
+    cell.value = "📊 تفاصيل الدفعات"
+    cell.font = Font(name='Arial', size=14, bold=True, color='FFFFFF')
+    cell.fill = PatternFill(start_color='667EEA', end_color='764BA2', fill_type='solid')
+    cell.alignment = Alignment(horizontal='center', vertical='center')
+    ws.row_dimensions[row].height = 35
+    row += 1
+    
+    # إنشاء تنسيقات مميزة بألوان جميلة
+    upcoming_fill = PatternFill(start_color='17A2B8', end_color='17A2B8', fill_type='solid')  # أزرق سماوي
+    upcoming_light = PatternFill(start_color='D1ECF1', end_color='D1ECF1', fill_type='solid')
+    pending_fill = PatternFill(start_color='FFC107', end_color='FFC107', fill_type='solid')  # أصفر ذهبي
+    pending_light = PatternFill(start_color='FFF3CD', end_color='FFF3CD', fill_type='solid')
+    overdue_fill = PatternFill(start_color='DC3545', end_color='DC3545', fill_type='solid')  # أحمر
+    overdue_light = PatternFill(start_color='F8D7DA', end_color='F8D7DA', fill_type='solid')
+    paid_fill = PatternFill(start_color='28A745', end_color='28A745', fill_type='solid')  # أخضر
+    paid_light = PatternFill(start_color='D4EDDA', end_color='D4EDDA', fill_type='solid')
+    
+    # 1. الدفعات المستحقة (30 يوم قادمة)
+    row += 1
+    ws.merge_cells(f'A{row}:F{row}')
+    cell = ws[f'A{row}']
+    cell.value = "🔵 الدفعات المستحقة (30 يوم قادمة)"
+    cell.font = Font(name='Arial', size=12, bold=True, color='FFFFFF')
+    cell.fill = upcoming_fill
+    cell.alignment = Alignment(horizontal='center')
+    ws.row_dimensions[row].height = 25
+    row += 1
+    
+    upcoming_payments_date = date.today() + timedelta(days=30)
+    upcoming_payments = [p for p in payments if p.status == 'pending' and date.today() <= p.payment_date <= upcoming_payments_date]
+    
+    if upcoming_payments:
+        # عناوين
+        headers = ['التاريخ', 'المبلغ (ريال)', 'الأيام المتبقية', 'طريقة الدفع', 'الحالة']
         for col, header in enumerate(headers, start=1):
             cell = ws.cell(row=row, column=col)
             cell.value = header
-            cell.font = header_font
-            cell.fill = header_fill
+            cell.font = Font(bold=True, color='0C5460')
+            cell.fill = upcoming_light
             cell.border = border
             cell.alignment = Alignment(horizontal='center')
         row += 1
         
-        # بيانات الدفعات
-        for payment in payments:
+        for payment in upcoming_payments:
+            days_left = (payment.payment_date - date.today()).days
             ws.cell(row=row, column=1, value=payment.payment_date.strftime('%Y-%m-%d')).border = border
-            ws.cell(row=row, column=2, value=f"{payment.amount:,.2f} ريال").border = border
-            status_text = {'pending': 'معلق', 'paid': 'مدفوع', 'overdue': 'متأخر'}.get(payment.status, '-')
-            ws.cell(row=row, column=3, value=status_text).border = border
-            ws.cell(row=row, column=4, value=payment.actual_payment_date.strftime('%Y-%m-%d') if payment.actual_payment_date else '-').border = border
+            ws.cell(row=row, column=2, value=f"{payment.amount:,.0f}").border = border
+            cell = ws.cell(row=row, column=3, value=f"⏰ {days_left} يوم")
+            cell.border = border
+            cell.font = Font(bold=True, color='0C5460')
+            ws.cell(row=row, column=4, value=payment.payment_method or '-').border = border
+            ws.cell(row=row, column=5, value='معلق').border = border
+            row += 1
+    else:
+        ws[f'A{row}'] = "✅ لا توجد دفعات مستحقة خلال 30 يوم"
+        ws[f'A{row}'].font = Font(italic=True, color='155724')
+        row += 1
+    
+    # 2. الدفعات المعلقة
+    row += 2
+    ws.merge_cells(f'A{row}:F{row}')
+    cell = ws[f'A{row}']
+    cell.value = "🟡 الدفعات المعلقة"
+    cell.font = Font(name='Arial', size=12, bold=True, color='000000')
+    cell.fill = pending_fill
+    cell.alignment = Alignment(horizontal='center')
+    ws.row_dimensions[row].height = 25
+    row += 1
+    
+    pending_payments = [p for p in payments if p.status == 'pending']
+    
+    if pending_payments:
+        # عناوين
+        headers = ['التاريخ المتوقع', 'المبلغ (ريال)', 'طريقة الدفع', 'الرقم المرجعي', 'ملاحظات']
+        for col, header in enumerate(headers, start=1):
+            cell = ws.cell(row=row, column=col)
+            cell.value = header
+            cell.font = Font(bold=True, color='856404')
+            cell.fill = pending_light
+            cell.border = border
+            cell.alignment = Alignment(horizontal='center')
+        row += 1
+        
+        for payment in pending_payments:
+            ws.cell(row=row, column=1, value=payment.payment_date.strftime('%Y-%m-%d')).border = border
+            ws.cell(row=row, column=2, value=f"{payment.amount:,.0f}").border = border
+            ws.cell(row=row, column=3, value=payment.payment_method or '-').border = border
+            ws.cell(row=row, column=4, value=payment.reference_number or '-').border = border
             ws.cell(row=row, column=5, value=payment.notes or '-').border = border
             row += 1
+    else:
+        ws[f'A{row}'] = "✅ لا توجد دفعات معلقة"
+        ws[f'A{row}'].font = Font(italic=True, color='155724')
+        row += 1
+    
+    # 3. الدفعات المتأخرة
+    row += 2
+    ws.merge_cells(f'A{row}:F{row}')
+    cell = ws[f'A{row}']
+    cell.value = "🔴 الدفعات المتأخرة"
+    cell.font = Font(name='Arial', size=12, bold=True, color='FFFFFF')
+    cell.fill = overdue_fill
+    cell.alignment = Alignment(horizontal='center')
+    ws.row_dimensions[row].height = 25
+    row += 1
+    
+    overdue_payments = [p for p in payments if p.status == 'pending' and p.payment_date < date.today()]
+    
+    if overdue_payments:
+        # عناوين
+        headers = ['التاريخ المتوقع', 'المبلغ (ريال)', 'أيام التأخير', 'طريقة الدفع', 'حالة خطرة']
+        for col, header in enumerate(headers, start=1):
+            cell = ws.cell(row=row, column=col)
+            cell.value = header
+            cell.font = Font(bold=True, color='721C24')
+            cell.fill = overdue_light
+            cell.border = border
+            cell.alignment = Alignment(horizontal='center')
+        row += 1
+        
+        for payment in overdue_payments:
+            days_overdue = (date.today() - payment.payment_date).days
+            ws.cell(row=row, column=1, value=payment.payment_date.strftime('%Y-%m-%d')).border = border
+            ws.cell(row=row, column=2, value=f"{payment.amount:,.0f}").border = border
+            cell = ws.cell(row=row, column=3, value=f"⚠️ متأخر {days_overdue} يوم")
+            cell.border = border
+            cell.font = Font(bold=True, color='721C24')
+            ws.cell(row=row, column=4, value=payment.payment_method or '-').border = border
+            ws.cell(row=row, column=5, value='يتطلب متابعة عاجلة').border = border
+            row += 1
+    else:
+        ws[f'A{row}'] = "✅ لا توجد دفعات متأخرة"
+        ws[f'A{row}'].font = Font(italic=True, color='155724')
+        row += 1
+    
+    # 4. الدفعات المدفوعة
+    row += 2
+    ws.merge_cells(f'A{row}:F{row}')
+    cell = ws[f'A{row}']
+    cell.value = "🟢 الدفعات المدفوعة"
+    cell.font = Font(name='Arial', size=12, bold=True, color='FFFFFF')
+    cell.fill = paid_fill
+    cell.alignment = Alignment(horizontal='center')
+    ws.row_dimensions[row].height = 25
+    row += 1
+    
+    paid_payments = [p for p in payments if p.status == 'paid']
+    
+    if paid_payments:
+        # عناوين
+        headers = ['تاريخ الدفع الفعلي', 'المبلغ (ريال)', 'طريقة الدفع', 'الرقم المرجعي', 'ملاحظات']
+        for col, header in enumerate(headers, start=1):
+            cell = ws.cell(row=row, column=col)
+            cell.value = header
+            cell.font = Font(bold=True, color='155724')
+            cell.fill = paid_light
+            cell.border = border
+            cell.alignment = Alignment(horizontal='center')
+        row += 1
+        
+        for payment in paid_payments:
+            ws.cell(row=row, column=1, value=payment.actual_payment_date.strftime('%Y-%m-%d') if payment.actual_payment_date else '-').border = border
+            ws.cell(row=row, column=2, value=f"{payment.amount:,.0f}").border = border
+            ws.cell(row=row, column=3, value=payment.payment_method or '-').border = border
+            ws.cell(row=row, column=4, value=payment.reference_number or '-').border = border
+            ws.cell(row=row, column=5, value=payment.notes or '-').border = border
+            row += 1
+    else:
+        ws[f'A{row}'] = "لم يتم دفع أي دفعات بعد"
+        ws[f'A{row}'].font = Font(italic=True)
+        row += 1
+    
+    # ملخص إحصائي مميز
+    row += 2
+    ws.merge_cells(f'A{row}:F{row}')
+    cell = ws[f'A{row}']
+    cell.value = "📈 ملخص إحصائي للدفعات"
+    cell.font = Font(name='Arial', size=12, bold=True, color='FFFFFF')
+    cell.fill = PatternFill(start_color='6C757D', end_color='6C757D', fill_type='solid')
+    cell.alignment = Alignment(horizontal='center')
+    row += 1
+    
+    total_payments = len(payments)
+    total_amount = sum(p.amount for p in payments)
+    paid_amount = sum(p.amount for p in paid_payments)
+    pending_amount = sum(p.amount for p in pending_payments)
+    
+    stats = [
+        ['إجمالي الدفعات', total_payments],
+        ['دفعات مدفوعة', len(paid_payments)],
+        ['دفعات معلقة', len(pending_payments)],
+        ['دفعات متأخرة', len(overdue_payments)],
+        ['المبلغ الإجمالي', f"{total_amount:,.0f} ريال"],
+        ['المبلغ المدفوع', f"{paid_amount:,.0f} ريال"],
+        ['المبلغ المعلق', f"{pending_amount:,.0f} ريال"],
+    ]
+    
+    for stat in stats:
+        ws[f'A{row}'] = stat[0]
+        ws[f'A{row}'].font = Font(bold=True)
+        ws[f'A{row}'].fill = PatternFill(start_color='E9ECEF', end_color='E9ECEF', fill_type='solid')
+        ws[f'A{row}'].border = border
+        
+        ws[f'B{row}'] = stat[1]
+        ws[f'B{row}'].border = border
+        ws[f'B{row}'].alignment = Alignment(horizontal='center')
+        row += 1
     
     # ضبط عرض الأعمدة
     ws.column_dimensions['A'].width = 25
-    ws.column_dimensions['B'].width = 30
-    ws.column_dimensions['C'].width = 15
-    ws.column_dimensions['D'].width = 20
-    ws.column_dimensions['E'].width = 30
+    ws.column_dimensions['B'].width = 25
+    ws.column_dimensions['C'].width = 20
+    ws.column_dimensions['D'].width = 25
+    ws.column_dimensions['E'].width = 25
+    ws.column_dimensions['F'].width = 25
     
     # حفظ في الذاكرة
     output = BytesIO()
