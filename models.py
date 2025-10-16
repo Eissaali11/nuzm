@@ -1845,6 +1845,15 @@ class VoiceHubAnalysis(db.Model):
         return f'<VoiceHubAnalysis {self.analysis_id}>'
 
 
+# جدول الربط بين العقارات والموظفين القاطنين
+property_employees = db.Table('property_employees',
+    db.Column('property_id', db.Integer, db.ForeignKey('rental_properties.id', ondelete='CASCADE'), primary_key=True),
+    db.Column('employee_id', db.Integer, db.ForeignKey('employee.id', ondelete='CASCADE'), primary_key=True),
+    db.Column('move_in_date', db.Date, nullable=True),  # تاريخ السكن
+    db.Column('move_out_date', db.Date, nullable=True),  # تاريخ الخروج
+    db.Column('notes', db.Text, nullable=True)  # ملاحظات
+)
+
 class RentalProperty(db.Model):
     """نموذج العقارات المستأجرة من قبل الشركة"""
     __tablename__ = 'rental_properties'
@@ -1887,6 +1896,9 @@ class RentalProperty(db.Model):
     payments = db.relationship('PropertyPayment', back_populates='rental_property', cascade='all, delete-orphan')
     furnishings = db.relationship('PropertyFurnishing', back_populates='rental_property', cascade='all, delete-orphan')
     creator = db.relationship('User', backref='rental_properties')
+    
+    # علاقة الموظفين القاطنين
+    residents = db.relationship('Employee', secondary=property_employees, backref='housing_properties')
     
     @property
     def remaining_days(self):

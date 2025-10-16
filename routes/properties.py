@@ -13,7 +13,7 @@ from openpyxl.utils import get_column_letter
 from io import BytesIO
 
 from app import db
-from models import RentalProperty, PropertyImage, PropertyPayment, PropertyFurnishing, User
+from models import RentalProperty, PropertyImage, PropertyPayment, PropertyFurnishing, User, Employee, Department
 from forms.property_forms import (
     RentalPropertyForm, PropertyImagesForm, PropertyPaymentForm, PropertyFurnishingForm
 )
@@ -283,11 +283,17 @@ def view(property_id):
     # جلب التجهيزات
     furnishing = PropertyFurnishing.query.filter_by(property_id=property_id).first()
     
+    # جلب الأقسام والموظفين لإدارة القاطنين
+    departments = Department.query.order_by(Department.name).all()
+    employees = Employee.query.filter_by(status='active').order_by(Employee.name).all()
+    
     return render_template('properties/view.html',
                          property=property,
                          images=images,
                          payments=payments,
-                         furnishing=furnishing)
+                         furnishing=furnishing,
+                         departments=departments,
+                         employees=employees)
 
 
 @properties_bp.route('/<int:property_id>/edit', methods=['GET', 'POST'])
@@ -1465,3 +1471,129 @@ def export_all_properties_excel():
         as_attachment=True,
         download_name=filename
     )
+
+
+@properties_bp.route('/<int:property_id>/manage-residents')
+@login_required
+def manage_residents(property_id):
+    """صفحة إدارة الموظفين القاطنين في العقار"""
+    property = RentalProperty.query.get_or_404(property_id)
+    
+    # جلب جميع الأقسام
+    departments = Department.query.order_by(Department.name).all()
+    
+    # جلب جميع الموظفين مع أقسامهم
+    employees = Employee.query.filter_by(status='active').order_by(Employee.name).all()
+    
+    # تنظيم الموظفين حسب القسم
+    employees_by_department = {}
+    for dept in departments:
+        dept_employees = [emp for emp in employees if emp.department_id == dept.id]
+        if dept_employees:
+            employees_by_department[dept.name] = dept_employees
+    
+    # موظفون بدون قسم
+    no_dept_employees = [emp for emp in employees if emp.department_id is None]
+    if no_dept_employees:
+        employees_by_department['بدون قسم'] = no_dept_employees
+    
+    # الموظفين الحاليين في العقار
+    current_residents = property.residents
+    
+    return render_template('properties/manage_residents.html',
+                         property=property,
+                         employees_by_department=employees_by_department,
+                         current_residents=current_residents,
+                         departments=departments)
+
+
+@properties_bp.route('/<int:property_id>/add-resident', methods=['POST'])
+@login_required
+def add_resident(property_id):
+    """إضافة موظف إلى العقار"""
+    property = RentalProperty.query.get_or_404(property_id)
+    
+    employee_id = request.form.get('employee_id')
+    
+    if employee_id:
+        employee = Employee.query.get_or_404(employee_id)
+        
+        # التحقق من عدم وجود الموظف مسبقاً
+        if employee not in property.residents:
+            property.residents.append(employee)
+            db.session.commit()
+            
+            log_activity(
+                action='إضافة موظف للعقار',
+                entity_type='RentalProperty',
+                entity_id=property_id,
+                details=f'تم إضافة الموظف {employee.name} للعقار {property.city}'
+            )
+            
+            flash(f'تم إضافة الموظف {employee.name} للعقار بنجاح', 'success')
+        else:
+            flash('الموظف مضاف مسبقاً للعقار', 'warning')
+    
+    return redirect(url_for('properties.view', property_id=property_id))
+
+
+@properties_bp.route('/<int:property_id>/add-department-residents', methods=['POST'])
+@login_required
+def add_department_residents(property_id):
+    """إضافة جميع موظفي قسم للعقار"""
+    property = RentalProperty.query.get_or_404(property_id)
+    
+    department_id = request.form.get('department_id')
+    
+    if department_id:
+        department = Department.query.get_or_404(department_id)
+        
+        # جلب جميع موظفي القسم النشطين
+        dept_employees = Employee.query.filter_by(
+            department_id=department_id,
+            status='active'
+        ).all()
+        
+        added_count = 0
+        for employee in dept_employees:
+            if employee not in property.residents:
+                property.residents.append(employee)
+                added_count += 1
+        
+        db.session.commit()
+        
+        log_activity(
+            action='إضافة قسم كامل للعقار',
+            entity_type='RentalProperty',
+            entity_id=property_id,
+            details=f'تم إضافة {added_count} موظف من قسم {department.name} للعقار {property.city}'
+        )
+        
+        flash(f'تم إضافة {added_count} موظف من قسم {department.name} للعقار', 'success')
+    
+    return redirect(url_for('properties.view', property_id=property_id))
+
+
+@properties_bp.route('/<int:property_id>/remove-resident/<int:employee_id>', methods=['POST'])
+@login_required
+def remove_resident(property_id, employee_id):
+    """إزالة موظف من العقار"""
+    property = RentalProperty.query.get_or_404(property_id)
+    employee = Employee.query.get_or_404(employee_id)
+    
+    if employee in property.residents:
+        property.residents.remove(employee)
+        db.session.commit()
+        
+        log_activity(
+            action='إزالة موظف من العقار',
+            entity_type='RentalProperty',
+            entity_id=property_id,
+            details=f'تم إزالة الموظف {employee.name} من العقار {property.city}'
+        )
+        
+        flash(f'تم إزالة الموظف {employee.name} من العقار', 'success')
+    else:
+        flash('الموظف غير موجود في العقار', 'warning')
+    
+    return redirect(url_for('properties.view', property_id=property_id))

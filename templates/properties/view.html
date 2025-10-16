@@ -182,6 +182,27 @@
         justify-content: space-between;
         align-items: center;
     }
+    
+    /* بطاقات الموظفين القاطنين */
+    .resident-card {
+        background-color: #2a3654;
+        border-radius: 8px;
+        padding: 15px;
+        border-right: 4px solid #667eea;
+        transition: all 0.3s;
+    }
+    
+    .resident-card:hover {
+        background-color: #323e5f;
+        transform: translateX(-5px);
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+    }
+    
+    .resident-card h6 {
+        color: #e9ecef;
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
 </style>
 {% endblock %}
 
@@ -439,6 +460,66 @@
         </div>
         {% endif %}
 
+        <!-- الموظفون القاطنون -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>
+                    <i class="fas fa-users me-2"></i>
+                    الموظفون القاطنون ({{ property.residents|length }})
+                </span>
+                <div>
+                    <button type="button" class="btn btn-sm btn-light" data-bs-toggle="modal" data-bs-target="#addResidentModal">
+                        <i class="fas fa-user-plus me-1"></i>
+                        إضافة موظف
+                    </button>
+                    <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#addDepartmentModal">
+                        <i class="fas fa-building me-1"></i>
+                        إضافة قسم
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                {% if property.residents %}
+                    <div class="row">
+                        {% for resident in property.residents %}
+                        <div class="col-md-6 mb-3">
+                            <div class="resident-card">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="mb-1">{{ resident.name }}</h6>
+                                        <small class="text-muted">
+                                            <i class="fas fa-id-card me-1"></i>
+                                            {{ resident.employee_id }}
+                                        </small>
+                                        {% if resident.department_id %}
+                                        <br>
+                                        <small class="text-info">
+                                            <i class="fas fa-building me-1"></i>
+                                            {{ resident.departments[0].name if resident.departments else 'بدون قسم' }}
+                                        </small>
+                                        {% endif %}
+                                        <br>
+                                        <small class="text-warning">
+                                            <i class="fas fa-briefcase me-1"></i>
+                                            {{ resident.job_title }}
+                                        </small>
+                                    </div>
+                                    <form method="POST" action="{{ url_for('properties.remove_resident', property_id=property.id, employee_id=resident.id) }}" style="display: inline;">
+                                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('هل أنت متأكد من إزالة هذا الموظف من العقار؟')">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-center text-muted">لا يوجد موظفون قاطنون في هذا العقار</p>
+                {% endif %}
+            </div>
+        </div>
+
         <!-- سجل الدفعات -->
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
@@ -536,4 +617,97 @@
         </div>
     </div>
 </div>
+
+<!-- Modal: إضافة موظف -->
+<div class="modal fade" id="addResidentModal" tabindex="-1" aria-labelledby="addResidentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content" style="background-color: #202940; color: #e9ecef;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none;">
+                <h5 class="modal-title" id="addResidentModalLabel">
+                    <i class="fas fa-user-plus me-2"></i>
+                    إضافة موظف قاطن
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" action="{{ url_for('properties.add_resident', property_id=property.id) }}">
+                    <div class="mb-3">
+                        <label for="employeeSelect" class="form-label">اختر الموظف</label>
+                        <select class="form-select" id="employeeSelect" name="employee_id" required style="background-color: #2a3654; color: #e9ecef; border-color: #3a4a6d;">
+                            <option value="">-- اختر موظف --</option>
+                            {% set all_departments = {} %}
+                            {% for employee in property.residents %}
+                                {% set _ = all_departments.update({employee.id: True}) %}
+                            {% endfor %}
+                            
+                            {% for dept in departments %}
+                                <optgroup label="{{ dept.name }}" style="font-weight: bold; color: #727cf5;">
+                                    {% for emp in employees if emp.department_id == dept.id and emp.id not in all_departments %}
+                                        <option value="{{ emp.id }}">{{ emp.name }} - {{ emp.employee_id }}</option>
+                                    {% endfor %}
+                                </optgroup>
+                            {% endfor %}
+                            
+                            <optgroup label="بدون قسم" style="font-weight: bold; color: #ffc107;">
+                                {% for emp in employees if emp.department_id is none and emp.id not in all_departments %}
+                                    <option value="{{ emp.id }}">{{ emp.name }} - {{ emp.employee_id }}</option>
+                                {% endfor %}
+                            </optgroup>
+                        </select>
+                    </div>
+                    <div class="modal-footer" style="border: none;">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-plus me-1"></i>
+                            إضافة
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: إضافة قسم كامل -->
+<div class="modal fade" id="addDepartmentModal" tabindex="-1" aria-labelledby="addDepartmentModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content" style="background-color: #202940; color: #e9ecef;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #17a2b8 0%, #138496 100%); border: none;">
+                <h5 class="modal-title" id="addDepartmentModalLabel">
+                    <i class="fas fa-building me-2"></i>
+                    إضافة قسم كامل
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" action="{{ url_for('properties.add_department_residents', property_id=property.id) }}">
+                    <div class="mb-3">
+                        <label for="departmentSelect" class="form-label">اختر القسم</label>
+                        <select class="form-select" id="departmentSelect" name="department_id" required style="background-color: #2a3654; color: #e9ecef; border-color: #3a4a6d;">
+                            <option value="">-- اختر قسم --</option>
+                            {% for dept in departments %}
+                                <option value="{{ dept.id }}">
+                                    {{ dept.name }}
+                                    ({{ employees|selectattr('department_id', 'equalto', dept.id)|list|length }} موظف)
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="alert alert-info" style="background-color: #2a3654; border-color: #3a4a6d; color: #e9ecef;">
+                        <i class="fas fa-info-circle me-2"></i>
+                        سيتم إضافة جميع الموظفين النشطين في القسم المختار
+                    </div>
+                    <div class="modal-footer" style="border: none;">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                        <button type="submit" class="btn btn-info">
+                            <i class="fas fa-users me-1"></i>
+                            إضافة القسم
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
