@@ -1,0 +1,295 @@
+{% extends 'layout.html' %}
+
+{% block title %}تجهيزات العقار - {{ property.city }}{% endblock %}
+
+{% block styles %}
+<style>
+    .main-wrapper {
+        min-height: 100vh;
+        background: linear-gradient(135deg, #1a2035 0%, #2a3654 100%);
+        padding: 20px 0;
+    }
+
+    .card {
+        border: none;
+        border-radius: 15px;
+        overflow: hidden;
+        margin-bottom: 25px;
+        background-color: #202940;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        transition: all 0.3s;
+    }
+    
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+    }
+    
+    .card .card-header {
+        border: none;
+        padding: 20px;
+        font-weight: bold;
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+    }
+    
+    .card .card-body {
+        background-color: #202940;
+        color: #e9ecef;
+        padding: 30px;
+    }
+    
+    .furnishing-item {
+        background: linear-gradient(135deg, #2a3654 0%, #3a4664 100%);
+        border-radius: 15px;
+        padding: 25px;
+        margin-bottom: 20px;
+        border-right: 5px solid #f093fb;
+        transition: all 0.3s;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .furnishing-item::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, rgba(240, 147, 251, 0.1) 0%, rgba(245, 87, 108, 0.1) 100%);
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+    
+    .furnishing-item:hover::before {
+        opacity: 1;
+    }
+    
+    .furnishing-item:hover {
+        transform: translateX(-10px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    }
+    
+    .furnishing-icon {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.5rem;
+        color: white;
+        margin: 0 auto 15px;
+        box-shadow: 0 5px 20px rgba(240, 147, 251, 0.5);
+    }
+    
+    .furnishing-number {
+        font-size: 3rem;
+        font-weight: bold;
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    
+    .btn {
+        border-radius: 8px;
+        padding: 10px 20px;
+        font-weight: 600;
+        transition: all 0.3s;
+    }
+    
+    .btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 50px;
+    }
+    
+    .empty-state i {
+        font-size: 5rem;
+        color: #4a5568;
+        margin-bottom: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid main-wrapper">
+    <div class="container">
+        <!-- العنوان -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h2 class="text-white mb-2">
+                            <i class="fas fa-couch ms-2"></i>
+                            تجهيزات ومحتويات العقار
+                        </h2>
+                        <p class="text-white-50">{{ property.city }} - {{ property.contract_number or 'بدون رقم عقد' }}</p>
+                    </div>
+                    <div>
+                        <a href="{{ url_for('properties.view', property_id=property.id) }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-right ms-1"></i>
+                            رجوع للعقار
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if furnishing %}
+        <div class="row">
+            <!-- جرات الغاز -->
+            {% if furnishing.gas_cylinder %}
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="furnishing-item">
+                    <div class="text-center">
+                        <div class="furnishing-icon">
+                            <i class="fas fa-fire"></i>
+                        </div>
+                        <h4 class="text-white mb-2">جرات الغاز</h4>
+                        <div class="furnishing-number">{{ furnishing.gas_cylinder }}</div>
+                        <p class="text-muted mb-0">جرة غاز</p>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- الطباخات -->
+            {% if furnishing.stoves %}
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="furnishing-item">
+                    <div class="text-center">
+                        <div class="furnishing-icon">
+                            <i class="fas fa-drumstick-bite"></i>
+                        </div>
+                        <h4 class="text-white mb-2">الطباخات</h4>
+                        <div class="furnishing-number">{{ furnishing.stoves }}</div>
+                        <p class="text-muted mb-0">طباخ</p>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- الأسرّة -->
+            {% if furnishing.beds %}
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="furnishing-item">
+                    <div class="text-center">
+                        <div class="furnishing-icon">
+                            <i class="fas fa-bed"></i>
+                        </div>
+                        <h4 class="text-white mb-2">الأسرّة</h4>
+                        <div class="furnishing-number">{{ furnishing.beds }}</div>
+                        <p class="text-muted mb-0">سرير</p>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- البطانيات -->
+            {% if furnishing.blankets %}
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="furnishing-item">
+                    <div class="text-center">
+                        <div class="furnishing-icon">
+                            <i class="fas fa-snowflake"></i>
+                        </div>
+                        <h4 class="text-white mb-2">البطانيات</h4>
+                        <div class="furnishing-number">{{ furnishing.blankets }}</div>
+                        <p class="text-muted mb-0">بطانية</p>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- المخدات -->
+            {% if furnishing.pillows %}
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="furnishing-item">
+                    <div class="text-center">
+                        <div class="furnishing-icon">
+                            <i class="fas fa-moon"></i>
+                        </div>
+                        <h4 class="text-white mb-2">المخدات</h4>
+                        <div class="furnishing-number">{{ furnishing.pillows }}</div>
+                        <p class="text-muted mb-0">مخدة</p>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- تجهيزات إضافية -->
+        {% if furnishing.other_items %}
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-list ms-2"></i>
+                        تجهيزات إضافية أخرى
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-0" style="white-space: pre-line;">{{ furnishing.other_items }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- ملاحظات -->
+        {% if furnishing.notes %}
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-sticky-note ms-2"></i>
+                        ملاحظات
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-0" style="white-space: pre-line;">{{ furnishing.notes }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- زر التعديل -->
+        <div class="row">
+            <div class="col-12 text-center">
+                <a href="{{ url_for('properties.furnishing', property_id=property.id) }}" class="btn btn-warning btn-lg">
+                    <i class="fas fa-edit ms-1"></i>
+                    تعديل التجهيزات
+                </a>
+            </div>
+        </div>
+
+        {% else %}
+        <!-- حالة فارغة -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="empty-state">
+                            <i class="fas fa-box-open"></i>
+                            <h3 class="text-white mb-3">لا توجد تجهيزات مسجلة</h3>
+                            <p class="text-muted mb-4">لم يتم تسجيل أي تجهيزات أو محتويات لهذا العقار بعد</p>
+                            <a href="{{ url_for('properties.furnishing', property_id=property.id) }}" class="btn btn-primary btn-lg">
+                                <i class="fas fa-plus ms-1"></i>
+                                إضافة التجهيزات الآن
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
