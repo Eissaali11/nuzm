@@ -840,6 +840,10 @@ def view(id):
     ).all()
     
     all_departments = Department.query.order_by(Department.name).all()
+    
+    # جلب معلومات السكن (العقارات التي يقطن فيها الموظف)
+    housing_properties = employee.housing_properties
+    
     return render_template('employees/view.html', 
                           employee=employee, 
                           documents=documents,
@@ -850,7 +854,8 @@ def view(id):
                           vehicle_handovers=vehicle_handovers,
                           mobile_devices=mobile_devices,
                           device_assignments=device_assignments,
-                          departments=all_departments
+                          departments=all_departments,
+                          housing_properties=housing_properties
                           )
 
 @employees_bp.route('/<int:id>/upload_iban', methods=['POST'])

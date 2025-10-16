@@ -1049,6 +1049,52 @@ document.addEventListener('DOMContentLoaded', function() {
                         {% endif %}
                         {% endif %}
                         
+                        <!-- سكن عمل الشركة -->
+                        {% if housing_properties %}
+                        <div class="col-12 mt-4">
+                            <div class="card" style="background-color: #2a3654; border: none; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                                <div class="card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 12px 12px 0 0;">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-building me-2"></i>
+                                        سكن عمل الشركة
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row g-3">
+                                        {% for property in housing_properties %}
+                                        <div class="col-md-6">
+                                            <div class="p-3 rounded" style="background-color: #323e5f; border-right: 4px solid #667eea;">
+                                                <h6 class="mb-2 text-white">
+                                                    <i class="fas fa-home me-2 text-info"></i>
+                                                    {{ property.city }}
+                                                </h6>
+                                                <p class="mb-1 small text-muted">
+                                                    <i class="fas fa-map-marker-alt me-1"></i>
+                                                    {{ property.address }}
+                                                </p>
+                                                {% if property.contract_number %}
+                                                <p class="mb-1 small text-muted">
+                                                    <i class="fas fa-file-contract me-1"></i>
+                                                    رقم العقد: {{ property.contract_number }}
+                                                </p>
+                                                {% endif %}
+                                                <div class="mt-2">
+                                                    <a href="{{ url_for('properties.view', property_id=property.id) }}" 
+                                                       class="btn btn-sm btn-outline-light" 
+                                                       style="border-radius: 20px;">
+                                                        <i class="fas fa-eye me-1"></i>
+                                                        عرض تفاصيل العقار
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
                         <!-- مقاسات الزي الموحد -->
                         {% if employee.pants_size or employee.shirt_size %}
                         <div class="col-md-6">
