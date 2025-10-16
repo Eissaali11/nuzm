@@ -1,0 +1,192 @@
+{% extends 'layout.html' %}
+
+{% block title %}إضافة دفعة إيجار{% endblock %}
+
+{% block styles %}
+<style>
+    .main-wrapper {
+        min-height: 100vh;
+        background: #1a2035;
+        padding: 20px 0;
+    }
+
+    .card {
+        border: none;
+        border-radius: 15px;
+        overflow: hidden;
+        margin-bottom: 25px;
+        background-color: #202940;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    }
+    
+    .card .card-header {
+        border: none;
+        padding: 20px;
+        font-weight: bold;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    
+    .card .card-body {
+        background-color: #202940;
+        color: #e9ecef;
+        padding: 25px;
+    }
+    
+    .form-control, .form-select {
+        border-radius: 8px;
+        padding: 12px 15px;
+        background-color: #2a3654;
+        border: 1px solid #3f4865;
+        color: #e9ecef;
+        margin-bottom: 15px;
+        transition: all 0.3s;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        background-color: #2e3d60;
+        border-color: #4d5b84;
+        box-shadow: 0 0 0 0.25rem rgba(114, 124, 245, 0.25);
+        color: #ffffff;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: #e9ecef;
+    }
+    
+    .btn {
+        border-radius: 8px;
+        padding: 10px 15px;
+        font-weight: 600;
+        transition: all 0.3s;
+    }
+    
+    .btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+    }
+    
+    .btn-secondary {
+        background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+        border: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid main-wrapper">
+    <div class="container">
+        <div class="row mb-4">
+            <div class="col-12">
+                <h2 class="text-white">
+                    <i class="fas fa-dollar-sign ms-2"></i>
+                    إضافة دفعة إيجار
+                </h2>
+                <p class="text-white-50">إضافة دفعة إيجار جديدة للعقار</p>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-money-bill-wave ms-2"></i>
+                        معلومات الدفعة
+                    </div>
+                    <div class="card-body">
+                        <form method="POST">
+                            {{ form.hidden_tag() }}
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        {{ form.payment_date.label(class="form-label") }}
+                                        {{ form.payment_date(class="form-control", type="date") }}
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        {{ form.amount.label(class="form-label") }}
+                                        {{ form.amount(class="form-control") }}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        {{ form.status.label(class="form-label") }}
+                                        {{ form.status(class="form-select") }}
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        {{ form.actual_payment_date.label(class="form-label") }}
+                                        {{ form.actual_payment_date(class="form-control", type="date") }}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        {{ form.payment_method.label(class="form-label") }}
+                                        {{ form.payment_method(class="form-select") }}
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        {{ form.reference_number.label(class="form-label") }}
+                                        {{ form.reference_number(class="form-control") }}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                {{ form.notes.label(class="form-label") }}
+                                {{ form.notes(class="form-control", rows="3") }}
+                            </div>
+                            
+                            <div class="d-flex justify-content-between mt-4">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save ms-1"></i>
+                                    حفظ الدفعة
+                                </button>
+                                <a href="{{ url_for('properties.view', property_id=property.id) }}" class="btn btn-secondary">
+                                    <i class="fas fa-arrow-right ms-1"></i>
+                                    رجوع
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-building ms-2"></i>
+                        معلومات العقار
+                    </div>
+                    <div class="card-body">
+                        <p><strong>اسم العقار:</strong> {{ property.city }}</p>
+                        <p><strong>رقم العقد:</strong> {{ property.contract_number or '-' }}</p>
+                        <p><strong>المالك:</strong> {{ property.owner_name }}</p>
+                        <p><strong>الإيجار السنوي:</strong> {{ "{:,.0f}".format(property.annual_rent_amount) }} ريال</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
