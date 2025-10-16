@@ -22,7 +22,7 @@ from utils.audit_logger import log_activity
 properties_bp = Blueprint('properties', __name__)
 
 # إعدادات رفع الملفات
-UPLOAD_FOLDER = 'uploads/properties'
+UPLOAD_FOLDER = 'static/uploads/properties'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'heic', 'webp'}
 
 
@@ -59,7 +59,9 @@ def process_and_save_image(file, property_id):
         else:
             file.save(filepath)
         
-        return filepath
+        # إرجاع المسار النسبي من static/
+        relative_path = filepath.replace('static/', '')
+        return relative_path
     except Exception as e:
         print(f"خطأ في معالجة الصورة: {e}")
         return None
