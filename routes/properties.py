@@ -897,14 +897,28 @@ def export_all_properties_excel():
         row += 1
         
         # التجهيزات
-        furnishings = PropertyFurnishing.query.filter_by(property_id=prop.id).all()
-        if furnishings:
+        furnishing = PropertyFurnishing.query.filter_by(property_id=prop.id).first()
+        if furnishing:
             ws_details[f'A{row}'] = "التجهيزات:"
             ws_details[f'A{row}'].font = Font(bold=True)
             row += 1
             
-            for furn in furnishings:
-                ws_details[f'A{row}'] = f"  • {furn.item_name}: {furn.quantity} {furn.unit}"
+            items = []
+            if furnishing.gas_cylinder:
+                items.append(f"  • جرات الغاز: {furnishing.gas_cylinder}")
+            if furnishing.stoves:
+                items.append(f"  • طباخات: {furnishing.stoves}")
+            if furnishing.beds:
+                items.append(f"  • أسرّة: {furnishing.beds}")
+            if furnishing.blankets:
+                items.append(f"  • بطانيات: {furnishing.blankets}")
+            if furnishing.pillows:
+                items.append(f"  • مخدات: {furnishing.pillows}")
+            if furnishing.other_items:
+                items.append(f"  • أخرى: {furnishing.other_items}")
+            
+            for item in items:
+                ws_details[f'A{row}'] = item
                 row += 1
         
         # الدفعات
