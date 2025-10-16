@@ -295,6 +295,7 @@ def edit(property_id):
         form.contract_end_date.data = property.contract_end_date
         form.monthly_rent.data = property.annual_rent_amount / 12
         form.payment_method.data = property.payment_method
+        form.location_link.data = property.location_link
         form.notes.data = property.notes
     
     if form.validate_on_submit():
@@ -302,6 +303,7 @@ def edit(property_id):
             property.city = form.name.data
             property.address = form.address.data
             property.map_link = ''
+            property.location_link = form.location_link.data or None
             property.contract_number = form.contract_number.data or None  # استخدام None بدلاً من قيمة فارغة
             property.owner_name = form.landlord_name.data
             property.owner_id = form.property_type.data  # استخدام owner_id لحفظ نوع العقار مؤقتاً
@@ -314,6 +316,15 @@ def edit(property_id):
             property.notes = form.notes.data
             
             db.session.commit()
+            
+            # معالجة ملف العقد الجديد إن وجد
+            if form.contract_file.data:
+                contract_file = request.files.get('contract_file')
+                if contract_file and contract_file.filename:
+                    contract_path = process_and_save_contract(contract_file, property.id)
+                    if contract_path:
+                        property.contract_file = contract_path
+                        db.session.commit()
             
             # معالجة الصور الجديدة إن وجدت
             if form.images.data:
