@@ -1,0 +1,441 @@
+{% extends 'layout.html' %}
+
+{% block title %}عقار: {{ property.name }}{% endblock %}
+
+{% block styles %}
+<style>
+    /* تأثير الخلفية الرئيسية */
+    .main-wrapper {
+        min-height: 100vh;
+        background: #1a2035;
+        padding: 20px 0;
+    }
+
+    /* تصميم البطاقات */
+    .card {
+        border: none;
+        border-radius: 15px;
+        overflow: hidden;
+        margin-bottom: 25px;
+        background-color: #202940;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    }
+    
+    .card .card-header {
+        border: none;
+        padding: 20px;
+        font-weight: bold;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    
+    .card .card-body {
+        background-color: #202940;
+        color: #e9ecef;
+        padding: 25px;
+    }
+    
+    /* تصميم الأزرار */
+    .btn {
+        border-radius: 8px;
+        padding: 10px 15px;
+        font-weight: 600;
+        transition: all 0.3s;
+    }
+    
+    .btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+    
+    .btn-primary {
+        background-color: #727cf5;
+        border-color: #727cf5;
+    }
+    
+    .btn-warning {
+        background-color: #ffc107;
+        border-color: #ffc107;
+        color: #000;
+    }
+    
+    .btn-danger {
+        background-color: #dc3545;
+        border-color: #dc3545;
+    }
+    
+    .btn-success {
+        background-color: #28a745;
+        border-color: #28a745;
+    }
+    
+    /* شريط التنقل العلوي */
+    .page-navigator {
+        background-color: #202940;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 20px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .page-navigator a {
+        color: #727cf5;
+        text-decoration: none;
+        transition: color 0.3s;
+    }
+    
+    .page-navigator a:hover {
+        color: #949df5;
+    }
+    
+    /* معلومات العقار */
+    .info-item {
+        padding: 15px;
+        margin-bottom: 15px;
+        background-color: #2a3654;
+        border-radius: 8px;
+        border-right: 4px solid #727cf5;
+    }
+    
+    .info-label {
+        color: #a8b1ce;
+        font-size: 0.9em;
+        margin-bottom: 5px;
+    }
+    
+    .info-value {
+        color: #e9ecef;
+        font-size: 1.1em;
+        font-weight: 600;
+    }
+    
+    /* شبكة الصور */
+    .images-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 15px;
+        margin-top: 15px;
+    }
+    
+    .property-image {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: transform 0.3s;
+    }
+    
+    .property-image:hover {
+        transform: scale(1.05);
+    }
+    
+    /* الحالات */
+    .badge-active {
+        background-color: #28a745;
+        padding: 8px 15px;
+        border-radius: 20px;
+        font-size: 0.9em;
+    }
+    
+    .badge-expiring {
+        background-color: #ffc107;
+        color: #000;
+        padding: 8px 15px;
+        border-radius: 20px;
+        font-size: 0.9em;
+    }
+    
+    .badge-expired {
+        background-color: #dc3545;
+        padding: 8px 15px;
+        border-radius: 20px;
+        font-size: 0.9em;
+    }
+    
+    /* قائمة الدفعات */
+    .payment-item {
+        background-color: #2a3654;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .payment-paid {
+        border-right: 4px solid #28a745;
+    }
+    
+    .payment-pending {
+        border-right: 4px solid #ffc107;
+    }
+    
+    /* قائمة التجهيزات */
+    .furnishing-item {
+        background-color: #2a3654;
+        border-radius: 8px;
+        padding: 12px 15px;
+        margin-bottom: 8px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="main-wrapper">
+    <div class="container">
+        <!-- شريط التنقل -->
+        <div class="page-navigator">
+            <a href="{{ url_for('properties.dashboard') }}">
+                <i class="fas fa-building"></i> العقارات
+            </a>
+            <span class="mx-2">/</span>
+            <span>{{ property.name }}</span>
+        </div>
+
+        <!-- أزرار الإجراءات -->
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between flex-wrap gap-2">
+                    <div>
+                        <a href="{{ url_for('properties.edit', property_id=property.id) }}" class="btn btn-warning">
+                            <i class="fas fa-edit me-2"></i>تعديل العقار
+                        </a>
+                        <a href="{{ url_for('properties.add_payment', property_id=property.id) }}" class="btn btn-success">
+                            <i class="fas fa-dollar-sign me-2"></i>إضافة دفعة
+                        </a>
+                        <a href="{{ url_for('properties.add_furnishing', property_id=property.id) }}" class="btn btn-primary">
+                            <i class="fas fa-couch me-2"></i>إضافة تجهيزات
+                        </a>
+                    </div>
+                    <form method="POST" action="{{ url_for('properties.delete', property_id=property.id) }}" style="display: inline;">
+                        {{ csrf_token() }}
+                        <button type="submit" class="btn btn-danger" onclick="return confirm('هل أنت متأكد من حذف هذا العقار؟')">
+                            <i class="fas fa-trash me-2"></i>حذف العقار
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- معلومات العقار -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-home me-2"></i>
+                        معلومات العقار
+                    </div>
+                    <div class="card-body">
+                        <div class="info-item">
+                            <div class="info-label">اسم العقار</div>
+                            <div class="info-value">{{ property.name }}</div>
+                        </div>
+                        
+                        <div class="info-item">
+                            <div class="info-label">نوع العقار</div>
+                            <div class="info-value">{{ property.get_property_type_display() }}</div>
+                        </div>
+                        
+                        <div class="info-item">
+                            <div class="info-label">العنوان</div>
+                            <div class="info-value">{{ property.address or '-' }}</div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="info-item">
+                                    <div class="info-label">المساحة</div>
+                                    <div class="info-value">{{ property.area or '-' }} م²</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="info-item">
+                                    <div class="info-label">عدد الغرف</div>
+                                    <div class="info-value">{{ property.rooms or '-' }}</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {% if property.notes %}
+                        <div class="info-item">
+                            <div class="info-label">ملاحظات</div>
+                            <div class="info-value">{{ property.notes }}</div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- معلومات العقد -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-file-contract me-2"></i>
+                        معلومات العقد
+                    </div>
+                    <div class="card-body">
+                        <div class="info-item">
+                            <div class="info-label">حالة العقد</div>
+                            <div class="info-value">
+                                {% if property.is_expired %}
+                                    <span class="badge-expired">منتهي</span>
+                                {% elif property.is_expiring_soon %}
+                                    <span class="badge-expiring">ينتهي قريباً</span>
+                                {% else %}
+                                    <span class="badge-active">ساري</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="info-item">
+                            <div class="info-label">رقم العقد</div>
+                            <div class="info-value">{{ property.contract_number or '-' }}</div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="info-item">
+                                    <div class="info-label">تاريخ البداية</div>
+                                    <div class="info-value">{{ property.contract_start_date.strftime('%Y-%m-%d') if property.contract_start_date else '-' }}</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="info-item">
+                                    <div class="info-label">تاريخ الانتهاء</div>
+                                    <div class="info-value">{{ property.contract_end_date.strftime('%Y-%m-%d') if property.contract_end_date else '-' }}</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="info-item">
+                            <div class="info-label">اسم المالك</div>
+                            <div class="info-value">{{ property.landlord_name or '-' }}</div>
+                        </div>
+                        
+                        <div class="info-item">
+                            <div class="info-label">رقم هاتف المالك</div>
+                            <div class="info-value">{{ property.landlord_phone or '-' }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- المعلومات المالية -->
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-dollar-sign me-2"></i>
+                المعلومات المالية
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="info-item">
+                            <div class="info-label">الإيجار الشهري</div>
+                            <div class="info-value">{{ "{:,.2f}".format(property.monthly_rent) }} ريال</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="info-item">
+                            <div class="info-label">طريقة الدفع</div>
+                            <div class="info-value">{{ property.get_payment_method_display() }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="info-item">
+                            <div class="info-label">يوم الدفع</div>
+                            <div class="info-value">{{ property.payment_day or '-' }}</div>
+                        </div>
+                    </div>
+                </div>
+                
+                {% if property.payment_notes %}
+                <div class="info-item mt-3">
+                    <div class="info-label">ملاحظات الدفع</div>
+                    <div class="info-value">{{ property.payment_notes }}</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- صور العقار -->
+        {% if property.images %}
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-images me-2"></i>
+                صور العقار ({{ property.images|length }})
+            </div>
+            <div class="card-body">
+                <div class="images-grid">
+                    {% for image in property.images %}
+                    <img src="{{ url_for('static', filename='uploads/properties/' + image.filename) }}" 
+                         class="property-image" 
+                         alt="صورة العقار"
+                         onclick="window.open(this.src, '_blank')">
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- سجل الدفعات -->
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-money-bill-wave me-2"></i>
+                سجل الدفعات ({{ property.payments|length }})
+            </div>
+            <div class="card-body">
+                {% if property.payments %}
+                    {% for payment in property.payments|sort(attribute='payment_date', reverse=True) %}
+                    <div class="payment-item {{ 'payment-paid' if payment.status == 'paid' else 'payment-pending' }}">
+                        <div>
+                            <div class="info-label">{{ payment.payment_date.strftime('%Y-%m-%d') }}</div>
+                            <div class="info-value">{{ "{:,.2f}".format(payment.amount) }} ريال</div>
+                        </div>
+                        <div>
+                            {% if payment.status == 'paid' %}
+                                <span class="badge bg-success">مدفوع</span>
+                            {% else %}
+                                <span class="badge bg-warning text-dark">معلق</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-center text-muted">لا توجد دفعات مسجلة</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- التجهيزات -->
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-couch me-2"></i>
+                التجهيزات ({{ property.furnishings|length }})
+            </div>
+            <div class="card-body">
+                {% if property.furnishings %}
+                    {% for item in property.furnishings %}
+                    <div class="furnishing-item">
+                        <div>
+                            <strong>{{ item.item_name }}</strong>
+                            <span class="text-muted ms-2">× {{ item.quantity }}</span>
+                        </div>
+                        <div>
+                            <span class="badge bg-secondary">{{ item.get_condition_display() }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-center text-muted">لا توجد تجهيزات مسجلة</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,382 @@
+{% extends 'layout.html' %}
+
+{% block title %}إضافة عقار جديد{% endblock %}
+
+{% block styles %}
+<style>
+    /* تأثير الخلفية الرئيسية */
+    .main-wrapper {
+        min-height: 100vh;
+        background: #1a2035;
+        padding: 20px 0;
+    }
+
+    /* تصميم البطاقات */
+    .card {
+        border: none;
+        border-radius: 15px;
+        overflow: hidden;
+        margin-bottom: 25px;
+        background-color: #202940;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    }
+    
+    .card .card-header {
+        border: none;
+        padding: 20px;
+        font-weight: bold;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    
+    .card .card-body {
+        background-color: #202940;
+        color: #e9ecef;
+        padding: 25px;
+    }
+    
+    /* الفورم */
+    .form-control, .form-select {
+        border-radius: 8px;
+        padding: 12px 15px;
+        background-color: #2a3654;
+        border: 1px solid #3f4865;
+        color: #e9ecef;
+        margin-bottom: 15px;
+        transition: all 0.3s;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        background-color: #2e3d60;
+        border-color: #4d5b84;
+        box-shadow: 0 0 0 0.25rem rgba(114, 124, 245, 0.25);
+        color: #ffffff;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: #e9ecef;
+    }
+    
+    /* تصميم الأزرار */
+    .btn {
+        border-radius: 8px;
+        padding: 10px 15px;
+        font-weight: 600;
+        transition: all 0.3s;
+    }
+    
+    .btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+    
+    .btn-primary {
+        background-color: #727cf5;
+        border-color: #727cf5;
+    }
+    
+    .btn-secondary {
+        background-color: #6c757d;
+        border-color: #6c757d;
+    }
+    
+    /* شريط التنقل العلوي */
+    .page-navigator {
+        background-color: #202940;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 20px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .page-navigator a {
+        color: #727cf5;
+        text-decoration: none;
+        transition: color 0.3s;
+    }
+    
+    .page-navigator a:hover {
+        color: #949df5;
+    }
+    
+    /* تصميم الأيقونات */
+    .form-icon {
+        color: #727cf5;
+        margin-left: 8px;
+    }
+    
+    /* رسائل الخطأ */
+    .invalid-feedback {
+        color: #ff6b6b;
+        font-size: 0.9em;
+        margin-top: 5px;
+    }
+    
+    /* تصميم رفع الصور */
+    .image-upload-area {
+        border: 2px dashed #3f4865;
+        border-radius: 8px;
+        padding: 20px;
+        text-align: center;
+        background-color: #2a3654;
+        transition: all 0.3s;
+        cursor: pointer;
+    }
+    
+    .image-upload-area:hover {
+        border-color: #727cf5;
+        background-color: #2e3d60;
+    }
+    
+    .image-preview {
+        max-width: 150px;
+        max-height: 150px;
+        margin: 10px;
+        border-radius: 8px;
+        object-fit: cover;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="main-wrapper">
+    <div class="container">
+        <!-- شريط التنقل -->
+        <div class="page-navigator">
+            <a href="{{ url_for('properties.dashboard') }}">
+                <i class="fas fa-building"></i> العقارات
+            </a>
+            <span class="mx-2">/</span>
+            <span>إضافة عقار جديد</span>
+        </div>
+
+        <form method="POST" enctype="multipart/form-data">
+            {{ form.hidden_tag() }}
+            
+            <!-- معلومات العقار الأساسية -->
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-home form-icon"></i>
+                    معلومات العقار
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.name.label(class="form-label") }}
+                            {{ form.name(class="form-control" + (" is-invalid" if form.name.errors else "")) }}
+                            {% if form.name.errors %}
+                                <div class="invalid-feedback">{{ form.name.errors[0] }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            {{ form.property_type.label(class="form-label") }}
+                            {{ form.property_type(class="form-select" + (" is-invalid" if form.property_type.errors else "")) }}
+                            {% if form.property_type.errors %}
+                                <div class="invalid-feedback">{{ form.property_type.errors[0] }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            {{ form.address.label(class="form-label") }}
+                            {{ form.address(class="form-control" + (" is-invalid" if form.address.errors else ""), rows="2") }}
+                            {% if form.address.errors %}
+                                <div class="invalid-feedback">{{ form.address.errors[0] }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.area.label(class="form-label") }}
+                            {{ form.area(class="form-control" + (" is-invalid" if form.area.errors else ""), placeholder="مثال: 150") }}
+                            {% if form.area.errors %}
+                                <div class="invalid-feedback">{{ form.area.errors[0] }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            {{ form.rooms.label(class="form-label") }}
+                            {{ form.rooms(class="form-control" + (" is-invalid" if form.rooms.errors else ""), placeholder="مثال: 3") }}
+                            {% if form.rooms.errors %}
+                                <div class="invalid-feedback">{{ form.rooms.errors[0] }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            {{ form.notes.label(class="form-label") }}
+                            {{ form.notes(class="form-control" + (" is-invalid" if form.notes.errors else ""), rows="3") }}
+                            {% if form.notes.errors %}
+                                <div class="invalid-feedback">{{ form.notes.errors[0] }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- معلومات العقد -->
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-file-contract form-icon"></i>
+                    معلومات العقد
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.landlord_name.label(class="form-label") }}
+                            {{ form.landlord_name(class="form-control" + (" is-invalid" if form.landlord_name.errors else "")) }}
+                            {% if form.landlord_name.errors %}
+                                <div class="invalid-feedback">{{ form.landlord_name.errors[0] }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            {{ form.landlord_phone.label(class="form-label") }}
+                            {{ form.landlord_phone(class="form-control" + (" is-invalid" if form.landlord_phone.errors else ""), placeholder="05XXXXXXXX") }}
+                            {% if form.landlord_phone.errors %}
+                                <div class="invalid-feedback">{{ form.landlord_phone.errors[0] }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            {{ form.contract_number.label(class="form-label") }}
+                            {{ form.contract_number(class="form-control" + (" is-invalid" if form.contract_number.errors else "")) }}
+                            {% if form.contract_number.errors %}
+                                <div class="invalid-feedback">{{ form.contract_number.errors[0] }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.contract_start_date.label(class="form-label") }}
+                            {{ form.contract_start_date(class="form-control" + (" is-invalid" if form.contract_start_date.errors else "")) }}
+                            {% if form.contract_start_date.errors %}
+                                <div class="invalid-feedback">{{ form.contract_start_date.errors[0] }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            {{ form.contract_end_date.label(class="form-label") }}
+                            {{ form.contract_end_date(class="form-control" + (" is-invalid" if form.contract_end_date.errors else "")) }}
+                            {% if form.contract_end_date.errors %}
+                                <div class="invalid-feedback">{{ form.contract_end_date.errors[0] }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- المعلومات المالية -->
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-dollar-sign form-icon"></i>
+                    المعلومات المالية
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            {{ form.monthly_rent.label(class="form-label") }}
+                            {{ form.monthly_rent(class="form-control" + (" is-invalid" if form.monthly_rent.errors else ""), placeholder="مثال: 5000") }}
+                            {% if form.monthly_rent.errors %}
+                                <div class="invalid-feedback">{{ form.monthly_rent.errors[0] }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            {{ form.payment_method.label(class="form-label") }}
+                            {{ form.payment_method(class="form-select" + (" is-invalid" if form.payment_method.errors else "")) }}
+                            {% if form.payment_method.errors %}
+                                <div class="invalid-feedback">{{ form.payment_method.errors[0] }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            {{ form.payment_day.label(class="form-label") }}
+                            {{ form.payment_day(class="form-control" + (" is-invalid" if form.payment_day.errors else ""), placeholder="مثال: 1") }}
+                            {% if form.payment_day.errors %}
+                                <div class="invalid-feedback">{{ form.payment_day.errors[0] }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            {{ form.payment_notes.label(class="form-label") }}
+                            {{ form.payment_notes(class="form-control" + (" is-invalid" if form.payment_notes.errors else ""), rows="2") }}
+                            {% if form.payment_notes.errors %}
+                                <div class="invalid-feedback">{{ form.payment_notes.errors[0] }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- صور العقار -->
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-images form-icon"></i>
+                    صور العقار
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        {{ form.images.label(class="form-label") }}
+                        <div class="image-upload-area" onclick="document.getElementById('images').click()">
+                            <i class="fas fa-cloud-upload-alt fa-3x mb-2" style="color: #727cf5;"></i>
+                            <p>اضغط لتحميل الصور (يدعم HEIC من iPhone/iPad)</p>
+                            <small>يمكنك اختيار أكثر من صورة</small>
+                        </div>
+                        {{ form.images(class="d-none", id="images") }}
+                        <div id="preview-container" class="mt-3"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- الأزرار -->
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('properties.dashboard') }}" class="btn btn-secondary">
+                            <i class="fas fa-times me-2"></i>إلغاء
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>حفظ العقار
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// معاينة الصور
+document.getElementById('images').addEventListener('change', function(e) {
+    const previewContainer = document.getElementById('preview-container');
+    previewContainer.innerHTML = '';
+    
+    const files = e.target.files;
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            const img = document.createElement('img');
+            img.src = e.target.result;
+            img.className = 'image-preview';
+            previewContainer.appendChild(img);
+        }
+        
+        reader.readAsDataURL(file);
+    }
+});
+</script>
+{% endblock %}
