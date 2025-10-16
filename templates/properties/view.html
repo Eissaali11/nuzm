@@ -345,12 +345,7 @@
                         
                         <div class="info-item">
                             <div class="info-label">اسم المالك</div>
-                            <div class="info-value">{{ property.landlord_name or '-' }}</div>
-                        </div>
-                        
-                        <div class="info-item">
-                            <div class="info-label">رقم هاتف المالك</div>
-                            <div class="info-value">{{ property.landlord_phone or '-' }}</div>
+                            <div class="info-value">{{ property.owner_name or '-' }}</div>
                         </div>
                     </div>
                 </div>
@@ -367,8 +362,14 @@
                 <div class="row">
                     <div class="col-md-4">
                         <div class="info-item">
-                            <div class="info-label">الإيجار الشهري</div>
-                            <div class="info-value">{{ "{:,.2f}".format(property.monthly_rent) }} ريال</div>
+                            <div class="info-label">الإيجار السنوي</div>
+                            <div class="info-value">{{ "{:,.0f}".format(property.annual_rent_amount) }} ريال</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="info-item">
+                            <div class="info-label">مبلغ الدفعة</div>
+                            <div class="info-value">{{ "{:,.2f}".format(property.payment_amount_per_period) }} ريال</div>
                         </div>
                     </div>
                     <div class="col-md-4">
@@ -387,20 +388,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-4">
-                        <div class="info-item">
-                            <div class="info-label">يوم الدفع</div>
-                            <div class="info-value">{{ property.payment_day or '-' }}</div>
-                        </div>
-                    </div>
                 </div>
-                
-                {% if property.payment_notes %}
-                <div class="info-item mt-3">
-                    <div class="info-label">ملاحظات الدفع</div>
-                    <div class="info-value">{{ property.payment_notes }}</div>
-                </div>
-                {% endif %}
             </div>
         </div>
 
