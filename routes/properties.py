@@ -147,7 +147,7 @@ def create():
                 city=form.name.data,
                 address=form.address.data,
                 map_link='',
-                contract_number=form.contract_number.data or '',
+                contract_number=form.contract_number.data or None,  # استخدام None بدلاً من قيمة فارغة
                 owner_name=form.landlord_name.data,
                 owner_id=form.property_type.data,  # استخدام owner_id لحفظ نوع العقار مؤقتاً
                 contract_start_date=form.contract_start_date.data,
@@ -243,7 +243,7 @@ def edit(property_id):
             property.city = form.name.data
             property.address = form.address.data
             property.map_link = ''
-            property.contract_number = form.contract_number.data or ''
+            property.contract_number = form.contract_number.data or None  # استخدام None بدلاً من قيمة فارغة
             property.owner_name = form.landlord_name.data
             property.owner_id = form.property_type.data  # استخدام owner_id لحفظ نوع العقار مؤقتاً
             property.contract_start_date = form.contract_start_date.data

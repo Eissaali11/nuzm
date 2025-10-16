@@ -1857,7 +1857,7 @@ class RentalProperty(db.Model):
     map_link = db.Column(db.String(500), nullable=True)  # رابط الموقع على الخريطة
     
     # بيانات عقد الإيجار
-    contract_number = db.Column(db.String(100), nullable=False, unique=True)
+    contract_number = db.Column(db.String(100), nullable=True, unique=False)  # رقم العقد اختياري
     owner_name = db.Column(db.String(200), nullable=False)
     owner_id = db.Column(db.String(100), nullable=False)  # رقم هوية المالك / السجل التجاري
     contract_start_date = db.Column(db.Date, nullable=False)
