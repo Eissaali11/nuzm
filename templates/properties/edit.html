@@ -373,7 +373,7 @@
                         <div class="existing-images-grid">
                             {% for image in property.images %}
                             <div class="image-wrapper">
-                                <img src="{{ url_for('static', filename='uploads/properties/' + image.filename) }}" class="image-preview" alt="صورة العقار">
+                                <img src="{{ url_for('static', filename=image.image_path) }}" class="image-preview" alt="صورة العقار">
                                 <button type="button" class="delete-image-btn" onclick="deleteImage({{ image.id }})">
                                     <i class="fas fa-times"></i>
                                 </button>
@@ -438,20 +438,18 @@ document.getElementById('images').addEventListener('change', function(e) {
 // حذف صورة
 function deleteImage(imageId) {
     if (confirm('هل أنت متأكد من حذف هذه الصورة؟')) {
-        fetch(`/properties/delete-image/${imageId}`, {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': '{{ csrf_token() }}'
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                location.reload();
-            } else {
-                alert('حدث خطأ أثناء حذف الصورة');
-            }
-        });
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/properties/images/${imageId}/delete`;
+        
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrf_token';
+        csrfInput.value = '{{ csrf_token() }}';
+        form.appendChild(csrfInput);
+        
+        document.body.appendChild(form);
+        form.submit();
     }
 }
 </script>

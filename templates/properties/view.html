@@ -233,12 +233,43 @@
                     <div class="card-body">
                         <div class="info-item">
                             <div class="info-label">اسم العقار</div>
-                            <div class="info-value">{{ property.name }}</div>
+                            <div class="info-value">{{ property.city }}</div>
                         </div>
                         
                         <div class="info-item">
                             <div class="info-label">نوع العقار</div>
-                            <div class="info-value">{{ property.get_property_type_display() }}</div>
+                            <div class="info-value">
+                                {% if property.owner_id == 'apartment' %}
+                                    شقة
+                                {% elif property.owner_id == 'villa' %}
+                                    فيلا
+                                {% elif property.owner_id == 'building' %}
+                                    عمارة
+                                {% elif property.owner_id == 'full_floor' %}
+                                    دور كامل
+                                {% elif property.owner_id == 'office' %}
+                                    مكتب
+                                {% elif property.owner_id == 'warehouse' %}
+                                    مستودع
+                                {% elif property.owner_id == 'other' %}
+                                    أخرى
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="info-item">
+                            <div class="info-label">حالة العقار</div>
+                            <div class="info-value">
+                                {% if property.status == 'active' %}
+                                    نشط
+                                {% elif property.status == 'expired' %}
+                                    منتهي
+                                {% else %}
+                                    ملغي
+                                {% endif %}
+                            </div>
                         </div>
                         
                         <div class="info-item">
@@ -343,7 +374,17 @@
                     <div class="col-md-4">
                         <div class="info-item">
                             <div class="info-label">طريقة الدفع</div>
-                            <div class="info-value">{{ property.get_payment_method_display() }}</div>
+                            <div class="info-value">
+                                {% if property.payment_method == 'monthly' %}
+                                    شهري
+                                {% elif property.payment_method == 'quarterly' %}
+                                    ربع سنوي
+                                {% elif property.payment_method == 'semi_annually' %}
+                                    نصف سنوي
+                                {% else %}
+                                    سنوي
+                                {% endif %}
+                            </div>
                         </div>
                     </div>
                     <div class="col-md-4">
@@ -373,7 +414,7 @@
             <div class="card-body">
                 <div class="images-grid">
                     {% for image in property.images %}
-                    <img src="{{ url_for('static', filename='uploads/properties/' + image.filename) }}" 
+                    <img src="{{ url_for('static', filename=image.image_path) }}" 
                          class="property-image" 
                          alt="صورة العقار"
                          onclick="window.open(this.src, '_blank')">

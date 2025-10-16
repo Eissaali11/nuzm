@@ -6,41 +6,51 @@ from flask_wtf.file import FileAllowed, FileSize
 class RentalPropertyForm(FlaskForm):
     """نموذج إضافة وتعديل العقار المستأجر"""
     
-    # معلومات العقار
-    city = StringField('المدينة', validators=[DataRequired()])
+    # معلومات العقار الأساسية
+    name = StringField('اسم العقار', validators=[DataRequired()])
+    property_type = SelectField('نوع العقار',
+                               choices=[
+                                   ('apartment', 'شقة'),
+                                   ('villa', 'فيلا'),
+                                   ('building', 'عمارة'),
+                                   ('full_floor', 'دور كامل'),
+                                   ('office', 'مكتب'),
+                                   ('warehouse', 'مستودع'),
+                                   ('other', 'أخرى')
+                               ],
+                               validators=[DataRequired()])
     address = TextAreaField('العنوان', validators=[DataRequired()])
-    map_link = StringField('رابط الموقع على الخريطة', validators=[Optional(), URL()])
+    area = FloatField('المساحة (م²)', validators=[Optional(), NumberRange(min=0)])
+    rooms = IntegerField('عدد الغرف', validators=[Optional(), NumberRange(min=0)])
+    notes = TextAreaField('ملاحظات')
     
-    # بيانات عقد الإيجار
-    contract_number = StringField('رقم العقد', validators=[DataRequired()])
-    owner_name = StringField('اسم المالك', validators=[DataRequired()])
-    owner_id = StringField('رقم هوية المالك / السجل التجاري', validators=[DataRequired()])
+    # معلومات المالك والعقد
+    landlord_name = StringField('اسم المالك', validators=[DataRequired()])
+    landlord_phone = StringField('رقم هاتف المالك', validators=[Optional()])
+    contract_number = StringField('رقم العقد', validators=[Optional()])
     contract_start_date = DateField('تاريخ بداية العقد', validators=[DataRequired()], format='%Y-%m-%d')
     contract_end_date = DateField('تاريخ نهاية العقد', validators=[DataRequired()], format='%Y-%m-%d')
     
-    # تفاصيل الإيجار
-    annual_rent_amount = FloatField('مبلغ الإيجار السنوي (ريال)', validators=[DataRequired(), NumberRange(min=0)])
-    includes_utilities = BooleanField('يشمل الماء والكهرباء؟')
+    # المعلومات المالية
+    monthly_rent = FloatField('الإيجار الشهري (ريال)', validators=[DataRequired(), NumberRange(min=0)])
     payment_method = SelectField('طريقة السداد', 
                                 choices=[
                                     ('monthly', 'شهري'),
                                     ('quarterly', 'ربع سنوي'),
                                     ('semi_annually', 'نصف سنوي'),
-                                    ('annually', 'سنوي كامل')
+                                    ('annually', 'سنوي')
                                 ],
                                 validators=[DataRequired()])
+    payment_day = IntegerField('يوم الدفع من الشهر', validators=[Optional(), NumberRange(min=1, max=31)])
+    payment_notes = TextAreaField('ملاحظات الدفع')
     
-    # حالة العقار
-    status = SelectField('حالة العقار',
-                        choices=[
-                            ('active', 'نشط'),
-                            ('expired', 'منتهي'),
-                            ('cancelled', 'ملغي')
-                        ],
-                        validators=[DataRequired()])
-    
-    # ملاحظات
-    notes = TextAreaField('ملاحظات')
+    # صور العقار
+    images = FileField('صور العقار', 
+                      validators=[
+                          FileAllowed(['jpg', 'jpeg', 'png', 'heic', 'webp'], 
+                                    'الصور المسموح بها: JPG, PNG, HEIC, WEBP فقط!')
+                      ],
+                      render_kw={"multiple": True})
 
 
 class PropertyImagesForm(FlaskForm):

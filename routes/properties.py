@@ -144,24 +144,38 @@ def create():
         try:
             # إنشاء العقار
             property = RentalProperty(
-                city=form.city.data,
+                city=form.name.data,
                 address=form.address.data,
-                map_link=form.map_link.data,
-                contract_number=form.contract_number.data,
-                owner_name=form.owner_name.data,
-                owner_id=form.owner_id.data,
+                map_link='',
+                contract_number=form.contract_number.data or '',
+                owner_name=form.landlord_name.data,
+                owner_id=form.property_type.data,  # استخدام owner_id لحفظ نوع العقار مؤقتاً
                 contract_start_date=form.contract_start_date.data,
                 contract_end_date=form.contract_end_date.data,
-                annual_rent_amount=form.annual_rent_amount.data,
-                includes_utilities=form.includes_utilities.data,
+                annual_rent_amount=form.monthly_rent.data * 12,
+                includes_utilities=False,
                 payment_method=form.payment_method.data,
-                status=form.status.data,
+                status='active',
                 notes=form.notes.data,
                 created_by=current_user.id
             )
             
             db.session.add(property)
             db.session.commit()
+            
+            # معالجة الصور إن وجدت
+            if form.images.data:
+                files = request.files.getlist('images')
+                for file in files:
+                    if file and allowed_file(file.filename):
+                        filepath = process_and_save_image(file, property.id)
+                        if filepath:
+                            image = PropertyImage(
+                                property_id=property.id,
+                                image_path=filepath
+                            )
+                            db.session.add(image)
+                db.session.commit()
             
             # تسجيل النشاط
             log_activity(
@@ -171,7 +185,7 @@ def create():
             )
             
             flash('تم إضافة العقار بنجاح!', 'success')
-            return redirect(url_for('properties.view', id=property.id))
+            return redirect(url_for('properties.view', property_id=property.id))
             
         except Exception as e:
             db.session.rollback()
@@ -180,20 +194,20 @@ def create():
     return render_template('properties/create.html', form=form)
 
 
-@properties_bp.route('/<int:id>')
+@properties_bp.route('/<int:property_id>')
 @login_required
-def view(id):
+def view(property_id):
     """عرض تفاصيل العقار"""
-    property = RentalProperty.query.get_or_404(id)
+    property = RentalProperty.query.get_or_404(property_id)
     
     # جلب الصور
-    images = PropertyImage.query.filter_by(property_id=id).order_by(PropertyImage.uploaded_at.desc()).all()
+    images = PropertyImage.query.filter_by(property_id=property_id).order_by(PropertyImage.uploaded_at.desc()).all()
     
     # جلب الدفعات
-    payments = PropertyPayment.query.filter_by(property_id=id).order_by(PropertyPayment.payment_date.desc()).all()
+    payments = PropertyPayment.query.filter_by(property_id=property_id).order_by(PropertyPayment.payment_date.desc()).all()
     
     # جلب التجهيزات
-    furnishing = PropertyFurnishing.query.filter_by(property_id=id).first()
+    furnishing = PropertyFurnishing.query.filter_by(property_id=property_id).first()
     
     return render_template('properties/view.html',
                          property=property,
@@ -202,30 +216,58 @@ def view(id):
                          furnishing=furnishing)
 
 
-@properties_bp.route('/<int:id>/edit', methods=['GET', 'POST'])
+@properties_bp.route('/<int:property_id>/edit', methods=['GET', 'POST'])
 @login_required
-def edit(id):
+def edit(property_id):
     """تعديل بيانات العقار"""
-    property = RentalProperty.query.get_or_404(id)
-    form = RentalPropertyForm(obj=property)
+    property = RentalProperty.query.get_or_404(property_id)
+    
+    # ملء النموذج بالبيانات الحالية
+    form = RentalPropertyForm()
+    if request.method == 'GET':
+        form.name.data = property.city
+        form.property_type.data = property.owner_id
+        form.address.data = property.address
+        form.contract_number.data = property.contract_number
+        form.landlord_name.data = property.owner_name
+        form.landlord_phone.data = ''
+        form.contract_start_date.data = property.contract_start_date
+        form.contract_end_date.data = property.contract_end_date
+        form.monthly_rent.data = property.annual_rent_amount / 12
+        form.payment_method.data = property.payment_method
+        form.notes.data = property.notes
     
     if form.validate_on_submit():
         try:
-            property.city = form.city.data
+            property.city = form.name.data
             property.address = form.address.data
-            property.map_link = form.map_link.data
-            property.contract_number = form.contract_number.data
-            property.owner_name = form.owner_name.data
-            property.owner_id = form.owner_id.data
+            property.map_link = ''
+            property.contract_number = form.contract_number.data or ''
+            property.owner_name = form.landlord_name.data
+            property.owner_id = form.property_type.data  # استخدام owner_id لحفظ نوع العقار مؤقتاً
             property.contract_start_date = form.contract_start_date.data
             property.contract_end_date = form.contract_end_date.data
-            property.annual_rent_amount = form.annual_rent_amount.data
-            property.includes_utilities = form.includes_utilities.data
+            property.annual_rent_amount = form.monthly_rent.data * 12
+            property.includes_utilities = False
             property.payment_method = form.payment_method.data
-            property.status = form.status.data
+            property.status = 'active'
             property.notes = form.notes.data
             
             db.session.commit()
+            
+            # معالجة الصور الجديدة إن وجدت
+            if form.images.data:
+                files = request.files.getlist('images')
+                for file in files:
+                    if file and allowed_file(file.filename):
+                        filepath = process_and_save_image(file, property.id)
+                        if filepath:
+                            image = PropertyImage(
+                                property_id=property.id,
+                                image_path=filepath
+                            )
+                            db.session.add(image)
+                db.session.commit()
             
             # تسجيل النشاط
             log_activity(
@@ -235,7 +277,7 @@ def edit(id):
             )
             
             flash('تم تحديث بيانات العقار بنجاح!', 'success')
-            return redirect(url_for('properties.view', id=property.id))
+            return redirect(url_for('properties.view', property_id=property.id))
             
         except Exception as e:
             db.session.rollback()
@@ -244,11 +286,11 @@ def edit(id):
     return render_template('properties/edit.html', form=form, property=property)
 
 
-@properties_bp.route('/<int:id>/delete', methods=['POST'])
+@properties_bp.route('/<int:property_id>/delete', methods=['POST'])
 @login_required
-def delete(id):
+def delete(property_id):
     """حذف العقار (حذف منطقي)"""
-    property = RentalProperty.query.get_or_404(id)
+    property = RentalProperty.query.get_or_404(property_id)
     
     try:
         property.is_active = False
@@ -283,7 +325,7 @@ def upload_images(property_id):
     
     if not files:
         flash('الرجاء اختيار صور للرفع', 'warning')
-        return redirect(url_for('properties.view', id=property_id))
+        return redirect(url_for('properties.view', property_id=property_id))
     
     uploaded_count = 0
     for file in files:
@@ -314,7 +356,7 @@ def upload_images(property_id):
         db.session.rollback()
         flash(f'حدث خطأ أثناء رفع الصور: {str(e)}', 'danger')
     
-    return redirect(url_for('properties.view', id=property_id))
+    return redirect(url_for('properties.view', property_id=property_id))
 
 
 @properties_bp.route('/images/<int:image_id>/delete', methods=['POST'])
@@ -338,7 +380,7 @@ def delete_image(image_id):
         db.session.rollback()
         flash(f'حدث خطأ أثناء حذف الصورة: {str(e)}', 'danger')
     
-    return redirect(url_for('properties.view', id=property_id))
+    return redirect(url_for('properties.view', property_id=property_id))
 
 
 @properties_bp.route('/<int:property_id>/payments/add', methods=['GET', 'POST'])
@@ -372,7 +414,7 @@ def add_payment(property_id):
             )
             
             flash('تم إضافة الدفعة بنجاح!', 'success')
-            return redirect(url_for('properties.view', id=property_id))
+            return redirect(url_for('properties.view', property_id=property_id))
             
         except Exception as e:
             db.session.rollback()
@@ -409,7 +451,7 @@ def edit_payment(payment_id):
             )
             
             flash('تم تحديث الدفعة بنجاح!', 'success')
-            return redirect(url_for('properties.view', id=property.id))
+            return redirect(url_for('properties.view', property_id=property.id))
             
         except Exception as e:
             db.session.rollback()
@@ -435,7 +477,7 @@ def delete_payment(payment_id):
         db.session.rollback()
         flash(f'حدث خطأ أثناء حذف الدفعة: {str(e)}', 'danger')
     
-    return redirect(url_for('properties.view', id=property_id))
+    return redirect(url_for('properties.view', property_id=property_id))
 
 
 @properties_bp.route('/<int:property_id>/furnishing', methods=['GET', 'POST'])
@@ -473,7 +515,7 @@ def manage_furnishing(property_id):
             )
             
             flash('تم تحديث التجهيزات بنجاح!', 'success')
-            return redirect(url_for('properties.view', id=property_id))
+            return redirect(url_for('properties.view', property_id=property_id))
             
         except Exception as e:
             db.session.rollback()
