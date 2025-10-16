@@ -36,6 +36,40 @@
         font-size: 0.8rem;
         padding: 5px 10px;
     }
+    
+    .btn-group .btn {
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-group .btn.active {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    }
+    
+    .btn-outline-light.active {
+        background-color: #6c757d;
+        border-color: #6c757d;
+        color: white;
+    }
+    
+    .btn-outline-success.active {
+        background-color: #28a745;
+        border-color: #28a745;
+        color: white;
+    }
+    
+    .btn-outline-warning.active {
+        background-color: #ffc107;
+        border-color: #ffc107;
+        color: #000;
+    }
+    
+    .btn-outline-danger.active {
+        background-color: #dc3545;
+        border-color: #dc3545;
+        color: white;
+    }
 </style>
 {% endblock %}
 
@@ -56,6 +90,34 @@
                 <i class="fas fa-plus ms-1"></i>
                 إضافة عقار جديد
             </a>
+        </div>
+    </div>
+
+    <!-- أزرار الفلترة -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="btn-group w-100" role="group">
+                <a href="{{ url_for('properties.dashboard', filter='all') }}" 
+                   class="btn btn-outline-light {{ 'active' if current_filter == 'all' else '' }}">
+                    <i class="fas fa-list ms-1"></i>
+                    جميع العقارات ({{ total_properties }})
+                </a>
+                <a href="{{ url_for('properties.dashboard', filter='active') }}" 
+                   class="btn btn-outline-success {{ 'active' if current_filter == 'active' else '' }}">
+                    <i class="fas fa-check-circle ms-1"></i>
+                    العقود النشطة ({{ active_properties }})
+                </a>
+                <a href="{{ url_for('properties.dashboard', filter='expiring') }}" 
+                   class="btn btn-outline-warning {{ 'active' if current_filter == 'expiring' else '' }}">
+                    <i class="fas fa-exclamation-triangle ms-1"></i>
+                    قريبة من الانتهاء ({{ expiring_soon }})
+                </a>
+                <a href="{{ url_for('properties.dashboard', filter='expired') }}" 
+                   class="btn btn-outline-danger {{ 'active' if current_filter == 'expired' else '' }}">
+                    <i class="fas fa-times-circle ms-1"></i>
+                    العقود المنتهية ({{ expired_properties }})
+                </a>
+            </div>
         </div>
     </div>
 

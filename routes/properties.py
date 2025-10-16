@@ -70,12 +70,15 @@ def process_and_save_image(file, property_id):
 def dashboard():
     """لوحة التحكم الرئيسية للعقارات المستأجرة"""
     
+    # الحصول على الفلتر من الـ URL
+    filter_type = request.args.get('filter', 'all')
+    
     # إحصائيات العقارات
     total_properties = RentalProperty.query.filter_by(is_active=True).count()
     active_properties = RentalProperty.query.filter_by(status='active', is_active=True).count()
     
     # العقود المنتهية
-    expired_properties = RentalProperty.query.filter(
+    expired_properties_count = RentalProperty.query.filter(
         RentalProperty.contract_end_date < date.today(),
         RentalProperty.is_active == True
     ).count()
@@ -106,12 +109,29 @@ def dashboard():
         func.sum(PropertyPayment.amount)
     ).filter_by(status='paid').scalar() or 0
     
-    # قائمة العقارات مع التفاصيل
-    properties = RentalProperty.query.filter_by(is_active=True).order_by(
-        RentalProperty.created_at.desc()
-    ).all()
+    # تطبيق الفلتر على قائمة العقارات
+    query = RentalProperty.query.filter_by(is_active=True)
     
-    # قائمة العقارات القريبة من الانتهاء
+    if filter_type == 'active':
+        # العقود النشطة (غير منتهية وليست قريبة من الانتهاء)
+        query = query.filter(
+            RentalProperty.status == 'active',
+            RentalProperty.contract_end_date > expiring_soon_date
+        )
+    elif filter_type == 'expiring':
+        # العقود القريبة من الانتهاء (خلال 60 يوم)
+        query = query.filter(
+            RentalProperty.contract_end_date.between(date.today(), expiring_soon_date)
+        )
+    elif filter_type == 'expired':
+        # العقود المنتهية
+        query = query.filter(
+            RentalProperty.contract_end_date < date.today()
+        )
+    
+    properties = query.order_by(RentalProperty.created_at.desc()).all()
+    
+    # قائمة العقارات القريبة من الانتهاء (للعمود الجانبي)
     expiring_properties = RentalProperty.query.filter(
         RentalProperty.contract_end_date.between(date.today(), expiring_soon_date),
         RentalProperty.is_active == True
@@ -127,7 +147,7 @@ def dashboard():
     return render_template('properties/dashboard.html',
                          total_properties=total_properties,
                          active_properties=active_properties,
-                         expired_properties=expired_properties,
+                         expired_properties=expired_properties_count,
                          expiring_soon=expiring_soon,
                          total_annual_rent=total_annual_rent,
                          pending_payments=pending_payments,
@@ -135,7 +155,8 @@ def dashboard():
                          total_paid=total_paid,
                          properties=properties,
                          expiring_properties=expiring_properties,
-                         upcoming_payments=upcoming_payments)
+                         upcoming_payments=upcoming_payments,
+                         current_filter=filter_type)
 
 
 @properties_bp.route('/create', methods=['GET', 'POST'])
