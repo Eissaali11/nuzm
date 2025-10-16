@@ -907,84 +907,179 @@ def export_all_properties_excel():
     for i, width in enumerate(column_widths, start=1):
         ws_properties.column_dimensions[get_column_letter(i)].width = width
     
-    # ========== ورقة 3: تفاصيل التجهيزات والدفعات ==========
-    ws_details = wb.create_sheet(title="التجهيزات والدفعات")
+    # ========== ورقة 3: التجهيزات ==========
+    ws_furnishing = wb.create_sheet(title="التجهيزات")
     
     # العنوان
-    ws_details.merge_cells('A1:H1')
-    cell = ws_details['A1']
-    cell.value = "تفاصيل التجهيزات والدفعات"
+    ws_furnishing.merge_cells('A1:G1')
+    cell = ws_furnishing['A1']
+    cell.value = "تجهيزات العقارات المستأجرة"
     cell.font = title_font
-    cell.fill = title_fill
+    cell.fill = PatternFill(start_color='F093FB', end_color='F093FB', fill_type='solid')
     cell.alignment = Alignment(horizontal='center', vertical='center')
-    ws_details.row_dimensions[1].height = 30
+    ws_furnishing.row_dimensions[1].height = 30
     
+    # عناوين الأعمدة
     row = 3
-    for prop in properties:
-        # عنوان العقار
-        ws_details.merge_cells(f'A{row}:H{row}')
-        cell = ws_details[f'A{row}']
-        cell.value = f"عقار: {prop.city} - {prop.contract_number or 'بدون رقم عقد'}"
-        cell.font = subheader_font
-        cell.fill = info_fill
+    headers = ['رقم العقد', 'اسم العقار', 'جرات الغاز', 'الطباخات', 'الأسرّة', 'البطانيات', 'المخدات']
+    furnishing_fill = PatternFill(start_color='F5576C', end_color='F5576C', fill_type='solid')
+    
+    for col, header in enumerate(headers, start=1):
+        cell = ws_furnishing.cell(row=row, column=col)
+        cell.value = header
+        cell.font = Font(name='Arial', size=11, bold=True, color='FFFFFF')
+        cell.fill = furnishing_fill
         cell.border = border
-        row += 1
-        
-        # التجهيزات
+        cell.alignment = Alignment(horizontal='center', vertical='center')
+    
+    # بيانات التجهيزات
+    row = 4
+    for prop in properties:
         furnishing = PropertyFurnishing.query.filter_by(property_id=prop.id).first()
+        
+        ws_furnishing.cell(row=row, column=1, value=prop.contract_number or '-').border = border
+        ws_furnishing.cell(row=row, column=2, value=prop.city).border = border
+        
         if furnishing:
-            ws_details[f'A{row}'] = "التجهيزات:"
-            ws_details[f'A{row}'].font = Font(bold=True)
+            ws_furnishing.cell(row=row, column=3, value=furnishing.gas_cylinder or 0).border = border
+            ws_furnishing.cell(row=row, column=4, value=furnishing.stoves or 0).border = border
+            ws_furnishing.cell(row=row, column=5, value=furnishing.beds or 0).border = border
+            ws_furnishing.cell(row=row, column=6, value=furnishing.blankets or 0).border = border
+            ws_furnishing.cell(row=row, column=7, value=furnishing.pillows or 0).border = border
+        else:
+            for col in range(3, 8):
+                ws_furnishing.cell(row=row, column=col, value=0).border = border
+        
+        row += 1
+    
+    # تجهيزات إضافية
+    row += 2
+    ws_furnishing.merge_cells(f'A{row}:G{row}')
+    cell = ws_furnishing[f'A{row}']
+    cell.value = "تجهيزات إضافية وملاحظات"
+    cell.font = Font(name='Arial', size=11, bold=True, color='FFFFFF')
+    cell.fill = furnishing_fill
+    cell.alignment = Alignment(horizontal='center')
+    row += 1
+    
+    for prop in properties:
+        furnishing = PropertyFurnishing.query.filter_by(property_id=prop.id).first()
+        if furnishing and (furnishing.other_items or furnishing.notes):
+            ws_furnishing[f'A{row}'] = f"{prop.contract_number or prop.city}:"
+            ws_furnishing[f'A{row}'].font = Font(bold=True)
             row += 1
             
-            items = []
-            if furnishing.gas_cylinder:
-                items.append(f"  • جرات الغاز: {furnishing.gas_cylinder}")
-            if furnishing.stoves:
-                items.append(f"  • طباخات: {furnishing.stoves}")
-            if furnishing.beds:
-                items.append(f"  • أسرّة: {furnishing.beds}")
-            if furnishing.blankets:
-                items.append(f"  • بطانيات: {furnishing.blankets}")
-            if furnishing.pillows:
-                items.append(f"  • مخدات: {furnishing.pillows}")
             if furnishing.other_items:
-                items.append(f"  • أخرى: {furnishing.other_items}")
-            
-            for item in items:
-                ws_details[f'A{row}'] = item
+                ws_furnishing[f'A{row}'] = f"تجهيزات أخرى: {furnishing.other_items}"
                 row += 1
-        
-        # الدفعات
-        payments = PropertyPayment.query.filter_by(property_id=prop.id).order_by(PropertyPayment.payment_date).all()
-        if payments:
-            ws_details[f'A{row}'] = "الدفعات:"
-            ws_details[f'A{row}'].font = Font(bold=True)
-            row += 1
             
-            # عناوين
-            headers = ['التاريخ المتوقع', 'المبلغ', 'الحالة', 'تاريخ الدفع الفعلي']
-            for col, header in enumerate(headers, start=1):
-                cell = ws_details.cell(row=row, column=col)
-                cell.value = header
-                cell.font = Font(bold=True)
-                cell.fill = info_fill
-                cell.border = border
-            row += 1
-            
-            for payment in payments:
-                ws_details.cell(row=row, column=1, value=payment.payment_date.strftime('%Y-%m-%d')).border = border
-                ws_details.cell(row=row, column=2, value=f"{payment.amount:,.0f} ريال").border = border
-                status_text = {'pending': 'معلق', 'paid': 'مدفوع', 'overdue': 'متأخر'}.get(payment.status, '-')
-                ws_details.cell(row=row, column=3, value=status_text).border = border
-                ws_details.cell(row=row, column=4, value=payment.actual_payment_date.strftime('%Y-%m-%d') if payment.actual_payment_date else '-').border = border
+            if furnishing.notes:
+                ws_furnishing[f'A{row}'] = f"ملاحظات: {furnishing.notes}"
                 row += 1
-        
-        row += 2  # مسافة بين العقارات
+            
+            row += 1
     
     # ضبط عرض الأعمدة
-    for i in range(1, 9):
-        ws_details.column_dimensions[get_column_letter(i)].width = 20
+    column_widths = [15, 25, 15, 15, 15, 15, 15]
+    for i, width in enumerate(column_widths, start=1):
+        ws_furnishing.column_dimensions[get_column_letter(i)].width = width
+    
+    # ========== ورقة 4: الدفعات ==========
+    ws_payments = wb.create_sheet(title="الدفعات")
+    
+    # العنوان
+    ws_payments.merge_cells('A1:H1')
+    cell = ws_payments['A1']
+    cell.value = "دفعات الإيجار للعقارات"
+    cell.font = title_font
+    cell.fill = PatternFill(start_color='667EEA', end_color='667EEA', fill_type='solid')
+    cell.alignment = Alignment(horizontal='center', vertical='center')
+    ws_payments.row_dimensions[1].height = 30
+    
+    # عناوين الأعمدة
+    row = 3
+    headers = ['رقم العقد', 'اسم العقار', 'التاريخ المتوقع', 'المبلغ', 'الحالة', 'تاريخ الدفع الفعلي', 'طريقة الدفع', 'الرقم المرجعي']
+    payment_fill = PatternFill(start_color='764BA2', end_color='764BA2', fill_type='solid')
+    
+    for col, header in enumerate(headers, start=1):
+        cell = ws_payments.cell(row=row, column=col)
+        cell.value = header
+        cell.font = Font(name='Arial', size=11, bold=True, color='FFFFFF')
+        cell.fill = payment_fill
+        cell.border = border
+        cell.alignment = Alignment(horizontal='center', vertical='center')
+    
+    # بيانات الدفعات
+    row = 4
+    for prop in properties:
+        payments = PropertyPayment.query.filter_by(property_id=prop.id).order_by(PropertyPayment.payment_date).all()
+        
+        for payment in payments:
+            ws_payments.cell(row=row, column=1, value=prop.contract_number or '-').border = border
+            ws_payments.cell(row=row, column=2, value=prop.city).border = border
+            ws_payments.cell(row=row, column=3, value=payment.payment_date.strftime('%Y-%m-%d')).border = border
+            ws_payments.cell(row=row, column=4, value=f"{payment.amount:,.0f}").border = border
+            
+            # الحالة مع تلوين
+            status_text = {'pending': 'معلق', 'paid': 'مدفوع', 'overdue': 'متأخر'}.get(payment.status, '-')
+            cell = ws_payments.cell(row=row, column=5, value=status_text)
+            cell.border = border
+            cell.alignment = Alignment(horizontal='center')
+            
+            if payment.status == 'paid':
+                cell.fill = PatternFill(start_color='C6EFCE', end_color='C6EFCE', fill_type='solid')
+            elif payment.status == 'overdue':
+                cell.fill = PatternFill(start_color='FFC7CE', end_color='FFC7CE', fill_type='solid')
+            else:
+                cell.fill = PatternFill(start_color='FFEB9C', end_color='FFEB9C', fill_type='solid')
+            
+            ws_payments.cell(row=row, column=6, value=payment.actual_payment_date.strftime('%Y-%m-%d') if payment.actual_payment_date else '-').border = border
+            ws_payments.cell(row=row, column=7, value=payment.payment_method or '-').border = border
+            ws_payments.cell(row=row, column=8, value=payment.reference_number or '-').border = border
+            
+            row += 1
+    
+    # إضافة صف إحصائيات
+    row += 1
+    ws_payments.merge_cells(f'A{row}:H{row}')
+    cell = ws_payments[f'A{row}']
+    cell.value = "إحصائيات الدفعات"
+    cell.font = Font(name='Arial', size=11, bold=True, color='FFFFFF')
+    cell.fill = payment_fill
+    cell.alignment = Alignment(horizontal='center')
+    row += 1
+    
+    # حساب الإحصائيات
+    all_payments = PropertyPayment.query.all()
+    total_payments = len(all_payments)
+    paid_payments = sum(1 for p in all_payments if p.status == 'paid')
+    pending_payments = sum(1 for p in all_payments if p.status == 'pending')
+    overdue_payments = sum(1 for p in all_payments if p.status == 'overdue')
+    total_amount = sum(p.amount for p in all_payments if p.status == 'paid')
+    
+    stats = [
+        ['إجمالي الدفعات', total_payments],
+        ['دفعات مدفوعة', paid_payments],
+        ['دفعات معلقة', pending_payments],
+        ['دفعات متأخرة', overdue_payments],
+        ['إجمالي المبالغ المدفوعة', f"{total_amount:,.0f} ريال"]
+    ]
+    
+    for stat in stats:
+        ws_payments[f'A{row}'] = stat[0]
+        ws_payments[f'A{row}'].font = Font(bold=True)
+        ws_payments[f'A{row}'].fill = info_fill
+        ws_payments[f'A{row}'].border = border
+        
+        ws_payments[f'B{row}'] = stat[1]
+        ws_payments[f'B{row}'].border = border
+        ws_payments[f'B{row}'].alignment = Alignment(horizontal='center')
+        row += 1
+    
+    # ضبط عرض الأعمدة
+    column_widths = [15, 25, 18, 18, 15, 18, 18, 18]
+    for i, width in enumerate(column_widths, start=1):
+        ws_payments.column_dimensions[get_column_letter(i)].width = width
     
     # حفظ في الذاكرة
     output = BytesIO()
