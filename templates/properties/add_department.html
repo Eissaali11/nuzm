@@ -144,9 +144,8 @@
                         <select class="form-select form-select-lg" id="departmentSelect" name="department_id" required>
                             <option value="">-- اختر قسم --</option>
                             {% for dept in departments %}
-                                {% set dept_count = employees|selectattr('department_id', 'equalto', dept.id)|list|length %}
                                 <option value="{{ dept.id }}">
-                                    {{ dept.name }} ({{ dept_count }} موظف)
+                                    {{ dept.name }} ({{ dept_employee_counts.get(dept.id, 0) }} موظف)
                                 </option>
                             {% endfor %}
                         </select>

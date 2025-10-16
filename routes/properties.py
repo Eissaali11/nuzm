@@ -1571,10 +1571,17 @@ def add_department_page(property_id):
     # جلب جميع الموظفين النشطين
     employees = Employee.query.filter_by(status='active').all()
     
+    # حساب عدد الموظفين لكل قسم
+    dept_employee_counts = {}
+    for dept in departments:
+        count = Employee.query.filter_by(department_id=dept.id, status='active').count()
+        dept_employee_counts[dept.id] = count
+    
     return render_template('properties/add_department.html',
                          property=property,
                          departments=departments,
-                         employees=employees)
+                         employees=employees,
+                         dept_employee_counts=dept_employee_counts)
 
 
 @properties_bp.route('/<int:property_id>/add-department-residents', methods=['POST'])
