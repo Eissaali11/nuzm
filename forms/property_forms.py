@@ -30,6 +30,12 @@ class RentalPropertyForm(FlaskForm):
     contract_number = StringField('رقم العقد', validators=[Optional()])
     contract_start_date = DateField('تاريخ بداية العقد', validators=[DataRequired()], format='%Y-%m-%d')
     contract_end_date = DateField('تاريخ نهاية العقد', validators=[DataRequired()], format='%Y-%m-%d')
+    contract_file = FileField('ملف العقد (PDF أو صورة)', 
+                             validators=[
+                                 FileAllowed(['pdf', 'jpg', 'jpeg', 'png'], 
+                                           'الملفات المسموح بها: PDF, JPG, PNG فقط!')
+                             ])
+    location_link = StringField('رابط موقع السكن', validators=[Optional(), URL(message='الرجاء إدخال رابط صحيح')])
     
     # المعلومات المالية
     monthly_rent = FloatField('الإيجار الشهري (ريال)', validators=[DataRequired(), NumberRange(min=0)])

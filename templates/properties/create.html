@@ -272,6 +272,26 @@
                             {% endif %}
                         </div>
                     </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.contract_file.label(class="form-label") }}
+                            {{ form.contract_file(class="form-control" + (" is-invalid" if form.contract_file.errors else "")) }}
+                            {% if form.contract_file.errors %}
+                                <div class="invalid-feedback">{{ form.contract_file.errors[0] }}</div>
+                            {% endif %}
+                            <small class="text-muted">PDF, JPG أو PNG - حجم أقصى: 10 MB</small>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            {{ form.location_link.label(class="form-label") }}
+                            {{ form.location_link(class="form-control" + (" is-invalid" if form.location_link.errors else ""), placeholder="https://maps.google.com/...") }}
+                            {% if form.location_link.errors %}
+                                <div class="invalid-feedback">{{ form.location_link.errors[0] }}</div>
+                            {% endif %}
+                            <small class="text-muted">رابط موقع السكن على خرائط جوجل</small>
+                        </div>
+                    </div>
                 </div>
             </div>
 

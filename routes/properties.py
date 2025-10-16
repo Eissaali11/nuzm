@@ -67,6 +67,28 @@ def process_and_save_image(file, property_id):
         return None
 
 
+def process_and_save_contract(file, property_id):
+    """معالجة وحفظ ملف العقد (PDF أو صورة)"""
+    try:
+        filename = secure_filename(file.filename)
+        file_ext = filename.rsplit('.', 1)[1].lower() if '.' in filename else ''
+        unique_filename = f"contract_{uuid.uuid4()}.{file_ext}"
+        
+        # إنشاء مجلد التخزين
+        property_folder = os.path.join(UPLOAD_FOLDER, str(property_id))
+        os.makedirs(property_folder, exist_ok=True)
+        filepath = os.path.join(property_folder, unique_filename)
+        
+        file.save(filepath)
+        
+        # إرجاع المسار النسبي من static/
+        relative_path = filepath.replace('static/', '')
+        return relative_path
+    except Exception as e:
+        print(f"خطأ في معالجة ملف العقد: {e}")
+        return None
+
+
 @properties_bp.route('/dashboard')
 @login_required
 def dashboard():
@@ -174,6 +196,7 @@ def create():
                 city=form.name.data,
                 address=form.address.data,
                 map_link='',
+                location_link=form.location_link.data or None,
                 contract_number=form.contract_number.data or None,  # استخدام None بدلاً من قيمة فارغة
                 owner_name=form.landlord_name.data,
                 owner_id=form.property_type.data,  # استخدام owner_id لحفظ نوع العقار مؤقتاً
@@ -189,6 +212,15 @@ def create():
             
             db.session.add(property)
             db.session.commit()
+            
+            # معالجة ملف العقد إن وجد
+            if form.contract_file.data:
+                contract_file = request.files.get('contract_file')
+                if contract_file and contract_file.filename:
+                    contract_path = process_and_save_contract(contract_file, property.id)
+                    if contract_path:
+                        property.contract_file = contract_path
+                        db.session.commit()
             
             # معالجة الصور إن وجدت
             if form.images.data:

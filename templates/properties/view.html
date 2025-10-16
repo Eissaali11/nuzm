@@ -350,6 +350,30 @@
                             <div class="info-label">اسم المالك</div>
                             <div class="info-value">{{ property.owner_name or '-' }}</div>
                         </div>
+                        
+                        {% if property.contract_file %}
+                        <div class="info-item">
+                            <div class="info-label">ملف العقد</div>
+                            <div class="info-value">
+                                <a href="{{ url_for('static', filename=property.contract_file) }}" target="_blank" class="btn btn-sm btn-primary">
+                                    <i class="fas fa-file-pdf me-1"></i>
+                                    عرض العقد
+                                </a>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        {% if property.location_link %}
+                        <div class="info-item">
+                            <div class="info-label">رابط موقع السكن</div>
+                            <div class="info-value">
+                                <a href="{{ property.location_link }}" target="_blank" class="btn btn-sm btn-success">
+                                    <i class="fas fa-map-marker-alt me-1"></i>
+                                    فتح الموقع
+                                </a>
+                            </div>
+                        </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>
