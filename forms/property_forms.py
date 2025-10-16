@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, TextAreaField, FloatField, DateField, SelectField, BooleanField, IntegerField, FileField
+from wtforms import StringField, TextAreaField, FloatField, DateField, SelectField, BooleanField, IntegerField, FileField, SubmitField
 from wtforms.validators import DataRequired, Optional, NumberRange, URL
 from flask_wtf.file import FileAllowed, FileSize
 
@@ -112,3 +112,6 @@ class PropertyFurnishingForm(FlaskForm):
     # تجهيزات إضافية
     other_items = TextAreaField('تجهيزات إضافية (أخرى)')
     notes = TextAreaField('ملاحظات')
+    
+    # زر الإرسال
+    submit = SubmitField('حفظ التجهيزات')
