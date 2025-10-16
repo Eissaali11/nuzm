@@ -98,7 +98,8 @@ class PropertyPaymentForm(FlaskForm):
                                     ('', '-- اختر --'),
                                     ('نقدي', 'نقدي'),
                                     ('تحويل بنكي', 'تحويل بنكي'),
-                                    ('شيك', 'شيك')
+                                    ('شيك', 'شيك'),
+                                    ('الدفع في منصة ايجار', 'الدفع في منصة ايجار')
                                 ],
                                 validators=[Optional()])
     reference_number = StringField('الرقم المرجعي للدفعة', validators=[Optional()])
