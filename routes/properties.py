@@ -168,6 +168,17 @@ def dashboard():
         PropertyPayment.payment_date.between(date.today(), upcoming_payments_date)
     ).order_by(PropertyPayment.payment_date).all()
     
+    # قائمة الدفعات المعلقة
+    pending_payments_list = PropertyPayment.query.filter_by(status='pending').order_by(
+        PropertyPayment.payment_date
+    ).all()
+    
+    # قائمة الدفعات المتأخرة
+    overdue_payments_list = PropertyPayment.query.filter(
+        PropertyPayment.status == 'pending',
+        PropertyPayment.payment_date < date.today()
+    ).order_by(PropertyPayment.payment_date).all()
+    
     return render_template('properties/dashboard.html',
                          total_properties=total_properties,
                          active_properties=active_properties,
@@ -180,6 +191,9 @@ def dashboard():
                          properties=properties,
                          expiring_properties=expiring_properties,
                          upcoming_payments=upcoming_payments,
+                         pending_payments_list=pending_payments_list,
+                         overdue_payments_list=overdue_payments_list,
+                         today=date.today(),
                          current_filter=filter_type)
 
 
