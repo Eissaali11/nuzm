@@ -1522,11 +1522,23 @@ def add_resident_page(property_id):
     # الموظفين المضافين مسبقاً
     current_resident_ids = [r.id for r in property.residents]
     
+    # تنظيم الموظفين حسب الأقسام باستخدام العلاقة many-to-many
+    employees_by_dept = {}
+    for dept in departments:
+        dept_employees = [emp for emp in employees if dept in emp.departments]
+        if dept_employees:
+            employees_by_dept[dept.id] = dept_employees
+    
+    # الموظفين بدون قسم
+    no_dept_employees = [emp for emp in employees if not emp.departments]
+    
     return render_template('properties/add_resident.html',
                          property=property,
                          departments=departments,
                          employees=employees,
-                         current_resident_ids=current_resident_ids)
+                         current_resident_ids=current_resident_ids,
+                         employees_by_dept=employees_by_dept,
+                         no_dept_employees=no_dept_employees)
 
 
 @properties_bp.route('/<int:property_id>/add-resident', methods=['POST'])

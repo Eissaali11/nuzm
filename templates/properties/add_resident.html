@@ -168,9 +168,8 @@
                         </label>
                         <div id="employeesList" style="max-height: 400px; overflow-y: auto; background-color: #323e5f; border-radius: 8px; padding: 15px;">
                             {% for dept in departments %}
-                                {% set dept_employees = employees|selectattr('department_id', 'equalto', dept.id)|list %}
-                                {% if dept_employees %}
-                                    {% for emp in dept_employees if emp.id not in current_resident_ids %}
+                                {% if dept.id in employees_by_dept %}
+                                    {% for emp in employees_by_dept[dept.id] if emp.id not in current_resident_ids %}
                                     <div class="employee-item form-check mb-2 p-2" 
                                          data-dept-id="{{ dept.id }}" 
                                          data-search="{{ emp.name|lower }} {{ emp.employee_id|lower }} {{ emp.job_title|lower }}"
@@ -199,7 +198,6 @@
                                 {% endif %}
                             {% endfor %}
                             
-                            {% set no_dept_employees = employees|selectattr('department_id', 'equalto', None)|list %}
                             {% if no_dept_employees %}
                                 {% for emp in no_dept_employees if emp.id not in current_resident_ids %}
                                 <div class="employee-item form-check mb-2 p-2" 
