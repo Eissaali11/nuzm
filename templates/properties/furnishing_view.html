@@ -263,7 +263,7 @@
         <!-- زر التعديل -->
         <div class="row">
             <div class="col-12 text-center">
-                <a href="{{ url_for('properties.furnishing', property_id=property.id) }}" class="btn btn-warning btn-lg">
+                <a href="{{ url_for('properties.manage_furnishing', property_id=property.id) }}" class="btn btn-warning btn-lg">
                     <i class="fas fa-edit ms-1"></i>
                     تعديل التجهيزات
                 </a>
@@ -280,7 +280,7 @@
                             <i class="fas fa-box-open"></i>
                             <h3 class="text-white mb-3">لا توجد تجهيزات مسجلة</h3>
                             <p class="text-muted mb-4">لم يتم تسجيل أي تجهيزات أو محتويات لهذا العقار بعد</p>
-                            <a href="{{ url_for('properties.furnishing', property_id=property.id) }}" class="btn btn-primary btn-lg">
+                            <a href="{{ url_for('properties.manage_furnishing', property_id=property.id) }}" class="btn btn-primary btn-lg">
                                 <i class="fas fa-plus ms-1"></i>
                                 إضافة التجهيزات الآن
                             </a>
