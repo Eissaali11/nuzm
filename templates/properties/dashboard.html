@@ -48,6 +48,10 @@
             لوحة معلومات العقارات المستأجرة
         </h2>
         <div>
+            <a href="{{ url_for('properties.export_all_properties_excel') }}" class="btn btn-primary me-2">
+                <i class="fas fa-file-excel ms-1"></i>
+                تصدير Excel شامل
+            </a>
             <a href="{{ url_for('properties.create') }}" class="btn btn-success">
                 <i class="fas fa-plus ms-1"></i>
                 إضافة عقار جديد

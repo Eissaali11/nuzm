@@ -672,3 +672,291 @@ def export_excel(property_id):
         as_attachment=True,
         download_name=filename
     )
+
+
+@properties_bp.route('/export-all-excel')
+@login_required
+def export_all_properties_excel():
+    """تصدير جميع بيانات العقارات إلى Excel"""
+    
+    # جلب جميع العقارات النشطة
+    properties = RentalProperty.query.filter_by(is_active=True).order_by(
+        RentalProperty.created_at.desc()
+    ).all()
+    
+    # إنشاء ملف Excel
+    wb = Workbook()
+    
+    # ========== ورقة 1: لوحة المعلومات ==========
+    ws_dashboard = wb.active
+    ws_dashboard.title = "لوحة المعلومات"
+    
+    # تنسيقات
+    title_font = Font(name='Arial', size=16, bold=True, color='FFFFFF')
+    header_font = Font(name='Arial', size=12, bold=True, color='FFFFFF')
+    subheader_font = Font(name='Arial', size=11, bold=True)
+    normal_font = Font(name='Arial', size=10)
+    
+    title_fill = PatternFill(start_color='1F4788', end_color='1F4788', fill_type='solid')
+    header_fill = PatternFill(start_color='4472C4', end_color='4472C4', fill_type='solid')
+    info_fill = PatternFill(start_color='E7E6E6', end_color='E7E6E6', fill_type='solid')
+    
+    border = Border(
+        left=Side(style='thin'),
+        right=Side(style='thin'),
+        top=Side(style='thin'),
+        bottom=Side(style='thin')
+    )
+    
+    # العنوان الرئيسي
+    ws_dashboard.merge_cells('A1:F1')
+    cell = ws_dashboard['A1']
+    cell.value = "تقرير العقارات المستأجرة - لوحة المعلومات"
+    cell.font = title_font
+    cell.fill = title_fill
+    cell.alignment = Alignment(horizontal='center', vertical='center')
+    ws_dashboard.row_dimensions[1].height = 30
+    
+    # تاريخ التقرير
+    ws_dashboard.merge_cells('A2:F2')
+    cell = ws_dashboard['A2']
+    cell.value = f"تاريخ التقرير: {datetime.now().strftime('%Y-%m-%d %H:%M')}"
+    cell.font = Font(name='Arial', size=10, italic=True)
+    cell.alignment = Alignment(horizontal='center')
+    
+    # الإحصائيات الرئيسية
+    row = 4
+    ws_dashboard.merge_cells(f'A{row}:F{row}')
+    cell = ws_dashboard[f'A{row}']
+    cell.value = "الإحصائيات الرئيسية"
+    cell.font = header_font
+    cell.fill = header_fill
+    cell.alignment = Alignment(horizontal='center')
+    
+    # حساب الإحصائيات
+    total_properties = len(properties)
+    active_properties = sum(1 for p in properties if p.status == 'active')
+    expired_properties = sum(1 for p in properties if p.is_expired)
+    expiring_soon = sum(1 for p in properties if p.is_expiring_soon and not p.is_expired)
+    total_annual_rent = sum(p.annual_rent_amount for p in properties if p.status == 'active')
+    
+    # عرض الإحصائيات
+    stats_data = [
+        ['إجمالي العقارات', total_properties],
+        ['عقود نشطة', active_properties],
+        ['عقود منتهية', expired_properties],
+        ['قريبة من الانتهاء (60 يوم)', expiring_soon],
+        ['إجمالي الإيجار السنوي', f"{total_annual_rent:,.0f} ريال"],
+    ]
+    
+    row = 5
+    for stat in stats_data:
+        ws_dashboard[f'A{row}'] = stat[0]
+        ws_dashboard[f'A{row}'].font = subheader_font
+        ws_dashboard[f'A{row}'].fill = info_fill
+        ws_dashboard[f'A{row}'].border = border
+        
+        ws_dashboard[f'B{row}'] = stat[1]
+        ws_dashboard[f'B{row}'].font = normal_font
+        ws_dashboard[f'B{row}'].border = border
+        ws_dashboard[f'B{row}'].alignment = Alignment(horizontal='center')
+        row += 1
+    
+    # ملخص حسب النوع
+    row += 1
+    ws_dashboard.merge_cells(f'A{row}:F{row}')
+    cell = ws_dashboard[f'A{row}']
+    cell.value = "ملخص حسب نوع العقار"
+    cell.font = header_font
+    cell.fill = header_fill
+    cell.alignment = Alignment(horizontal='center')
+    
+    row += 1
+    # عناوين
+    headers = ['نوع العقار', 'العدد', 'إجمالي الإيجار السنوي']
+    for col, header in enumerate(headers, start=1):
+        cell = ws_dashboard.cell(row=row, column=col)
+        cell.value = header
+        cell.font = subheader_font
+        cell.fill = info_fill
+        cell.border = border
+        cell.alignment = Alignment(horizontal='center')
+    
+    # تجميع حسب النوع
+    property_types = {}
+    for prop in properties:
+        ptype = prop.owner_id or 'غير محدد'  # owner_id يحتوي نوع العقار مؤقتاً
+        if ptype not in property_types:
+            property_types[ptype] = {'count': 0, 'total_rent': 0}
+        property_types[ptype]['count'] += 1
+        if prop.status == 'active':
+            property_types[ptype]['total_rent'] += prop.annual_rent_amount
+    
+    row += 1
+    for ptype, data in property_types.items():
+        ws_dashboard.cell(row=row, column=1, value=ptype).border = border
+        ws_dashboard.cell(row=row, column=2, value=data['count']).border = border
+        ws_dashboard.cell(row=row, column=3, value=f"{data['total_rent']:,.0f} ريال").border = border
+        row += 1
+    
+    # ضبط عرض الأعمدة
+    ws_dashboard.column_dimensions['A'].width = 30
+    ws_dashboard.column_dimensions['B'].width = 20
+    ws_dashboard.column_dimensions['C'].width = 25
+    ws_dashboard.column_dimensions['D'].width = 20
+    ws_dashboard.column_dimensions['E'].width = 20
+    ws_dashboard.column_dimensions['F'].width = 20
+    
+    # ========== ورقة 2: قائمة العقارات ==========
+    ws_properties = wb.create_sheet(title="قائمة العقارات")
+    
+    # العنوان
+    ws_properties.merge_cells('A1:L1')
+    cell = ws_properties['A1']
+    cell.value = "قائمة العقارات المستأجرة"
+    cell.font = title_font
+    cell.fill = title_fill
+    cell.alignment = Alignment(horizontal='center', vertical='center')
+    ws_properties.row_dimensions[1].height = 30
+    
+    # عناوين الأعمدة
+    row = 3
+    headers = [
+        'رقم العقد', 'اسم العقار', 'نوع العقار', 'العنوان', 'المالك',
+        'تاريخ البداية', 'تاريخ الانتهاء', 'الأيام المتبقية',
+        'الإيجار السنوي', 'الإيجار الشهري', 'طريقة الدفع', 'الحالة'
+    ]
+    
+    for col, header in enumerate(headers, start=1):
+        cell = ws_properties.cell(row=row, column=col)
+        cell.value = header
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.border = border
+        cell.alignment = Alignment(horizontal='center', vertical='center')
+    
+    # بيانات العقارات
+    row = 4
+    for prop in properties:
+        ws_properties.cell(row=row, column=1, value=prop.contract_number or '-').border = border
+        ws_properties.cell(row=row, column=2, value=prop.city).border = border
+        ws_properties.cell(row=row, column=3, value=prop.owner_id or 'غير محدد').border = border
+        ws_properties.cell(row=row, column=4, value=prop.address).border = border
+        ws_properties.cell(row=row, column=5, value=prop.owner_name).border = border
+        ws_properties.cell(row=row, column=6, value=prop.contract_start_date.strftime('%Y-%m-%d')).border = border
+        ws_properties.cell(row=row, column=7, value=prop.contract_end_date.strftime('%Y-%m-%d')).border = border
+        ws_properties.cell(row=row, column=8, value=prop.remaining_days).border = border
+        ws_properties.cell(row=row, column=9, value=f"{prop.annual_rent_amount:,.0f}").border = border
+        ws_properties.cell(row=row, column=10, value=f"{prop.annual_rent_amount/12:,.0f}").border = border
+        ws_properties.cell(row=row, column=11, value=prop.payment_method or '-').border = border
+        
+        # تحديد الحالة
+        if prop.is_expired:
+            status = 'منتهي'
+            status_fill = PatternFill(start_color='FFC7CE', end_color='FFC7CE', fill_type='solid')
+        elif prop.is_expiring_soon:
+            status = f'قريب من الانتهاء ({prop.remaining_days} يوم)'
+            status_fill = PatternFill(start_color='FFEB9C', end_color='FFEB9C', fill_type='solid')
+        else:
+            status = f'نشط ({prop.remaining_days} يوم)'
+            status_fill = PatternFill(start_color='C6EFCE', end_color='C6EFCE', fill_type='solid')
+        
+        cell = ws_properties.cell(row=row, column=12, value=status)
+        cell.border = border
+        cell.fill = status_fill
+        cell.alignment = Alignment(horizontal='center')
+        
+        row += 1
+    
+    # ضبط عرض الأعمدة
+    column_widths = [15, 20, 15, 35, 20, 15, 15, 15, 18, 18, 15, 25]
+    for i, width in enumerate(column_widths, start=1):
+        ws_properties.column_dimensions[get_column_letter(i)].width = width
+    
+    # ========== ورقة 3: تفاصيل التجهيزات والدفعات ==========
+    ws_details = wb.create_sheet(title="التجهيزات والدفعات")
+    
+    # العنوان
+    ws_details.merge_cells('A1:H1')
+    cell = ws_details['A1']
+    cell.value = "تفاصيل التجهيزات والدفعات"
+    cell.font = title_font
+    cell.fill = title_fill
+    cell.alignment = Alignment(horizontal='center', vertical='center')
+    ws_details.row_dimensions[1].height = 30
+    
+    row = 3
+    for prop in properties:
+        # عنوان العقار
+        ws_details.merge_cells(f'A{row}:H{row}')
+        cell = ws_details[f'A{row}']
+        cell.value = f"عقار: {prop.city} - {prop.contract_number or 'بدون رقم عقد'}"
+        cell.font = subheader_font
+        cell.fill = info_fill
+        cell.border = border
+        row += 1
+        
+        # التجهيزات
+        furnishings = PropertyFurnishing.query.filter_by(property_id=prop.id).all()
+        if furnishings:
+            ws_details[f'A{row}'] = "التجهيزات:"
+            ws_details[f'A{row}'].font = Font(bold=True)
+            row += 1
+            
+            for furn in furnishings:
+                ws_details[f'A{row}'] = f"  • {furn.item_name}: {furn.quantity} {furn.unit}"
+                row += 1
+        
+        # الدفعات
+        payments = PropertyPayment.query.filter_by(property_id=prop.id).order_by(PropertyPayment.payment_date).all()
+        if payments:
+            ws_details[f'A{row}'] = "الدفعات:"
+            ws_details[f'A{row}'].font = Font(bold=True)
+            row += 1
+            
+            # عناوين
+            headers = ['التاريخ المتوقع', 'المبلغ', 'الحالة', 'تاريخ الدفع الفعلي']
+            for col, header in enumerate(headers, start=1):
+                cell = ws_details.cell(row=row, column=col)
+                cell.value = header
+                cell.font = Font(bold=True)
+                cell.fill = info_fill
+                cell.border = border
+            row += 1
+            
+            for payment in payments:
+                ws_details.cell(row=row, column=1, value=payment.payment_date.strftime('%Y-%m-%d')).border = border
+                ws_details.cell(row=row, column=2, value=f"{payment.amount:,.0f} ريال").border = border
+                status_text = {'pending': 'معلق', 'paid': 'مدفوع', 'overdue': 'متأخر'}.get(payment.status, '-')
+                ws_details.cell(row=row, column=3, value=status_text).border = border
+                ws_details.cell(row=row, column=4, value=payment.actual_payment_date.strftime('%Y-%m-%d') if payment.actual_payment_date else '-').border = border
+                row += 1
+        
+        row += 2  # مسافة بين العقارات
+    
+    # ضبط عرض الأعمدة
+    for i in range(1, 9):
+        ws_details.column_dimensions[get_column_letter(i)].width = 20
+    
+    # حفظ في الذاكرة
+    output = BytesIO()
+    wb.save(output)
+    output.seek(0)
+    
+    # اسم الملف
+    filename = f"تقرير_العقارات_الشامل_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx"
+    
+    # تسجيل النشاط
+    log_activity(
+        action='تصدير تقرير العقارات',
+        entity_type='RentalProperty',
+        entity_id=0,
+        details=f'تم تصدير تقرير شامل لجميع العقارات ({total_properties} عقار)'
+    )
+    
+    return send_file(
+        output,
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        as_attachment=True,
+        download_name=filename
+    )
