@@ -1119,6 +1119,103 @@ def export_all_properties_excel():
             
             row += 1
     
+    # إضافة تفاصيل الدفعات
+    row += 2
+    
+    # الدفعات المستحقة (القادمة خلال 30 يوم)
+    ws_payments.merge_cells(f'A{row}:H{row}')
+    cell = ws_payments[f'A{row}']
+    cell.value = "الدفعات المستحقة (30 يوم قادمة)"
+    cell.font = Font(name='Arial', size=11, bold=True, color='FFFFFF')
+    cell.fill = PatternFill(start_color='17A2B8', end_color='17A2B8', fill_type='solid')
+    cell.alignment = Alignment(horizontal='center')
+    row += 1
+    
+    upcoming_payments_date = date.today() + timedelta(days=30)
+    upcoming_payments = PropertyPayment.query.filter(
+        PropertyPayment.status == 'pending',
+        PropertyPayment.payment_date.between(date.today(), upcoming_payments_date)
+    ).order_by(PropertyPayment.payment_date).all()
+    
+    if upcoming_payments:
+        for payment in upcoming_payments:
+            prop = payment.rental_property
+            ws_payments.cell(row=row, column=1, value=prop.contract_number or '-').border = border
+            ws_payments.cell(row=row, column=2, value=prop.city).border = border
+            ws_payments.cell(row=row, column=3, value=payment.payment_date.strftime('%Y-%m-%d')).border = border
+            ws_payments.cell(row=row, column=4, value=f"{payment.amount:,.0f} ريال").border = border
+            days_left = (payment.payment_date - date.today()).days
+            cell = ws_payments.cell(row=row, column=5, value=f"بعد {days_left} يوم")
+            cell.border = border
+            cell.fill = PatternFill(start_color='D1ECF1', end_color='D1ECF1', fill_type='solid')
+            row += 1
+    else:
+        ws_payments[f'A{row}'] = "لا توجد دفعات مستحقة خلال 30 يوم"
+        ws_payments[f'A{row}'].font = Font(italic=True)
+        row += 1
+    
+    # الدفعات المعلقة
+    row += 1
+    ws_payments.merge_cells(f'A{row}:H{row}')
+    cell = ws_payments[f'A{row}']
+    cell.value = "الدفعات المعلقة"
+    cell.font = Font(name='Arial', size=11, bold=True, color='000000')
+    cell.fill = PatternFill(start_color='FFC107', end_color='FFC107', fill_type='solid')
+    cell.alignment = Alignment(horizontal='center')
+    row += 1
+    
+    pending_payments_list = PropertyPayment.query.filter_by(status='pending').order_by(
+        PropertyPayment.payment_date
+    ).all()
+    
+    if pending_payments_list:
+        for payment in pending_payments_list:
+            prop = payment.rental_property
+            ws_payments.cell(row=row, column=1, value=prop.contract_number or '-').border = border
+            ws_payments.cell(row=row, column=2, value=prop.city).border = border
+            ws_payments.cell(row=row, column=3, value=payment.payment_date.strftime('%Y-%m-%d')).border = border
+            ws_payments.cell(row=row, column=4, value=f"{payment.amount:,.0f} ريال").border = border
+            cell = ws_payments.cell(row=row, column=5, value="معلق")
+            cell.border = border
+            cell.fill = PatternFill(start_color='FFF3CD', end_color='FFF3CD', fill_type='solid')
+            row += 1
+    else:
+        ws_payments[f'A{row}'] = "لا توجد دفعات معلقة"
+        ws_payments[f'A{row}'].font = Font(italic=True)
+        row += 1
+    
+    # الدفعات المتأخرة
+    row += 1
+    ws_payments.merge_cells(f'A{row}:H{row}')
+    cell = ws_payments[f'A{row}']
+    cell.value = "الدفعات المتأخرة"
+    cell.font = Font(name='Arial', size=11, bold=True, color='FFFFFF')
+    cell.fill = PatternFill(start_color='DC3545', end_color='DC3545', fill_type='solid')
+    cell.alignment = Alignment(horizontal='center')
+    row += 1
+    
+    overdue_payments_list = PropertyPayment.query.filter(
+        PropertyPayment.status == 'pending',
+        PropertyPayment.payment_date < date.today()
+    ).order_by(PropertyPayment.payment_date).all()
+    
+    if overdue_payments_list:
+        for payment in overdue_payments_list:
+            prop = payment.rental_property
+            ws_payments.cell(row=row, column=1, value=prop.contract_number or '-').border = border
+            ws_payments.cell(row=row, column=2, value=prop.city).border = border
+            ws_payments.cell(row=row, column=3, value=payment.payment_date.strftime('%Y-%m-%d')).border = border
+            ws_payments.cell(row=row, column=4, value=f"{payment.amount:,.0f} ريال").border = border
+            days_overdue = (date.today() - payment.payment_date).days
+            cell = ws_payments.cell(row=row, column=5, value=f"متأخر {days_overdue} يوم")
+            cell.border = border
+            cell.fill = PatternFill(start_color='F8D7DA', end_color='F8D7DA', fill_type='solid')
+            row += 1
+    else:
+        ws_payments[f'A{row}'] = "لا توجد دفعات متأخرة"
+        ws_payments[f'A{row}'].font = Font(italic=True)
+        row += 1
+    
     # إضافة صف إحصائيات
     row += 1
     ws_payments.merge_cells(f'A{row}:H{row}')
@@ -1133,15 +1230,15 @@ def export_all_properties_excel():
     all_payments = PropertyPayment.query.all()
     total_payments = len(all_payments)
     paid_payments = sum(1 for p in all_payments if p.status == 'paid')
-    pending_payments = sum(1 for p in all_payments if p.status == 'pending')
-    overdue_payments = sum(1 for p in all_payments if p.status == 'overdue')
+    pending_payments_count = sum(1 for p in all_payments if p.status == 'pending')
+    overdue_payments_count = sum(1 for p in all_payments if p.status == 'pending' and p.payment_date < date.today())
     total_amount = sum(p.amount for p in all_payments if p.status == 'paid')
     
     stats = [
         ['إجمالي الدفعات', total_payments],
         ['دفعات مدفوعة', paid_payments],
-        ['دفعات معلقة', pending_payments],
-        ['دفعات متأخرة', overdue_payments],
+        ['دفعات معلقة', pending_payments_count],
+        ['دفعات متأخرة', overdue_payments_count],
         ['إجمالي المبالغ المدفوعة', f"{total_amount:,.0f} ريال"]
     ]
     
