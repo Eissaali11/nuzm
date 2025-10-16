@@ -1507,6 +1507,28 @@ def manage_residents(property_id):
                          departments=departments)
 
 
+@properties_bp.route('/<int:property_id>/add-resident-page')
+@login_required
+def add_resident_page(property_id):
+    """صفحة إضافة موظف قاطن"""
+    property = RentalProperty.query.get_or_404(property_id)
+    
+    # جلب جميع الأقسام
+    departments = Department.query.order_by(Department.name).all()
+    
+    # جلب جميع الموظفين النشطين
+    employees = Employee.query.filter_by(status='active').order_by(Employee.name).all()
+    
+    # الموظفين المضافين مسبقاً
+    current_resident_ids = [r.id for r in property.residents]
+    
+    return render_template('properties/add_resident.html',
+                         property=property,
+                         departments=departments,
+                         employees=employees,
+                         current_resident_ids=current_resident_ids)
+
+
 @properties_bp.route('/<int:property_id>/add-resident', methods=['POST'])
 @login_required
 def add_resident(property_id):
@@ -1535,6 +1557,24 @@ def add_resident(property_id):
             flash('الموظف مضاف مسبقاً للعقار', 'warning')
     
     return redirect(url_for('properties.view', property_id=property_id))
+
+
+@properties_bp.route('/<int:property_id>/add-department-page')
+@login_required
+def add_department_page(property_id):
+    """صفحة إضافة قسم كامل"""
+    property = RentalProperty.query.get_or_404(property_id)
+    
+    # جلب جميع الأقسام
+    departments = Department.query.order_by(Department.name).all()
+    
+    # جلب جميع الموظفين النشطين
+    employees = Employee.query.filter_by(status='active').all()
+    
+    return render_template('properties/add_department.html',
+                         property=property,
+                         departments=departments,
+                         employees=employees)
 
 
 @properties_bp.route('/<int:property_id>/add-department-residents', methods=['POST'])

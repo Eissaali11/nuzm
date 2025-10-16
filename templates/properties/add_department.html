@@ -1,0 +1,181 @@
+{% extends 'layout.html' %}
+
+{% block title %}إضافة قسم كامل{% endblock %}
+
+{% block styles %}
+<style>
+    .main-wrapper {
+        min-height: 100vh;
+        background: #1a2035;
+        padding: 20px 0;
+    }
+
+    .card {
+        border: none;
+        border-radius: 15px;
+        overflow: hidden;
+        margin-bottom: 25px;
+        background-color: #202940;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    }
+    
+    .card .card-header {
+        border: none;
+        padding: 20px;
+        font-weight: bold;
+        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+        color: white;
+    }
+    
+    .card .card-body {
+        background-color: #202940;
+        color: #e9ecef;
+        padding: 30px;
+    }
+
+    .form-label {
+        color: #a8b1ce;
+        font-weight: 600;
+        margin-bottom: 10px;
+    }
+
+    .form-select, .form-control {
+        background-color: #2a3654;
+        color: #e9ecef;
+        border: 1px solid #3a4a6d;
+        border-radius: 8px;
+        padding: 12px;
+    }
+
+    .form-select:focus, .form-control:focus {
+        background-color: #323e5f;
+        color: #e9ecef;
+        border-color: #17a2b8;
+        box-shadow: 0 0 0 0.2rem rgba(23, 162, 184, 0.25);
+    }
+
+    .form-select option {
+        background-color: #2a3654;
+        color: #e9ecef;
+    }
+
+    .btn {
+        border-radius: 8px;
+        padding: 12px 25px;
+        font-weight: 600;
+        transition: all 0.3s;
+    }
+
+    .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    }
+
+    .btn-info {
+        background-color: #17a2b8;
+        border-color: #17a2b8;
+        color: white;
+    }
+
+    .btn-secondary {
+        background-color: #6c757d;
+        border-color: #6c757d;
+    }
+
+    .page-navigator {
+        background-color: #202940;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 20px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .page-navigator a {
+        color: #727cf5;
+        text-decoration: none;
+        transition: color 0.3s;
+    }
+    
+    .page-navigator a:hover {
+        color: #949df5;
+    }
+
+    .alert-info {
+        background-color: #2a3654;
+        border: 1px solid #17a2b8;
+        color: #e9ecef;
+        border-radius: 8px;
+    }
+
+    .alert-info i {
+        color: #17a2b8;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="main-wrapper">
+    <div class="container">
+        <!-- شريط التنقل -->
+        <div class="page-navigator">
+            <a href="{{ url_for('properties.dashboard') }}">
+                <i class="fas fa-building"></i> العقارات
+            </a>
+            <span class="mx-2">/</span>
+            <a href="{{ url_for('properties.view', property_id=property.id) }}">
+                {{ property.city }}
+            </a>
+            <span class="mx-2">/</span>
+            <span>إضافة قسم كامل</span>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-building me-2"></i>
+                إضافة قسم كامل - {{ property.city }}
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('properties.add_department_residents', property_id=property.id) }}">
+                    <div class="mb-4">
+                        <label for="departmentSelect" class="form-label">
+                            <i class="fas fa-building me-2"></i>
+                            اختر القسم
+                        </label>
+                        <select class="form-select form-select-lg" id="departmentSelect" name="department_id" required>
+                            <option value="">-- اختر قسم --</option>
+                            {% for dept in departments %}
+                                {% set dept_count = employees|selectattr('department_id', 'equalto', dept.id)|list|length %}
+                                <option value="{{ dept.id }}">
+                                    {{ dept.name }} ({{ dept_count }} موظف)
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <small class="text-muted mt-2 d-block">
+                            <i class="fas fa-info-circle me-1"></i>
+                            سيتم إضافة جميع الموظفين النشطين في القسم المحدد
+                        </small>
+                    </div>
+
+                    <div class="alert alert-info mb-4">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        <strong>تنبيه:</strong> 
+                        عند اختيار قسم، سيتم إضافة جميع الموظفين النشطين التابعين له إلى العقار. 
+                        الموظفين المضافين مسبقاً لن يتم تكرارهم.
+                    </div>
+
+                    <div class="d-flex gap-3 justify-content-end">
+                        <a href="{{ url_for('properties.view', property_id=property.id) }}" class="btn btn-secondary">
+                            <i class="fas fa-times me-1"></i>
+                            إلغاء
+                        </a>
+                        <button type="submit" class="btn btn-info">
+                            <i class="fas fa-users me-1"></i>
+                            إضافة القسم
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
