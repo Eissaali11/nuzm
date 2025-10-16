@@ -1,0 +1,184 @@
+{% extends 'layout.html' %}
+
+{% block title %}إدارة تجهيزات العقار{% endblock %}
+
+{% block styles %}
+<style>
+    .main-wrapper {
+        min-height: 100vh;
+        background: #1a2035;
+        padding: 20px 0;
+    }
+
+    .card {
+        border: none;
+        border-radius: 15px;
+        overflow: hidden;
+        margin-bottom: 25px;
+        background-color: #202940;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    }
+    
+    .card .card-header {
+        border: none;
+        padding: 20px;
+        font-weight: bold;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    
+    .card .card-body {
+        background-color: #202940;
+        color: #e9ecef;
+        padding: 25px;
+    }
+    
+    .form-control, .form-select {
+        border-radius: 8px;
+        padding: 12px 15px;
+        background-color: #2a3654;
+        border: 1px solid #3f4865;
+        color: #e9ecef;
+        margin-bottom: 15px;
+        transition: all 0.3s;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        background-color: #2e3d60;
+        border-color: #4d5b84;
+        box-shadow: 0 0 0 0.25rem rgba(114, 124, 245, 0.25);
+        color: #ffffff;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: #e9ecef;
+    }
+    
+    .btn {
+        border-radius: 8px;
+        padding: 10px 15px;
+        font-weight: 600;
+        transition: all 0.3s;
+    }
+    
+    .btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+    }
+    
+    .btn-secondary {
+        background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+        border: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid main-wrapper">
+    <div class="container">
+        <div class="row mb-4">
+            <div class="col-12">
+                <h2 class="text-white">
+                    <i class="fas fa-couch ms-2"></i>
+                    إدارة تجهيزات العقار
+                </h2>
+                <p class="text-white-50">إضافة وتعديل تجهيزات العقار المستأجر</p>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-edit ms-2"></i>
+                        تفاصيل التجهيزات
+                    </div>
+                    <div class="card-body">
+                        <form method="POST">
+                            {{ form.hidden_tag() }}
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        {{ form.gas_cylinder.label(class="form-label") }}
+                                        {{ form.gas_cylinder(class="form-control") }}
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        {{ form.stoves.label(class="form-label") }}
+                                        {{ form.stoves(class="form-control") }}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        {{ form.beds.label(class="form-label") }}
+                                        {{ form.beds(class="form-control") }}
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        {{ form.blankets.label(class="form-label") }}
+                                        {{ form.blankets(class="form-control") }}
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        {{ form.pillows.label(class="form-label") }}
+                                        {{ form.pillows(class="form-control") }}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                {{ form.other_items.label(class="form-label") }}
+                                {{ form.other_items(class="form-control", rows="3") }}
+                            </div>
+                            
+                            <div class="mb-3">
+                                {{ form.notes.label(class="form-label") }}
+                                {{ form.notes(class="form-control", rows="3") }}
+                            </div>
+                            
+                            <div class="d-flex justify-content-between mt-4">
+                                {{ form.submit(class="btn btn-primary") }}
+                                <a href="{{ url_for('properties.view', property_id=property.id) }}" class="btn btn-secondary">
+                                    <i class="fas fa-arrow-right ms-1"></i>
+                                    رجوع
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-building ms-2"></i>
+                        معلومات العقار
+                    </div>
+                    <div class="card-body">
+                        <p><strong>اسم العقار:</strong> {{ property.city }}</p>
+                        <p><strong>رقم العقد:</strong> {{ property.contract_number or '-' }}</p>
+                        <p><strong>المالك:</strong> {{ property.owner_name }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
