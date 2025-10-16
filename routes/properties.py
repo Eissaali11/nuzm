@@ -7,6 +7,10 @@ import os
 import uuid
 from PIL import Image
 import pillow_heif
+from openpyxl import Workbook
+from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
+from openpyxl.utils import get_column_letter
+from io import BytesIO
 
 from app import db
 from models import RentalProperty, PropertyImage, PropertyPayment, PropertyFurnishing, User
@@ -529,3 +533,142 @@ def manage_furnishing(property_id):
             flash(f'حدث خطأ أثناء تحديث التجهيزات: {str(e)}', 'danger')
     
     return render_template('properties/furnishing.html', form=form, property=property, furnishing=furnishing)
+
+
+@properties_bp.route('/<int:property_id>/export-excel')
+@login_required
+def export_excel(property_id):
+    """تصدير بيانات العقار إلى Excel"""
+    property = RentalProperty.query.get_or_404(property_id)
+    
+    # جلب البيانات المرتبطة
+    payments = PropertyPayment.query.filter_by(property_id=property_id).order_by(PropertyPayment.payment_date).all()
+    furnishing = PropertyFurnishing.query.filter_by(property_id=property_id).first()
+    
+    # إنشاء ملف Excel
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "بيانات العقار"
+    
+    # تعريف الألوان والتنسيقات
+    header_fill = PatternFill(start_color="4472C4", end_color="4472C4", fill_type="solid")
+    header_font = Font(bold=True, color="FFFFFF", size=12)
+    border = Border(
+        left=Side(style='thin'),
+        right=Side(style='thin'),
+        top=Side(style='thin'),
+        bottom=Side(style='thin')
+    )
+    
+    # العنوان الرئيسي
+    ws.merge_cells('A1:D1')
+    ws['A1'] = f"تقرير العقار: {property.city}"
+    ws['A1'].font = Font(bold=True, size=16, color="1F4788")
+    ws['A1'].alignment = Alignment(horizontal='center', vertical='center')
+    ws.row_dimensions[1].height = 30
+    
+    # معلومات العقار الأساسية
+    ws['A3'] = "معلومات العقار"
+    ws['A3'].font = header_font
+    ws['A3'].fill = header_fill
+    ws.merge_cells('A3:B3')
+    
+    property_data = [
+        ('اسم العقار', property.city),
+        ('نوع العقار', {'apartment': 'شقة', 'villa': 'فيلا', 'building': 'عمارة', 
+                       'full_floor': 'دور كامل', 'office': 'مكتب', 'warehouse': 'مستودع'}.get(property.owner_id, '-')),
+        ('العنوان', property.address),
+        ('رقم العقد', property.contract_number or '-'),
+        ('اسم المالك', property.owner_name),
+        ('تاريخ البداية', property.contract_start_date.strftime('%Y-%m-%d')),
+        ('تاريخ الانتهاء', property.contract_end_date.strftime('%Y-%m-%d')),
+        ('الإيجار السنوي', f"{property.annual_rent_amount:,.0f} ريال"),
+        ('طريقة الدفع', {'monthly': 'شهري', 'quarterly': 'ربع سنوي', 
+                        'semi_annually': 'نصف سنوي', 'annually': 'سنوي'}.get(property.payment_method, '-')),
+    ]
+    
+    row = 4
+    for label, value in property_data:
+        ws[f'A{row}'] = label
+        ws[f'A{row}'].font = Font(bold=True)
+        ws[f'B{row}'] = value
+        ws[f'A{row}'].border = border
+        ws[f'B{row}'].border = border
+        row += 1
+    
+    # التجهيزات
+    if furnishing:
+        row += 1
+        ws[f'A{row}'] = "التجهيزات"
+        ws[f'A{row}'].font = header_font
+        ws[f'A{row}'].fill = header_fill
+        ws.merge_cells(f'A{row}:B{row}')
+        row += 1
+        
+        furnishing_data = [
+            ('جرات الغاز', furnishing.gas_cylinder),
+            ('الطباخات', furnishing.stoves),
+            ('الأسرّة', furnishing.beds),
+            ('البطانيات', furnishing.blankets),
+            ('المخدات', furnishing.pillows),
+        ]
+        
+        for label, value in furnishing_data:
+            ws[f'A{row}'] = label
+            ws[f'A{row}'].font = Font(bold=True)
+            ws[f'B{row}'] = value
+            ws[f'A{row}'].border = border
+            ws[f'B{row}'].border = border
+            row += 1
+    
+    # الدفعات
+    if payments:
+        row += 2
+        ws[f'A{row}'] = "الدفعات"
+        ws.merge_cells(f'A{row}:E{row}')
+        ws[f'A{row}'].font = header_font
+        ws[f'A{row}'].fill = header_fill
+        row += 1
+        
+        # عناوين جدول الدفعات
+        headers = ['التاريخ المتوقع', 'المبلغ', 'الحالة', 'تاريخ الدفع الفعلي', 'ملاحظات']
+        for col, header in enumerate(headers, start=1):
+            cell = ws.cell(row=row, column=col)
+            cell.value = header
+            cell.font = header_font
+            cell.fill = header_fill
+            cell.border = border
+            cell.alignment = Alignment(horizontal='center')
+        row += 1
+        
+        # بيانات الدفعات
+        for payment in payments:
+            ws.cell(row=row, column=1, value=payment.payment_date.strftime('%Y-%m-%d')).border = border
+            ws.cell(row=row, column=2, value=f"{payment.amount:,.2f} ريال").border = border
+            status_text = {'pending': 'معلق', 'paid': 'مدفوع', 'overdue': 'متأخر'}.get(payment.status, '-')
+            ws.cell(row=row, column=3, value=status_text).border = border
+            ws.cell(row=row, column=4, value=payment.actual_payment_date.strftime('%Y-%m-%d') if payment.actual_payment_date else '-').border = border
+            ws.cell(row=row, column=5, value=payment.notes or '-').border = border
+            row += 1
+    
+    # ضبط عرض الأعمدة
+    ws.column_dimensions['A'].width = 25
+    ws.column_dimensions['B'].width = 30
+    ws.column_dimensions['C'].width = 15
+    ws.column_dimensions['D'].width = 20
+    ws.column_dimensions['E'].width = 30
+    
+    # حفظ في الذاكرة
+    output = BytesIO()
+    wb.save(output)
+    output.seek(0)
+    
+    # اسم الملف
+    filename = f"عقار_{property.city}_{datetime.now().strftime('%Y%m%d')}.xlsx"
+    
+    return send_file(
+        output,
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        as_attachment=True,
+        download_name=filename
+    )
