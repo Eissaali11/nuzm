@@ -1366,6 +1366,9 @@ class VehicleExternalSafetyCheck(db.Model):
     # ملاحظات عامة
     notes = db.Column(db.Text)  # ملاحظات إضافية
     
+    # ملف PDF المرفق
+    pdf_file_path = db.Column(db.String(500), nullable=True)  # مسار ملف PDF المرفق
+    
     # معلومات النظام
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
