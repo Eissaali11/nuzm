@@ -1483,14 +1483,10 @@ def edit_safety_check(check_id):
                     if pdf_file.filename.lower().endswith('.pdf'):
                         # حذف الملف القديم إذا كان موجوداً
                         if safety_check.pdf_file_path:
-                            from utils.storage_helper import delete_image
                             delete_image(safety_check.pdf_file_path)
                         
                         # حفظ الملف الجديد
-                        import uuid
                         filename = f"{uuid.uuid4()}_{pdf_file.filename}"
-                        
-                        from utils.storage_helper import upload_image
                         pdf_path = upload_image(pdf_file, 'safety_checks_pdfs', filename)
                         safety_check.pdf_file_path = pdf_path
                         
