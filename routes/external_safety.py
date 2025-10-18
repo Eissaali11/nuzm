@@ -452,16 +452,43 @@ def handle_safety_check_submission(vehicle):
         db.session.add(safety_check)
         db.session.flush()  # للحصول على ID الجديد
         
-        # معالجة الصور من الكاميرا
+        # إنشاء مجلد الصور
+        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        upload_dir = os.path.join(project_root, 'uploads', 'safety_checks')
+        os.makedirs(upload_dir, exist_ok=True)
+        
+        # معالجة الصور من الملفات (للمدراء)
+        uploaded_files = request.files.getlist('file_images')
+        if uploaded_files and uploaded_files[0].filename:
+            for file in uploaded_files:
+                if file and file.filename:
+                    try:
+                        # حفظ الملف
+                        filename = f"{uuid.uuid4()}_{secure_filename(file.filename)}"
+                        file_path = os.path.join(upload_dir, filename)
+                        file.save(file_path)
+                        
+                        # ضغط وتحويل الصورة
+                        success = compress_image(file_path)
+                        if not success:
+                            current_app.logger.warning(f"فشل ضغط الصورة {filename}")
+                        
+                        # حفظ في قاعدة البيانات
+                        safety_image = VehicleSafetyImage()
+                        safety_image.safety_check_id = safety_check.id
+                        safety_image.image_path = f'uploads/safety_checks/{filename}'
+                        safety_image.image_description = f"تم رفعها من قبل المدير"
+                        db.session.add(safety_image)
+                        
+                    except Exception as e:
+                        current_app.logger.error(f"خطأ في معالجة الملف {file.filename}: {str(e)}")
+                        continue
+        
+        # معالجة الصور من الكاميرا (للسائقين)
         camera_images = request.form.get('camera_images', '')
         image_notes = request.form.get('image_notes', '')
         
         if camera_images:
-            # إنشاء مجلد الصور في جذر المشروع (مجلد دائم)
-            project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-            upload_dir = os.path.join(project_root, 'uploads', 'safety_checks')
-            os.makedirs(upload_dir, exist_ok=True)
-            
             import base64
             
             # تقسيم الصور والملاحظات
@@ -1450,6 +1477,7 @@ def bulk_delete_safety_checks():
         db.session.rollback()
         current_app.logger.error(f"خطأ في الحذف الجماعي لطلبات فحص السلامة: {str(e)}")
         flash('حدث خطأ في عملية الحذف الجماعي. يرجى المحاولة مرة أخرى', 'error')
+        return redirect(url_for('external_safety.admin_external_safety_checks'))
 
 @external_safety_bp.route('/admin/create-check-from-images', methods=['POST'])
 def admin_create_check_from_images():
