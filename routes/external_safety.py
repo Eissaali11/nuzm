@@ -1507,8 +1507,11 @@ def edit_safety_check(check_id):
                 for image_file in new_images:
                     if image_file and image_file.filename:
                         try:
+                            # إنشاء اسم ملف فريد
+                            filename = f"{uuid.uuid4()}_{secure_filename(image_file.filename)}"
+                            
                             # رفع الصورة باستخدام storage_helper
-                            image_path = upload_image(image_file, 'safety_checks', f"{uuid.uuid4()}_{secure_filename(image_file.filename)}")
+                            image_path = upload_image(image_file, 'safety_checks', filename)
                             
                             # إنشاء سجل جديد للصورة
                             new_image = VehicleSafetyImage(
