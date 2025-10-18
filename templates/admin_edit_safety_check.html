@@ -328,10 +328,21 @@
                         <!-- الصور المحفوظة مسبقاً -->
                         {% if safety_check.safety_images %}
                         <div class="card border-primary mb-3">
-                            <div class="card-header bg-primary text-white">
+                            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                                 <h5 class="mb-0">
                                     <i class="fas fa-images"></i> الصور المحفوظة ({{ safety_check.safety_images|length }} صورة)
                                 </h5>
+                                <div>
+                                    <div class="custom-control custom-checkbox d-inline-block">
+                                        <input type="checkbox" class="custom-control-input" id="selectAllImages" onclick="toggleAllImages(this)">
+                                        <label class="custom-control-label text-white" for="selectAllImages">
+                                            <i class="fas fa-check-double"></i> تحديد الكل
+                                        </label>
+                                    </div>
+                                    <button type="button" class="btn btn-danger btn-sm mr-2" onclick="deleteSelectedImages()" id="deleteImagesBtn">
+                                        <i class="fas fa-trash"></i> حذف المحدد
+                                    </button>
+                                </div>
                             </div>
                             <div class="card-body">
                                 <div class="row">
@@ -339,6 +350,13 @@
                                     <div class="col-md-4 mb-3">
                                         <div class="card border-light">
                                             <div class="card-body text-center">
+                                                <!-- Checkbox لتحديد الصورة -->
+                                                <div class="custom-control custom-checkbox mb-2 text-left">
+                                                    <input type="checkbox" class="custom-control-input image-checkbox" id="image_{{ image.id }}" value="{{ image.id }}">
+                                                    <label class="custom-control-label" for="image_{{ image.id }}">
+                                                        حذف هذه الصورة
+                                                    </label>
+                                                </div>
                                                 <!-- عرض الصورة -->
                                                 <div class="mb-3">
                                                     {% if image.image_path %}
@@ -675,6 +693,55 @@
         if (img && img.src) {
             window.open(img.src, '_blank');
         }
+    }
+    
+    // تحديد/إلغاء تحديد جميع الصور
+    function toggleAllImages(checkbox) {
+        const imageCheckboxes = document.querySelectorAll('.image-checkbox');
+        imageCheckboxes.forEach(cb => {
+            cb.checked = checkbox.checked;
+        });
+    }
+    
+    // حذف الصور المحددة
+    function deleteSelectedImages() {
+        const selectedImages = [];
+        document.querySelectorAll('.image-checkbox:checked').forEach(checkbox => {
+            selectedImages.push(checkbox.value);
+        });
+        
+        if (selectedImages.length === 0) {
+            alert('يرجى تحديد صورة واحدة على الأقل للحذف');
+            return;
+        }
+        
+        if (!confirm(`هل أنت متأكد من حذف ${selectedImages.length} صورة؟\nهذا الإجراء لا يمكن التراجع عنه.`)) {
+            return;
+        }
+        
+        // إرسال طلب حذف إلى الخادم
+        fetch('{{ url_for("external_safety.delete_safety_check_images", check_id=safety_check.id) }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                image_ids: selectedImages
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message || 'تم حذف الصور بنجاح');
+                window.location.reload();
+            } else {
+                alert('حدث خطأ: ' + (data.message || 'فشل حذف الصور'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('حدث خطأ في الاتصال بالخادم');
+        });
     }
     
     // إضافة دعم السحب والإفلات للصور المكبرة

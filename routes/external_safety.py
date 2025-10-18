@@ -1529,6 +1529,64 @@ def edit_safety_check(check_id):
     
     return render_template('admin_edit_safety_check.html', safety_check=safety_check)
 
+@external_safety_bp.route('/admin/external-safety-check/<int:check_id>/delete-images', methods=['POST'])
+def delete_safety_check_images(check_id):
+    """حذف صور محددة من طلب فحص السلامة"""
+    if not current_user.is_authenticated:
+        return jsonify({'success': False, 'message': 'غير مصرح لك'}), 403
+    
+    try:
+        safety_check = VehicleExternalSafetyCheck.query.get_or_404(check_id)
+        
+        # الحصول على معرفات الصور المراد حذفها
+        data = request.get_json()
+        image_ids = data.get('image_ids', [])
+        
+        if not image_ids:
+            return jsonify({'success': False, 'message': 'لم يتم تحديد أي صور للحذف'}), 400
+        
+        # حذف الصور المحددة
+        deleted_count = 0
+        for image_id in image_ids:
+            image = VehicleSafetyImage.query.filter_by(
+                id=image_id,
+                safety_check_id=check_id
+            ).first()
+            
+            if image:
+                try:
+                    # حذف الصورة من التخزين
+                    if image.image_path:
+                        delete_image(image.image_path)
+                    
+                    # حذف السجل من قاعدة البيانات
+                    db.session.delete(image)
+                    deleted_count += 1
+                except Exception as e:
+                    current_app.logger.error(f"خطأ في حذف الصورة {image_id}: {str(e)}")
+                    continue
+        
+        db.session.commit()
+        
+        # تسجيل العملية
+        log_audit(
+            user_id=current_user.id,
+            action='delete_images',
+            entity_type='VehicleExternalSafetyCheck',
+            entity_id=safety_check.id,
+            details=f'تم حذف {deleted_count} صورة من طلب فحص السلامة للسيارة {safety_check.vehicle_plate_number}'
+        )
+        
+        return jsonify({
+            'success': True,
+            'message': f'تم حذف {deleted_count} صورة بنجاح'
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"خطأ في حذف الصور: {str(e)}")
+        return jsonify({'success': False, 'message': 'حدث خطأ في حذف الصور'}), 500
+
 @external_safety_bp.route('/admin/external-safety-check/<int:check_id>/delete', methods=['POST'])
 def delete_safety_check(check_id):
     """حذف طلب فحص السلامة"""
