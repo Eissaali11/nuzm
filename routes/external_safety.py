@@ -452,9 +452,9 @@ def handle_safety_check_submission(vehicle):
         db.session.add(safety_check)
         db.session.flush()  # للحصول على ID الجديد
         
-        # إنشاء مجلد الصور
+        # إنشاء مجلد الصور في static (دائم في Replit)
         project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        upload_dir = os.path.join(project_root, 'uploads', 'safety_checks')
+        upload_dir = os.path.join(project_root, 'static', 'uploads', 'safety_checks')
         os.makedirs(upload_dir, exist_ok=True)
         
         # معالجة الصور من الملفات (للمدراء)
@@ -476,7 +476,7 @@ def handle_safety_check_submission(vehicle):
                         # حفظ في قاعدة البيانات
                         safety_image = VehicleSafetyImage()
                         safety_image.safety_check_id = safety_check.id
-                        safety_image.image_path = f'uploads/safety_checks/{filename}'
+                        safety_image.image_path = f'static/uploads/safety_checks/{filename}'
                         safety_image.image_description = f"تم رفعها من قبل المدير"
                         db.session.add(safety_image)
                         
@@ -536,7 +536,7 @@ def handle_safety_check_submission(vehicle):
                         
                         safety_image = VehicleSafetyImage()
                         safety_image.safety_check_id = safety_check.id
-                        safety_image.image_path = f'uploads/safety_checks/{filename}'
+                        safety_image.image_path = f'static/uploads/safety_checks/{filename}'
                         safety_image.image_description = description
                         
                         db.session.add(safety_image)
@@ -1547,7 +1547,7 @@ def admin_create_check_from_images():
                 # إنشاء سجل الصورة
                 image_record = VehicleSafetyImage()
                 image_record.safety_check_id = safety_check.id
-                image_record.image_path = f"uploads/safety_checks/{unique_filename}"
+                image_record.image_path = f"static/uploads/safety_checks/{unique_filename}"
                 image_record.uploaded_at = datetime.now()
                 
                 db.session.add(image_record)
