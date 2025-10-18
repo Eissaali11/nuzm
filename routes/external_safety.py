@@ -1592,11 +1592,16 @@ def export_safety_check_pdf(check_id):
             details=f'تم تصدير طلب فحص السلامة للسيارة {safety_check.vehicle_plate_number} كملف PDF'
         )
         
+        # تنسيق اسم الملف برقم اللوحة واسم السائق والتاريخ
+        inspection_date = safety_check.inspection_date.strftime('%Y-%m-%d') if safety_check.inspection_date else 'بدون_تاريخ'
+        plate_number = safety_check.vehicle_plate_number.replace(' ', '_')
+        driver_name = safety_check.driver_name.replace(' ', '_') if safety_check.driver_name else 'غير_محدد'
+        
         # إرسال الـ PDF
         return send_file(
             pdf_buffer,
             as_attachment=True,
-            download_name=f'safety_check_{safety_check.id}_{safety_check.vehicle_plate_number}.pdf',
+            download_name=f'{plate_number}_{driver_name}_{inspection_date}.pdf',
             mimetype='application/pdf'
         )
         
