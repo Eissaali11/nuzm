@@ -1068,7 +1068,7 @@ def export_residents_excel(property_id):
         cell.border = border
         
         # الجنسية
-        nationality = resident.nationality_rel.name if resident.nationality_rel else '-'
+        nationality = resident.nationality_rel.name_ar if resident.nationality_rel else '-'
         cell = ws.cell(row=row, column=6, value=nationality)
         cell.border = border
         
