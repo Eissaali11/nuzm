@@ -977,6 +977,178 @@ def export_excel(property_id):
     )
 
 
+@properties_bp.route('/<int:property_id>/export-residents-excel')
+@login_required
+def export_residents_excel(property_id):
+    """تصدير بيانات الموظفين القاطنين إلى Excel"""
+    property = RentalProperty.query.get_or_404(property_id)
+    
+    # جلب الموظفين القاطنين
+    residents = property.residents
+    
+    # إنشاء ملف Excel
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "الموظفون القاطنون"
+    
+    # تعريف الألوان والتنسيقات
+    header_fill = PatternFill(start_color="667EEA", end_color="764BA2", fill_type="solid")
+    header_font = Font(bold=True, color="FFFFFF", size=12)
+    border = Border(
+        left=Side(style='thin'),
+        right=Side(style='thin'),
+        top=Side(style='thin'),
+        bottom=Side(style='thin')
+    )
+    
+    # العنوان الرئيسي
+    ws.merge_cells('A1:H1')
+    ws['A1'] = f"الموظفون القاطنون في العقار: {property.city}"
+    ws['A1'].font = Font(bold=True, size=16, color="1F4788")
+    ws['A1'].alignment = Alignment(horizontal='center', vertical='center')
+    ws.row_dimensions[1].height = 35
+    
+    # معلومات العقار
+    property_types = {'apartment': 'شقة', 'villa': 'فيلا', 'building': 'عمارة', 'full_floor': 'دور كامل', 'office': 'مكتب', 'warehouse': 'مستودع'}
+    ws['A3'] = f"نوع العقار: {property_types.get(property.owner_id, '-')}"
+    ws['A3'].font = Font(bold=True, size=11)
+    ws['A4'] = f"العنوان: {property.address or '-'}"
+    ws['A4'].font = Font(size=10)
+    ws['A5'] = f"رقم العقد: {property.contract_number or '-'}"
+    ws['A5'].font = Font(size=10)
+    
+    # عنوان القائمة
+    row = 7
+    ws.merge_cells(f'A{row}:H{row}')
+    cell = ws[f'A{row}']
+    cell.value = f"👥 قائمة الموظفين القاطنين ({len(residents)} موظف)"
+    cell.font = Font(name='Arial', size=14, bold=True, color='FFFFFF')
+    cell.fill = header_fill
+    cell.alignment = Alignment(horizontal='center', vertical='center')
+    ws.row_dimensions[row].height = 30
+    row += 1
+    
+    # عناوين الأعمدة
+    headers = ['#', 'اسم الموظف', 'رقم الموظف', 'المسمى الوظيفي', 'القسم', 'الجنسية', 'رقم الهوية', 'الحالة']
+    for col, header in enumerate(headers, start=1):
+        cell = ws.cell(row=row, column=col)
+        cell.value = header
+        cell.font = header_font
+        cell.fill = PatternFill(start_color="4472C4", end_color="4472C4", fill_type="solid")
+        cell.border = border
+        cell.alignment = Alignment(horizontal='center', vertical='center')
+    ws.row_dimensions[row].height = 25
+    row += 1
+    
+    # بيانات الموظفين
+    for idx, resident in enumerate(residents, start=1):
+        # الرقم التسلسلي
+        cell = ws.cell(row=row, column=1, value=idx)
+        cell.border = border
+        cell.alignment = Alignment(horizontal='center')
+        cell.fill = PatternFill(start_color="F0F0F0", end_color="F0F0F0", fill_type="solid")
+        
+        # اسم الموظف
+        cell = ws.cell(row=row, column=2, value=resident.name)
+        cell.border = border
+        cell.font = Font(bold=True)
+        
+        # رقم الموظف
+        cell = ws.cell(row=row, column=3, value=resident.employee_id)
+        cell.border = border
+        cell.alignment = Alignment(horizontal='center')
+        
+        # المسمى الوظيفي
+        cell = ws.cell(row=row, column=4, value=resident.job_title or '-')
+        cell.border = border
+        
+        # القسم
+        department_name = resident.departments[0].name if resident.departments else 'بدون قسم'
+        cell = ws.cell(row=row, column=5, value=department_name)
+        cell.border = border
+        
+        # الجنسية
+        nationality = resident.nationality_rel.name if resident.nationality_rel else '-'
+        cell = ws.cell(row=row, column=6, value=nationality)
+        cell.border = border
+        
+        # رقم الهوية
+        cell = ws.cell(row=row, column=7, value=resident.national_id or '-')
+        cell.border = border
+        cell.alignment = Alignment(horizontal='center')
+        
+        # الحالة
+        status_text = 'نشط' if resident.status == 'active' else 'غير نشط'
+        cell = ws.cell(row=row, column=8, value=status_text)
+        cell.border = border
+        cell.alignment = Alignment(horizontal='center')
+        
+        # تلوين الصف بالتبادل
+        if idx % 2 == 0:
+            for col in range(1, 9):
+                ws.cell(row=row, column=col).fill = PatternFill(start_color="F8F9FA", end_color="F8F9FA", fill_type="solid")
+        
+        row += 1
+    
+    # إضافة ملخص إحصائي
+    row += 2
+    ws.merge_cells(f'A{row}:H{row}')
+    cell = ws[f'A{row}']
+    cell.value = "📊 ملخص إحصائي"
+    cell.font = Font(name='Arial', size=12, bold=True, color='FFFFFF')
+    cell.fill = PatternFill(start_color='6C757D', end_color='6C757D', fill_type='solid')
+    cell.alignment = Alignment(horizontal='center')
+    row += 1
+    
+    # حساب الإحصائيات
+    active_count = sum(1 for r in residents if r.status == 'active')
+    departments_count = len(set(r.departments[0].name for r in residents if r.departments))
+    
+    stats = [
+        ['إجمالي الموظفين القاطنين', len(residents)],
+        ['موظفين نشطين', active_count],
+        ['موظفين غير نشطين', len(residents) - active_count],
+        ['عدد الأقسام المختلفة', departments_count],
+    ]
+    
+    for stat in stats:
+        ws[f'A{row}'] = stat[0]
+        ws[f'A{row}'].font = Font(bold=True)
+        ws[f'A{row}'].fill = PatternFill(start_color='E9ECEF', end_color='E9ECEF', fill_type='solid')
+        ws[f'A{row}'].border = border
+        
+        ws[f'B{row}'] = stat[1]
+        ws[f'B{row}'].border = border
+        ws[f'B{row}'].alignment = Alignment(horizontal='center')
+        ws[f'B{row}'].font = Font(bold=True, color='667EEA')
+        row += 1
+    
+    # ضبط عرض الأعمدة
+    ws.column_dimensions['A'].width = 8
+    ws.column_dimensions['B'].width = 25
+    ws.column_dimensions['C'].width = 15
+    ws.column_dimensions['D'].width = 25
+    ws.column_dimensions['E'].width = 20
+    ws.column_dimensions['F'].width = 15
+    ws.column_dimensions['G'].width = 15
+    ws.column_dimensions['H'].width = 12
+    
+    # حفظ في الذاكرة
+    output = BytesIO()
+    wb.save(output)
+    output.seek(0)
+    
+    # اسم الملف
+    filename = f"الموظفون_القاطنون_{property.city}_{datetime.now().strftime('%Y%m%d')}.xlsx"
+    
+    return send_file(
+        output,
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        as_attachment=True,
+        download_name=filename
+    )
+
+
 @properties_bp.route('/export-all-excel')
 @login_required
 def export_all_properties_excel():
