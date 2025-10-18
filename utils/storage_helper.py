@@ -23,28 +23,30 @@ def upload_image(file_data, folder_name, filename):
     Returns:
         str: المسار الكامل للملف في Storage أو المسار المحلي
     """
-    if not STORAGE_AVAILABLE or client is None:
-        # حفظ محلياً كبديل
-        local_path = os.path.join('static', 'uploads', folder_name, filename)
-        os.makedirs(os.path.dirname(local_path), exist_ok=True)
-        
-        file_bytes = file_data if isinstance(file_data, bytes) else file_data.read() if hasattr(file_data, 'read') else file_data
-        
-        with open(local_path, 'wb') as f:
-            f.write(file_bytes)
-        
-        return f'static/uploads/{folder_name}/{filename}'
-    
     object_key = f"{folder_name}/{filename}"
     
+    # تحضير البيانات
     if hasattr(file_data, 'read'):
         file_bytes = file_data.read()
     else:
         file_bytes = file_data
     
-    client.upload_from_bytes(object_key, file_bytes)
+    # محاولة الرفع إلى Object Storage
+    if STORAGE_AVAILABLE and client is not None:
+        try:
+            client.upload_from_bytes(object_key, file_bytes)
+            return object_key
+        except Exception as e:
+            print(f"Warning: Failed to upload to Object Storage ({e}), falling back to local storage")
     
-    return object_key
+    # الحفظ المحلي كبديل
+    local_path = os.path.join('static', 'uploads', folder_name, filename)
+    os.makedirs(os.path.dirname(local_path), exist_ok=True)
+    
+    with open(local_path, 'wb') as f:
+        f.write(file_bytes)
+    
+    return f'static/uploads/{folder_name}/{filename}'
 
 def download_image(object_key):
     """
@@ -116,23 +118,24 @@ def delete_image(object_key):
         return False
     
     # حذف من Object Storage
-    if not STORAGE_AVAILABLE or client is None:
-        # محاولة حذف من المسار المحلي
-        local_path = os.path.join('static', 'uploads', object_key)
-        if os.path.exists(local_path):
-            try:
-                os.remove(local_path)
-                return True
-            except Exception as e:
-                print(f"Error deleting fallback file {local_path}: {str(e)}")
-        return False
+    if STORAGE_AVAILABLE and client is not None:
+        try:
+            client.delete(object_key)
+            return True
+        except Exception as e:
+            print(f"Warning: Failed to delete from Object Storage ({e}), trying local fallback")
     
-    try:
-        client.delete(object_key)
-        return True
-    except Exception as e:
-        print(f"Error deleting image {object_key}: {str(e)}")
-        return False
+    # محاولة حذف من المسار المحلي كبديل
+    local_path = os.path.join('static', 'uploads', object_key)
+    if os.path.exists(local_path):
+        try:
+            os.remove(local_path)
+            return True
+        except Exception as e:
+            print(f"Error deleting fallback file {local_path}: {str(e)}")
+            return False
+    
+    return False
 
 def list_images(folder_name):
     """
