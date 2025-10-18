@@ -693,103 +693,6 @@
                             <input type="hidden" name="camera_images" id="camera_images">
                         </div>
                     </div>
-                </div>
-        
-        
-        // التحقق من الموظف
-        async function verifyEmployee() {
-            const nationalId = document.getElementById('driver_national_id').value;
-            
-            if (!nationalId) {
-                alert('يرجى إدخال رقم الهوية الوطنية');
-                return;
-            }
-            
-            // إضافة مؤشر التحميل
-            const submitBtn = document.getElementById('submitBtn');
-            const originalText = submitBtn.innerHTML;
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التحقق...';
-            submitBtn.disabled = true;
-            
-            try {
-                console.log('Verifying employee with ID:', nationalId);
-                const response = await fetch(`/external-safety/api/verify-employee/${nationalId}`, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    }
-                });
-                
-                console.log('Response status:', response.status);
-                const data = await response.json();
-                console.log('Response data:', data);
-                
-                if (response.ok && data.success) {
-                    // تعبئة البيانات التلقائية
-                    document.getElementById('driver_name').value = data.employee.name;
-                    document.getElementById('driver_department').value = data.employee.department;
-                    document.getElementById('driver_city').value = data.employee.city || 'الرياض';
-                    
-                    // عرض معلومات التحقق
-                    const verification = document.getElementById('employeeVerification');
-                    const details = document.getElementById('employeeDetails');
-                    
-                    details.innerHTML = `
-                        <div class="mt-2">
-                            <strong>الاسم:</strong> ${data.employee.name}<br>
-                            <strong>القسم:</strong> ${data.employee.department}<br>
-                            <strong>المدينة:</strong> ${data.employee.city || 'الرياض'}
-                        </div>
-                    `;
-                    
-                    verification.style.display = 'block';
-                    
-                    // إظهار رسالة نجاح
-                    showAlert('تم التحقق من الموظف بنجاح', 'success');
-                    
-                } else {
-                    // إخفاء معلومات التحقق
-                    const verification = document.getElementById('employeeVerification');
-                    verification.style.display = 'none';
-                    
-                    // مسح البيانات المعبأة
-                    document.getElementById('driver_name').value = '';
-                    document.getElementById('driver_department').value = '';
-                    document.getElementById('driver_city').value = '';
-                    
-                    showAlert('لم يتم العثور على موظف بهذا الرقم', 'danger');
-                }
-            } catch (error) {
-                console.error('خطأ في التحقق من الموظف:', error);
-                showAlert('حدث خطأ في التحقق من الموظف. يرجى المحاولة مرة أخرى.', 'danger');
-                
-                // إخفاء معلومات التحقق
-                const verification = document.getElementById('employeeVerification');
-                verification.style.display = 'none';
-            } finally {
-                // إعادة الزر لحالته الطبيعية
-                submitBtn.innerHTML = originalText;
-                submitBtn.disabled = false;
-            }
-        }
-        
-        // دالة لعرض التنبيهات
-        function showAlert(message, type) {
-            const alertDiv = document.createElement('div');
-            alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
-            alertDiv.innerHTML = `
-                ${message}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            `;
-            
-            const container = document.querySelector('.form-container');
-            container.insertBefore(alertDiv, container.firstChild);
-            
-            // إخفاء التنبيه تلقائياً بعد 5 ثوان
-            setTimeout(() => {
-                alertDiv.remove();
-            }, 5000);
-        }
         
         // معالجة رفع الصور
         function handleImageUpload(input) {
@@ -1034,6 +937,103 @@
                 loadingSpinner.style.display = 'none';
             }
 <script>
+                </div>
+        
+        
+        // التحقق من الموظف
+        async function verifyEmployee() {
+            const nationalId = document.getElementById('driver_national_id').value;
+            
+            if (!nationalId) {
+                alert('يرجى إدخال رقم الهوية الوطنية');
+                return;
+            }
+            
+            // إضافة مؤشر التحميل
+            const submitBtn = document.getElementById('submitBtn');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التحقق...';
+            submitBtn.disabled = true;
+            
+            try {
+                console.log('Verifying employee with ID:', nationalId);
+                const response = await fetch(`/external-safety/api/verify-employee/${nationalId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                console.log('Response status:', response.status);
+                const data = await response.json();
+                console.log('Response data:', data);
+                
+                if (response.ok && data.success) {
+                    // تعبئة البيانات التلقائية
+                    document.getElementById('driver_name').value = data.employee.name;
+                    document.getElementById('driver_department').value = data.employee.department;
+                    document.getElementById('driver_city').value = data.employee.city || 'الرياض';
+                    
+                    // عرض معلومات التحقق
+                    const verification = document.getElementById('employeeVerification');
+                    const details = document.getElementById('employeeDetails');
+                    
+                    details.innerHTML = `
+                        <div class="mt-2">
+                            <strong>الاسم:</strong> ${data.employee.name}<br>
+                            <strong>القسم:</strong> ${data.employee.department}<br>
+                            <strong>المدينة:</strong> ${data.employee.city || 'الرياض'}
+                        </div>
+                    `;
+                    
+                    verification.style.display = 'block';
+                    
+                    // إظهار رسالة نجاح
+                    showAlert('تم التحقق من الموظف بنجاح', 'success');
+                    
+                } else {
+                    // إخفاء معلومات التحقق
+                    const verification = document.getElementById('employeeVerification');
+                    verification.style.display = 'none';
+                    
+                    // مسح البيانات المعبأة
+                    document.getElementById('driver_name').value = '';
+                    document.getElementById('driver_department').value = '';
+                    document.getElementById('driver_city').value = '';
+                    
+                    showAlert('لم يتم العثور على موظف بهذا الرقم', 'danger');
+                }
+            } catch (error) {
+                console.error('خطأ في التحقق من الموظف:', error);
+                showAlert('حدث خطأ في التحقق من الموظف. يرجى المحاولة مرة أخرى.', 'danger');
+                
+                // إخفاء معلومات التحقق
+                const verification = document.getElementById('employeeVerification');
+                verification.style.display = 'none';
+            } finally {
+                // إعادة الزر لحالته الطبيعية
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }
+        }
+        
+        // دالة لعرض التنبيهات
+        function showAlert(message, type) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            const container = document.querySelector('.form-container');
+            container.insertBefore(alertDiv, container.firstChild);
+            
+            // إخفاء التنبيه تلقائياً بعد 5 ثوان
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 5000);
+        }
 // عرض معاينة الصور مع حقول الملاحظات
 function displayImagePreview() {
     const instantPreview = document.getElementById('instantPreview');

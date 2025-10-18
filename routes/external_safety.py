@@ -1594,10 +1594,11 @@ def api_admin_login():
         
         if user and check_password_hash(user.password_hash, password):
             # التحقق من أن المستخدم مدير
-            if user.role in ['admin', 'manager']:
+            role_value = user.role.value if hasattr(user.role, 'value') else str(user.role)
+            if role_value.upper() in ['ADMIN', 'MANAGER']:
                 return jsonify({
                     'success': True,
-                    'role': user.role,
+                    'role': role_value.lower(),
                     'username': user.username
                 })
             else:
