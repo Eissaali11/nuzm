@@ -260,7 +260,7 @@
                 </div>
                 
                 <div class="card-body">
-                    <form method="POST" action="{{ url_for('external_safety.edit_safety_check', check_id=safety_check.id) }}">
+                    <form method="POST" action="{{ url_for('external_safety.edit_safety_check', check_id=safety_check.id) }}" enctype="multipart/form-data">
                         <div class="row">
                             <!-- معلومات السيارة -->
                             <div class="col-md-6">
@@ -403,6 +403,55 @@
                             </div>
                         </div>
                         {% endif %}
+                        
+                        <!-- رفع ملف PDF -->
+                        <div class="card border-danger mb-3">
+                            <div class="card-header bg-danger text-white">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-file-pdf"></i> ملف PDF المرفق
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                {% if safety_check.pdf_file_path %}
+                                <div class="alert alert-success mb-3">
+                                    <i class="fas fa-check-circle"></i>
+                                    يوجد ملف PDF مرفق حالياً
+                                    <div class="mt-2">
+                                        {% if safety_check.pdf_file_path.startswith('static/') %}
+                                            {% set pdf_url = '/' + safety_check.pdf_file_path %}
+                                        {% else %}
+                                            {% set pdf_url = '/uploads/safety_checks_pdfs/' + safety_check.pdf_file_path %}
+                                        {% endif %}
+                                        <a href="{{ pdf_url }}" target="_blank" class="btn btn-sm btn-info">
+                                            <i class="fas fa-eye"></i> عرض الملف الحالي
+                                        </a>
+                                        <a href="{{ pdf_url }}" download class="btn btn-sm btn-success">
+                                            <i class="fas fa-download"></i> تحميل الملف
+                                        </a>
+                                    </div>
+                                </div>
+                                {% else %}
+                                <div class="alert alert-warning mb-3">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    لا يوجد ملف PDF مرفق حالياً
+                                </div>
+                                {% endif %}
+                                
+                                <div class="form-group">
+                                    <label for="pdf_file">
+                                        <i class="fas fa-upload"></i> رفع ملف PDF جديد:
+                                    </label>
+                                    <input type="file" 
+                                           class="form-control" 
+                                           id="pdf_file" 
+                                           name="pdf_file" 
+                                           accept=".pdf,application/pdf">
+                                    <small class="form-text text-muted">
+                                        يمكنك رفع ملف PDF (الحد الأقصى: 10 ميجابايت). سيتم استبدال الملف القديم إذا كان موجوداً.
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
                         
                         <!-- الملاحظات -->
                         <div class="card border-secondary mb-3">
