@@ -694,48 +694,6 @@
                         </div>
                     </div>
                 </div>
-  a.href = dataURL;
-  a.download = `snapshot-${Date.now()}.png`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-}
-
-function addThumbnail(dataURL) {
-  const img = document.createElement('img');
-  img.src = dataURL;
-  img.alt = 'Captured snapshot';
-  img.style.maxWidth = '160px';
-  img.style.margin = '4px';
-  galleryEl.appendChild(img);
-}
-
-// Example upload: send base64 payload to server
-function uploadImage(dataURL) {
-  // Strip "data:image/png;base64," prefix
-  const base64 = dataURL.split(',')[1];
-
-  fetch('/upload-snapshot', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      filename: `snapshot-${Date.now()}.png`,
-      image_base64: base64
-    })
-  })
-  .then(r => {
-    if (!r.ok) throw new Error('Upload failed');
-    return r.json();
-  })
-  .then(result => {
-    console.log('Uploaded:', result);
-  })
-  .catch(err => {
-    console.error(err);
-    alert('Upload error: ' + err.message);
-  });
-}
-
         
         
         // التحقق من الموظف
@@ -964,6 +922,9 @@ function uploadImage(dataURL) {
         // إعداد السحب والإفلات
         const uploadArea = document.querySelector('.image-upload-area');
         
+        if (uploadArea) {
+        
+        if (uploadArea) {
         uploadArea.addEventListener('dragover', (e) => {
             e.preventDefault();
             uploadArea.classList.add('dragover');
@@ -982,6 +943,7 @@ function uploadImage(dataURL) {
             const input = document.getElementById('safety_images');
             input.files = files;
             handleImageUpload(input);
+        }
         });
         
         // إرسال النموذج
@@ -1272,3 +1234,5 @@ async function adminLogin() {
     }
 }
 </script>
+</body>
+</html>
