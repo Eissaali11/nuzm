@@ -1165,7 +1165,7 @@ $(document).ready(function() {
                 <div class="modal-body">
                     <div class="mb-3">
                         <label class="form-label">اختر السيارة</label>
-                        <select class="form-control" name="vehicle_id" id="vehicleSelect" required>
+                        <select class="form-control vehicle-search-dropdown" name="vehicle_id" id="vehicleSelect" required>
                             <option value="">-- اختر السيارة --</option>
                             {% for vehicle in all_vehicles %}
                                 {% if vehicle %}
@@ -1207,6 +1207,24 @@ $(document).ready(function() {
 <script>
 // Wrap in DOMContentLoaded to ensure elements exist
 document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Select2 for vehicle dropdown in modal
+    $('#vehicleSelect').select2({
+        placeholder: 'ابحث عن السيارة...',
+        allowClear: true,
+        dir: 'rtl',
+        theme: 'default',
+        width: '100%',
+        dropdownParent: $('#uploadImagesModal'),
+        language: {
+            noResults: function() {
+                return "لا توجد نتائج مطابقة";
+            },
+            searching: function() {
+                return "جاري البحث...";
+            }
+        }
+    });
+    
     const imageInput = document.getElementById('imageInput');
     const uploadForm = document.getElementById('uploadImagesForm');
     
