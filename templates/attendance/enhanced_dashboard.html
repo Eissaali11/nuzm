@@ -25,7 +25,7 @@
                 <i class="fas fa-list me-1"></i>
                 قائمة الحضور
             </a>
-            <a href="{{ url_for('attendance.all_departments_attendance', date=selected_date.strftime('%Y-%m-%d')) }}" class="btn btn-primary">
+            <a href="{{ url_for('mass.departments', date=selected_date.strftime('%Y-%m-%d')) }}" class="btn btn-primary">
                 <i class="fas fa-plus-circle me-1"></i>
                 تسجيل حضور الكل
             </a>
