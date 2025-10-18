@@ -19,4 +19,4 @@ __pycache__/
 # Other
 .DS_Store
 
-instance/nuzum_local.db
+instance/nuzum_local.db!static/uploads/**
