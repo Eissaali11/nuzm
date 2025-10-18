@@ -1450,4 +1450,99 @@ def bulk_delete_safety_checks():
         db.session.rollback()
         current_app.logger.error(f"خطأ في الحذف الجماعي لطلبات فحص السلامة: {str(e)}")
         flash('حدث خطأ في عملية الحذف الجماعي. يرجى المحاولة مرة أخرى', 'error')
-        return redirect(url_for('external_safety.admin_external_safety_checks'))
+
+@external_safety_bp.route('/admin/create-check-from-images', methods=['POST'])
+def admin_create_check_from_images():
+    """إنشاء فحص سلامة جديد من خلال رفع صور السيارة مباشرة"""
+    from flask_login import login_required, current_user
+    from models import Vehicle, VehicleSafetyImage
+    from datetime import datetime
+    from utils.audit_logger import log_audit
+    
+    # التحقق من تسجيل الدخول
+    if not current_user.is_authenticated:
+        return jsonify({'success': False, 'error': 'يرجى تسجيل الدخول'}), 401
+    
+    try:
+        # الحصول على البيانات
+        vehicle_id = request.form.get('vehicle_id')
+        notes = request.form.get('notes', '')
+        
+        if not vehicle_id:
+            return jsonify({'success': False, 'error': 'يرجى اختيار السيارة'}), 400
+        
+        # التحقق من وجود السيارة
+        vehicle = Vehicle.query.get_or_404(vehicle_id)
+        
+        # التحقق من وجود صور
+        images = request.files.getlist('images')
+        if not images or len(images) == 0:
+            return jsonify({'success': False, 'error': 'يرجى رفع صورة واحدة على الأقل'}), 400
+        
+        # إنشاء سجل فحص السلامة
+        safety_check = VehicleExternalSafetyCheck()
+        safety_check.vehicle_id = vehicle.id
+        safety_check.vehicle_plate_number = vehicle.plate_number
+        safety_check.vehicle_make_model = f"{vehicle.make} {vehicle.model}"
+        safety_check.driver_name = current_user.username
+        safety_check.driver_department = current_user.assigned_department.name if hasattr(current_user, 'assigned_department') and current_user.assigned_department else 'الإدارة'
+        safety_check.driver_city = 'الرياض'
+        safety_check.driver_national_id = ''
+        safety_check.inspection_date = datetime.now()
+        safety_check.notes = f"تم إنشاء الفحص من الصور المرفوعة. {notes}"
+        safety_check.approval_status = 'approved'  # موافق عليه مباشرة
+        safety_check.created_at = datetime.now()
+        
+        db.session.add(safety_check)
+        db.session.flush()  # للحصول على ID
+        
+        # حفظ الصور
+        saved_images_count = 0
+        for image_file in images:
+            if image_file and image_file.filename and allowed_file(image_file.filename):
+                # توليد اسم ملف آمن
+                original_filename = secure_filename(image_file.filename)
+                file_ext = original_filename.rsplit('.', 1)[1].lower()
+                unique_filename = f"safety_check_{safety_check.id}_{uuid.uuid4().hex}.{file_ext}"
+                
+                # مسار حفظ الصورة
+                upload_folder = os.path.join(current_app.root_path, 'static', 'uploads', 'safety_checks')
+                os.makedirs(upload_folder, exist_ok=True)
+                file_path = os.path.join(upload_folder, unique_filename)
+                
+                # حفظ الصورة
+                image_file.save(file_path)
+                
+                # ضغط الصورة
+                compress_image(file_path)
+                
+                # إنشاء سجل الصورة
+                image_record = VehicleSafetyImage()
+                image_record.safety_check_id = safety_check.id
+                image_record.image_path = f"uploads/safety_checks/{unique_filename}"
+                image_record.uploaded_at = datetime.now()
+                
+                db.session.add(image_record)
+                saved_images_count += 1
+        
+        db.session.commit()
+        
+        # تسجيل النشاط
+        log_audit(
+            user_id=current_user.id,
+            action='create',
+            entity_type='VehicleExternalSafetyCheck',
+            entity_id=safety_check.id,
+            details=f'تم إنشاء فحص سلامة للمركبة {vehicle.plate_number} مع {saved_images_count} صورة'
+        )
+        
+        return jsonify({
+            'success': True,
+            'message': f'تم إنشاء الفحص بنجاح مع {saved_images_count} صورة',
+            'check_id': safety_check.id
+        }), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"خطأ في إنشاء فحص السلامة من الصور: {str(e)}")
+        return jsonify({'success': False, 'error': 'حدث خطأ في إنشاء الفحص'}), 500

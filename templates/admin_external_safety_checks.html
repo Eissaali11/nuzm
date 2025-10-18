@@ -1203,67 +1203,79 @@ $(document).ready(function() {
     </div>
 </div>
 
+
 <script>
-// Image Preview
-document.getElementById('imageInput').addEventListener('change', function(e) {
-    const preview = document.getElementById('imagePreview');
-    preview.innerHTML = '';
+// Wrap in DOMContentLoaded to ensure elements exist
+document.addEventListener('DOMContentLoaded', function() {
+    const imageInput = document.getElementById('imageInput');
+    const uploadForm = document.getElementById('uploadImagesForm');
     
-    const files = Array.from(e.target.files);
-    files.forEach((file, index) => {
-        const reader = new FileReader();
-        reader.onload = function(event) {
-            const col = document.createElement('div');
-            col.className = 'col-md-3 mb-3';
-            col.innerHTML = `
-                <div style="position: relative;">
-                    <img src="${event.target.result}" class="img-fluid rounded" 
-                         style="width: 100%; height: 150px; object-fit: cover;">
-                    <span class="badge bg-primary" style="position: absolute; top: 5px; right: 5px;">
-                        ${index + 1}
-                    </span>
-                </div>
-            `;
-            preview.appendChild(col);
-        };
-        reader.readAsDataURL(file);
+    if (!imageInput || !uploadForm) {
+        return; // Elements not found, exit gracefully
+    }
+    
+    // Image Preview
+    imageInput.addEventListener('change', function(e) {
+        const preview = document.getElementById('imagePreview');
+        preview.innerHTML = '';
+        
+        const files = Array.from(e.target.files);
+        files.forEach((file, index) => {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const col = document.createElement('div');
+                col.className = 'col-md-3 mb-3';
+                col.innerHTML = `
+                    <div style="position: relative;">
+                        <img src="${event.target.result}" class="img-fluid rounded" 
+                             style="width: 100%; height: 150px; object-fit: cover;">
+                        <span class="badge bg-primary" style="position: absolute; top: 5px; right: 5px;">
+                            ${index + 1}
+                        </span>
+                    </div>
+                `;
+                preview.appendChild(col);
+            };
+            reader.readAsDataURL(file);
+        });
+    });
+    
+    // Form Submission
+    uploadForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const uploadBtn = document.getElementById('uploadBtn');
+        const originalText = uploadBtn.innerHTML;
+        
+        uploadBtn.disabled = true;
+        uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>جاري الرفع...';
+        
+        try {
+            const response = await fetch('{{ url_for("external_safety.admin_create_check_from_images") }}', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                alert(result.message || 'تم إنشاء الفحص بنجاح!');
+                location.reload();
+            } else {
+                alert(result.error || 'حدث خطأ في الرفع');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('حدث خطأ في الاتصال بالخادم');
+        } finally {
+            uploadBtn.disabled = false;
+            uploadBtn.innerHTML = originalText;
+        }
     });
 });
-
-// Form Submission
-document.getElementById('uploadImagesForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    
-    const formData = new FormData(this);
-    const uploadBtn = document.getElementById('uploadBtn');
-    const originalText = uploadBtn.innerHTML;
-    
-    uploadBtn.disabled = true;
-    uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>جاري الرفع...';
-    
-    try {
-        const response = await fetch('{{ url_for("external_safety_bp.admin_create_check_from_images") }}', {
-            method: 'POST',
-            body: formData
-        });
-        
-        const result = await response.json();
-        
-        if (result.success) {
-            alert(result.message || 'تم إنشاء الفحص بنجاح!');
-            location.reload();
-        } else {
-            alert(result.error || 'حدث خطأ في الرفع');
-        }
-    } catch (error) {
-        console.error('Error:', error);
-        alert('حدث خطأ في الاتصال بالخادم');
-    } finally {
-        uploadBtn.disabled = false;
-        uploadBtn.innerHTML = originalText;
-    }
-});
 </script>
+
 
 
 {% endblock %}
