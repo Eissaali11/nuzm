@@ -1475,6 +1475,30 @@ def edit_safety_check(check_id):
             safety_check.driver_city = request.form.get('driver_city', '')
             safety_check.notes = request.form.get('notes', '')
             
+            # معالجة رفع ملف PDF
+            if 'pdf_file' in request.files:
+                pdf_file = request.files['pdf_file']
+                if pdf_file and pdf_file.filename:
+                    # التحقق من نوع الملف
+                    if pdf_file.filename.lower().endswith('.pdf'):
+                        # حذف الملف القديم إذا كان موجوداً
+                        if safety_check.pdf_file_path:
+                            from utils.storage_helper import delete_image
+                            delete_image(safety_check.pdf_file_path)
+                        
+                        # حفظ الملف الجديد
+                        import uuid
+                        filename = f"{uuid.uuid4()}_{pdf_file.filename}"
+                        
+                        from utils.storage_helper import upload_image
+                        pdf_path = upload_image(pdf_file, 'safety_checks_pdfs', filename)
+                        safety_check.pdf_file_path = pdf_path
+                        
+                        current_app.logger.info(f'تم رفع ملف PDF للفحص {safety_check.id}: {pdf_path}')
+                    else:
+                        flash('يرجى رفع ملف بصيغة PDF فقط', 'error')
+                        return render_template('admin_edit_safety_check.html', safety_check=safety_check)
+            
             # تحديث أوصاف الصور
             for image in safety_check.safety_images:
                 description_field = f'image_description_{image.id}'
