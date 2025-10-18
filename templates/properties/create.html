@@ -114,6 +114,61 @@
         margin-top: 5px;
     }
     
+    /* تنبيه مواعيد الدفع */
+    .payment-schedule-alert {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 12px;
+        padding: 20px;
+        margin-top: 20px;
+        color: white;
+        display: none;
+    }
+    
+    .payment-schedule-alert.show {
+        display: block;
+        animation: slideDown 0.5s ease;
+    }
+    
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .payment-date-item {
+        background-color: rgba(255, 255, 255, 0.15);
+        border-radius: 8px;
+        padding: 12px 15px;
+        margin-bottom: 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .payment-date-item:hover {
+        background-color: rgba(255, 255, 255, 0.25);
+        transform: translateX(-5px);
+        transition: all 0.3s;
+    }
+    
+    .payment-number {
+        background-color: rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        width: 35px;
+        height: 35px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+    }
+    
     /* تصميم رفع الصور */
     .image-upload-area {
         border: 2px dashed #3f4865;
@@ -337,6 +392,24 @@
                             {% endif %}
                         </div>
                     </div>
+                    
+                    <!-- تنبيه مواعيد الدفع -->
+                    <div id="payment-schedule-alert" class="payment-schedule-alert">
+                        <div class="d-flex align-items-center mb-3">
+                            <i class="fas fa-calendar-alt fa-2x me-3"></i>
+                            <div>
+                                <h5 class="mb-0">📅 مواعيد الدفعات المتوقعة</h5>
+                                <small id="payment-schedule-subtitle">بناءً على تاريخ البداية وطريقة الدفع المحددة</small>
+                            </div>
+                        </div>
+                        <div id="payment-dates-list"></div>
+                        <div class="mt-3 p-3 rounded" style="background-color: rgba(255,255,255,0.1);">
+                            <small>
+                                <i class="fas fa-info-circle me-2"></i>
+                                <strong>ملاحظة:</strong> هذه المواعيد تقديرية ويمكن تعديلها لاحقاً من صفحة تفاصيل العقار
+                            </small>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -397,6 +470,160 @@ document.getElementById('images').addEventListener('change', function(e) {
         
         reader.readAsDataURL(file);
     }
+});
+
+// حساب وعرض مواعيد الدفع
+function calculatePaymentDates() {
+    const startDateInput = document.getElementById('contract_start_date');
+    const endDateInput = document.getElementById('contract_end_date');
+    const paymentMethodSelect = document.getElementById('payment_method');
+    const paymentDayInput = document.getElementById('payment_day');
+    
+    const startDate = startDateInput ? startDateInput.value : '';
+    const endDate = endDateInput ? endDateInput.value : '';
+    const paymentMethod = paymentMethodSelect ? paymentMethodSelect.value : '';
+    const paymentDay = paymentDayInput ? parseInt(paymentDayInput.value) || 1 : 1;
+    
+    const alert = document.getElementById('payment-schedule-alert');
+    const datesList = document.getElementById('payment-dates-list');
+    
+    // إخفاء التنبيه إذا لم تكن البيانات كاملة
+    if (!startDate || !endDate || !paymentMethod) {
+        alert.classList.remove('show');
+        return;
+    }
+    
+    // حساب عدد الأشهر بين التواريخ
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    
+    if (start >= end) {
+        alert.classList.remove('show');
+        return;
+    }
+    
+    // تحديد فترة الدفع بالأشهر
+    const periods = {
+        'monthly': 1,
+        'quarterly': 3,
+        'semi_annually': 6,
+        'annually': 12
+    };
+    
+    const periodMonths = periods[paymentMethod] || 1;
+    
+    // أسماء طرق الدفع بالعربية
+    const methodNames = {
+        'monthly': 'شهري',
+        'quarterly': 'ربع سنوي (كل 3 أشهر)',
+        'semi_annually': 'نصف سنوي (كل 6 أشهر)',
+        'annually': 'سنوي (كل 12 شهر)'
+    };
+    
+    // تحديث العنوان الفرعي
+    document.getElementById('payment-schedule-subtitle').textContent = 
+        `طريقة الدفع: ${methodNames[paymentMethod]} | يوم الدفع: ${paymentDay} من كل فترة`;
+    
+    // حساب مواعيد الدفع
+    const paymentDates = [];
+    let currentDate = new Date(start);
+    currentDate.setDate(paymentDay);
+    
+    // إذا كان يوم الدفع قبل تاريخ البداية، ابدأ من الشهر التالي
+    if (currentDate < start) {
+        currentDate.setMonth(currentDate.getMonth() + 1);
+    }
+    
+    let paymentNumber = 1;
+    while (currentDate <= end && paymentNumber <= 50) { // حد أقصى 50 دفعة
+        paymentDates.push({
+            number: paymentNumber,
+            date: new Date(currentDate)
+        });
+        
+        currentDate.setMonth(currentDate.getMonth() + periodMonths);
+        paymentNumber++;
+    }
+    
+    // عرض مواعيد الدفع
+    datesList.innerHTML = '';
+    
+    if (paymentDates.length === 0) {
+        alert.classList.remove('show');
+        return;
+    }
+    
+    paymentDates.forEach((payment, index) => {
+        const dateItem = document.createElement('div');
+        dateItem.className = 'payment-date-item';
+        
+        // تنسيق التاريخ
+        const formattedDate = payment.date.toLocaleDateString('ar-SA', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            weekday: 'long'
+        });
+        
+        // حساب الأيام المتبقية
+        const today = new Date();
+        const daysUntil = Math.ceil((payment.date - today) / (1000 * 60 * 60 * 24));
+        
+        let daysText = '';
+        if (daysUntil > 0) {
+            daysText = `<span class="badge bg-light text-dark ms-2">بعد ${daysUntil} يوم</span>`;
+        } else if (daysUntil === 0) {
+            daysText = '<span class="badge bg-warning text-dark ms-2">اليوم</span>';
+        } else {
+            daysText = `<span class="badge bg-secondary ms-2">منذ ${Math.abs(daysUntil)} يوم</span>`;
+        }
+        
+        dateItem.innerHTML = `
+            <div class="d-flex align-items-center">
+                <div class="payment-number me-3">${payment.number}</div>
+                <div>
+                    <div><strong>${formattedDate}</strong></div>
+                    <small style="opacity: 0.8;">الدفعة رقم ${payment.number}</small>
+                </div>
+            </div>
+            <div>
+                ${daysText}
+            </div>
+        `;
+        
+        datesList.appendChild(dateItem);
+        
+        // عرض أول 12 دفعة فقط
+        if (index >= 11) return false;
+    });
+    
+    // إضافة ملاحظة إذا كان هناك دفعات أكثر
+    if (paymentDates.length > 12) {
+        const moreNote = document.createElement('div');
+        moreNote.className = 'text-center mt-3';
+        moreNote.style.opacity = '0.8';
+        moreNote.innerHTML = `<small><i class="fas fa-ellipsis-h me-2"></i>وهناك ${paymentDates.length - 12} دفعة إضافية حتى نهاية العقد</small>`;
+        datesList.appendChild(moreNote);
+    }
+    
+    // إظهار التنبيه
+    alert.classList.add('show');
+}
+
+// الاستماع للتغييرات في الحقول
+document.addEventListener('DOMContentLoaded', function() {
+    const startDateInput = document.getElementById('contract_start_date');
+    const endDateInput = document.getElementById('contract_end_date');
+    const paymentMethodSelect = document.getElementById('payment_method');
+    const paymentDayInput = document.getElementById('payment_day');
+    
+    if (startDateInput) startDateInput.addEventListener('change', calculatePaymentDates);
+    if (endDateInput) endDateInput.addEventListener('change', calculatePaymentDates);
+    if (paymentMethodSelect) paymentMethodSelect.addEventListener('change', calculatePaymentDates);
+    if (paymentDayInput) paymentDayInput.addEventListener('input', calculatePaymentDates);
+    
+    // حساب عند تحميل الصفحة إذا كانت البيانات موجودة
+    calculatePaymentDates();
 });
 </script>
 {% endblock %}
