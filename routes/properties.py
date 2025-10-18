@@ -59,9 +59,8 @@ def process_and_save_image(file, property_id):
         else:
             file.save(filepath)
         
-        # إرجاع المسار النسبي من static/
-        relative_path = filepath.replace('static/', '')
-        return relative_path
+        # إرجاع المسار النسبي (يجب أن يبدأ بـ static/)
+        return filepath
     except Exception as e:
         print(f"خطأ في معالجة الصورة: {e}")
         return None
@@ -81,9 +80,8 @@ def process_and_save_contract(file, property_id):
         
         file.save(filepath)
         
-        # إرجاع المسار النسبي من static/
-        relative_path = filepath.replace('static/', '')
-        return relative_path
+        # إرجاع المسار النسبي (يجب أن يبدأ بـ static/)
+        return filepath
     except Exception as e:
         print(f"خطأ في معالجة ملف العقد: {e}")
         return None

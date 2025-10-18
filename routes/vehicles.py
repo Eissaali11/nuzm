@@ -385,7 +385,7 @@ def save_file(file, folder='vehicles'):
         file_type = 'pdf' if filename.lower().endswith('.pdf') else 'image'
 
         # إرجاع المسار النسبي للملف ونوعه
-        return f"uploads/{folder}/{unique_filename}", file_type
+        return f"static/uploads/{folder}/{unique_filename}", file_type
 
 # للحفاظ على التوافق مع الكود القديم
 def save_image(file, folder='vehicles'):
@@ -2708,7 +2708,7 @@ def save_base64_image(base64_string, subfolder):
                         f.write(image_data)
 
                 # إرجاع المسار النسبي (مهم لقاعدة البيانات و HTML)
-                return os.path.join(subfolder, filename)
+                return os.path.join('static', 'uploads', subfolder, filename)
 
         except Exception as e:
                 print(f"Error saving Base64 image: {e}")
@@ -2741,7 +2741,7 @@ def save_uploaded_file(file, subfolder):
                 file.save(file_path)
 
                 # إرجاع المسار النسبي
-                return os.path.join(subfolder, unique_filename)
+                return os.path.join('static', 'uploads', subfolder, unique_filename)
 
         except Exception as e:
                 print(f"Error saving uploaded file: {e}")
@@ -5044,7 +5044,7 @@ def edit_external_authorization(vehicle_id, auth_id):
                         if os.path.exists(old_file_path):
                             os.remove(old_file_path)
 
-                    auth.file_path = f"uploads/authorizations/{filename}"
+                    auth.file_path = f"static/uploads/authorizations/{filename}"
 
             db.session.commit()
             flash('تم تحديث التفويض بنجاح', 'success')
