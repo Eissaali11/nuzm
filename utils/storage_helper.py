@@ -72,7 +72,7 @@ def list_images(folder_name):
     """
     try:
         objects = client.list(prefix=f"{folder_name}/")
-        return [obj.key for obj in objects]
+        return [obj.name for obj in objects]
     except Exception as e:
         print(f"Error listing images in {folder_name}: {str(e)}")
         return []

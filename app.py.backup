@@ -430,10 +430,11 @@ with app.app_context():
     from routes.landing_admin import landing_admin_bp
     app.register_blueprint(landing_admin_bp, url_prefix='/landing-admin')
 
+    # إضافة route لخدمة الصور من مجلد uploads
     @app.route('/uploads/<path:filename>')
     def uploaded_file(filename):
-        from flask import send_from_directory, abort, Response
-        from utils.storage_helper import download_image
+        from flask import send_from_directory
+        from flask import send_from_directory, abort
         import os
         
         # البحث أولاً في uploads
@@ -458,33 +459,22 @@ with app.app_context():
             else:
                 return send_from_directory("static/uploads", filename)
         
-        # البحث في Object Storage
-        image_data = download_image(filename)
-        if image_data:
-            ext = filename.lower().rsplit('.', 1)[-1]
-            content_types = {
-                'jpg': 'image/jpeg', 'jpeg': 'image/jpeg',
-                'png': 'image/png', 'gif': 'image/gif',
-                'webp': 'image/webp', 'svg': 'image/svg+xml'
-            }
-            content_type = content_types.get(ext, 'image/jpeg')
-            return Response(image_data, mimetype=content_type)
-        
         # في حالة عدم وجود الصورة، إرجاع صورة بديلة
         if filename.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.webp')):
             return send_from_directory('static/images', 'image-not-found.svg')
         
         abort(404)
 
+    # مسار إضافي لخدمة صور static/uploads مع معالجة الأخطاء
     @app.route('/static/uploads/<path:filename>')
     def static_uploaded_file(filename):
-        from flask import send_from_directory, abort, Response
-        from utils.storage_helper import download_image
+        from flask import send_from_directory, abort
         import os
         
         # البحث في static/uploads
         file_path = os.path.join('static', 'uploads', filename)
         if os.path.exists(file_path):
+            # استخراج اسم الملف والمجلد
             dir_parts = filename.split('/')
             if len(dir_parts) > 1:
                 subdir = '/'.join(dir_parts[:-1])
@@ -493,23 +483,10 @@ with app.app_context():
             else:
                 return send_from_directory('static/uploads', filename)
         
-        # البحث في Object Storage
-        image_data = download_image(filename)
-        if image_data:
-            ext = filename.lower().rsplit('.', 1)[-1]
-            content_types = {
-                'jpg': 'image/jpeg', 'jpeg': 'image/jpeg',
-                'png': 'image/png', 'gif': 'image/gif',
-                'webp': 'image/webp', 'svg': 'image/svg+xml'
-            }
-            content_type = content_types.get(ext, 'image/jpeg')
-            return Response(image_data, mimetype=content_type)
-        
         # في حالة عدم وجود الصورة، إرجاع صورة بديلة
         if filename.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.webp')):
             return send_from_directory('static/images', 'image-not-found.svg')
         
-        abort(404)
         abort(404)
 
     # إضافة دوال مساعدة لقوالب Jinja
