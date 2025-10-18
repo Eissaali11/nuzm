@@ -11,6 +11,7 @@ register_heif_opener()
 from models import VehicleExternalSafetyCheck, VehicleSafetyImage, Vehicle, Employee, User, UserRole, VehicleHandover
 from app import db
 from utils.audit_logger import log_audit
+from utils.storage_helper import upload_image, delete_image
 from flask_login import current_user
 from sqlalchemy import func, select
 from sqlalchemy.orm import aliased, contains_eager
@@ -453,31 +454,42 @@ def handle_safety_check_submission(vehicle):
         db.session.add(safety_check)
         db.session.flush()  # للحصول على ID الجديد
         
-        # إنشاء مجلد الصور في static (دائم في Replit)
-        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        upload_dir = os.path.join(project_root, 'static', 'uploads', 'safety_checks')
-        os.makedirs(upload_dir, exist_ok=True)
-        
         # معالجة الصور من الملفات (للمدراء)
         uploaded_files = request.files.getlist('file_images')
         if uploaded_files and uploaded_files[0].filename:
             for file in uploaded_files:
                 if file and file.filename:
                     try:
-                        # حفظ الملف
-                        filename = f"{uuid.uuid4()}_{secure_filename(file.filename)}"
-                        file_path = os.path.join(upload_dir, filename)
-                        file.save(file_path)
+                        # توليد اسم ملف آمن
+                        ext = secure_filename(file.filename).rsplit('.', 1)[1].lower() if '.' in file.filename else 'jpg'
+                        filename = f"{uuid.uuid4()}.{ext}"
                         
-                        # ضغط وتحويل الصورة
-                        success = compress_image(file_path)
-                        if not success:
-                            current_app.logger.warning(f"فشل ضغط الصورة {filename}")
+                        # قراءة بيانات الملف
+                        file_data = file.read()
+                        file.seek(0)  # إعادة المؤشر للبداية
+                        
+                        # حفظ مؤقتاً للضغط
+                        temp_path = f"/tmp/{filename}"
+                        with open(temp_path, 'wb') as f:
+                            f.write(file_data)
+                        
+                        # ضغط الصورة
+                        compress_image(temp_path)
+                        
+                        # قراءة الصورة المضغوطة
+                        with open(temp_path, 'rb') as f:
+                            compressed_data = f.read()
+                        
+                        # رفع إلى Object Storage
+                        object_key = upload_image(compressed_data, 'safety_checks', filename)
+                        
+                        # حذف الملف المؤقت
+                        os.remove(temp_path)
                         
                         # حفظ في قاعدة البيانات
                         safety_image = VehicleSafetyImage()
                         safety_image.safety_check_id = safety_check.id
-                        safety_image.image_path = f'static/uploads/safety_checks/{filename}'
+                        safety_image.image_path = object_key
                         safety_image.image_description = f"تم رفعها من قبل المدير"
                         db.session.add(safety_image)
                         
@@ -519,25 +531,35 @@ def handle_safety_check_submission(vehicle):
                         
                         # إنشاء اسم ملف آمن
                         filename = f"{uuid.uuid4()}.{ext}"
-                        image_path = os.path.join(upload_dir, filename)
+                        temp_path = f"/tmp/{filename}"
                         
-                        # حفظ الصورة
-                        with open(image_path, 'wb') as f:
+                        # حفظ مؤقتاً
+                        with open(temp_path, 'wb') as f:
                             f.write(image_bytes)
                         
-                        # ضغط الصورة وتحويلها إلى JPEG
-                        success = compress_image(image_path)
+                        # ضغط الصورة
+                        success = compress_image(temp_path)
                         if not success:
                             current_app.logger.warning(f"فشل ضغط الصورة {filename}")
                         else:
                             current_app.logger.info(f"تم تحويل صورة {source_format} إلى JPEG: {filename}")
+                        
+                        # قراءة الصورة المضغوطة
+                        with open(temp_path, 'rb') as f:
+                            compressed_data = f.read()
+                        
+                        # رفع إلى Object Storage
+                        object_key = upload_image(compressed_data, 'safety_checks', filename)
+                        
+                        # حذف الملف المؤقت
+                        os.remove(temp_path)
                         
                         # حفظ معلومات الصورة في قاعدة البيانات
                         description = notes_list[i] if i < len(notes_list) else None
                         
                         safety_image = VehicleSafetyImage()
                         safety_image.safety_check_id = safety_check.id
-                        safety_image.image_path = f'static/uploads/safety_checks/{filename}'
+                        safety_image.image_path = object_key
                         safety_image.image_description = description
                         
                         db.session.add(safety_image)
@@ -1706,21 +1728,27 @@ def admin_create_check_from_images():
                 file_ext = original_filename.rsplit('.', 1)[1].lower()
                 unique_filename = f"safety_check_{safety_check.id}_{uuid.uuid4().hex}.{file_ext}"
                 
-                # مسار حفظ الصورة
-                upload_folder = os.path.join(current_app.root_path, 'static', 'uploads', 'safety_checks')
-                os.makedirs(upload_folder, exist_ok=True)
-                file_path = os.path.join(upload_folder, unique_filename)
-                
-                # حفظ الصورة
-                image_file.save(file_path)
+                # حفظ مؤقتاً للضغط
+                temp_path = f"/tmp/{unique_filename}"
+                image_file.save(temp_path)
                 
                 # ضغط الصورة
-                compress_image(file_path)
+                compress_image(temp_path)
+                
+                # قراءة الصورة المضغوطة
+                with open(temp_path, 'rb') as f:
+                    compressed_data = f.read()
+                
+                # رفع إلى Object Storage
+                object_key = upload_image(compressed_data, 'safety_checks', unique_filename)
+                
+                # حذف الملف المؤقت
+                os.remove(temp_path)
                 
                 # إنشاء سجل الصورة
                 image_record = VehicleSafetyImage()
                 image_record.safety_check_id = safety_check.id
-                image_record.image_path = f"static/uploads/safety_checks/{unique_filename}"
+                image_record.image_path = object_key
                 image_record.uploaded_at = datetime.now()
                 
                 db.session.add(image_record)
