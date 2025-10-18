@@ -799,7 +799,7 @@ def export_share_links_excel():
         status_ar = status_map.get(vehicle.status, vehicle.status)
         
         # إنشاء رابط الفحص الخارجي
-        form_url = url_for('external_safety.external_form', vehicle_id=vehicle.id, _external=True)
+        form_url = url_for('external_safety.external_safety_check_form', vehicle_id=vehicle.id, _external=True)
         
         row_data = [
             idx,
