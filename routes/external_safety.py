@@ -70,7 +70,8 @@ def get_all_current_driversWithEmil():
             'name': record.driver_employee.name,
             'email': record.driver_employee.email,
             'mobile': record.driver_employee.mobile,
-            'phone' : record.driver_employee.mobile
+            'phone' : record.driver_employee.mobile,
+            'national_id': record.driver_employee.national_id
         }
         for record in latest_handovers_with_drivers if record.driver_employee # نتأكد من وجود سائق
     }
@@ -754,7 +755,7 @@ def export_share_links_excel():
     
     # الحصول على السيارات
     vehicles = query.order_by(Vehicle.status, Vehicle.plate_number).all()
-    all_current_drivers = get_all_current_drivers()
+    all_current_drivers_with_details = get_all_current_driversWithEmil()
     
     # إنشاء ملف Excel
     wb = Workbook()
@@ -774,7 +775,7 @@ def export_share_links_excel():
     )
     
     # العناوين
-    headers = ['#', 'رقم اللوحة', 'الشركة المصنعة', 'الموديل', 'السنة', 'الحالة', 'السائق الحالي', 'رابط الفحص الخارجي']
+    headers = ['#', 'رقم اللوحة', 'الشركة المصنعة', 'الموديل', 'السنة', 'الحالة', 'السائق الحالي', 'رقم الهوية', 'رابط الفحص الخارجي']
     ws.append(headers)
     
     # تنسيق العناوين
@@ -786,7 +787,9 @@ def export_share_links_excel():
     
     # إضافة البيانات
     for idx, vehicle in enumerate(vehicles, start=1):
-        driver_name = all_current_drivers.get(vehicle.id, '-')
+        driver_info = all_current_drivers_with_details.get(vehicle.id)
+        driver_name = driver_info['name'] if driver_info else '-'
+        national_id = driver_info['national_id'] if driver_info else '-'
         
         # ترجمة الحالة
         status_map = {
@@ -809,6 +812,7 @@ def export_share_links_excel():
             vehicle.year or '-',
             status_ar,
             driver_name,
+            national_id,
             form_url
         ]
         
@@ -821,7 +825,7 @@ def export_share_links_excel():
             cell.border = border
     
     # ضبط عرض الأعمدة
-    column_widths = [8, 20, 18, 18, 12, 15, 25, 60]
+    column_widths = [8, 20, 18, 18, 12, 15, 25, 20, 60]
     for idx, width in enumerate(column_widths, start=1):
         ws.column_dimensions[ws.cell(1, idx).column_letter].width = width
     
