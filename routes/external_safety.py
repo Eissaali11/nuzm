@@ -1044,6 +1044,9 @@ def admin_external_safety_checks():
     departments_list = db.session.query(VehicleExternalSafetyCheck.driver_department).distinct().all()
     departments_list = [d[0] for d in departments_list if d[0]]
     
+    # جلب جميع السيارات النشطة لنموذج إنشاء الفحص
+    all_vehicles = Vehicle.query.filter_by(status='available').order_by(Vehicle.plate_number).all()
+    
     return render_template('admin_external_safety_checks.html', 
                          safety_checks=safety_checks,
                          vehicle_filter=vehicle_filter,
@@ -1055,7 +1058,8 @@ def admin_external_safety_checks():
                          total_checks=total_checks,
                          pending_checks=pending_checks,
                          approved_checks=approved_checks,
-                         rejected_checks=rejected_checks)
+                         rejected_checks=rejected_checks,
+                         all_vehicles=all_vehicles)
 
 @external_safety_bp.route('/admin/external-safety-check/<int:check_id>')
 def admin_view_safety_check(check_id):

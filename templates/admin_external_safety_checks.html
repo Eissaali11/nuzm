@@ -394,6 +394,12 @@
                 <p class="text-muted mb-0">إدارة شاملة لطلبات فحص سلامة المركبات الخارجية</p>
             </div>
         </div>
+            <div>
+                <button type="button" class="btn btn-action-enhanced" style="background: var(--approved-gradient);" 
+                        data-bs-toggle="modal" data-bs-target="#uploadImagesModal">
+                    <i class="fas fa-camera me-1"></i> إنشاء فحص من الصور
+                </button>
+            </div>
     </div>
     
     <!-- Enhanced Stats Cards -->
@@ -1146,6 +1152,120 @@ $(document).ready(function() {
     };
 });
 </script>
+
+<!-- Upload Images Modal -->
+<div class="modal fade" id="uploadImagesModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content" style="background: var(--glass-bg); border: 1px solid var(--glass-border);">
+            <div class="modal-header" style="border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
+                <h5 class="modal-title"><i class="fas fa-camera me-2"></i>إنشاء فحص سلامة من الصور</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="uploadImagesForm" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">اختر السيارة</label>
+                        <select class="form-control" name="vehicle_id" id="vehicleSelect" required>
+                            <option value="">-- اختر السيارة --</option>
+                            {% for vehicle in all_vehicles %}
+                                {% if vehicle %}
+                                <option value="{{ vehicle.id }}">{{ vehicle.plate_number }} - {{ vehicle.make }} {{ vehicle.model }}</option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">رفع صور السيارة (يدعم HEIC من iPhone)</label>
+                        <input type="file" class="form-control" name="images" id="imageInput" 
+                               multiple accept="image/*,.heic,.heif" required>
+                        <small class="text-muted">يمكنك رفع عدة صور معاً</small>
+                    </div>
+                    
+                    <div id="imagePreview" class="row mt-3"></div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">ملاحظات</label>
+                        <textarea class="form-control" name="notes" rows="3" 
+                                  placeholder="أضف أي ملاحظات حول الفحص..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer" style="border-top: 1px solid rgba(255, 255, 255, 0.1);">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>إلغاء
+                    </button>
+                    <button type="submit" class="btn btn-success" id="uploadBtn">
+                        <i class="fas fa-upload me-1"></i>رفع وإنشاء الفحص
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Image Preview
+document.getElementById('imageInput').addEventListener('change', function(e) {
+    const preview = document.getElementById('imagePreview');
+    preview.innerHTML = '';
+    
+    const files = Array.from(e.target.files);
+    files.forEach((file, index) => {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const col = document.createElement('div');
+            col.className = 'col-md-3 mb-3';
+            col.innerHTML = `
+                <div style="position: relative;">
+                    <img src="${event.target.result}" class="img-fluid rounded" 
+                         style="width: 100%; height: 150px; object-fit: cover;">
+                    <span class="badge bg-primary" style="position: absolute; top: 5px; right: 5px;">
+                        ${index + 1}
+                    </span>
+                </div>
+            `;
+            preview.appendChild(col);
+        };
+        reader.readAsDataURL(file);
+    });
+});
+
+// Form Submission
+document.getElementById('uploadImagesForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const uploadBtn = document.getElementById('uploadBtn');
+    const originalText = uploadBtn.innerHTML;
+    
+    uploadBtn.disabled = true;
+    uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>جاري الرفع...';
+    
+    try {
+        const response = await fetch('{{ url_for("external_safety_bp.admin_create_check_from_images") }}', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            alert(result.message || 'تم إنشاء الفحص بنجاح!');
+            location.reload();
+        } else {
+            alert(result.error || 'حدث خطأ في الرفع');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('حدث خطأ في الاتصال بالخادم');
+    } finally {
+        uploadBtn.disabled = false;
+        uploadBtn.innerHTML = originalText;
+    }
+});
+</script>
+
+
 {% endblock %}
 
 <style>
