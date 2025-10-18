@@ -1236,7 +1236,7 @@ async function adminLogin() {
     
     // إرسال طلب تسجيل الدخول
     try {
-        const response = await fetch('/api/admin-login', {
+        const response = await fetch('/external-safety/api/admin-login', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
