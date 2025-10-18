@@ -1215,8 +1215,37 @@ def admin_external_safety_checks():
     departments_list = db.session.query(VehicleExternalSafetyCheck.driver_department).distinct().all()
     departments_list = [d[0] for d in departments_list if d[0]]
     
-    # جلب جميع السيارات النشطة لنموذج إنشاء الفحص
-    all_vehicles = Vehicle.query.filter_by(status='available').order_by(Vehicle.plate_number).all()
+    # جلب جميع السيارات لنموذج إنشاء الفحص مع مراعاة فلترة القسم
+    vehicles_query = Vehicle.query
+    
+    # فلترة السيارات حسب القسم المحدد للمستخدم الحالي
+    if current_user.is_authenticated and hasattr(current_user, 'assigned_department_id') and current_user.assigned_department_id:
+        # الحصول على معرفات الموظفين في القسم المحدد
+        dept_employee_ids = db.session.query(Employee.id).join(
+            employee_departments
+        ).join(Department).filter(
+            Department.id == current_user.assigned_department_id
+        ).all()
+        dept_employee_ids = [emp.id for emp in dept_employee_ids]
+        
+        if dept_employee_ids:
+            # فلترة المركبات التي لها تسليم لموظف في القسم المحدد
+            vehicle_ids_with_handovers = db.session.query(
+                VehicleHandover.vehicle_id
+            ).filter(
+                VehicleHandover.handover_type == 'delivery',
+                VehicleHandover.employee_id.in_(dept_employee_ids)
+            ).distinct().all()
+            
+            vehicle_ids = [h.vehicle_id for h in vehicle_ids_with_handovers]
+            if vehicle_ids:
+                vehicles_query = vehicles_query.filter(Vehicle.id.in_(vehicle_ids))
+            else:
+                vehicles_query = vehicles_query.filter(Vehicle.id == -1)  # قائمة فارغة
+        else:
+            vehicles_query = vehicles_query.filter(Vehicle.id == -1)  # قائمة فارغة
+    
+    all_vehicles = vehicles_query.order_by(Vehicle.plate_number).all()
     
     return render_template('admin_external_safety_checks.html', 
                          safety_checks=safety_checks,
