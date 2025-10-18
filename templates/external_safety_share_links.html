@@ -444,8 +444,13 @@
 
     <!-- Table -->
     <div class="table-card">
-        <div class="table-header">
-            <h6><i class="fas fa-list"></i> قائمة المركبات</h6>
+        <div class="table-header d-flex justify-content-between align-items-center">
+            <h6 class="mb-0"><i class="fas fa-list"></i> قائمة المركبات</h6>
+            <a href="{{ url_for('external_safety.export_share_links_excel', status=status_filter, make=make_filter, search_plate=search_plate, project=project_filter) }}" 
+               class="btn btn-success btn-sm">
+                <i class="fas fa-file-excel ms-1"></i>
+                تصدير Excel
+            </a>
         </div>
         
         {% if vehicles %}

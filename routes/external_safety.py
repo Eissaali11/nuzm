@@ -700,6 +700,146 @@ def share_links():
                            all_current_drivers_with_emil=all_current_drivers_with_emil
                            )
 
+@external_safety_bp.route('/share-links/export-excel')
+def export_share_links_excel():
+    """تصدير روابط الفحص الخارجي كملف Excel مع معلومات السيارة والسائق"""
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+    from io import BytesIO
+    
+    # الحصول على معاملات الفلترة من الطلب (نفس الفلاتر المستخدمة في share_links)
+    status_filter = request.args.get('status', '')
+    make_filter = request.args.get('make', '')
+    search_plate = request.args.get('search_plate', '')
+    project_filter = request.args.get('project', '')
+    
+    # قاعدة الاستعلام الأساسية
+    query = Vehicle.query
+    
+    # فلترة المركبات حسب القسم المحدد للمستخدم الحالي
+    from models import employee_departments, Department, Employee, VehicleHandover
+    if current_user.is_authenticated and hasattr(current_user, 'assigned_department_id') and current_user.assigned_department_id:
+        dept_employee_ids = db.session.query(Employee.id).join(
+            employee_departments
+        ).join(Department).filter(
+            Department.id == current_user.assigned_department_id
+        ).all()
+        dept_employee_ids = [emp.id for emp in dept_employee_ids]
+        
+        if dept_employee_ids:
+            vehicle_ids_with_handovers = db.session.query(
+                VehicleHandover.vehicle_id
+            ).filter(
+                VehicleHandover.handover_type == 'delivery',
+                VehicleHandover.employee_id.in_(dept_employee_ids)
+            ).distinct().all()
+            
+            vehicle_ids = [h.vehicle_id for h in vehicle_ids_with_handovers]
+            if vehicle_ids:
+                query = query.filter(Vehicle.id.in_(vehicle_ids))
+            else:
+                query = query.filter(Vehicle.id == -1)
+        else:
+            query = query.filter(Vehicle.id == -1)
+    
+    # إضافة التصفية
+    if status_filter:
+        query = query.filter(Vehicle.status == status_filter)
+    if make_filter:
+        query = query.filter(Vehicle.make == make_filter)
+    if project_filter:
+        query = query.filter(Vehicle.project == project_filter)
+    if search_plate:
+        query = query.filter(Vehicle.plate_number.contains(search_plate))
+    
+    # الحصول على السيارات
+    vehicles = query.order_by(Vehicle.status, Vehicle.plate_number).all()
+    all_current_drivers = get_all_current_drivers()
+    
+    # إنشاء ملف Excel
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "روابط الفحص الخارجي"
+    ws.sheet_view.rightToLeft = True
+    
+    # تنسيقات الألوان والخطوط
+    header_fill = PatternFill(start_color="171E3F", end_color="171E3F", fill_type="solid")
+    header_font = Font(name='Arial', size=12, bold=True, color="FFFFFF")
+    cell_font = Font(name='Arial', size=11)
+    border = Border(
+        left=Side(style='thin'),
+        right=Side(style='thin'),
+        top=Side(style='thin'),
+        bottom=Side(style='thin')
+    )
+    
+    # العناوين
+    headers = ['#', 'رقم اللوحة', 'الشركة المصنعة', 'الموديل', 'السنة', 'الحالة', 'السائق الحالي', 'رابط الفحص الخارجي']
+    ws.append(headers)
+    
+    # تنسيق العناوين
+    for cell in ws[1]:
+        cell.fill = header_fill
+        cell.font = header_font
+        cell.alignment = Alignment(horizontal='center', vertical='center')
+        cell.border = border
+    
+    # إضافة البيانات
+    for idx, vehicle in enumerate(vehicles, start=1):
+        driver_name = all_current_drivers.get(vehicle.id, '-')
+        
+        # ترجمة الحالة
+        status_map = {
+            'available': 'متاحة',
+            'rented': 'مؤجرة',
+            'in_project': 'في مشروع',
+            'in_workshop': 'في الورشة',
+            'accident': 'حادث'
+        }
+        status_ar = status_map.get(vehicle.status, vehicle.status)
+        
+        # إنشاء رابط الفحص الخارجي
+        form_url = url_for('external_safety.external_form', vehicle_id=vehicle.id, _external=True)
+        
+        row_data = [
+            idx,
+            vehicle.plate_number or '-',
+            vehicle.make or '-',
+            vehicle.model or '-',
+            vehicle.year or '-',
+            status_ar,
+            driver_name,
+            form_url
+        ]
+        
+        ws.append(row_data)
+        
+        # تنسيق الخلايا
+        for cell in ws[idx + 1]:
+            cell.font = cell_font
+            cell.alignment = Alignment(horizontal='center', vertical='center')
+            cell.border = border
+    
+    # ضبط عرض الأعمدة
+    column_widths = [8, 20, 18, 18, 12, 15, 25, 60]
+    for idx, width in enumerate(column_widths, start=1):
+        ws.column_dimensions[ws.cell(1, idx).column_letter].width = width
+    
+    # حفظ الملف في الذاكرة
+    output = BytesIO()
+    wb.save(output)
+    output.seek(0)
+    
+    # إنشاء اسم الملف مع التاريخ
+    filename = f'external_safety_links_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xlsx'
+    
+    return send_file(
+        output,
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        as_attachment=True,
+        download_name=filename
+    )
+
 # في ملف الراوت الخاص بك (e.g., external_safety_bp.py)
 
 @external_safety_bp.route('/api/send-email', methods=['POST'])
