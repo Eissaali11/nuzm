@@ -1574,3 +1574,37 @@ def admin_create_check_from_images():
         db.session.rollback()
         current_app.logger.error(f"خطأ في إنشاء فحص السلامة من الصور: {str(e)}")
         return jsonify({'success': False, 'error': 'حدث خطأ في إنشاء الفحص'}), 500
+
+@external_safety_bp.route('/api/admin-login', methods=['POST'])
+def api_admin_login():
+    """API للتحقق من تسجيل دخول المدراء في صفحة فحص السلامة العامة"""
+    try:
+        data = request.get_json()
+        username = data.get('username')
+        password = data.get('password')
+        
+        if not username or not password:
+            return jsonify({'success': False, 'error': 'بيانات غير مكتملة'}), 400
+        
+        # البحث عن المستخدم
+        from models import User
+        from werkzeug.security import check_password_hash
+        
+        user = User.query.filter_by(username=username).first()
+        
+        if user and check_password_hash(user.password_hash, password):
+            # التحقق من أن المستخدم مدير
+            if user.role in ['admin', 'manager']:
+                return jsonify({
+                    'success': True,
+                    'role': user.role,
+                    'username': user.username
+                })
+            else:
+                return jsonify({'success': False, 'error': 'غير مصرح لك بالدخول'}), 403
+        else:
+            return jsonify({'success': False, 'error': 'بيانات دخول خاطئة'}), 401
+            
+    except Exception as e:
+        current_app.logger.error(f"خطأ في تسجيل دخول المدراء: {str(e)}")
+        return jsonify({'success': False, 'error': 'حدث خطأ في الخادم'}), 500
