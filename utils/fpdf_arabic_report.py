@@ -853,27 +853,8 @@ def generate_safety_check_report_pdf(safety_check):
     if hasattr(safety_check, 'safety_images') and safety_check.safety_images:
         pdf.add_section_header(f'صور فحص السلامة ({len(safety_check.safety_images)} صورة)', '📷')
         
-        # عرض الصور في شبكة 2x2
-        images_per_row = 2
-        image_width = 80
-        image_height = 60
-        x_start = 20
-        y_start = pdf.get_y()
-        
         for i, image in enumerate(safety_check.safety_images):
             try:
-                # حساب الموقع
-                col = i % images_per_row
-                row = i // images_per_row
-                x = x_start + (col * 90)
-                y = y_start + (row * 75)
-                
-                # التحقق من المساحة المتبقية في الصفحة
-                if y + 75 > 270:
-                    pdf.add_page()
-                    y_start = pdf.get_y()
-                    y = y_start
-                
                 # المسار الكامل للصورة
                 image_path = image.image_path
                 if not image_path.startswith('/'):
@@ -881,28 +862,72 @@ def generate_safety_check_report_pdf(safety_check):
                 
                 # التحقق من وجود الصورة
                 if os.path.exists(image_path):
-                    # رسم إطار للصورة
-                    pdf.set_draw_color(200, 200, 200)
-                    pdf.rect(x, y, image_width, image_height + 10)
+                    # إضافة صفحة جديدة لكل صورة بعد الأولى
+                    if i > 0:
+                        pdf.add_page()
+                        pdf.ln(10)
+                    
+                    # عنوان الصورة
+                    description = image.image_description or f'صورة رقم {i+1}'
+                    if pdf.fonts_available:
+                        pdf.set_font('Tajawal', 'B', 14)
+                    else:
+                        pdf.set_font('Arial', 'B', 14)
+                    pdf.set_color('primary')
+                    pdf.cell(0, 10, description, 0, 1, 'C')
+                    pdf.ln(5)
+                    
+                    # الحصول على أبعاد الصورة الأصلية
+                    from PIL import Image as PILImage
+                    try:
+                        with PILImage.open(image_path) as img:
+                            original_width, original_height = img.size
+                    except:
+                        original_width, original_height = 800, 600
+                    
+                    # حساب الأبعاد المناسبة مع الحفاظ على نسبة العرض إلى الارتفاع
+                    max_width = 170  # عرض الصفحة - الهوامش
+                    max_height = 200  # ارتفاع مناسب
+                    
+                    # حساب النسبة
+                    width_ratio = max_width / original_width
+                    height_ratio = max_height / original_height
+                    ratio = min(width_ratio, height_ratio)
+                    
+                    # الأبعاد النهائية
+                    final_width = original_width * ratio
+                    final_height = original_height * ratio
+                    
+                    # مركز الصورة
+                    x_position = (210 - final_width) / 2
+                    y_position = pdf.get_y()
+                    
+                    # رسم إطار جميل حول الصورة
+                    pdf.set_draw_color(41, 128, 185)
+                    pdf.set_line_width(0.5)
+                    pdf.rect(x_position - 2, y_position - 2, final_width + 4, final_height + 4)
+                    
+                    # إضافة ظل خفيف
+                    pdf.set_fill_color(200, 200, 200)
+                    pdf.rect(x_position + 2, y_position + 2, final_width + 4, final_height + 4, 'F')
                     
                     # إضافة الصورة
-                    pdf.image(image_path, x + 2, y + 2, image_width - 4, image_height - 4)
+                    pdf.image(image_path, x_position, y_position, final_width, final_height)
                     
-                    # إضافة الوصف
-                    pdf.set_xy(x, y + image_height + 2)
-                    if pdf.fonts_available:
-                        pdf.set_font('Amiri', '', 9)
-                    else:
-                        pdf.set_font('Arial', '', 9)
-                    pdf.set_color('text_light')
-                    description = image.image_description or f'صورة {i+1}'
-                    pdf.cell(image_width, 6, description[:40], 0, 0, 'C')
+                    # مساحة بعد الصورة
+                    pdf.set_y(y_position + final_height + 5)
+                    
             except Exception as e:
                 import logging
                 logging.error(f"خطأ في إضافة الصورة: {str(e)}")
+                # عرض رسالة خطأ في PDF
+                pdf.set_color('danger')
+                if pdf.fonts_available:
+                    pdf.set_font('Amiri', '', 11)
+                else:
+                    pdf.set_font('Arial', '', 11)
+                pdf.cell(0, 10, f'تعذر تحميل الصورة رقم {i+1}', 0, 1, 'C')
                 continue
-        
-        pdf.ln(80)
     
     # ===== تذييل التقرير =====
     pdf.set_y(-30)
