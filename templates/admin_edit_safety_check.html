@@ -422,6 +422,38 @@
                         </div>
                         {% endif %}
                         
+                        <!-- رفع صور جديدة -->
+                        <div class="card border-success mb-3">
+                            <div class="card-header bg-success text-white">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-camera"></i> رفع صور جديدة
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="form-group">
+                                    <label for="new_images">
+                                        <i class="fas fa-upload"></i> اختر صور جديدة:
+                                    </label>
+                                    <input type="file" 
+                                           class="form-control" 
+                                           id="new_images" 
+                                           name="new_images" 
+                                           accept="image/*,.heic,.heif" 
+                                           multiple>
+                                    <small class="form-text text-muted">
+                                        يمكنك رفع عدة صور في نفس الوقت (JPG, PNG, HEIC). يتم تحويل صور HEIC من iPhone/iPad تلقائياً.
+                                    </small>
+                                </div>
+                                
+                                <!-- معاينة الصور قبل الرفع -->
+                                <div id="newImagesPreview" class="row mt-3" style="display: none;">
+                                    <div class="col-12 mb-2">
+                                        <h6><i class="fas fa-eye"></i> معاينة الصور الجديدة:</h6>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
                         <!-- رفع ملف PDF -->
                         <div class="card border-danger mb-3">
                             <div class="card-header bg-danger text-white">
@@ -743,6 +775,47 @@
             alert('حدث خطأ في الاتصال بالخادم');
         });
     }
+    
+    // معاينة الصور الجديدة قبل الرفع
+    document.getElementById('new_images').addEventListener('change', function(e) {
+        const files = e.target.files;
+        const previewContainer = document.getElementById('newImagesPreview');
+        
+        // مسح المعاينة السابقة
+        const existingPreviews = previewContainer.querySelectorAll('.col-md-3');
+        existingPreviews.forEach(preview => preview.remove());
+        
+        if (files.length > 0) {
+            previewContainer.style.display = 'flex';
+            
+            Array.from(files).forEach((file, index) => {
+                const reader = new FileReader();
+                
+                reader.onload = function(event) {
+                    const col = document.createElement('div');
+                    col.className = 'col-md-3 mb-3';
+                    
+                    col.innerHTML = `
+                        <div class="card border-success">
+                            <img src="${event.target.result}" 
+                                 class="card-img-top" 
+                                 alt="معاينة صورة ${index + 1}"
+                                 style="max-height: 150px; object-fit: cover;">
+                            <div class="card-body text-center p-2">
+                                <small class="text-muted">${file.name}</small>
+                            </div>
+                        </div>
+                    `;
+                    
+                    previewContainer.appendChild(col);
+                };
+                
+                reader.readAsDataURL(file);
+            });
+        } else {
+            previewContainer.style.display = 'none';
+        }
+    });
     
     // إضافة دعم السحب والإفلات للصور المكبرة
     document.addEventListener('DOMContentLoaded', function() {

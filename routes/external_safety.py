@@ -1499,6 +1499,34 @@ def edit_safety_check(check_id):
                         flash('يرجى رفع ملف بصيغة PDF فقط', 'error')
                         return render_template('admin_edit_safety_check.html', safety_check=safety_check)
             
+            # معالجة رفع صور جديدة
+            if 'new_images' in request.files:
+                new_images = request.files.getlist('new_images')
+                uploaded_count = 0
+                
+                for image_file in new_images:
+                    if image_file and image_file.filename:
+                        try:
+                            # رفع الصورة باستخدام storage_helper
+                            image_path = upload_image(image_file, 'safety_checks', f"{uuid.uuid4()}_{secure_filename(image_file.filename)}")
+                            
+                            # إنشاء سجل جديد للصورة
+                            new_image = VehicleSafetyImage(
+                                safety_check_id=safety_check.id,
+                                image_path=image_path,
+                                image_description=''
+                            )
+                            db.session.add(new_image)
+                            uploaded_count += 1
+                            
+                            current_app.logger.info(f'تم رفع صورة جديدة للفحص {safety_check.id}: {image_path}')
+                        except Exception as e:
+                            current_app.logger.error(f'خطأ في رفع صورة: {str(e)}')
+                            continue
+                
+                if uploaded_count > 0:
+                    flash(f'تم رفع {uploaded_count} صورة جديدة بنجاح', 'success')
+            
             # تحديث أوصاف الصور
             for image in safety_check.safety_images:
                 description_field = f'image_description_{image.id}'
