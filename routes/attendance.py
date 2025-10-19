@@ -1624,9 +1624,8 @@ def export_excel_dashboard():
     """تصدير لوحة المعلومات إلى Excel مع تصميم داش بورد خيالي ومبهر"""
     try:
         from openpyxl import Workbook
-        from openpyxl.chart import BarChart, PieChart, LineChart, Reference, Series
-        from openpyxl.chart.label import DataLabelList
-        from openpyxl.styles import Font, PatternFill, Alignment, Border, Side, GradientFill
+        from openpyxl.chart import BarChart, PieChart, Reference
+        from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
         from openpyxl.utils import get_column_letter
         from io import BytesIO
         from flask import send_file
