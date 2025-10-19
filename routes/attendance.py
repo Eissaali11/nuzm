@@ -1621,12 +1621,13 @@ def department_stats():
 
 @attendance_bp.route('/export-excel-dashboard')
 def export_excel_dashboard():
-    """تصدير لوحة المعلومات إلى Excel مع رسم بياني"""
+    """تصدير لوحة المعلومات إلى Excel مع تصميم داش بورد خيالي ومبهر"""
     try:
-        import pandas as pd
         from openpyxl import Workbook
-        from openpyxl.chart import BarChart, Reference
-        from openpyxl.styles import Font, PatternFill, Alignment
+        from openpyxl.chart import BarChart, PieChart, LineChart, Reference, Series
+        from openpyxl.chart.label import DataLabelList
+        from openpyxl.styles import Font, PatternFill, Alignment, Border, Side, GradientFill
+        from openpyxl.utils import get_column_letter
         from io import BytesIO
         from flask import send_file
         
@@ -1635,30 +1636,33 @@ def export_excel_dashboard():
         selected_project = request.args.get('project', None)
         
         today = datetime.now().date()
-        start_date = today.replace(day=1)  # بداية الشهر الحالي
-        end_date = today  # حتى اليوم الحالي
+        start_date = today.replace(day=1)
+        end_date = today
+        
+        # جلب جميع الموظفين
+        all_employees = Employee.query.filter_by(status='active').all()
+        total_employees = len(all_employees)
         
         # جلب البيانات حسب الفلتر
         departments = Department.query.all()
         department_data = []
         
+        total_present = 0
+        total_absent = 0
+        total_leave = 0
+        total_sick = 0
+        total_records = 0
+        
         for dept in departments:
-            # فلترة حسب القسم المحدد
             if selected_department and dept.name != selected_department:
                 continue
                 
-            # جلب الموظفين
-            employees_query = Employee.query.filter_by(
-                department_id=dept.id,
-                status='active'
-            )
-            employees = employees_query.all()
-            total_employees = len(employees)
+            employees = [emp for emp in all_employees if any(d.id == dept.id for d in emp.departments)]
+            dept_employee_count = len(employees)
             
-            if total_employees == 0:
+            if dept_employee_count == 0:
                 continue
                 
-            # جلب سجلات الحضور
             employee_ids = [emp.id for emp in employees]
             attendance_records = Attendance.query.filter(
                 Attendance.employee_id.in_(employee_ids),
@@ -1666,121 +1670,240 @@ def export_excel_dashboard():
                 Attendance.date <= end_date
             ).all()
             
-            # حساب الإحصائيات
-            present_count = sum(1 for record in attendance_records if record.status == 'present')
-            absent_count = sum(1 for record in attendance_records if record.status == 'absent')
-            leave_count = sum(1 for record in attendance_records if record.status == 'leave')
-            sick_count = sum(1 for record in attendance_records if record.status == 'sick')
-            total_records = len(attendance_records)
+            present_count = sum(1 for r in attendance_records if r.status == 'present')
+            absent_count = sum(1 for r in attendance_records if r.status == 'absent')
+            leave_count = sum(1 for r in attendance_records if r.status == 'leave')
+            sick_count = sum(1 for r in attendance_records if r.status == 'sick')
+            dept_total_records = len(attendance_records)
             
-            attendance_rate = (present_count / total_records * 100) if total_records > 0 else 0
+            attendance_rate = (present_count / dept_total_records * 100) if dept_total_records > 0 else 0
+            
+            total_present += present_count
+            total_absent += absent_count
+            total_leave += leave_count
+            total_sick += sick_count
+            total_records += dept_total_records
             
             department_data.append({
-                'القسم': dept.name,
-                'عدد الموظفين': total_employees,
-                'حاضر': present_count,
-                'غائب': absent_count,
-                'إجازة': leave_count,
-                'مرضي': sick_count,
-                'إجمالي السجلات': total_records,
-                'معدل الحضور %': round(attendance_rate, 1)
+                'name': dept.name,
+                'employees': dept_employee_count,
+                'present': present_count,
+                'absent': absent_count,
+                'leave': leave_count,
+                'sick': sick_count,
+                'total': dept_total_records,
+                'rate': round(attendance_rate, 1)
             })
         
-        # إنشاء DataFrame
-        df = pd.DataFrame(department_data)
-        
-        if df.empty:
-            # إرجاع ملف فارغ مع رسالة
+        if not department_data:
             wb = Workbook()
             ws = wb.active
             ws.title = "لا توجد بيانات"
             ws['A1'] = "لا توجد بيانات للعرض"
-            
             output = BytesIO()
             wb.save(output)
             output.seek(0)
-            
-            return send_file(
-                output,
-                mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                as_attachment=True,
-                download_name=f'تقرير_الحضور_{today.strftime("%Y%m%d")}.xlsx'
-            )
+            return send_file(output, mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                           as_attachment=True, download_name=f'تقرير_الحضور_{today.strftime("%Y%m%d")}.xlsx')
         
-        # إنشاء ملف Excel مع تنسيق متقدم
+        # إنشاء ملف Excel خيالي
         wb = Workbook()
         ws = wb.active
-        ws.title = "إحصائيات الحضور"
+        ws.title = "📊 لوحة المعلومات"
         
-        # كتابة العنوان الرئيسي
-        title = f"تقرير إحصائيات الحضور للفترة من {start_date.strftime('%Y-%m-%d')} إلى {end_date.strftime('%Y-%m-%d')}"
-        if selected_department:
-            title += f" - القسم: {selected_department}"
-        if selected_project:
-            title += f" - المشروع: {selected_project}"
+        # === العنوان الرئيسي الفاخر ===
+        ws.merge_cells('A1:M3')
+        title_cell = ws['A1']
+        title_cell.value = f"📊 لوحة معلومات الحضور والغياب\n{start_date.strftime('%Y/%m/%d')} - {end_date.strftime('%Y/%m/%d')}"
+        title_cell.font = Font(size=24, bold=True, color="FFFFFF", name="Arial")
+        title_cell.fill = PatternFill(start_color="1F4E78", end_color="1F4E78", fill_type="solid")
+        title_cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+        ws.row_dimensions[1].height = 30
+        ws.row_dimensions[2].height = 30
+        
+        # === بطاقات KPI الملونة ===
+        kpi_row = 5
+        ws.row_dimensions[kpi_row].height = 35
+        ws.row_dimensions[kpi_row + 1].height = 30
+        
+        # تعريف الحدود
+        thick_border = Border(
+            left=Side(style='thick', color='FFFFFF'),
+            right=Side(style='thick', color='FFFFFF'),
+            top=Side(style='thick', color='FFFFFF'),
+            bottom=Side(style='thick', color='FFFFFF')
+        )
+        
+        # KPI 1: إجمالي الموظفين
+        ws.merge_cells(f'A{kpi_row}:C{kpi_row+1}')
+        kpi1 = ws[f'A{kpi_row}']
+        kpi1.value = f"👥 إجمالي الموظفين\n{total_employees}"
+        kpi1.font = Font(size=16, bold=True, color="FFFFFF")
+        kpi1.fill = PatternFill(start_color="5B9BD5", end_color="5B9BD5", fill_type="solid")
+        kpi1.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+        kpi1.border = thick_border
+        
+        # KPI 2: الحضور
+        ws.merge_cells(f'D{kpi_row}:F{kpi_row+1}')
+        kpi2 = ws[f'D{kpi_row}']
+        kpi2.value = f"✅ الحضور\n{total_present}"
+        kpi2.font = Font(size=16, bold=True, color="FFFFFF")
+        kpi2.fill = PatternFill(start_color="70AD47", end_color="70AD47", fill_type="solid")
+        kpi2.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+        kpi2.border = thick_border
+        
+        # KPI 3: الغياب
+        ws.merge_cells(f'G{kpi_row}:I{kpi_row+1}')
+        kpi3 = ws[f'G{kpi_row}']
+        kpi3.value = f"❌ الغياب\n{total_absent}"
+        kpi3.font = Font(size=16, bold=True, color="FFFFFF")
+        kpi3.fill = PatternFill(start_color="E74C3C", end_color="E74C3C", fill_type="solid")
+        kpi3.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+        kpi3.border = thick_border
+        
+        # KPI 4: الإجازات
+        ws.merge_cells(f'J{kpi_row}:L{kpi_row+1}')
+        kpi4 = ws[f'J{kpi_row}']
+        kpi4.value = f"🏖️ الإجازات\n{total_leave}"
+        kpi4.font = Font(size=16, bold=True, color="FFFFFF")
+        kpi4.fill = PatternFill(start_color="F39C12", end_color="F39C12", fill_type="solid")
+        kpi4.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+        kpi4.border = thick_border
+        
+        # KPI 5: المرضي
+        ws.merge_cells(f'M{kpi_row}:O{kpi_row+1}')
+        kpi5 = ws[f'M{kpi_row}']
+        kpi5.value = f"🏥 المرضي\n{total_sick}"
+        kpi5.font = Font(size=16, bold=True, color="FFFFFF")
+        kpi5.fill = PatternFill(start_color="3498DB", end_color="3498DB", fill_type="solid")
+        kpi5.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+        kpi5.border = thick_border
+        
+        # === جدول البيانات التفصيلي ===
+        table_start_row = kpi_row + 3
+        
+        # عنوان الجدول
+        ws.merge_cells(f'A{table_start_row}:H{table_start_row}')
+        table_title = ws[f'A{table_start_row}']
+        table_title.value = "📋 تفاصيل الأقسام"
+        table_title.font = Font(size=14, bold=True, color="FFFFFF")
+        table_title.fill = PatternFill(start_color="2C3E50", end_color="2C3E50", fill_type="solid")
+        table_title.alignment = Alignment(horizontal='center', vertical='center')
+        ws.row_dimensions[table_start_row].height = 25
+        
+        # رؤوس الأعمدة
+        headers_row = table_start_row + 1
+        headers = ['القسم', 'عدد الموظفين', 'حاضر', 'غائب', 'إجازة', 'مرضي', 'إجمالي السجلات', 'معدل الحضور %']
+        header_colors = ['34495E', '5B9BD5', '70AD47', 'E74C3C', 'F39C12', '3498DB', '95A5A6', '16A085']
+        
+        for col_idx, (header, color) in enumerate(zip(headers, header_colors), 1):
+            cell = ws.cell(row=headers_row, column=col_idx)
+            cell.value = header
+            cell.font = Font(size=11, bold=True, color="FFFFFF")
+            cell.fill = PatternFill(start_color=color, end_color=color, fill_type="solid")
+            cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+            cell.border = Border(
+                left=Side(style='thin'), right=Side(style='thin'),
+                top=Side(style='thin'), bottom=Side(style='thin')
+            )
+        ws.row_dimensions[headers_row].height = 30
+        
+        # البيانات
+        data_start_row = headers_row + 1
+        for row_idx, dept in enumerate(department_data, data_start_row):
+            values = [dept['name'], dept['employees'], dept['present'], dept['absent'], 
+                     dept['leave'], dept['sick'], dept['total'], dept['rate']]
             
-        ws['A1'] = title
-        ws['A1'].font = Font(size=16, bold=True)
-        ws['A1'].alignment = Alignment(horizontal='center')
-        ws.merge_cells('A1:H1')
-        
-        # كتابة رؤوس الأعمدة
-        headers = list(df.columns)
-        for col_num, header in enumerate(headers, 1):
-            cell = ws.cell(row=3, column=col_num, value=header)
-            cell.font = Font(bold=True, color="FFFFFF")
-            cell.fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")
-            cell.alignment = Alignment(horizontal='center')
-        
-        # كتابة البيانات
-        for row_num, row_data in enumerate(df.values, 4):
-            for col_num, value in enumerate(row_data, 1):
-                cell = ws.cell(row=row_num, column=col_num, value=value)
-                cell.alignment = Alignment(horizontal='center')
+            for col_idx, value in enumerate(values, 1):
+                cell = ws.cell(row=row_idx, column=col_idx)
+                cell.value = value
+                cell.alignment = Alignment(horizontal='center', vertical='center')
+                cell.border = Border(
+                    left=Side(style='thin'), right=Side(style='thin'),
+                    top=Side(style='thin'), bottom=Side(style='thin')
+                )
                 
-                # تلوين الخلايا حسب القيم
-                if col_num == 3:  # عمود الحضور
-                    cell.fill = PatternFill(start_color="D4EDDA", end_color="D4EDDA", fill_type="solid")
-                elif col_num == 4:  # عمود الغياب
-                    cell.fill = PatternFill(start_color="F8D7DA", end_color="F8D7DA", fill_type="solid")
-                elif col_num == 5:  # عمود الإجازة
-                    cell.fill = PatternFill(start_color="FFF3CD", end_color="FFF3CD", fill_type="solid")
-                elif col_num == 6:  # عمود المرضي
-                    cell.fill = PatternFill(start_color="D1ECF1", end_color="D1ECF1", fill_type="solid")
+                # تلوين بديل للصفوف
+                if row_idx % 2 == 0:
+                    cell.fill = PatternFill(start_color="ECF0F1", end_color="ECF0F1", fill_type="solid")
+                
+                # تلوين خاص للأعمدة
+                if col_idx == 3:  # حاضر
+                    cell.fill = PatternFill(start_color="D5F4E6", end_color="D5F4E6", fill_type="solid")
+                    cell.font = Font(bold=True, color="27AE60")
+                elif col_idx == 4:  # غائب
+                    cell.fill = PatternFill(start_color="FADBD8", end_color="FADBD8", fill_type="solid")
+                    cell.font = Font(bold=True, color="C0392B")
+                elif col_idx == 5:  # إجازة
+                    cell.fill = PatternFill(start_color="FEF5E7", end_color="FEF5E7", fill_type="solid")
+                    cell.font = Font(bold=True, color="D68910")
+                elif col_idx == 6:  # مرضي
+                    cell.fill = PatternFill(start_color="D6EAF8", end_color="D6EAF8", fill_type="solid")
+                    cell.font = Font(bold=True, color="2874A6")
+                elif col_idx == 8:  # معدل الحضور
+                    cell.font = Font(bold=True, size=11)
+                    if value >= 90:
+                        cell.fill = PatternFill(start_color="ABEBC6", end_color="ABEBC6", fill_type="solid")
+                    elif value >= 75:
+                        cell.fill = PatternFill(start_color="F9E79F", end_color="F9E79F", fill_type="solid")
+                    else:
+                        cell.fill = PatternFill(start_color="F5B7B1", end_color="F5B7B1", fill_type="solid")
         
-        # إنشاء رسم بياني
-        chart = BarChart()
-        chart.type = "col"
-        chart.style = 10
-        chart.title = "مقارنة الحضور بين الأقسام"
-        chart.y_axis.title = 'عدد أيام الحضور'
-        chart.x_axis.title = 'الأقسام'
+        # === الرسوم البيانية ===
+        chart_row = data_start_row + len(department_data) + 2
         
-        # تحديد البيانات للرسم البياني
-        data = Reference(ws, min_col=3, min_row=3, max_row=3+len(df), max_col=6)
-        cats = Reference(ws, min_col=1, min_row=4, max_row=3+len(df))
+        # 1. مخطط عمودي - مقارنة الحضور بين الأقسام
+        bar_chart = BarChart()
+        bar_chart.title = "مقارنة حالات الحضور بين الأقسام"
+        bar_chart.style = 13
+        bar_chart.y_axis.title = 'العدد'
+        bar_chart.x_axis.title = 'الأقسام'
+        bar_chart.height = 12
+        bar_chart.width = 20
         
-        chart.add_data(data, titles_from_data=True)
-        chart.set_categories(cats)
-        chart.shape = 4
+        data_ref = Reference(ws, min_col=3, min_row=headers_row, max_row=data_start_row + len(department_data) - 1, max_col=6)
+        cats_ref = Reference(ws, min_col=1, min_row=data_start_row, max_row=data_start_row + len(department_data) - 1)
         
-        # إضافة الرسم البياني
-        ws.add_chart(chart, "J3")
+        bar_chart.add_data(data_ref, titles_from_data=True)
+        bar_chart.set_categories(cats_ref)
+        ws.add_chart(bar_chart, f"A{chart_row}")
         
-        # تعديل عرض الأعمدة
-        column_widths = [15, 12, 10, 10, 10, 10, 15, 15]
+        # 2. مخطط دائري - نسب الحضور الإجمالية
+        pie_chart = PieChart()
+        pie_chart.title = "نسب حالات الحضور الإجمالية"
+        pie_chart.height = 12
+        pie_chart.width = 15
+        
+        # إنشاء بيانات الإجمالي
+        summary_row = data_start_row + len(department_data) + 15
+        ws[f'K{summary_row}'] = 'حاضر'
+        ws[f'L{summary_row}'] = total_present
+        ws[f'K{summary_row+1}'] = 'غائب'
+        ws[f'L{summary_row+1}'] = total_absent
+        ws[f'K{summary_row+2}'] = 'إجازة'
+        ws[f'L{summary_row+2}'] = total_leave
+        ws[f'K{summary_row+3}'] = 'مرضي'
+        ws[f'L{summary_row+3}'] = total_sick
+        
+        pie_data = Reference(ws, min_col=12, min_row=summary_row, max_row=summary_row+3)
+        pie_labels = Reference(ws, min_col=11, min_row=summary_row, max_row=summary_row+3)
+        pie_chart.add_data(pie_data, titles_from_data=False)
+        pie_chart.set_categories(pie_labels)
+        ws.add_chart(pie_chart, f"K{chart_row}")
+        
+        # تعيين عرض الأعمدة
+        column_widths = [20, 15, 12, 12, 12, 12, 18, 18]
         for i, width in enumerate(column_widths, 1):
-            ws.column_dimensions[chr(64 + i)].width = width
+            ws.column_dimensions[get_column_letter(i)].width = width
         
         # حفظ الملف
         output = BytesIO()
         wb.save(output)
         output.seek(0)
         
-        # إرجاع الملف
-        filename = f'تقرير_لوحة_الحضور_{today.strftime("%Y%m%d")}.xlsx'
+        filename = f'📊_لوحة_معلومات_الحضور_{today.strftime("%Y%m%d")}.xlsx'
         if selected_department:
-            filename = f'تقرير_{selected_department}_{today.strftime("%Y%m%d")}.xlsx'
+            filename = f'📊_{selected_department}_{today.strftime("%Y%m%d")}.xlsx'
             
         return send_file(
             output,
@@ -1790,7 +1913,7 @@ def export_excel_dashboard():
         )
         
     except Exception as e:
-        print(f"خطأ في تصدير Excel: {str(e)}")
+        logger.error(f"خطأ في تصدير Excel: {str(e)}")
         flash('حدث خطأ أثناء تصدير الملف', 'error')
         return redirect(url_for('attendance.dashboard'))
 
