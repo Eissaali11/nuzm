@@ -494,6 +494,7 @@
                         <th><i class="fas fa-building me-1"></i>القسم</th>
                         <th><i class="fas fa-calendar me-1"></i>التاريخ</th>
                         <th><i class="fas fa-info-circle me-1"></i>الحالة</th>
+                        <th><i class="fas fa-file-medical me-1"></i>ملف الإجازة</th>
                         <th><i class="fas fa-sign-in-alt me-1"></i>دخول</th>
                         <th><i class="fas fa-sign-out-alt me-1"></i>خروج</th>
                         <th><i class="fas fa-clock me-1"></i>ساعات العمل</th>
@@ -522,6 +523,18 @@
                                 <span class="status-badge badge-leave">إجازة</span>
                             {% elif attendance.status == 'sick' %}
                                 <span class="status-badge badge-sick">مرضي</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if attendance.status == 'sick' and attendance.sick_leave_file %}
+                                <a href="{{ url_for('static', filename=attendance.sick_leave_file) }}" 
+                                   target="_blank" 
+                                   class="btn btn-sm btn-success" 
+                                   style="border-radius: 20px; padding: 6px 16px; background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); border: none;">
+                                    <i class="fas fa-file-alt me-1"></i>عرض الملف
+                                </a>
+                            {% else %}
+                                <span class="text-muted">-</span>
                             {% endif %}
                         </td>
                         <td>
