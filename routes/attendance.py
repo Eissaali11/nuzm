@@ -2767,8 +2767,9 @@ def update_attendance_page(id):
         if status == 'sick' and 'sick_leave_file' in request.files:
             file = request.files['sick_leave_file']
             if file and file.filename:
-                from utils.storage_helper import save_file
+                from utils.storage_helper import upload_image
                 import os
+                from werkzeug.utils import secure_filename
                 
                 # حذف الملف القديم إذا كان موجوداً
                 if attendance.sick_leave_file:
@@ -2780,7 +2781,8 @@ def update_attendance_page(id):
                             pass
                 
                 # حفظ الملف الجديد
-                file_path = save_file(file, 'sick_leaves')
+                filename = secure_filename(file.filename)
+                file_path = upload_image(file, 'sick_leaves', filename)
                 if file_path:
                     attendance.sick_leave_file = file_path
         elif status != 'sick':
