@@ -176,45 +176,113 @@ def export_attendance_by_department_with_dashboard(employees, attendances, start
                 'absent': day_absent
             })
         
-        # ========== إنشاء ورقة بيانات مخفية للرسوم البيانية ==========
-        chart_data = workbook.add_worksheet('ChartData')
-        chart_data.hide()
+        # ========== إنشاء ورقة بيانات احترافية للرسوم البيانية ==========
+        chart_data = workbook.add_worksheet('📈 بيانات الرسوم البيانية')
         
-        # بيانات الرسم الدائري
-        chart_data.write('A1', 'الحالة')
-        chart_data.write('B1', 'العدد')
-        chart_data.write('A2', 'حاضر')
-        chart_data.write('B2', total_present)
-        chart_data.write('A3', 'غائب')
-        chart_data.write('B3', total_absent)
-        chart_data.write('A4', 'إجازة')
-        chart_data.write('B4', total_leave)
-        chart_data.write('A5', 'مرضي')
-        chart_data.write('B5', total_sick)
+        # تنسيقات احترافية للورقة
+        section_title_format = workbook.add_format({
+            'bold': True,
+            'font_size': 16,
+            'font_color': 'white',
+            'bg_color': '#4A90E2',
+            'align': 'center',
+            'valign': 'vcenter',
+            'border': 2
+        })
         
-        # بيانات إحصائيات الأقسام
-        chart_data.write('D1', 'القسم')
-        chart_data.write('E1', 'حضور')
-        chart_data.write('F1', 'غياب')
-        chart_data.write('G1', 'إجازات')
-        chart_data.write('H1', 'مرضي')
+        data_header_format = workbook.add_format({
+            'bold': True,
+            'font_size': 11,
+            'bg_color': '#D6EAF8',
+            'font_color': '#1B4F72',
+            'border': 1,
+            'align': 'center',
+            'valign': 'vcenter'
+        })
         
-        for idx, dept in enumerate(dept_stats[:10], start=2):  # أول 10 أقسام
-            chart_data.write(f'D{idx}', dept['name'])
-            chart_data.write(f'E{idx}', dept['present'])
-            chart_data.write(f'F{idx}', dept['absent'])
-            chart_data.write(f'G{idx}', dept['leave'])
-            chart_data.write(f'H{idx}', dept['sick'])
+        data_cell_format = workbook.add_format({
+            'border': 1,
+            'align': 'center',
+            'valign': 'vcenter'
+        })
         
-        # بيانات التطور اليومي
-        chart_data.write('J1', 'التاريخ')
-        chart_data.write('K1', 'حضور')
-        chart_data.write('L1', 'غياب')
+        success_cell_format = workbook.add_format({
+            'border': 1,
+            'align': 'center',
+            'valign': 'vcenter',
+            'font_color': '#28A745',
+            'bold': True
+        })
         
-        for idx, day_stat in enumerate(daily_stats, start=2):
-            chart_data.write(f'J{idx}', day_stat['date'].strftime('%Y-%m-%d'))
-            chart_data.write(f'K{idx}', day_stat['present'])
-            chart_data.write(f'L{idx}', day_stat['absent'])
+        danger_cell_format = workbook.add_format({
+            'border': 1,
+            'align': 'center',
+            'valign': 'vcenter',
+            'font_color': '#DC3545',
+            'bold': True
+        })
+        
+        # العنوان الرئيسي
+        chart_data.merge_range('A1:L1', '📈 بيانات الرسوم البيانية والإحصائيات', title_format)
+        chart_data.set_row(0, 40)
+        
+        # ========== القسم الأول: توزيع الحضور ==========
+        chart_data.merge_range('A3:B3', '📊 توزيع الحضور والغياب', section_title_format)
+        chart_data.set_row(2, 30)
+        
+        chart_data.write('A4', 'الحالة', data_header_format)
+        chart_data.write('B4', 'العدد', data_header_format)
+        
+        chart_data.write('A5', '✅ حاضر', data_cell_format)
+        chart_data.write('B5', total_present, success_cell_format)
+        
+        chart_data.write('A6', '❌ غائب', data_cell_format)
+        chart_data.write('B6', total_absent, danger_cell_format)
+        
+        chart_data.write('A7', '🏖️ إجازة', data_cell_format)
+        chart_data.write('B7', total_leave, data_cell_format)
+        
+        chart_data.write('A8', '🏥 مرضي', data_cell_format)
+        chart_data.write('B8', total_sick, data_cell_format)
+        
+        chart_data.set_column('A:A', 20)
+        chart_data.set_column('B:B', 15)
+        
+        # ========== القسم الثاني: إحصائيات الأقسام ==========
+        chart_data.merge_range('D3:H3', '📋 إحصائيات الأقسام التفصيلية', section_title_format)
+        chart_data.set_row(2, 30)
+        
+        chart_data.write('D4', 'القسم', data_header_format)
+        chart_data.write('E4', 'حضور ✅', data_header_format)
+        chart_data.write('F4', 'غياب ❌', data_header_format)
+        chart_data.write('G4', 'إجازات 🏖️', data_header_format)
+        chart_data.write('H4', 'مرضي 🏥', data_header_format)
+        
+        for idx, dept in enumerate(dept_stats[:10], start=5):  # أول 10 أقسام
+            chart_data.write(f'D{idx}', dept['name'], data_cell_format)
+            chart_data.write(f'E{idx}', dept['present'], success_cell_format)
+            chart_data.write(f'F{idx}', dept['absent'], danger_cell_format)
+            chart_data.write(f'G{idx}', dept['leave'], data_cell_format)
+            chart_data.write(f'H{idx}', dept['sick'], data_cell_format)
+        
+        chart_data.set_column('D:D', 25)
+        chart_data.set_column('E:H', 12)
+        
+        # ========== القسم الثالث: التطور اليومي ==========
+        chart_data.merge_range('J3:L3', '📅 التطور اليومي', section_title_format)
+        chart_data.set_row(2, 30)
+        
+        chart_data.write('J4', 'التاريخ', data_header_format)
+        chart_data.write('K4', 'حضور ✅', data_header_format)
+        chart_data.write('L4', 'غياب ❌', data_header_format)
+        
+        for idx, day_stat in enumerate(daily_stats, start=5):
+            chart_data.write(f'J{idx}', day_stat['date'].strftime('%Y-%m-%d'), data_cell_format)
+            chart_data.write(f'K{idx}', day_stat['present'], success_cell_format)
+            chart_data.write(f'L{idx}', day_stat['absent'], danger_cell_format)
+        
+        chart_data.set_column('J:J', 15)
+        chart_data.set_column('K:L', 12)
         
         # ========== إنشاء ورقة الداش بورد ==========
         dashboard = workbook.add_worksheet('📊 لوحة المعلومات')
@@ -256,8 +324,8 @@ def export_attendance_by_department_with_dashboard(employees, attendances, start
         pie_chart = workbook.add_chart({'type': 'doughnut'})
         pie_chart.add_series({
             'name': 'توزيع الموظفين',
-            'categories': '=ChartData!$A$2:$A$5',
-            'values': '=ChartData!$B$2:$B$5',
+            'categories': '="📈 بيانات الرسوم البيانية"!$A$5:$A$8',
+            'values': '="📈 بيانات الرسوم البيانية"!$B$5:$B$8',
             'data_labels': {'percentage': True, 'position': 'best_fit'},
             'points': [
                 {'fill': {'color': '#28A745'}},  # حاضر - أخضر
@@ -277,26 +345,26 @@ def export_attendance_by_department_with_dashboard(employees, attendances, start
             col_chart = workbook.add_chart({'type': 'column'})
             col_chart.add_series({
                 'name': 'حضور',
-                'categories': f'=ChartData!$D$2:$D${num_depts+1}',
-                'values': f'=ChartData!$E$2:$E${num_depts+1}',
+                'categories': f'="📈 بيانات الرسوم البيانية"!$D$5:$D${num_depts+4}',
+                'values': f'="📈 بيانات الرسوم البيانية"!$E$5:$E${num_depts+4}',
                 'fill': {'color': '#28A745'},
             })
             col_chart.add_series({
                 'name': 'غياب',
-                'categories': f'=ChartData!$D$2:$D${num_depts+1}',
-                'values': f'=ChartData!$F$2:$F${num_depts+1}',
+                'categories': f'="📈 بيانات الرسوم البيانية"!$D$5:$D${num_depts+4}',
+                'values': f'="📈 بيانات الرسوم البيانية"!$F$5:$F${num_depts+4}',
                 'fill': {'color': '#DC3545'},
             })
             col_chart.add_series({
                 'name': 'إجازات',
-                'categories': f'=ChartData!$D$2:$D${num_depts+1}',
-                'values': f'=ChartData!$G$2:$G${num_depts+1}',
+                'categories': f'="📈 بيانات الرسوم البيانية"!$D$5:$D${num_depts+4}',
+                'values': f'="📈 بيانات الرسوم البيانية"!$G$5:$G${num_depts+4}',
                 'fill': {'color': '#FFC107'},
             })
             col_chart.add_series({
                 'name': 'مرضي',
-                'categories': f'=ChartData!$D$2:$D${num_depts+1}',
-                'values': f'=ChartData!$H$2:$H${num_depts+1}',
+                'categories': f'="📈 بيانات الرسوم البيانية"!$D$5:$D${num_depts+4}',
+                'values': f'="📈 بيانات الرسوم البيانية"!$H$5:$H${num_depts+4}',
                 'fill': {'color': '#0070C0'},
             })
             col_chart.set_title({'name': 'إحصائيات الأقسام'})
@@ -312,15 +380,15 @@ def export_attendance_by_department_with_dashboard(employees, attendances, start
             line_chart = workbook.add_chart({'type': 'line'})
             line_chart.add_series({
                 'name': 'حضور',
-                'categories': f'=ChartData!$J$2:$J${num_days+1}',
-                'values': f'=ChartData!$K$2:$K${num_days+1}',
+                'categories': f'="📈 بيانات الرسوم البيانية"!$J$5:$J${num_days+4}',
+                'values': f'="📈 بيانات الرسوم البيانية"!$K$5:$K${num_days+4}',
                 'line': {'color': '#28A745', 'width': 2.5},
                 'marker': {'type': 'circle', 'size': 6, 'fill': {'color': '#28A745'}},
             })
             line_chart.add_series({
                 'name': 'غياب',
-                'categories': f'=ChartData!$J$2:$J${num_days+1}',
-                'values': f'=ChartData!$L$2:$L${num_days+1}',
+                'categories': f'="📈 بيانات الرسوم البيانية"!$J$5:$J${num_days+4}',
+                'values': f'="📈 بيانات الرسوم البيانية"!$L$5:$L${num_days+4}',
                 'line': {'color': '#DC3545', 'width': 2.5},
                 'marker': {'type': 'circle', 'size': 6, 'fill': {'color': '#DC3545'}},
             })
