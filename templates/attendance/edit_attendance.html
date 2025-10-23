@@ -263,7 +263,7 @@
         </div>
         
         <!-- نموذج التعديل -->
-        <form method="POST" action="{{ url_for('attendance.update_attendance_page', id=attendance.id) }}">
+        <form method="POST" action="{{ url_for('attendance.update_attendance_page', id=attendance.id) }}" enctype="multipart/form-data">
             <!-- حالة الحضور -->
             <div class="form-section">
                 <h5><i class="fas fa-info-circle"></i>حالة الحضور</h5>
@@ -357,6 +357,34 @@
                 </div>
             </div>
             
+            <!-- ملف الإجازة المرضية -->
+            <div class="form-section" id="sickLeaveSection" style="display: none;">
+                <h5><i class="fas fa-file-medical"></i>ملف الإجازة المرضية</h5>
+                <div class="time-section">
+                    {% if attendance.sick_leave_file %}
+                    <div class="alert alert-success mb-3" style="border-radius: 10px;">
+                        <i class="fas fa-check-circle me-2"></i>
+                        يوجد ملف مرفق:
+                        <a href="{{ url_for('static', filename=attendance.sick_leave_file) }}" 
+                           target="_blank" class="text-decoration-underline ms-2">
+                            <i class="fas fa-external-link-alt me-1"></i>عرض الملف
+                        </a>
+                    </div>
+                    {% endif %}
+                    
+                    <label for="sick_leave_file" class="form-label">
+                        <i class="fas fa-upload"></i>
+                        رفع ملف الإجازة المرضية (PDF أو صورة)
+                    </label>
+                    <input type="file" class="form-control" id="sick_leave_file" name="sick_leave_file" 
+                           accept=".pdf,.jpg,.jpeg,.png,.heic">
+                    <small class="text-muted mt-2 d-block">
+                        <i class="fas fa-info-circle me-1"></i>
+                        يمكنك رفع ملف PDF أو صورة للإجازة المرضية (الصيغ المدعومة: PDF, JPG, PNG, HEIC)
+                    </small>
+                </div>
+            </div>
+            
             <!-- أزرار الإجراءات -->
             <div class="text-center mt-4">
                 <button type="submit" class="btn btn-save me-3">
@@ -374,12 +402,13 @@
 
 {% block extra_js %}
 <script>
-    // تفعيل/تعطيل حقول الوقت حسب الحالة
+    // تفعيل/تعطيل حقول الوقت وقسم الإجازة المرضية حسب الحالة
     function toggleTimeInputs() {
         const statusRadios = document.querySelectorAll('input[name="status"]');
         const checkInInput = document.getElementById('check_in');
         const checkOutInput = document.getElementById('check_out');
         const timeSection = document.getElementById('timeSection');
+        const sickLeaveSection = document.getElementById('sickLeaveSection');
         
         let selectedStatus = 'present';
         statusRadios.forEach(radio => {
@@ -388,6 +417,7 @@
             }
         });
         
+        // إظهار/إخفاء قسم الوقت
         if (selectedStatus === 'present') {
             checkInInput.removeAttribute('disabled');
             checkOutInput.removeAttribute('disabled');
@@ -398,6 +428,13 @@
             checkInInput.setAttribute('disabled', 'disabled');
             checkOutInput.setAttribute('disabled', 'disabled');
             timeSection.style.opacity = '0.5';
+        }
+        
+        // إظهار/إخفاء قسم الإجازة المرضية
+        if (selectedStatus === 'sick') {
+            sickLeaveSection.style.display = 'block';
+        } else {
+            sickLeaveSection.style.display = 'none';
         }
     }
     

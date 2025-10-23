@@ -2763,6 +2763,38 @@ def update_attendance_page(id):
         attendance.status = status
         attendance.notes = notes if notes else None
         
+        # معالجة رفع ملف الإجازة المرضية
+        if status == 'sick' and 'sick_leave_file' in request.files:
+            file = request.files['sick_leave_file']
+            if file and file.filename:
+                from utils.storage_helper import save_file
+                import os
+                
+                # حذف الملف القديم إذا كان موجوداً
+                if attendance.sick_leave_file:
+                    old_file_path = os.path.join('static', attendance.sick_leave_file)
+                    if os.path.exists(old_file_path):
+                        try:
+                            os.remove(old_file_path)
+                        except:
+                            pass
+                
+                # حفظ الملف الجديد
+                file_path = save_file(file, 'sick_leaves')
+                if file_path:
+                    attendance.sick_leave_file = file_path
+        elif status != 'sick':
+            # إذا تم تغيير الحالة من مرضي إلى حالة أخرى، نحذف ملف الإجازة المرضية
+            if attendance.sick_leave_file:
+                import os
+                old_file_path = os.path.join('static', attendance.sick_leave_file)
+                if os.path.exists(old_file_path):
+                    try:
+                        os.remove(old_file_path)
+                    except:
+                        pass
+                attendance.sick_leave_file = None
+        
         # معالجة أوقات الدخول والخروج
         if status == 'present':
             if check_in_str:

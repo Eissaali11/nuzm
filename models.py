@@ -180,6 +180,7 @@ class Attendance(db.Model):
     check_out = db.Column(db.Time, nullable=True)
     status = db.Column(db.String(20), nullable=False, default='present')  # present, absent, leave, sick
     notes = db.Column(db.Text)
+    sick_leave_file = db.Column(db.String(255), nullable=True)  # ملف الإجازة المرضية (PDF أو صورة)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
