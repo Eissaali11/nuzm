@@ -2717,3 +2717,82 @@ def department_bulk_attendance():
         departments = Department.query.all()
     
     return render_template('attendance/department_bulk.html', departments=departments)
+
+@attendance_bp.route('/update', methods=['POST'])
+def update_attendance():
+    """تحديث سجل حضور موجود"""
+    from flask import jsonify
+    from flask_login import current_user
+    from datetime import datetime, time
+    
+    try:
+        attendance_id = request.form.get('attendance_id')
+        status = request.form.get('status')
+        check_in_str = request.form.get('check_in', '')
+        check_out_str = request.form.get('check_out', '')
+        
+        if not attendance_id or not status:
+            return jsonify({'success': False, 'message': 'البيانات المطلوبة مفقودة'}), 400
+        
+        # الحصول على سجل الحضور
+        attendance = Attendance.query.get_or_404(attendance_id)
+        
+        # التحقق من صلاحيات المستخدم
+        if current_user.is_authenticated:
+            # التحقق من إمكانية الوصول للقسم
+            employee_departments = [dept.id for dept in attendance.employee.departments]
+            if employee_departments and not any(current_user.can_access_department(dept_id) for dept_id in employee_departments):
+                return jsonify({'success': False, 'message': 'ليس لديك صلاحية لتعديل هذا السجل'}), 403
+        
+        # تحديث الحالة
+        old_status = attendance.status
+        attendance.status = status
+        
+        # معالجة أوقات الدخول والخروج
+        if status == 'present':
+            if check_in_str:
+                try:
+                    hours, minutes = map(int, check_in_str.split(':'))
+                    attendance.check_in = time(hours, minutes)
+                except:
+                    attendance.check_in = None
+            
+            if check_out_str:
+                try:
+                    hours, minutes = map(int, check_out_str.split(':'))
+                    attendance.check_out = time(hours, minutes)
+                except:
+                    attendance.check_out = None
+        else:
+            # إذا لم تكن الحالة حاضر، نحذف أوقات الدخول والخروج
+            attendance.check_in = None
+            attendance.check_out = None
+        
+        # حفظ التغييرات
+        db.session.commit()
+        
+        # تسجيل العملية في سجل النشاط
+        log_attendance_activity(
+            action='update',
+            attendance_data={
+                'id': attendance.id,
+                'employee_id': attendance.employee_id,
+                'date': attendance.date.isoformat(),
+                'old_status': old_status,
+                'new_status': status
+            },
+            employee_name=attendance.employee.name
+        )
+        
+        return jsonify({
+            'success': True,
+            'message': 'تم تحديث سجل الحضور بنجاح'
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"خطأ في تحديث سجل الحضور: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': f'حدث خطأ: {str(e)}'
+        }), 500

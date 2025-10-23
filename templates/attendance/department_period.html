@@ -497,6 +497,7 @@
                         <th><i class="fas fa-sign-in-alt me-1"></i>دخول</th>
                         <th><i class="fas fa-sign-out-alt me-1"></i>خروج</th>
                         <th><i class="fas fa-clock me-1"></i>ساعات العمل</th>
+                        <th><i class="fas fa-edit me-1"></i>تعديل</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -545,6 +546,11 @@
                                 <span class="text-muted">-</span>
                             {% endif %}
                         </td>
+                        <td>
+                            <button class="btn btn-sm btn-primary" onclick="editAttendance({{ attendance.id }}, '{{ attendance.employee.name }}', '{{ attendance.date.strftime('%Y-%m-%d') }}', '{{ attendance.status }}', '{{ attendance.check_in.strftime('%H:%M') if attendance.check_in else '' }}', '{{ attendance.check_out.strftime('%H:%M') if attendance.check_out else '' }}')" style="border-radius: 20px; padding: 6px 16px;">
+                                <i class="fas fa-edit me-1"></i>تعديل
+                            </button>
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -564,24 +570,162 @@
     </div>
     {% endif %}
 </div>
+
+<!-- نافذة التعديل المنبثقة -->
+<div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 20px; border: none; overflow: hidden;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none;">
+                <h5 class="modal-title"><i class="fas fa-edit me-2"></i>تعديل حالة الحضور</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editForm" method="POST" action="{{ url_for('attendance.update_attendance') }}">
+                <div class="modal-body" style="padding: 30px;">
+                    <input type="hidden" id="edit_attendance_id" name="attendance_id">
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">
+                            <i class="fas fa-user me-1"></i>الموظف
+                        </label>
+                        <input type="text" class="form-control" id="edit_employee_name" readonly style="background: #f8f9fa;">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">
+                            <i class="fas fa-calendar me-1"></i>التاريخ
+                        </label>
+                        <input type="text" class="form-control" id="edit_date" readonly style="background: #f8f9fa;">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">
+                            <i class="fas fa-info-circle me-1"></i>الحالة *
+                        </label>
+                        <select class="form-select" id="edit_status" name="status" required>
+                            <option value="present">حاضر</option>
+                            <option value="absent">غائب</option>
+                            <option value="leave">إجازة</option>
+                            <option value="sick">مرضي</option>
+                        </select>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-sign-in-alt me-1"></i>وقت الدخول
+                            </label>
+                            <input type="time" class="form-control" id="edit_check_in" name="check_in">
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-sign-out-alt me-1"></i>وقت الخروج
+                            </label>
+                            <input type="time" class="form-control" id="edit_check_out" name="check_out">
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info mb-0" style="border-radius: 12px; border-left: 4px solid #667eea;">
+                        <small>
+                            <i class="fas fa-info-circle me-1"></i>
+                            سيتم تحديث حالة الحضور فوراً بعد الحفظ
+                        </small>
+                    </div>
+                </div>
+                <div class="modal-footer" style="border: none; padding: 20px 30px; background: #f8f9fa;">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius: 20px; padding: 10px 25px;">
+                        <i class="fas fa-times me-1"></i>إلغاء
+                    </button>
+                    <button type="submit" class="btn btn-primary" style="border-radius: 20px; padding: 10px 25px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none;">
+                        <i class="fas fa-save me-1"></i>حفظ التغييرات
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
     // التحقق من صحة التواريخ
-    document.querySelector('form').addEventListener('submit', function(e) {
-        const startDate = document.getElementById('start_date').value;
-        const endDate = document.getElementById('end_date').value;
-        
-        if (startDate && endDate && startDate > endDate) {
-            e.preventDefault();
-            alert('تاريخ البداية يجب أن يكون قبل تاريخ النهاية');
-        }
-    });
+    const filterForm = document.querySelector('form[action="{{ url_for('attendance.department_attendance_view') }}"]');
+    if (filterForm) {
+        filterForm.addEventListener('submit', function(e) {
+            const startDate = document.getElementById('start_date').value;
+            const endDate = document.getElementById('end_date').value;
+            
+            if (startDate && endDate && startDate > endDate) {
+                e.preventDefault();
+                alert('تاريخ البداية يجب أن يكون قبل تاريخ النهاية');
+            }
+        });
+    }
     
     // تعيين الحد الأدنى لتاريخ النهاية
-    document.getElementById('start_date').addEventListener('change', function() {
-        document.getElementById('end_date').min = this.value;
+    const startDateInput = document.getElementById('start_date');
+    if (startDateInput) {
+        startDateInput.addEventListener('change', function() {
+            document.getElementById('end_date').min = this.value;
+        });
+    }
+    
+    // فتح نافذة التعديل
+    function editAttendance(id, employeeName, date, status, checkIn, checkOut) {
+        document.getElementById('edit_attendance_id').value = id;
+        document.getElementById('edit_employee_name').value = employeeName;
+        document.getElementById('edit_date').value = date;
+        document.getElementById('edit_status').value = status;
+        document.getElementById('edit_check_in').value = checkIn;
+        document.getElementById('edit_check_out').value = checkOut;
+        
+        // فتح النافذة المنبثقة
+        const modal = new bootstrap.Modal(document.getElementById('editModal'));
+        modal.show();
+    }
+    
+    // معالجة إرسال نموذج التعديل
+    document.getElementById('editForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        
+        fetch('{{ url_for('attendance.update_attendance') }}', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // إغلاق النافذة
+                bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
+                
+                // إعادة تحميل الصفحة لعرض التغييرات
+                location.reload();
+            } else {
+                alert('حدث خطأ: ' + (data.message || 'فشل التحديث'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('حدث خطأ في الاتصال بالخادم');
+        });
+    });
+    
+    // تفعيل/تعطيل حقول الوقت حسب الحالة
+    document.getElementById('edit_status').addEventListener('change', function() {
+        const checkInInput = document.getElementById('edit_check_in');
+        const checkOutInput = document.getElementById('edit_check_out');
+        
+        if (this.value === 'present') {
+            checkInInput.removeAttribute('disabled');
+            checkOutInput.removeAttribute('disabled');
+        } else {
+            checkInInput.value = '';
+            checkOutInput.value = '';
+            checkInInput.setAttribute('disabled', 'disabled');
+            checkOutInput.setAttribute('disabled', 'disabled');
+        }
     });
 </script>
 {% endblock %}
