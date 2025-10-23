@@ -225,11 +225,18 @@
                                         </span>
                                         {% endif %}
                                         
-                                        <div class="mt-3">
-                                            <a href="{{ url_for('properties.edit_payment', property_id=property.id, payment_id=payment.id) }}" class="btn btn-sm btn-outline-warning">
+                                        <div class="mt-3 d-flex gap-2 justify-content-center">
+                                            <a href="{{ url_for('properties.edit_payment', payment_id=payment.id) }}" class="btn btn-sm btn-outline-warning">
                                                 <i class="fas fa-edit"></i>
                                                 تعديل
                                             </a>
+                                            <form method="POST" action="{{ url_for('properties.delete_payment', payment_id=payment.id) }}" style="display: inline;">
+                                                {{ csrf_token() }}
+                                                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('هل أنت متأكد من حذف هذه الدفعة؟')">
+                                                    <i class="fas fa-trash"></i>
+                                                    حذف
+                                                </button>
+                                            </form>
                                         </div>
                                     </div>
                                 </div>

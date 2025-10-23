@@ -556,12 +556,21 @@
                             <div class="info-label">{{ payment.payment_date.strftime('%Y-%m-%d') }}</div>
                             <div class="info-value">{{ "{:,.2f}".format(payment.amount) }} ريال</div>
                         </div>
-                        <div>
+                        <div class="d-flex align-items-center gap-2">
                             {% if payment.status == 'paid' %}
                                 <span class="badge bg-success">مدفوع</span>
                             {% else %}
                                 <span class="badge bg-warning text-dark">معلق</span>
                             {% endif %}
+                            <a href="{{ url_for('properties.edit_payment', payment_id=payment.id) }}" class="btn btn-sm btn-warning" title="تعديل">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <form method="POST" action="{{ url_for('properties.delete_payment', payment_id=payment.id) }}" style="display: inline;">
+                                {{ csrf_token() }}
+                                <button type="submit" class="btn btn-sm btn-danger" title="حذف" onclick="return confirm('هل أنت متأكد من حذف هذه الدفعة؟')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
                         </div>
                     </div>
                     {% endif %}
