@@ -109,19 +109,7 @@ def export_attendance_by_department_with_dashboard(employees, attendances, start
             'bg_color': '#FFEBEE'
         })
         
-        # ========== إنشاء ورقة الداش بورد ==========
-        dashboard = workbook.add_worksheet('📊 لوحة المعلومات')
-        
-        # العنوان الرئيسي
-        dashboard.merge_range('A1:H1', '📊 لوحة معلومات الحضور الشهري - جميع الأقسام', title_format)
-        dashboard.set_row(0, 40)
-        
-        # الفترة الزمنية
-        period_text = f'الفترة: من {start_date.strftime("%Y-%m-%d")} إلى {end_date.strftime("%Y-%m-%d")}'
-        dashboard.merge_range('A2:H2', period_text, subtitle_format)
-        dashboard.set_row(1, 30)
-        
-        # حساب الإحصائيات العامة
+        # ========== حساب الإحصائيات العامة ==========
         attendance_data = {}
         for att in attendances:
             emp_id = att.employee_id
@@ -137,6 +125,108 @@ def export_attendance_by_department_with_dashboard(employees, attendances, start
         
         # حساب نسبة الحضور
         attendance_rate = (total_present / total_records * 100) if total_records > 0 else 0
+        
+        # تنظيم الموظفين حسب الأقسام
+        departments = {}
+        for employee in employees:
+            dept_name = ', '.join([dept.name for dept in employee.departments]) if employee.departments else 'بدون قسم'
+            if dept_name not in departments:
+                departments[dept_name] = []
+            departments[dept_name].append(employee)
+        
+        # حساب إحصائيات كل قسم
+        dept_stats = []
+        for dept_name, dept_employees in sorted(departments.items()):
+            emp_ids = [emp.id for emp in dept_employees]
+            dept_attendances = [att for att in attendances if att.employee_id in emp_ids]
+            
+            dept_present = sum(1 for att in dept_attendances if att.status == 'present')
+            dept_absent = sum(1 for att in dept_attendances if att.status == 'absent')
+            dept_leave = sum(1 for att in dept_attendances if att.status == 'leave')
+            dept_sick = sum(1 for att in dept_attendances if att.status == 'sick')
+            dept_total = len(dept_attendances)
+            dept_rate = (dept_present / dept_total * 100) if dept_total > 0 else 0
+            
+            dept_stats.append({
+                'name': dept_name,
+                'employees': len(dept_employees),
+                'present': dept_present,
+                'absent': dept_absent,
+                'leave': dept_leave,
+                'sick': dept_sick,
+                'total': dept_total,
+                'rate': dept_rate
+            })
+        
+        # حساب الحضور اليومي للرسم الخطي
+        date_list = []
+        current_date = start_date
+        while current_date <= end_date:
+            date_list.append(current_date)
+            current_date += timedelta(days=1)
+        
+        daily_stats = []
+        for date in date_list:
+            day_attendances = [att for att in attendances if att.date == date]
+            day_present = sum(1 for att in day_attendances if att.status == 'present')
+            day_absent = sum(1 for att in day_attendances if att.status == 'absent')
+            daily_stats.append({
+                'date': date,
+                'present': day_present,
+                'absent': day_absent
+            })
+        
+        # ========== إنشاء ورقة بيانات مخفية للرسوم البيانية ==========
+        chart_data = workbook.add_worksheet('ChartData')
+        chart_data.hide()
+        
+        # بيانات الرسم الدائري
+        chart_data.write('A1', 'الحالة')
+        chart_data.write('B1', 'العدد')
+        chart_data.write('A2', 'حاضر')
+        chart_data.write('B2', total_present)
+        chart_data.write('A3', 'غائب')
+        chart_data.write('B3', total_absent)
+        chart_data.write('A4', 'إجازة')
+        chart_data.write('B4', total_leave)
+        chart_data.write('A5', 'مرضي')
+        chart_data.write('B5', total_sick)
+        
+        # بيانات إحصائيات الأقسام
+        chart_data.write('D1', 'القسم')
+        chart_data.write('E1', 'حضور')
+        chart_data.write('F1', 'غياب')
+        chart_data.write('G1', 'إجازات')
+        chart_data.write('H1', 'مرضي')
+        
+        for idx, dept in enumerate(dept_stats[:10], start=2):  # أول 10 أقسام
+            chart_data.write(f'D{idx}', dept['name'])
+            chart_data.write(f'E{idx}', dept['present'])
+            chart_data.write(f'F{idx}', dept['absent'])
+            chart_data.write(f'G{idx}', dept['leave'])
+            chart_data.write(f'H{idx}', dept['sick'])
+        
+        # بيانات التطور اليومي
+        chart_data.write('J1', 'التاريخ')
+        chart_data.write('K1', 'حضور')
+        chart_data.write('L1', 'غياب')
+        
+        for idx, day_stat in enumerate(daily_stats, start=2):
+            chart_data.write(f'J{idx}', day_stat['date'].strftime('%Y-%m-%d'))
+            chart_data.write(f'K{idx}', day_stat['present'])
+            chart_data.write(f'L{idx}', day_stat['absent'])
+        
+        # ========== إنشاء ورقة الداش بورد ==========
+        dashboard = workbook.add_worksheet('📊 لوحة المعلومات')
+        
+        # العنوان الرئيسي
+        dashboard.merge_range('A1:L1', '📊 لوحة معلومات الحضور الشهري - جميع الأقسام', title_format)
+        dashboard.set_row(0, 40)
+        
+        # الفترة الزمنية
+        period_text = f'الفترة: من {start_date.strftime("%Y-%m-%d")} إلى {end_date.strftime("%Y-%m-%d")}'
+        dashboard.merge_range('A2:L2', period_text, subtitle_format)
+        dashboard.set_row(1, 30)
         
         # بطاقات KPI
         row = 4
@@ -160,8 +250,89 @@ def export_attendance_by_department_with_dashboard(employees, attendances, start
         dashboard.merge_range(f'E{row}:H{row}', f'{attendance_rate:.1f}%', kpi_value_success)
         dashboard.set_row(row-1, 35)
         
-        # إحصائيات الأقسام
-        row += 3
+        # ========== إضافة الرسوم البيانية ==========
+        
+        # رسم دائري لتوزيع الحضور/الغياب
+        pie_chart = workbook.add_chart({'type': 'doughnut'})
+        pie_chart.add_series({
+            'name': 'توزيع الموظفين',
+            'categories': '=ChartData!$A$2:$A$5',
+            'values': '=ChartData!$B$2:$B$5',
+            'data_labels': {'percentage': True, 'position': 'best_fit'},
+            'points': [
+                {'fill': {'color': '#28A745'}},  # حاضر - أخضر
+                {'fill': {'color': '#DC3545'}},  # غائب - أحمر
+                {'fill': {'color': '#FFC107'}},  # إجازة - أصفر
+                {'fill': {'color': '#0070C0'}},  # مرضي - أزرق
+            ],
+        })
+        pie_chart.set_title({'name': 'توزيع الموظفين حسب الحالة'})
+        pie_chart.set_size({'width': 480, 'height': 300})
+        pie_chart.set_legend({'position': 'right'})
+        dashboard.insert_chart('J4', pie_chart)
+        
+        # رسم عمودي لإحصائيات الأقسام
+        num_depts = min(len(dept_stats), 10)
+        if num_depts > 0:
+            col_chart = workbook.add_chart({'type': 'column'})
+            col_chart.add_series({
+                'name': 'حضور',
+                'categories': f'=ChartData!$D$2:$D${num_depts+1}',
+                'values': f'=ChartData!$E$2:$E${num_depts+1}',
+                'fill': {'color': '#28A745'},
+            })
+            col_chart.add_series({
+                'name': 'غياب',
+                'categories': f'=ChartData!$D$2:$D${num_depts+1}',
+                'values': f'=ChartData!$F$2:$F${num_depts+1}',
+                'fill': {'color': '#DC3545'},
+            })
+            col_chart.add_series({
+                'name': 'إجازات',
+                'categories': f'=ChartData!$D$2:$D${num_depts+1}',
+                'values': f'=ChartData!$G$2:$G${num_depts+1}',
+                'fill': {'color': '#FFC107'},
+            })
+            col_chart.add_series({
+                'name': 'مرضي',
+                'categories': f'=ChartData!$D$2:$D${num_depts+1}',
+                'values': f'=ChartData!$H$2:$H${num_depts+1}',
+                'fill': {'color': '#0070C0'},
+            })
+            col_chart.set_title({'name': 'إحصائيات الأقسام'})
+            col_chart.set_x_axis({'name': 'القسم'})
+            col_chart.set_y_axis({'name': 'عدد السجلات'})
+            col_chart.set_size({'width': 720, 'height': 400})
+            col_chart.set_legend({'position': 'bottom'})
+            dashboard.insert_chart('A11', col_chart)
+        
+        # رسم خطي للتطور اليومي
+        if len(daily_stats) > 1:
+            num_days = len(daily_stats)
+            line_chart = workbook.add_chart({'type': 'line'})
+            line_chart.add_series({
+                'name': 'حضور',
+                'categories': f'=ChartData!$J$2:$J${num_days+1}',
+                'values': f'=ChartData!$K$2:$K${num_days+1}',
+                'line': {'color': '#28A745', 'width': 2.5},
+                'marker': {'type': 'circle', 'size': 6, 'fill': {'color': '#28A745'}},
+            })
+            line_chart.add_series({
+                'name': 'غياب',
+                'categories': f'=ChartData!$J$2:$J${num_days+1}',
+                'values': f'=ChartData!$L$2:$L${num_days+1}',
+                'line': {'color': '#DC3545', 'width': 2.5},
+                'marker': {'type': 'circle', 'size': 6, 'fill': {'color': '#DC3545'}},
+            })
+            line_chart.set_title({'name': 'التطور اليومي للحضور والغياب'})
+            line_chart.set_x_axis({'name': 'التاريخ'})
+            line_chart.set_y_axis({'name': 'عدد الموظفين'})
+            line_chart.set_size({'width': 720, 'height': 300})
+            line_chart.set_legend({'position': 'bottom'})
+            dashboard.insert_chart('A37', line_chart)
+        
+        # ========== جدول إحصائيات الأقسام ==========
+        row = 57
         dashboard.merge_range(f'A{row}:H{row}', '📋 إحصائيات الأقسام', subtitle_format)
         dashboard.set_row(row-1, 30)
         
@@ -170,37 +341,18 @@ def export_attendance_by_department_with_dashboard(employees, attendances, start
         for col, header in enumerate(headers):
             dashboard.write(row-1, col, header, header_format)
         
-        # تنظيم الموظفين حسب الأقسام
-        departments = {}
-        for employee in employees:
-            dept_name = ', '.join([dept.name for dept in employee.departments]) if employee.departments else 'بدون قسم'
-            if dept_name not in departments:
-                departments[dept_name] = []
-            departments[dept_name].append(employee)
-        
-        # حساب إحصائيات كل قسم
-        for dept_name, dept_employees in sorted(departments.items()):
-            emp_ids = [emp.id for emp in dept_employees]
-            dept_attendances = [att for att in attendances if att.employee_id in emp_ids]
-            
-            dept_present = sum(1 for att in dept_attendances if att.status == 'present')
-            dept_absent = sum(1 for att in dept_attendances if att.status == 'absent')
-            dept_leave = sum(1 for att in dept_attendances if att.status == 'leave')
-            dept_sick = sum(1 for att in dept_attendances if att.status == 'sick')
-            dept_total = len(dept_attendances)
-            dept_rate = (dept_present / dept_total * 100) if dept_total > 0 else 0
-            
-            dashboard.write(row, 0, dept_name, normal_format)
-            dashboard.write(row, 1, len(dept_employees), normal_format)
-            dashboard.write(row, 2, dept_present, normal_format)
-            dashboard.write(row, 3, dept_absent, normal_format)
-            dashboard.write(row, 4, dept_leave, normal_format)
-            dashboard.write(row, 5, dept_sick, normal_format)
-            dashboard.write(row, 6, dept_total, normal_format)
-            dashboard.write(row, 7, f'{dept_rate:.1f}%', normal_format)
+        for dept in dept_stats:
+            dashboard.write(row, 0, dept['name'], normal_format)
+            dashboard.write(row, 1, dept['employees'], normal_format)
+            dashboard.write(row, 2, dept['present'], normal_format)
+            dashboard.write(row, 3, dept['absent'], normal_format)
+            dashboard.write(row, 4, dept['leave'], normal_format)
+            dashboard.write(row, 5, dept['sick'], normal_format)
+            dashboard.write(row, 6, dept['total'], normal_format)
+            dashboard.write(row, 7, f'{dept["rate"]:.1f}%', normal_format)
             row += 1
         
-        # قائمة الموظفين الغائبين
+        # ========== قائمة الموظفين الغائبين ==========
         row += 2
         dashboard.merge_range(f'A{row}:H{row}', '🚨 قائمة الموظفين الغائبين', subtitle_format)
         dashboard.set_row(row-1, 30)
@@ -231,7 +383,7 @@ def export_attendance_by_department_with_dashboard(employees, attendances, start
         absent_records.sort(key=lambda x: x['date'], reverse=True)
         
         # كتابة سجلات الغياب
-        for record in absent_records[:50]:  # أول 50 سجل
+        for record in absent_records[:100]:  # أول 100 سجل
             dashboard.write(row, 0, record['date'].strftime('%Y-%m-%d'), absent_row_format)
             dashboard.write(row, 1, record['name'], absent_row_format)
             dashboard.write(row, 2, record['emp_id'], absent_row_format)
@@ -249,6 +401,7 @@ def export_attendance_by_department_with_dashboard(employees, attendances, start
         dashboard.set_column('F:F', 15)
         dashboard.set_column('G:G', 18)
         dashboard.set_column('H:H', 18)
+        dashboard.set_column('I:L', 12)
         
         # ========== إضافة أوراق الأقسام ==========
         # تنسيقات للأقسام
@@ -297,13 +450,6 @@ def export_attendance_by_department_with_dashboard(employees, attendances, start
             'valign': 'vcenter',
             'font_color': '#0070C0'
         })
-        
-        # تحديد قائمة التواريخ
-        date_list = []
-        current_date = start_date
-        while current_date <= end_date:
-            date_list.append(current_date)
-            current_date += timedelta(days=1)
         
         weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
         
