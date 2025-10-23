@@ -177,7 +177,7 @@ def export_attendance_by_department_with_dashboard(employees, attendances, start
             })
         
         # ========== إنشاء ورقة بيانات احترافية للرسوم البيانية ==========
-        chart_data = workbook.add_worksheet('📈 بيانات الرسوم البيانية')
+        chart_data = workbook.add_worksheet('ChartData')
         
         # تنسيقات احترافية للورقة
         section_title_format = workbook.add_format({
@@ -223,7 +223,7 @@ def export_attendance_by_department_with_dashboard(employees, attendances, start
         })
         
         # العنوان الرئيسي
-        chart_data.merge_range('A1:L1', '📈 بيانات الرسوم البيانية والإحصائيات', title_format)
+        chart_data.merge_range('A1:L1', 'بيانات الرسوم البيانية والإحصائيات', title_format)
         chart_data.set_row(0, 40)
         
         # ========== القسم الأول: توزيع الحضور ==========
@@ -324,8 +324,8 @@ def export_attendance_by_department_with_dashboard(employees, attendances, start
         pie_chart = workbook.add_chart({'type': 'doughnut'})
         pie_chart.add_series({
             'name': 'توزيع الموظفين',
-            'categories': '="📈 بيانات الرسوم البيانية"!$A$5:$A$8',
-            'values': '="📈 بيانات الرسوم البيانية"!$B$5:$B$8',
+            'categories': '=ChartData!$A$5:$A$8',
+            'values': '=ChartData!$B$5:$B$8',
             'data_labels': {'percentage': True, 'position': 'best_fit'},
             'points': [
                 {'fill': {'color': '#28A745'}},  # حاضر - أخضر
@@ -345,26 +345,26 @@ def export_attendance_by_department_with_dashboard(employees, attendances, start
             col_chart = workbook.add_chart({'type': 'column'})
             col_chart.add_series({
                 'name': 'حضور',
-                'categories': f'="📈 بيانات الرسوم البيانية"!$D$5:$D${num_depts+4}',
-                'values': f'="📈 بيانات الرسوم البيانية"!$E$5:$E${num_depts+4}',
+                'categories': f'=ChartData!$D$5:$D${num_depts+4}',
+                'values': f'=ChartData!$E$5:$E${num_depts+4}',
                 'fill': {'color': '#28A745'},
             })
             col_chart.add_series({
                 'name': 'غياب',
-                'categories': f'="📈 بيانات الرسوم البيانية"!$D$5:$D${num_depts+4}',
-                'values': f'="📈 بيانات الرسوم البيانية"!$F$5:$F${num_depts+4}',
+                'categories': f'=ChartData!$D$5:$D${num_depts+4}',
+                'values': f'=ChartData!$F$5:$F${num_depts+4}',
                 'fill': {'color': '#DC3545'},
             })
             col_chart.add_series({
                 'name': 'إجازات',
-                'categories': f'="📈 بيانات الرسوم البيانية"!$D$5:$D${num_depts+4}',
-                'values': f'="📈 بيانات الرسوم البيانية"!$G$5:$G${num_depts+4}',
+                'categories': f'=ChartData!$D$5:$D${num_depts+4}',
+                'values': f'=ChartData!$G$5:$G${num_depts+4}',
                 'fill': {'color': '#FFC107'},
             })
             col_chart.add_series({
                 'name': 'مرضي',
-                'categories': f'="📈 بيانات الرسوم البيانية"!$D$5:$D${num_depts+4}',
-                'values': f'="📈 بيانات الرسوم البيانية"!$H$5:$H${num_depts+4}',
+                'categories': f'=ChartData!$D$5:$D${num_depts+4}',
+                'values': f'=ChartData!$H$5:$H${num_depts+4}',
                 'fill': {'color': '#0070C0'},
             })
             col_chart.set_title({'name': 'إحصائيات الأقسام'})
@@ -380,15 +380,15 @@ def export_attendance_by_department_with_dashboard(employees, attendances, start
             line_chart = workbook.add_chart({'type': 'line'})
             line_chart.add_series({
                 'name': 'حضور',
-                'categories': f'="📈 بيانات الرسوم البيانية"!$J$5:$J${num_days+4}',
-                'values': f'="📈 بيانات الرسوم البيانية"!$K$5:$K${num_days+4}',
+                'categories': f'=ChartData!$J$5:$J${num_days+4}',
+                'values': f'=ChartData!$K$5:$K${num_days+4}',
                 'line': {'color': '#28A745', 'width': 2.5},
                 'marker': {'type': 'circle', 'size': 6, 'fill': {'color': '#28A745'}},
             })
             line_chart.add_series({
                 'name': 'غياب',
-                'categories': f'="📈 بيانات الرسوم البيانية"!$J$5:$J${num_days+4}',
-                'values': f'="📈 بيانات الرسوم البيانية"!$L$5:$L${num_days+4}',
+                'categories': f'=ChartData!$J$5:$J${num_days+4}',
+                'values': f'=ChartData!$L$5:$L${num_days+4}',
                 'line': {'color': '#DC3545', 'width': 2.5},
                 'marker': {'type': 'circle', 'size': 6, 'fill': {'color': '#DC3545'}},
             })
