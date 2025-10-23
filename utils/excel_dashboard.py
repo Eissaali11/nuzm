@@ -399,25 +399,111 @@ def export_attendance_by_department_with_dashboard(employees, attendances, start
             line_chart.set_legend({'position': 'bottom'})
             dashboard.insert_chart('A37', line_chart)
         
-        # ========== جدول إحصائيات الأقسام ==========
+        # ========== جدول إحصائيات الأقسام بتصميم احترافي ==========
         row = 57
         dashboard.merge_range(f'A{row}:H{row}', '📋 إحصائيات الأقسام', subtitle_format)
         dashboard.set_row(row-1, 30)
         
+        # تنسيقات احترافية للجدول
+        table_header_format = workbook.add_format({
+            'bold': True,
+            'font_size': 11,
+            'bg_color': '#5B4B9D',
+            'font_color': 'white',
+            'border': 1,
+            'align': 'center',
+            'valign': 'vcenter'
+        })
+        
+        # صفوف متناوبة بألوان مختلفة
+        row_even_format = workbook.add_format({
+            'border': 1,
+            'align': 'center',
+            'valign': 'vcenter',
+            'bg_color': '#F8F9FA'
+        })
+        
+        row_odd_format = workbook.add_format({
+            'border': 1,
+            'align': 'center',
+            'valign': 'vcenter',
+            'bg_color': '#FFFFFF'
+        })
+        
+        dept_name_format = workbook.add_format({
+            'border': 1,
+            'align': 'right',
+            'valign': 'vcenter',
+            'bg_color': '#F8F9FA',
+            'bold': True
+        })
+        
+        dept_name_format_odd = workbook.add_format({
+            'border': 1,
+            'align': 'right',
+            'valign': 'vcenter',
+            'bg_color': '#FFFFFF',
+            'bold': True
+        })
+        
+        number_success_format = workbook.add_format({
+            'border': 1,
+            'align': 'center',
+            'valign': 'vcenter',
+            'bg_color': '#D4EDDA',
+            'font_color': '#155724',
+            'bold': True
+        })
+        
+        number_danger_format = workbook.add_format({
+            'border': 1,
+            'align': 'center',
+            'valign': 'vcenter',
+            'bg_color': '#F8D7DA',
+            'font_color': '#721C24',
+            'bold': True
+        })
+        
+        number_warning_format = workbook.add_format({
+            'border': 1,
+            'align': 'center',
+            'valign': 'vcenter',
+            'bg_color': '#FFF3CD',
+            'font_color': '#856404',
+            'bold': True
+        })
+        
+        percentage_format = workbook.add_format({
+            'border': 1,
+            'align': 'center',
+            'valign': 'vcenter',
+            'bg_color': '#E7F3FF',
+            'font_color': '#004085',
+            'bold': True
+        })
+        
         row += 1
         headers = ['القسم', 'عدد الموظفين', 'الحضور', 'الغياب', 'الإجازات', 'الإجازات المرضية', 'إجمالي السجلات', 'نسبة الحضور %']
         for col, header in enumerate(headers):
-            dashboard.write(row-1, col, header, header_format)
+            dashboard.write(row-1, col, header, table_header_format)
         
-        for dept in dept_stats:
-            dashboard.write(row, 0, dept['name'], normal_format)
-            dashboard.write(row, 1, dept['employees'], normal_format)
-            dashboard.write(row, 2, dept['present'], normal_format)
-            dashboard.write(row, 3, dept['absent'], normal_format)
-            dashboard.write(row, 4, dept['leave'], normal_format)
-            dashboard.write(row, 5, dept['sick'], normal_format)
-            dashboard.write(row, 6, dept['total'], normal_format)
-            dashboard.write(row, 7, f'{dept["rate"]:.1f}%', normal_format)
+        dashboard.set_row(row-1, 25)
+        
+        for idx, dept in enumerate(dept_stats):
+            is_even = idx % 2 == 0
+            name_fmt = dept_name_format if is_even else dept_name_format_odd
+            cell_fmt = row_even_format if is_even else row_odd_format
+            
+            dashboard.write(row, 0, dept['name'], name_fmt)
+            dashboard.write(row, 1, dept['employees'], cell_fmt)
+            dashboard.write(row, 2, dept['present'], number_success_format)
+            dashboard.write(row, 3, dept['absent'], number_danger_format)
+            dashboard.write(row, 4, dept['leave'], number_warning_format)
+            dashboard.write(row, 5, dept['sick'], number_warning_format)
+            dashboard.write(row, 6, dept['total'], cell_fmt)
+            dashboard.write(row, 7, f'{dept["rate"]:.1f}%', percentage_format)
+            
+            dashboard.set_row(row, 22)
             row += 1
         
         # ========== قائمة الموظفين الغائبين ==========
