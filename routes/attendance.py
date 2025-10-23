@@ -2583,3 +2583,137 @@ def export_department_period():
         print(f"خطأ في تصدير حضور الفترة: {str(e)}")
         flash('حدث خطأ أثناء تصدير الملف', 'error')
         return redirect(url_for('attendance.department_attendance_view'))
+
+@attendance_bp.route('/department/bulk', methods=['GET', 'POST'])
+def department_bulk_attendance():
+    """تسجيل حضور قسم كامل لفترة زمنية محددة"""
+    from flask_login import current_user
+    
+    if request.method == 'POST':
+        try:
+            department_id = request.form['department_id']
+            start_date_str = request.form['start_date']
+            end_date_str = request.form['end_date']
+            status = request.form['status']
+            skip_weekends = 'skip_weekends' in request.form
+            overwrite_existing = 'overwrite_existing' in request.form
+            
+            # التحقق من صلاحيات المستخدم
+            if current_user.is_authenticated and not current_user.can_access_department(int(department_id)):
+                flash('ليس لديك صلاحية لتسجيل حضور هذا القسم', 'error')
+                return redirect(url_for('attendance.department_bulk_attendance'))
+            
+            # تحليل التواريخ
+            start_date = parse_date(start_date_str)
+            end_date = parse_date(end_date_str)
+            
+            # التحقق من صحة الفترة
+            if start_date > end_date:
+                flash('تاريخ البداية يجب أن يكون قبل تاريخ النهاية', 'error')
+                return redirect(url_for('attendance.department_bulk_attendance'))
+            
+            # الحد الأقصى للفترة (90 يوم)
+            if (end_date - start_date).days > 90:
+                flash('الفترة الزمنية لا يمكن أن تتجاوز 90 يوم', 'error')
+                return redirect(url_for('attendance.department_bulk_attendance'))
+            
+            # الحصول على القسم والموظفين
+            department = Department.query.get_or_404(department_id)
+            employees = [emp for emp in department.employees if emp.status == 'active']
+            
+            if not employees:
+                flash('لا يوجد موظفين نشطين في هذا القسم', 'warning')
+                return redirect(url_for('attendance.department_bulk_attendance'))
+            
+            # إنشاء قائمة التواريخ
+            date_list = []
+            current_date = start_date
+            while current_date <= end_date:
+                # تخطي عطلة نهاية الأسبوع إذا تم تحديد الخيار
+                if skip_weekends:
+                    # 4 = الجمعة، 5 = السبت في Python (0=الإثنين)
+                    if current_date.weekday() in [4, 5]:
+                        current_date += timedelta(days=1)
+                        continue
+                
+                date_list.append(current_date)
+                current_date += timedelta(days=1)
+            
+            # حساب الإحصائيات
+            created_count = 0
+            updated_count = 0
+            skipped_count = 0
+            
+            # تسجيل الحضور لكل موظف في كل يوم
+            for employee in employees:
+                for attendance_date in date_list:
+                    # البحث عن سجل موجود
+                    existing = Attendance.query.filter_by(
+                        employee_id=employee.id,
+                        date=attendance_date
+                    ).first()
+                    
+                    if existing:
+                        if overwrite_existing:
+                            # تحديث السجل الموجود
+                            existing.status = status
+                            if status != 'present':
+                                existing.check_in = None
+                                existing.check_out = None
+                            updated_count += 1
+                        else:
+                            # تخطي السجل الموجود
+                            skipped_count += 1
+                    else:
+                        # إنشاء سجل جديد
+                        new_attendance = Attendance(
+                            employee_id=employee.id,
+                            date=attendance_date,
+                            status=status
+                        )
+                        db.session.add(new_attendance)
+                        created_count += 1
+            
+            # حفظ التغييرات
+            db.session.commit()
+            
+            # تسجيل العملية في سجل النشاط
+            log_attendance_activity(
+                action='bulk_create_period',
+                attendance_data={
+                    'department_id': department_id,
+                    'start_date': start_date.isoformat(),
+                    'end_date': end_date.isoformat(),
+                    'status': status,
+                    'created': created_count,
+                    'updated': updated_count,
+                    'skipped': skipped_count
+                },
+                employee_name=f"جميع موظفي قسم {department.name}"
+            )
+            
+            # رسالة النجاح
+            message_parts = []
+            if created_count > 0:
+                message_parts.append(f'تم إنشاء {created_count} سجل جديد')
+            if updated_count > 0:
+                message_parts.append(f'تم تحديث {updated_count} سجل')
+            if skipped_count > 0:
+                message_parts.append(f'تم تخطي {skipped_count} سجل موجود')
+            
+            flash(' | '.join(message_parts), 'success')
+            return redirect(url_for('attendance.index'))
+            
+        except Exception as e:
+            db.session.rollback()
+            print(f"خطأ في تسجيل الحضور الجماعي: {str(e)}")
+            flash(f'حدث خطأ: {str(e)}', 'danger')
+            return redirect(url_for('attendance.department_bulk_attendance'))
+    
+    # GET request
+    if current_user.is_authenticated:
+        departments = current_user.get_accessible_departments()
+    else:
+        departments = Department.query.all()
+    
+    return render_template('attendance/department_bulk.html', departments=departments)
