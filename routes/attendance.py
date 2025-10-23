@@ -2441,9 +2441,11 @@ def department_attendance_view():
 
 @attendance_bp.route('/department/export-period', methods=['GET'])
 def export_department_period():
-    """تصدير حضور قسم خلال فترة زمنية إلى Excel"""
+    """تصدير حضور قسم خلال فترة زمنية إلى Excel مع dashboard احترافي"""
     from openpyxl import Workbook
     from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
+    from openpyxl.chart import PieChart, BarChart, Reference
+    from openpyxl.chart.label import DataLabelList
     from io import BytesIO
     
     try:
@@ -2451,34 +2453,207 @@ def export_department_period():
         start_date_str = request.args.get('start_date')
         end_date_str = request.args.get('end_date')
         
-        if not all([department_id, start_date_str, end_date_str]):
-            flash('يجب تحديد القسم والفترة الزمنية', 'error')
+        if not all([start_date_str, end_date_str]):
+            flash('يجب تحديد الفترة الزمنية', 'error')
             return redirect(url_for('attendance.department_attendance_view'))
         
         # تحليل التواريخ
         start_date = parse_date(start_date_str)
         end_date = parse_date(end_date_str)
         
-        # الحصول على القسم
-        department = Department.query.get_or_404(department_id)
+        # الحصول على القسم إذا تم تحديده
+        department = None
+        department_name = "جميع الأقسام"
+        if department_id:
+            department = Department.query.get_or_404(department_id)
+            department_name = department.name
         
         # الحصول على بيانات الحضور
-        attendances = Attendance.query.join(Employee).join(employee_departments).filter(
-            employee_departments.c.department_id == int(department_id),
+        query = Attendance.query.join(Employee).filter(
             Attendance.date >= start_date,
             Attendance.date <= end_date
-        ).order_by(Employee.name, Attendance.date).all()
+        )
+        
+        if department_id:
+            query = query.join(employee_departments).filter(
+                employee_departments.c.department_id == int(department_id)
+            )
+        
+        attendances = query.order_by(Employee.name, Attendance.date).all()
+        
+        if not attendances:
+            flash('لا توجد بيانات للتصدير في هذه الفترة', 'warning')
+            return redirect(url_for('attendance.department_attendance_view'))
         
         # إنشاء workbook
         wb = Workbook()
-        ws = wb.active
-        ws.title = "حضور القسم"
         
-        # تنسيقات الألوان
+        # ========== ورقة Dashboard ==========
+        ws_dashboard = wb.active
+        ws_dashboard.title = "Dashboard"
+        
+        # تنسيقات احترافية
+        title_fill = PatternFill(start_color="667eea", end_color="667eea", fill_type="solid")
+        title_font = Font(bold=True, color="FFFFFF", size=20)
+        subtitle_fill = PatternFill(start_color="764ba2", end_color="764ba2", fill_type="solid")
+        subtitle_font = Font(bold=True, color="FFFFFF", size=14)
+        
+        kpi_label_format = PatternFill(start_color="E9ECEF", end_color="E9ECEF", fill_type="solid")
+        kpi_success_fill = PatternFill(start_color="d4edda", end_color="d4edda", fill_type="solid")
+        kpi_danger_fill = PatternFill(start_color="f8d7da", end_color="f8d7da", fill_type="solid")
+        kpi_warning_fill = PatternFill(start_color="fff3cd", end_color="fff3cd", fill_type="solid")
+        kpi_info_fill = PatternFill(start_color="d1ecf1", end_color="d1ecf1", fill_type="solid")
+        
+        # عنوان Dashboard
+        ws_dashboard.merge_cells('A1:H1')
+        ws_dashboard['A1'] = f'تقرير حضور قسم {department_name}'
+        ws_dashboard['A1'].fill = title_fill
+        ws_dashboard['A1'].font = title_font
+        ws_dashboard['A1'].alignment = Alignment(horizontal='center', vertical='center')
+        ws_dashboard.row_dimensions[1].height = 35
+        
+        # معلومات الفترة
+        ws_dashboard.merge_cells('A2:H2')
+        ws_dashboard['A2'] = f'الفترة: من {start_date.strftime("%Y-%m-%d")} إلى {end_date.strftime("%Y-%m-%d")}'
+        ws_dashboard['A2'].fill = subtitle_fill
+        ws_dashboard['A2'].font = subtitle_font
+        ws_dashboard['A2'].alignment = Alignment(horizontal='center', vertical='center')
+        ws_dashboard.row_dimensions[2].height = 25
+        
+        # حساب الإحصائيات
+        total_count = len(attendances)
+        present_count = sum(1 for a in attendances if a.status == 'present')
+        absent_count = sum(1 for a in attendances if a.status == 'absent')
+        leave_count = sum(1 for a in attendances if a.status == 'leave')
+        sick_count = sum(1 for a in attendances if a.status == 'sick')
+        attendance_rate = (present_count / total_count * 100) if total_count > 0 else 0
+        
+        # عدد الموظفين الفريدين
+        unique_employees = set(a.employee_id for a in attendances)
+        employee_count = len(unique_employees)
+        
+        # عدد الأيام
+        days_count = (end_date - start_date).days + 1
+        
+        # KPIs - الصف 4
+        kpis = [
+            ('A4', 'B4', 'إجمالي السجلات', total_count, kpi_label_format, kpi_info_fill),
+            ('C4', 'D4', 'عدد الموظفين', employee_count, kpi_label_format, kpi_info_fill),
+            ('E4', 'F4', 'عدد الأيام', days_count, kpi_label_format, kpi_info_fill),
+            ('G4', 'H4', 'نسبة الحضور', f'{attendance_rate:.1f}%', kpi_label_format, kpi_success_fill),
+        ]
+        
+        for start_cell, end_cell, label, value, label_fill, value_fill in kpis:
+            # Label
+            ws_dashboard.merge_cells(f'{start_cell}:{start_cell}')
+            ws_dashboard[start_cell] = label
+            ws_dashboard[start_cell].fill = label_fill
+            ws_dashboard[start_cell].font = Font(bold=True, size=11)
+            ws_dashboard[start_cell].alignment = Alignment(horizontal='center', vertical='center')
+            ws_dashboard[start_cell].border = Border(
+                left=Side(style='medium'), right=Side(style='medium'),
+                top=Side(style='medium'), bottom=Side(style='thin')
+            )
+            
+            # Value
+            ws_dashboard.merge_cells(f'{end_cell}:{end_cell}')
+            ws_dashboard[end_cell] = value
+            ws_dashboard[end_cell].fill = value_fill
+            ws_dashboard[end_cell].font = Font(bold=True, size=16, color='1e3c72')
+            ws_dashboard[end_cell].alignment = Alignment(horizontal='center', vertical='center')
+            ws_dashboard[end_cell].border = Border(
+                left=Side(style='medium'), right=Side(style='medium'),
+                top=Side(style='thin'), bottom=Side(style='medium')
+            )
+        
+        ws_dashboard.row_dimensions[4].height = 30
+        
+        # إحصائيات الحضور - الصف 6
+        ws_dashboard.merge_cells('A6:H6')
+        ws_dashboard['A6'] = 'توزيع حالات الحضور'
+        ws_dashboard['A6'].fill = subtitle_fill
+        ws_dashboard['A6'].font = Font(bold=True, color="FFFFFF", size=13)
+        ws_dashboard['A6'].alignment = Alignment(horizontal='center', vertical='center')
+        ws_dashboard.row_dimensions[6].height = 25
+        
+        # جدول الإحصائيات للرسم البياني - يبدأ من الصف 8
+        stats_data = [
+            ('A8', 'B8', 'حاضر', present_count, kpi_success_fill),
+            ('C8', 'D8', 'غائب', absent_count, kpi_danger_fill),
+            ('E8', 'F8', 'إجازة', leave_count, kpi_warning_fill),
+            ('G8', 'H8', 'مرضي', sick_count, kpi_info_fill),
+        ]
+        
+        for start_cell, end_cell, label, value, fill in stats_data:
+            # Label
+            ws_dashboard.merge_cells(f'{start_cell}:{start_cell}')
+            ws_dashboard[start_cell] = label
+            ws_dashboard[start_cell].fill = fill
+            ws_dashboard[start_cell].font = Font(bold=True, size=12)
+            ws_dashboard[start_cell].alignment = Alignment(horizontal='center', vertical='center')
+            ws_dashboard[start_cell].border = Border(
+                left=Side(style='medium'), right=Side(style='medium'),
+                top=Side(style='medium'), bottom=Side(style='thin')
+            )
+            
+            # Value
+            ws_dashboard.merge_cells(f'{end_cell}:{end_cell}')
+            ws_dashboard[end_cell] = value
+            ws_dashboard[end_cell].fill = fill
+            ws_dashboard[end_cell].font = Font(bold=True, size=18)
+            ws_dashboard[end_cell].alignment = Alignment(horizontal='center', vertical='center')
+            ws_dashboard[end_cell].border = Border(
+                left=Side(style='medium'), right=Side(style='medium'),
+                top=Side(style='thin'), bottom=Side(style='medium')
+            )
+        
+        ws_dashboard.row_dimensions[8].height = 30
+        
+        # بيانات للمخطط الدائري
+        ws_dashboard['A10'] = 'الحالة'
+        ws_dashboard['B10'] = 'العدد'
+        ws_dashboard['A10'].font = Font(bold=True)
+        ws_dashboard['B10'].font = Font(bold=True)
+        
+        chart_data = [
+            ('حاضر', present_count),
+            ('غائب', absent_count),
+            ('إجازة', leave_count),
+            ('مرضي', sick_count),
+        ]
+        
+        for idx, (label, value) in enumerate(chart_data, start=11):
+            ws_dashboard[f'A{idx}'] = label
+            ws_dashboard[f'B{idx}'] = value
+        
+        # إنشاء مخطط دائري
+        pie_chart = PieChart()
+        pie_chart.title = "توزيع حالات الحضور"
+        pie_chart.style = 10
+        pie_chart.height = 10
+        pie_chart.width = 15
+        
+        labels = Reference(ws_dashboard, min_col=1, min_row=11, max_row=14)
+        data = Reference(ws_dashboard, min_col=2, min_row=10, max_row=14)
+        pie_chart.add_data(data, titles_from_data=True)
+        pie_chart.set_categories(labels)
+        
+        # إضافة تسميات البيانات
+        pie_chart.dataLabels = DataLabelList()
+        pie_chart.dataLabels.showPercent = True
+        pie_chart.dataLabels.showVal = True
+        
+        ws_dashboard.add_chart(pie_chart, "J6")
+        
+        # تعديل عرض الأعمدة
+        for col in ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']:
+            ws_dashboard.column_dimensions[col].width = 15
+        
+        # ========== ورقة البيانات التفصيلية ==========
+        ws_data = wb.create_sheet("البيانات التفصيلية")
+        
         header_fill = PatternFill(start_color="667eea", end_color="667eea", fill_type="solid")
         header_font = Font(bold=True, color="FFFFFF", size=12)
-        title_fill = PatternFill(start_color="764ba2", end_color="764ba2", fill_type="solid")
-        title_font = Font(bold=True, color="FFFFFF", size=16)
         
         present_fill = PatternFill(start_color="d4edda", end_color="d4edda", fill_type="solid")
         absent_fill = PatternFill(start_color="f8d7da", end_color="f8d7da", fill_type="solid")
@@ -2486,36 +2661,34 @@ def export_department_period():
         sick_fill = PatternFill(start_color="d1ecf1", end_color="d1ecf1", fill_type="solid")
         
         # العنوان
-        ws.merge_cells('A1:H1')
-        ws['A1'] = f'تقرير حضور قسم {department.name}'
-        ws['A1'].fill = title_fill
-        ws['A1'].font = title_font
-        ws['A1'].alignment = Alignment(horizontal='center', vertical='center')
-        ws.row_dimensions[1].height = 30
-        
-        # معلومات الفترة
-        ws.merge_cells('A2:H2')
-        ws['A2'] = f'من {start_date.strftime("%Y-%m-%d")} إلى {end_date.strftime("%Y-%m-%d")}'
-        ws['A2'].font = Font(bold=True, size=11)
-        ws['A2'].alignment = Alignment(horizontal='center')
+        ws_data.merge_cells('A1:H1')
+        ws_data['A1'] = f'سجلات حضور قسم {department_name}'
+        ws_data['A1'].fill = title_fill
+        ws_data['A1'].font = title_font
+        ws_data['A1'].alignment = Alignment(horizontal='center', vertical='center')
+        ws_data.row_dimensions[1].height = 30
         
         # رؤوس الأعمدة
         headers = ['الموظف', 'الرقم الوظيفي', 'التاريخ', 'الحالة', 'وقت الدخول', 'وقت الخروج', 'ساعات العمل', 'ملاحظات']
         for col_num, header in enumerate(headers, 1):
-            cell = ws.cell(row=4, column=col_num, value=header)
+            cell = ws_data.cell(row=3, column=col_num, value=header)
             cell.fill = header_fill
             cell.font = header_font
             cell.alignment = Alignment(horizontal='center', vertical='center')
+            cell.border = Border(
+                left=Side(style='thin'), right=Side(style='thin'),
+                top=Side(style='thin'), bottom=Side(style='thin')
+            )
         
         # البيانات
-        row_num = 5
+        row_num = 4
         for attendance in attendances:
-            ws.cell(row=row_num, column=1, value=attendance.employee.name)
-            ws.cell(row=row_num, column=2, value=attendance.employee.employee_id or '-')
-            ws.cell(row=row_num, column=3, value=attendance.date.strftime('%Y-%m-%d'))
+            ws_data.cell(row=row_num, column=1, value=attendance.employee.name)
+            ws_data.cell(row=row_num, column=2, value=attendance.employee.employee_id or '-')
+            ws_data.cell(row=row_num, column=3, value=attendance.date.strftime('%Y-%m-%d'))
             
             # حالة الحضور مع التلوين
-            status_cell = ws.cell(row=row_num, column=4)
+            status_cell = ws_data.cell(row=row_num, column=4)
             if attendance.status == 'present':
                 status_cell.value = 'حاضر'
                 status_cell.fill = present_fill
@@ -2531,71 +2704,44 @@ def export_department_period():
             
             status_cell.alignment = Alignment(horizontal='center')
             
-            ws.cell(row=row_num, column=5, value=attendance.check_in.strftime('%H:%M') if attendance.check_in else '-')
-            ws.cell(row=row_num, column=6, value=attendance.check_out.strftime('%H:%M') if attendance.check_out else '-')
+            ws_data.cell(row=row_num, column=5, value=attendance.check_in.strftime('%H:%M') if attendance.check_in else '-')
+            ws_data.cell(row=row_num, column=6, value=attendance.check_out.strftime('%H:%M') if attendance.check_out else '-')
             
             # حساب ساعات العمل
             if attendance.check_in and attendance.check_out:
                 hours = attendance.hours_worked
-                ws.cell(row=row_num, column=7, value=f"{hours:.1f} ساعة")
+                ws_data.cell(row=row_num, column=7, value=f"{hours:.1f}")
             else:
-                ws.cell(row=row_num, column=7, value='-')
+                ws_data.cell(row=row_num, column=7, value='-')
             
-            ws.cell(row=row_num, column=8, value=attendance.notes or '-')
+            ws_data.cell(row=row_num, column=8, value=attendance.notes or '-')
+            
+            # إضافة حدود للخلايا
+            for col in range(1, 9):
+                ws_data.cell(row=row_num, column=col).border = Border(
+                    left=Side(style='thin'), right=Side(style='thin'),
+                    top=Side(style='thin'), bottom=Side(style='thin')
+                )
+                ws_data.cell(row=row_num, column=col).alignment = Alignment(horizontal='center', vertical='center')
             
             row_num += 1
         
         # تنسيق عرض الأعمدة
-        ws.column_dimensions['A'].width = 25
-        ws.column_dimensions['B'].width = 15
-        ws.column_dimensions['C'].width = 15
-        ws.column_dimensions['D'].width = 12
-        ws.column_dimensions['E'].width = 12
-        ws.column_dimensions['F'].width = 12
-        ws.column_dimensions['G'].width = 15
-        ws.column_dimensions['H'].width = 30
-        
-        # إضافة ورقة الإحصائيات
-        ws_stats = wb.create_sheet("الإحصائيات")
-        
-        # عنوان الإحصائيات
-        ws_stats.merge_cells('A1:B1')
-        ws_stats['A1'] = 'إحصائيات الحضور'
-        ws_stats['A1'].fill = title_fill
-        ws_stats['A1'].font = title_font
-        ws_stats['A1'].alignment = Alignment(horizontal='center')
-        
-        # حساب الإحصائيات
-        total_count = len(attendances)
-        present_count = sum(1 for a in attendances if a.status == 'present')
-        absent_count = sum(1 for a in attendances if a.status == 'absent')
-        leave_count = sum(1 for a in attendances if a.status == 'leave')
-        sick_count = sum(1 for a in attendances if a.status == 'sick')
-        
-        stats_data = [
-            ('إجمالي السجلات', total_count),
-            ('حضور', present_count),
-            ('غياب', absent_count),
-            ('إجازات', leave_count),
-            ('مرضي', sick_count),
-            ('نسبة الحضور', f"{(present_count/total_count*100):.1f}%" if total_count > 0 else "0%")
-        ]
-        
-        row_num = 3
-        for label, value in stats_data:
-            ws_stats.cell(row=row_num, column=1, value=label).font = Font(bold=True)
-            ws_stats.cell(row=row_num, column=2, value=value)
-            row_num += 1
-        
-        ws_stats.column_dimensions['A'].width = 20
-        ws_stats.column_dimensions['B'].width = 15
+        ws_data.column_dimensions['A'].width = 25
+        ws_data.column_dimensions['B'].width = 15
+        ws_data.column_dimensions['C'].width = 15
+        ws_data.column_dimensions['D'].width = 12
+        ws_data.column_dimensions['E'].width = 12
+        ws_data.column_dimensions['F'].width = 12
+        ws_data.column_dimensions['G'].width = 15
+        ws_data.column_dimensions['H'].width = 30
         
         # حفظ الملف
         output = BytesIO()
         wb.save(output)
         output.seek(0)
         
-        filename = f'حضور_{department.name}_{start_date.strftime("%Y%m%d")}_إلى_{end_date.strftime("%Y%m%d")}.xlsx'
+        filename = f'تقرير_حضور_{department_name}_{start_date.strftime("%Y%m%d")}_إلى_{end_date.strftime("%Y%m%d")}.xlsx'
         
         return send_file(
             output,
@@ -2606,6 +2752,8 @@ def export_department_period():
         
     except Exception as e:
         print(f"خطأ في تصدير حضور الفترة: {str(e)}")
+        import traceback
+        traceback.print_exc()
         flash('حدث خطأ أثناء تصدير الملف', 'error')
         return redirect(url_for('attendance.department_attendance_view'))
 
