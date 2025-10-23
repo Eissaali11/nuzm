@@ -2357,10 +2357,12 @@ def export_excel_department():
 def department_attendance_view():
     """عرض حضور الأقسام خلال فترة زمنية محددة"""
     from flask_login import current_user
+    from sqlalchemy import or_
     
     # الحصول على معاملات الفلترة
     department_id = request.args.get('department_id', '')
-    employee_id = request.args.get('employee_id', '')
+    search_query = request.args.get('search_query', '').strip()
+    status_filter = request.args.get('status_filter', '')
     start_date_str = request.args.get('start_date', '')
     end_date_str = request.args.get('end_date', '')
     
@@ -2381,29 +2383,31 @@ def department_attendance_view():
     else:
         departments = Department.query.all()
     
-    # الحصول على قائمة الموظفين للفلترة
-    employees_query = Employee.query
-    if department_id:
-        employees_query = employees_query.join(employee_departments).filter(
-            employee_departments.c.department_id == int(department_id)
-        )
-    employees = employees_query.order_by(Employee.name).all()
-    
     # بناء الاستعلام
     query = Attendance.query.join(Employee).filter(
         Attendance.date >= start_date,
         Attendance.date <= end_date
     )
     
-    # تطبيق فلتر الموظف أو القسم (ليس كلاهما معاً لتجنب join مكرر)
-    if employee_id:
-        # فلتر حسب الموظف فقط (لا حاجة لفلتر القسم)
-        query = query.filter(Attendance.employee_id == int(employee_id))
-    elif department_id:
-        # فلتر حسب القسم فقط
+    # تطبيق فلتر القسم
+    if department_id:
         query = query.join(employee_departments).filter(
             employee_departments.c.department_id == int(department_id)
         )
+    
+    # تطبيق البحث عن الموظف (الاسم، رقم الهوية، الرقم الوظيفي)
+    if search_query:
+        query = query.filter(
+            or_(
+                Employee.name.ilike(f'%{search_query}%'),
+                Employee.employee_id.ilike(f'%{search_query}%'),
+                Employee.national_id.ilike(f'%{search_query}%')
+            )
+        )
+    
+    # تطبيق فلتر الحالة
+    if status_filter:
+        query = query.filter(Attendance.status == status_filter)
     
     # الحصول على السجلات مرتبة حسب التاريخ والموظف
     attendances = query.order_by(Attendance.date.desc(), Employee.name).all()
@@ -2418,8 +2422,8 @@ def department_attendance_view():
     return render_template('attendance/department_period.html',
                           departments=departments,
                           department_id=department_id,
-                          employees=employees,
-                          employee_id=employee_id,
+                          search_query=search_query,
+                          status_filter=status_filter,
                           start_date=start_date,
                           end_date=end_date,
                           attendances=attendances,
