@@ -387,7 +387,7 @@
         <h5><i class="fas fa-filter"></i>خيارات البحث والفلترة</h5>
         <form method="GET" action="{{ url_for('attendance.department_attendance_view') }}">
             <div class="row align-items-end">
-                <div class="col-md-4 mb-3">
+                <div class="col-md-3 mb-3">
                     <label for="department_id" class="form-label">
                         <i class="fas fa-building me-1"></i>القسم
                     </label>
@@ -402,6 +402,22 @@
                 </div>
                 
                 <div class="col-md-3 mb-3">
+                    <label for="employee_id" class="form-label">
+                        <i class="fas fa-user me-1"></i>الموظف (اختياري)
+                    </label>
+                    <select class="form-select" id="employee_id" name="employee_id">
+                        <option value="">جميع الموظفين</option>
+                        {% if employees %}
+                        {% for employee in employees %}
+                        <option value="{{ employee.id }}" {% if employee_id == employee.id|string %}selected{% endif %}>
+                            {{ employee.name }} - {{ employee.employee_id }}
+                        </option>
+                        {% endfor %}
+                        {% endif %}
+                    </select>
+                </div>
+                
+                <div class="col-md-2 mb-3">
                     <label for="start_date" class="form-label">
                         <i class="fas fa-calendar-day me-1"></i>من تاريخ
                     </label>
@@ -409,7 +425,7 @@
                            value="{{ start_date.strftime('%Y-%m-%d') if start_date else '' }}">
                 </div>
                 
-                <div class="col-md-3 mb-3">
+                <div class="col-md-2 mb-3">
                     <label for="end_date" class="form-label">
                         <i class="fas fa-calendar-day me-1"></i>إلى تاريخ
                     </label>
@@ -617,6 +633,36 @@
     if (startDateInput) {
         startDateInput.addEventListener('change', function() {
             document.getElementById('end_date').min = this.value;
+        });
+    }
+    
+    // تحديث قائمة الموظفين عند تغيير القسم
+    const departmentSelect = document.getElementById('department_id');
+    const employeeSelect = document.getElementById('employee_id');
+    
+    if (departmentSelect && employeeSelect) {
+        departmentSelect.addEventListener('change', function() {
+            const departmentId = this.value;
+            
+            // إعادة تعيين قائمة الموظفين
+            employeeSelect.innerHTML = '<option value="">جميع الموظفين</option>';
+            
+            if (departmentId) {
+                // جلب الموظفين من القسم المحدد
+                fetch(`/attendance/api/departments/${departmentId}/employees`)
+                    .then(response => response.json())
+                    .then(employees => {
+                        employees.forEach(employee => {
+                            const option = document.createElement('option');
+                            option.value = employee.id;
+                            option.textContent = `${employee.name} - ${employee.employee_id}`;
+                            employeeSelect.appendChild(option);
+                        });
+                    })
+                    .catch(error => {
+                        console.error('خطأ في جلب الموظفين:', error);
+                    });
+            }
         });
     }
 </script>

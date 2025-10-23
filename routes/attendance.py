@@ -2360,6 +2360,7 @@ def department_attendance_view():
     
     # الحصول على معاملات الفلترة
     department_id = request.args.get('department_id', '')
+    employee_id = request.args.get('employee_id', '')
     start_date_str = request.args.get('start_date', '')
     end_date_str = request.args.get('end_date', '')
     
@@ -2380,6 +2381,14 @@ def department_attendance_view():
     else:
         departments = Department.query.all()
     
+    # الحصول على قائمة الموظفين للفلترة
+    employees_query = Employee.query
+    if department_id:
+        employees_query = employees_query.join(employee_departments).filter(
+            employee_departments.c.department_id == int(department_id)
+        )
+    employees = employees_query.order_by(Employee.name).all()
+    
     # بناء الاستعلام
     query = Attendance.query.join(Employee).filter(
         Attendance.date >= start_date,
@@ -2391,6 +2400,10 @@ def department_attendance_view():
         query = query.join(employee_departments).filter(
             employee_departments.c.department_id == int(department_id)
         )
+    
+    # تطبيق فلتر الموظف إذا تم تحديده
+    if employee_id:
+        query = query.filter(Attendance.employee_id == int(employee_id))
     
     # الحصول على السجلات مرتبة حسب التاريخ والموظف
     attendances = query.order_by(Attendance.date.desc(), Employee.name).all()
@@ -2405,6 +2418,8 @@ def department_attendance_view():
     return render_template('attendance/department_period.html',
                           departments=departments,
                           department_id=department_id,
+                          employees=employees,
+                          employee_id=employee_id,
                           start_date=start_date,
                           end_date=end_date,
                           attendances=attendances,
