@@ -349,7 +349,7 @@ def export_attendance_by_department_with_dashboard(employees, attendances, start
                 worksheet.write(row, 1, employee.national_id or '', normal_format)
                 worksheet.write(row, 2, employee.employee_id, normal_format)
                 worksheet.write(row, 3, employee.job_title or '', right_aligned_format)
-                worksheet.write(row, 4, employee.phone or '', normal_format)
+                worksheet.write(row, 4, employee.mobile or '', normal_format)
                 worksheet.write(row, 5, '', normal_format)
                 worksheet.write(row, 6, '', normal_format)
                 worksheet.write(row, 7, employee.project or '', right_aligned_format)
