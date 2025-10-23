@@ -2822,7 +2822,7 @@ def export_department_period():
             ws_matrix.cell(row=data_row, column=2, value=employee.national_id or '-')
             ws_matrix.cell(row=data_row, column=3, value=employee.employee_id or '-')
             ws_matrix.cell(row=data_row, column=4, value=employee.job_title or '-')
-            ws_matrix.cell(row=data_row, column=5, value=employee.phone or '-')
+            ws_matrix.cell(row=data_row, column=5, value=employee.mobile or '-')
             ws_matrix.cell(row=data_row, column=6, value=employee.location or '-')
             ws_matrix.cell(row=data_row, column=7, value=employee.project or '-')
             
