@@ -684,35 +684,12 @@
                                        data-bs-toggle="tooltip">
                                         <i class="fas fa-edit"></i>
                                     </a>
-                                    <button type="button" class="btn btn-sm btn-outline-danger" 
-                                            title="حذف" 
-                                            data-bs-toggle="modal" 
-                                            data-bs-target="#deleteModal{{ attendance.id }}"
-                                            data-bs-toggle="tooltip">
+                                    <a href="{{ url_for('attendance.confirm_delete_attendance', id=attendance.id) }}" 
+                                       class="btn btn-sm btn-outline-danger" 
+                                       title="حذف"
+                                       data-bs-toggle="tooltip">
                                         <i class="fas fa-trash"></i>
-                                    </button>
-                                </div>
-                                
-                                <!-- Delete Modal -->
-                                <div class="modal fade" id="deleteModal{{ attendance.id }}" tabindex="-1" aria-hidden="true">
-                                    <div class="modal-dialog">
-                                        <div class="modal-content">
-                                            <div class="modal-header">
-                                                <h5 class="modal-title">تأكيد الحذف</h5>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                            </div>
-                                            <div class="modal-body">
-                                                هل أنت متأكد من حذف سجل حضور للموظف <strong>{{ attendance.employee.name }}</strong>؟
-                                                <p class="text-danger mt-2">هذا الإجراء لا يمكن التراجع عنه.</p>
-                                            </div>
-                                            <div class="modal-footer">
-                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
-                                                <form action="{{ url_for('attendance.delete', id=attendance.id) }}" method="post">
-                                                    <button type="submit" class="btn btn-danger delete-confirm">تأكيد الحذف</button>
-                                                </form>
-                                            </div>
-                                        </div>
-                                    </div>
+                                    </a>
                                 </div>
                             </td>
                         </tr>
@@ -822,14 +799,6 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('export_department_id').value = selectedDepartment;
     }
 
-    // Enhanced delete confirmation
-    document.querySelectorAll('.delete-confirm').forEach(button => {
-        button.addEventListener('click', function(e) {
-            if (!confirm('هل أنت متأكد من حذف هذا السجل؟ لا يمكن التراجع عن هذا الإجراء.')) {
-                e.preventDefault();
-            }
-        });
-    });
 
     console.log('تم تحميل صفحة سجل الحضور بنجاح');
 });

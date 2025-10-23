@@ -1,0 +1,213 @@
+{% extends "base.html" %}
+
+{% block title %}تأكيد حذف سجل الحضور{% endblock %}
+
+{% block styles %}
+<style>
+    body {
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        min-height: 100vh;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .confirm-card {
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 20px;
+        padding: 40px;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        max-width: 600px;
+        margin: 100px auto;
+        text-align: center;
+    }
+
+    .warning-icon {
+        font-size: 80px;
+        color: #dc3545;
+        margin-bottom: 20px;
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+    }
+
+    .confirm-title {
+        color: #2c3e50;
+        font-size: 28px;
+        font-weight: bold;
+        margin-bottom: 20px;
+    }
+
+    .attendance-info {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 15px;
+        padding: 25px;
+        margin: 30px 0;
+        text-align: right;
+    }
+
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 12px 0;
+        border-bottom: 1px solid #dee2e6;
+    }
+
+    .info-row:last-child {
+        border-bottom: none;
+    }
+
+    .info-label {
+        font-weight: bold;
+        color: #495057;
+    }
+
+    .info-value {
+        color: #212529;
+    }
+
+    .status-badge {
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: bold;
+    }
+
+    .status-present {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+    }
+
+    .status-absent {
+        background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
+        color: white;
+    }
+
+    .status-leave {
+        background: linear-gradient(135deg, #ffc107 0%, #ffcd39 100%);
+        color: #212529;
+    }
+
+    .status-sick {
+        background: linear-gradient(135deg, #6f42c1 0%, #7952b3 100%);
+        color: white;
+    }
+
+    .warning-message {
+        background: rgba(220, 53, 69, 0.1);
+        border-right: 4px solid #dc3545;
+        padding: 15px;
+        border-radius: 10px;
+        margin: 20px 0;
+        text-align: right;
+        color: #721c24;
+        font-weight: 500;
+    }
+
+    .btn-group {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        margin-top: 30px;
+    }
+
+    .btn-delete {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        color: white;
+        border: none;
+        padding: 12px 40px;
+        border-radius: 25px;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
+    }
+
+    .btn-delete:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(220, 53, 69, 0.6);
+    }
+
+    .btn-cancel {
+        background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+        color: white;
+        border: none;
+        padding: 12px 40px;
+        border-radius: 25px;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+        box-shadow: 0 4px 15px rgba(108, 117, 125, 0.4);
+    }
+
+    .btn-cancel:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(108, 117, 125, 0.6);
+        color: white;
+        text-decoration: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="confirm-card">
+    <i class="fas fa-exclamation-triangle warning-icon"></i>
+    <h2 class="confirm-title">تأكيد حذف سجل الحضور</h2>
+    
+    <div class="warning-message">
+        <i class="fas fa-info-circle me-2"></i>
+        هل أنت متأكد من حذف سجل الحضور هذا؟ هذا الإجراء لا يمكن التراجع عنه.
+    </div>
+
+    <div class="attendance-info">
+        <div class="info-row">
+            <span class="info-label">اسم الموظف:</span>
+            <span class="info-value">{{ attendance.employee.name }}</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">الرقم الوظيفي:</span>
+            <span class="info-value">{{ attendance.employee.employee_id }}</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">التاريخ:</span>
+            <span class="info-value">{{ attendance.date.strftime('%Y-%m-%d') }}</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">الحالة:</span>
+            <span class="info-value">
+                {% if attendance.status == 'present' %}
+                <span class="status-badge status-present">حاضر</span>
+                {% elif attendance.status == 'absent' %}
+                <span class="status-badge status-absent">غائب</span>
+                {% elif attendance.status == 'leave' %}
+                <span class="status-badge status-leave">إجازة</span>
+                {% elif attendance.status == 'sick' %}
+                <span class="status-badge status-sick">مرضي</span>
+                {% endif %}
+            </span>
+        </div>
+        {% if attendance.notes %}
+        <div class="info-row">
+            <span class="info-label">ملاحظات:</span>
+            <span class="info-value">{{ attendance.notes }}</span>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="btn-group">
+        <form method="POST" action="{{ url_for('attendance.delete_attendance', id=attendance.id) }}" style="margin: 0;">
+            <button type="submit" class="btn-delete">
+                <i class="fas fa-trash me-2"></i>نعم، احذف السجل
+            </button>
+        </form>
+        <a href="{{ url_for('attendance.dashboard') }}" class="btn-cancel">
+            <i class="fas fa-times me-2"></i>إلغاء
+        </a>
+    </div>
+</div>
+{% endblock %}

@@ -848,8 +848,14 @@ def multi_day_department_attendance():
                           hijri_date=hijri_date,
                           gregorian_date=gregorian_date)
 
+@attendance_bp.route('/delete/<int:id>/confirm', methods=['GET'])
+def confirm_delete_attendance(id):
+    """عرض صفحة تأكيد حذف سجل الحضور"""
+    attendance = Attendance.query.get_or_404(id)
+    return render_template('attendance/confirm_delete.html', attendance=attendance)
+
 @attendance_bp.route('/delete/<int:id>', methods=['POST'])
-def delete(id):
+def delete_attendance(id):
     """Delete an attendance record"""
     attendance = Attendance.query.get_or_404(id)
     
