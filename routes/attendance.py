@@ -2352,3 +2352,234 @@ def export_excel_department():
         print(f"خطأ في تصدير تفاصيل القسم: {str(e)}")
         flash('حدث خطأ أثناء تصدير الملف', 'error')
         return redirect(url_for('attendance.dashboard'))
+
+@attendance_bp.route('/department/view', methods=['GET'])
+def department_attendance_view():
+    """عرض حضور الأقسام خلال فترة زمنية محددة"""
+    from flask_login import current_user
+    
+    # الحصول على معاملات الفلترة
+    department_id = request.args.get('department_id', '')
+    start_date_str = request.args.get('start_date', '')
+    end_date_str = request.args.get('end_date', '')
+    
+    # تحديد التواريخ الافتراضية (آخر 30 يوم)
+    if not start_date_str:
+        start_date = datetime.now().date() - timedelta(days=30)
+    else:
+        start_date = parse_date(start_date_str)
+    
+    if not end_date_str:
+        end_date = datetime.now().date()
+    else:
+        end_date = parse_date(end_date_str)
+    
+    # الحصول على الأقسام حسب صلاحيات المستخدم
+    if current_user.is_authenticated:
+        departments = current_user.get_accessible_departments()
+    else:
+        departments = Department.query.all()
+    
+    # بناء الاستعلام
+    query = Attendance.query.join(Employee).filter(
+        Attendance.date >= start_date,
+        Attendance.date <= end_date
+    )
+    
+    # تطبيق فلتر القسم إذا تم تحديده
+    if department_id:
+        query = query.join(employee_departments).filter(
+            employee_departments.c.department_id == int(department_id)
+        )
+    
+    # الحصول على السجلات مرتبة حسب التاريخ والموظف
+    attendances = query.order_by(Attendance.date.desc(), Employee.name).all()
+    
+    # حساب الإحصائيات
+    total_count = len(attendances)
+    present_count = sum(1 for a in attendances if a.status == 'present')
+    absent_count = sum(1 for a in attendances if a.status == 'absent')
+    leave_count = sum(1 for a in attendances if a.status == 'leave')
+    sick_count = sum(1 for a in attendances if a.status == 'sick')
+    
+    return render_template('attendance/department_period.html',
+                          departments=departments,
+                          department_id=department_id,
+                          start_date=start_date,
+                          end_date=end_date,
+                          attendances=attendances,
+                          total_count=total_count,
+                          present_count=present_count,
+                          absent_count=absent_count,
+                          leave_count=leave_count,
+                          sick_count=sick_count)
+
+@attendance_bp.route('/department/export-period', methods=['GET'])
+def export_department_period():
+    """تصدير حضور قسم خلال فترة زمنية إلى Excel"""
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
+    from io import BytesIO
+    
+    try:
+        department_id = request.args.get('department_id')
+        start_date_str = request.args.get('start_date')
+        end_date_str = request.args.get('end_date')
+        
+        if not all([department_id, start_date_str, end_date_str]):
+            flash('يجب تحديد القسم والفترة الزمنية', 'error')
+            return redirect(url_for('attendance.department_attendance_view'))
+        
+        # تحليل التواريخ
+        start_date = parse_date(start_date_str)
+        end_date = parse_date(end_date_str)
+        
+        # الحصول على القسم
+        department = Department.query.get_or_404(department_id)
+        
+        # الحصول على بيانات الحضور
+        attendances = Attendance.query.join(Employee).join(employee_departments).filter(
+            employee_departments.c.department_id == int(department_id),
+            Attendance.date >= start_date,
+            Attendance.date <= end_date
+        ).order_by(Employee.name, Attendance.date).all()
+        
+        # إنشاء workbook
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "حضور القسم"
+        
+        # تنسيقات الألوان
+        header_fill = PatternFill(start_color="667eea", end_color="667eea", fill_type="solid")
+        header_font = Font(bold=True, color="FFFFFF", size=12)
+        title_fill = PatternFill(start_color="764ba2", end_color="764ba2", fill_type="solid")
+        title_font = Font(bold=True, color="FFFFFF", size=16)
+        
+        present_fill = PatternFill(start_color="d4edda", end_color="d4edda", fill_type="solid")
+        absent_fill = PatternFill(start_color="f8d7da", end_color="f8d7da", fill_type="solid")
+        leave_fill = PatternFill(start_color="fff3cd", end_color="fff3cd", fill_type="solid")
+        sick_fill = PatternFill(start_color="d1ecf1", end_color="d1ecf1", fill_type="solid")
+        
+        # العنوان
+        ws.merge_cells('A1:H1')
+        ws['A1'] = f'تقرير حضور قسم {department.name}'
+        ws['A1'].fill = title_fill
+        ws['A1'].font = title_font
+        ws['A1'].alignment = Alignment(horizontal='center', vertical='center')
+        ws.row_dimensions[1].height = 30
+        
+        # معلومات الفترة
+        ws.merge_cells('A2:H2')
+        ws['A2'] = f'من {start_date.strftime("%Y-%m-%d")} إلى {end_date.strftime("%Y-%m-%d")}'
+        ws['A2'].font = Font(bold=True, size=11)
+        ws['A2'].alignment = Alignment(horizontal='center')
+        
+        # رؤوس الأعمدة
+        headers = ['الموظف', 'الرقم الوظيفي', 'التاريخ', 'الحالة', 'وقت الدخول', 'وقت الخروج', 'ساعات العمل', 'ملاحظات']
+        for col_num, header in enumerate(headers, 1):
+            cell = ws.cell(row=4, column=col_num, value=header)
+            cell.fill = header_fill
+            cell.font = header_font
+            cell.alignment = Alignment(horizontal='center', vertical='center')
+        
+        # البيانات
+        row_num = 5
+        for attendance in attendances:
+            ws.cell(row=row_num, column=1, value=attendance.employee.name)
+            ws.cell(row=row_num, column=2, value=attendance.employee.employee_id or '-')
+            ws.cell(row=row_num, column=3, value=attendance.date.strftime('%Y-%m-%d'))
+            
+            # حالة الحضور مع التلوين
+            status_cell = ws.cell(row=row_num, column=4)
+            if attendance.status == 'present':
+                status_cell.value = 'حاضر'
+                status_cell.fill = present_fill
+            elif attendance.status == 'absent':
+                status_cell.value = 'غائب'
+                status_cell.fill = absent_fill
+            elif attendance.status == 'leave':
+                status_cell.value = 'إجازة'
+                status_cell.fill = leave_fill
+            elif attendance.status == 'sick':
+                status_cell.value = 'مرضي'
+                status_cell.fill = sick_fill
+            
+            status_cell.alignment = Alignment(horizontal='center')
+            
+            ws.cell(row=row_num, column=5, value=attendance.check_in.strftime('%H:%M') if attendance.check_in else '-')
+            ws.cell(row=row_num, column=6, value=attendance.check_out.strftime('%H:%M') if attendance.check_out else '-')
+            
+            # حساب ساعات العمل
+            if attendance.check_in and attendance.check_out:
+                hours = attendance.hours_worked
+                ws.cell(row=row_num, column=7, value=f"{hours:.1f} ساعة")
+            else:
+                ws.cell(row=row_num, column=7, value='-')
+            
+            ws.cell(row=row_num, column=8, value=attendance.notes or '-')
+            
+            row_num += 1
+        
+        # تنسيق عرض الأعمدة
+        ws.column_dimensions['A'].width = 25
+        ws.column_dimensions['B'].width = 15
+        ws.column_dimensions['C'].width = 15
+        ws.column_dimensions['D'].width = 12
+        ws.column_dimensions['E'].width = 12
+        ws.column_dimensions['F'].width = 12
+        ws.column_dimensions['G'].width = 15
+        ws.column_dimensions['H'].width = 30
+        
+        # إضافة ورقة الإحصائيات
+        ws_stats = wb.create_sheet("الإحصائيات")
+        
+        # عنوان الإحصائيات
+        ws_stats.merge_cells('A1:B1')
+        ws_stats['A1'] = 'إحصائيات الحضور'
+        ws_stats['A1'].fill = title_fill
+        ws_stats['A1'].font = title_font
+        ws_stats['A1'].alignment = Alignment(horizontal='center')
+        
+        # حساب الإحصائيات
+        total_count = len(attendances)
+        present_count = sum(1 for a in attendances if a.status == 'present')
+        absent_count = sum(1 for a in attendances if a.status == 'absent')
+        leave_count = sum(1 for a in attendances if a.status == 'leave')
+        sick_count = sum(1 for a in attendances if a.status == 'sick')
+        
+        stats_data = [
+            ('إجمالي السجلات', total_count),
+            ('حضور', present_count),
+            ('غياب', absent_count),
+            ('إجازات', leave_count),
+            ('مرضي', sick_count),
+            ('نسبة الحضور', f"{(present_count/total_count*100):.1f}%" if total_count > 0 else "0%")
+        ]
+        
+        row_num = 3
+        for label, value in stats_data:
+            ws_stats.cell(row=row_num, column=1, value=label).font = Font(bold=True)
+            ws_stats.cell(row=row_num, column=2, value=value)
+            row_num += 1
+        
+        ws_stats.column_dimensions['A'].width = 20
+        ws_stats.column_dimensions['B'].width = 15
+        
+        # حفظ الملف
+        output = BytesIO()
+        wb.save(output)
+        output.seek(0)
+        
+        filename = f'حضور_{department.name}_{start_date.strftime("%Y%m%d")}_إلى_{end_date.strftime("%Y%m%d")}.xlsx'
+        
+        return send_file(
+            output,
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            as_attachment=True,
+            download_name=filename
+        )
+        
+    except Exception as e:
+        print(f"خطأ في تصدير حضور الفترة: {str(e)}")
+        flash('حدث خطأ أثناء تصدير الملف', 'error')
+        return redirect(url_for('attendance.department_attendance_view'))
