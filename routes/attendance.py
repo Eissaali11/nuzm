@@ -2446,6 +2446,7 @@ def export_department_period():
     from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
     from openpyxl.chart import PieChart, BarChart, Reference
     from openpyxl.chart.label import DataLabelList
+    from openpyxl.utils import get_column_letter
     from io import BytesIO
     
     try:
@@ -2798,7 +2799,7 @@ def export_department_period():
                 left=Side(style='thin'), right=Side(style='thin'),
                 top=Side(style='thin'), bottom=Side(style='thin')
             )
-            ws_matrix.column_dimensions[ws_matrix.cell(row=1, column=idx).column_letter].width = 4
+            ws_matrix.column_dimensions[get_column_letter(idx)].width = 4
         
         # صف التواريخ
         for idx, date in enumerate(sorted_dates, start=9):
