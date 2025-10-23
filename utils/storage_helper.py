@@ -13,7 +13,7 @@ except Exception as e:
 
 def upload_image(file_data, folder_name, filename):
     """
-    رفع صورة إلى Replit Object Storage أو حفظها محلياً
+    رفع صورة وحفظها محلياً في static/uploads
     
     Args:
         file_data: البيانات الثنائية للملف (bytes أو file-like object)
@@ -21,25 +21,15 @@ def upload_image(file_data, folder_name, filename):
         filename: اسم الملف
     
     Returns:
-        str: المسار الكامل للملف في Storage أو المسار المحلي
+        str: المسار الكامل للملف المحلي
     """
-    object_key = f"{folder_name}/{filename}"
-    
     # تحضير البيانات
     if hasattr(file_data, 'read'):
         file_bytes = file_data.read()
     else:
         file_bytes = file_data
     
-    # محاولة الرفع إلى Object Storage
-    if STORAGE_AVAILABLE and client is not None:
-        try:
-            client.upload_from_bytes(object_key, file_bytes)
-            return object_key
-        except Exception as e:
-            print(f"Warning: Failed to upload to Object Storage ({e}), falling back to local storage")
-    
-    # الحفظ المحلي كبديل
+    # الحفظ المحلي (الطريقة الأساسية الآن)
     local_path = os.path.join('static', 'uploads', folder_name, filename)
     os.makedirs(os.path.dirname(local_path), exist_ok=True)
     
