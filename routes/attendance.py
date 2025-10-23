@@ -2395,15 +2395,15 @@ def department_attendance_view():
         Attendance.date <= end_date
     )
     
-    # تطبيق فلتر القسم إذا تم تحديده
-    if department_id:
+    # تطبيق فلتر الموظف أو القسم (ليس كلاهما معاً لتجنب join مكرر)
+    if employee_id:
+        # فلتر حسب الموظف فقط (لا حاجة لفلتر القسم)
+        query = query.filter(Attendance.employee_id == int(employee_id))
+    elif department_id:
+        # فلتر حسب القسم فقط
         query = query.join(employee_departments).filter(
             employee_departments.c.department_id == int(department_id)
         )
-    
-    # تطبيق فلتر الموظف إذا تم تحديده
-    if employee_id:
-        query = query.filter(Attendance.employee_id == int(employee_id))
     
     # الحصول على السجلات مرتبة حسب التاريخ والموظف
     attendances = query.order_by(Attendance.date.desc(), Employee.name).all()
