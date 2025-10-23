@@ -2756,10 +2756,12 @@ def update_attendance_page(id):
         status = request.form.get('status')
         check_in_str = request.form.get('check_in', '')
         check_out_str = request.form.get('check_out', '')
+        notes = request.form.get('notes', '')
         
         # تحديث الحالة
         old_status = attendance.status
         attendance.status = status
+        attendance.notes = notes if notes else None
         
         # معالجة أوقات الدخول والخروج
         if status == 'present':
