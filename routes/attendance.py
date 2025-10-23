@@ -2736,6 +2736,155 @@ def export_department_period():
         ws_data.column_dimensions['G'].width = 15
         ws_data.column_dimensions['H'].width = 30
         
+        # ========== ورقة سجل الحضور (Matrix View) ==========
+        ws_matrix = wb.create_sheet("سجل الحضور")
+        
+        # تجميع البيانات حسب الموظف والتاريخ
+        employee_attendance_map = {}
+        unique_dates = set()
+        
+        for att in attendances:
+            emp_id = att.employee_id
+            if emp_id not in employee_attendance_map:
+                employee_attendance_map[emp_id] = {
+                    'employee': att.employee,
+                    'dates': {}
+                }
+            employee_attendance_map[emp_id]['dates'][att.date] = att.status
+            unique_dates.add(att.date)
+        
+        # ترتيب التواريخ
+        sorted_dates = sorted(list(unique_dates))
+        
+        # العنوان
+        ws_matrix.merge_cells(start_row=1, start_column=1, end_row=1, end_column=len(sorted_dates) + 8)
+        ws_matrix.cell(row=1, column=1, value=f'سجل حضور قسم {department_name}')
+        ws_matrix.cell(row=1, column=1).fill = title_fill
+        ws_matrix.cell(row=1, column=1).font = title_font
+        ws_matrix.cell(row=1, column=1).alignment = Alignment(horizontal='center', vertical='center')
+        ws_matrix.row_dimensions[1].height = 30
+        
+        # الفترة
+        ws_matrix.merge_cells(start_row=2, start_column=1, end_row=2, end_column=len(sorted_dates) + 8)
+        ws_matrix.cell(row=2, column=1, value=f'الفترة: من {start_date.strftime("%Y-%m-%d")} إلى {end_date.strftime("%Y-%m-%d")}')
+        ws_matrix.cell(row=2, column=1).fill = subtitle_fill
+        ws_matrix.cell(row=2, column=1).font = subtitle_font
+        ws_matrix.cell(row=2, column=1).alignment = Alignment(horizontal='center', vertical='center')
+        ws_matrix.row_dimensions[2].height = 25
+        
+        # رؤوس الأعمدة الثابتة
+        fixed_headers = ['Name', 'ID Number', 'Emp. No', 'Job Title', 'No. Mobile', 'Location', 'Project', 'Total']
+        header_row = 4
+        
+        for col_num, header in enumerate(fixed_headers, 1):
+            cell = ws_matrix.cell(row=header_row, column=col_num, value=header)
+            cell.fill = PatternFill(start_color="00B0B0", end_color="00B0B0", fill_type="solid")
+            cell.font = Font(bold=True, color="FFFFFF", size=11)
+            cell.alignment = Alignment(horizontal='center', vertical='center')
+            cell.border = Border(
+                left=Side(style='thin'), right=Side(style='thin'),
+                top=Side(style='thin'), bottom=Side(style='thin')
+            )
+        
+        # رؤوس الأعمدة للتواريخ
+        for idx, date in enumerate(sorted_dates, start=9):
+            # صف اليوم (اسم اليوم بالإنجليزي)
+            day_name = date.strftime('%a')
+            cell = ws_matrix.cell(row=header_row, column=idx, value=day_name)
+            cell.fill = PatternFill(start_color="FFD700", end_color="FFD700", fill_type="solid")
+            cell.font = Font(bold=True, size=9)
+            cell.alignment = Alignment(horizontal='center', vertical='center', text_rotation=90)
+            cell.border = Border(
+                left=Side(style='thin'), right=Side(style='thin'),
+                top=Side(style='thin'), bottom=Side(style='thin')
+            )
+            ws_matrix.column_dimensions[ws_matrix.cell(row=1, column=idx).column_letter].width = 4
+        
+        # صف التواريخ
+        for idx, date in enumerate(sorted_dates, start=9):
+            cell = ws_matrix.cell(row=header_row + 1, column=idx, value=date.strftime('%d/%m/%Y'))
+            cell.fill = PatternFill(start_color="E9ECEF", end_color="E9ECEF", fill_type="solid")
+            cell.font = Font(bold=True, size=8)
+            cell.alignment = Alignment(horizontal='center', vertical='center', text_rotation=90)
+            cell.border = Border(
+                left=Side(style='thin'), right=Side(style='thin'),
+                top=Side(style='thin'), bottom=Side(style='thin')
+            )
+        
+        # بيانات الموظفين
+        data_row = header_row + 2
+        for emp_id, emp_data in sorted(employee_attendance_map.items(), key=lambda x: x[1]['employee'].name):
+            employee = emp_data['employee']
+            
+            # البيانات الثابتة
+            ws_matrix.cell(row=data_row, column=1, value=employee.name)
+            ws_matrix.cell(row=data_row, column=2, value=employee.national_id or '-')
+            ws_matrix.cell(row=data_row, column=3, value=employee.employee_id or '-')
+            ws_matrix.cell(row=data_row, column=4, value=employee.job_title or '-')
+            ws_matrix.cell(row=data_row, column=5, value=employee.phone or '-')
+            ws_matrix.cell(row=data_row, column=6, value=employee.location or '-')
+            ws_matrix.cell(row=data_row, column=7, value=employee.project or '-')
+            
+            # حساب المجموع
+            total_days = len(emp_data['dates'])
+            ws_matrix.cell(row=data_row, column=8, value=total_days)
+            ws_matrix.cell(row=data_row, column=8).font = Font(bold=True)
+            ws_matrix.cell(row=data_row, column=8).alignment = Alignment(horizontal='center', vertical='center')
+            
+            # حالات الحضور
+            for idx, date in enumerate(sorted_dates, start=9):
+                status = emp_data['dates'].get(date, '')
+                cell = ws_matrix.cell(row=data_row, column=idx)
+                
+                if status == 'present':
+                    cell.value = 'P'
+                    cell.fill = PatternFill(start_color="d4edda", end_color="d4edda", fill_type="solid")
+                    cell.font = Font(bold=True, color="155724")
+                elif status == 'absent':
+                    cell.value = 'A'
+                    cell.fill = PatternFill(start_color="f8d7da", end_color="f8d7da", fill_type="solid")
+                    cell.font = Font(bold=True, color="721c24")
+                elif status == 'leave':
+                    cell.value = 'L'
+                    cell.fill = PatternFill(start_color="fff3cd", end_color="fff3cd", fill_type="solid")
+                    cell.font = Font(bold=True, color="856404")
+                elif status == 'sick':
+                    cell.value = 'S'
+                    cell.fill = PatternFill(start_color="d1ecf1", end_color="d1ecf1", fill_type="solid")
+                    cell.font = Font(bold=True, color="0c5460")
+                else:
+                    cell.value = ''
+                
+                cell.alignment = Alignment(horizontal='center', vertical='center')
+                cell.border = Border(
+                    left=Side(style='thin'), right=Side(style='thin'),
+                    top=Side(style='thin'), bottom=Side(style='thin')
+                )
+            
+            # تنسيق الصف
+            for col in range(1, 9):
+                cell = ws_matrix.cell(row=data_row, column=col)
+                cell.border = Border(
+                    left=Side(style='thin'), right=Side(style='thin'),
+                    top=Side(style='thin'), bottom=Side(style='thin')
+                )
+                cell.alignment = Alignment(horizontal='center', vertical='center')
+            
+            data_row += 1
+        
+        # تنسيق عرض الأعمدة الثابتة
+        ws_matrix.column_dimensions['A'].width = 25
+        ws_matrix.column_dimensions['B'].width = 15
+        ws_matrix.column_dimensions['C'].width = 12
+        ws_matrix.column_dimensions['D'].width = 20
+        ws_matrix.column_dimensions['E'].width = 15
+        ws_matrix.column_dimensions['F'].width = 15
+        ws_matrix.column_dimensions['G'].width = 15
+        ws_matrix.column_dimensions['H'].width = 8
+        
+        # تجميد الأعمدة الثابتة والصفوف العليا
+        ws_matrix.freeze_panes = ws_matrix.cell(row=header_row + 2, column=9)
+        
         # حفظ الملف
         output = BytesIO()
         wb.save(output)
