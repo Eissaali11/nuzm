@@ -527,12 +527,22 @@
                         </td>
                         <td>
                             {% if attendance.status == 'sick' and attendance.sick_leave_file %}
-                                <a href="{{ url_for('static', filename=attendance.sick_leave_file) }}" 
-                                   target="_blank" 
-                                   class="btn btn-sm btn-success" 
-                                   style="border-radius: 20px; padding: 6px 16px; background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); border: none;">
-                                    <i class="fas fa-file-alt me-1"></i>عرض الملف
-                                </a>
+                                <div class="d-flex gap-2 justify-content-center">
+                                    <a href="{{ url_for('static', filename=attendance.sick_leave_file) }}" 
+                                       target="_blank" 
+                                       class="btn btn-sm btn-info" 
+                                       style="border-radius: 20px; padding: 6px 12px; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); border: none;"
+                                       title="عرض الملف">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{{ url_for('static', filename=attendance.sick_leave_file) }}" 
+                                       download 
+                                       class="btn btn-sm btn-success" 
+                                       style="border-radius: 20px; padding: 6px 12px; background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); border: none;"
+                                       title="تحميل الملف">
+                                        <i class="fas fa-download"></i>
+                                    </a>
+                                </div>
                             {% else %}
                                 <span class="text-muted">-</span>
                             {% endif %}
