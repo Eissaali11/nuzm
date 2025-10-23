@@ -6,6 +6,7 @@ from app import db
 from models import Attendance, Employee, Department, SystemAudit, VehicleProject, Module, Permission, employee_departments
 from utils.date_converter import parse_date, format_date_hijri, format_date_gregorian
 from utils.excel import export_attendance_by_department
+from utils.excel_dashboard import export_attendance_by_department_with_dashboard
 from utils.user_helpers import check_module_access
 from utils.audit_logger import log_attendance_activity, log_system_activity, log_activity
 import calendar
@@ -928,8 +929,8 @@ def export_excel():
             department_id = request.args.get('department_id')
         
         # التحقق من المدخلات
-        if not start_date_str or not department_id:
-            flash('تاريخ البداية والقسم مطلوبان', 'danger')
+        if not start_date_str:
+            flash('تاريخ البداية مطلوب', 'danger')
             return redirect(url_for('attendance.export_page'))
         
         # تحليل التواريخ
@@ -943,32 +944,49 @@ def export_excel():
             flash('تاريخ غير صالح', 'danger')
             return redirect(url_for('attendance.export_page'))
         
-        # الحصول على القسم
-        department = Department.query.get(department_id)
-        if not department:
-            flash('القسم غير موجود', 'danger')
-            return redirect(url_for('attendance.export_page'))
-        
-        # الحصول على موظفي القسم - استخدام علاقة many-to-many
-        employees = department.employees
-        
-        # الحصول على سجلات الحضور خلال الفترة المحددة
-        if employees:
-            attendances = Attendance.query.filter(
-                Attendance.date.between(start_date, end_date),
-                Attendance.employee_id.in_([emp.id for emp in employees])
-            ).all()
+        # التحقق من اختيار القسم
+        if department_id and department_id != '':
+            # تصدير قسم واحد فقط
+            department = Department.query.get(department_id)
+            if not department:
+                flash('القسم غير موجود', 'danger')
+                return redirect(url_for('attendance.export_page'))
+            
+            employees = department.employees
+            
+            if employees:
+                attendances = Attendance.query.filter(
+                    Attendance.date.between(start_date, end_date),
+                    Attendance.employee_id.in_([emp.id for emp in employees])
+                ).all()
+            else:
+                attendances = []
+            
+            excel_file = export_attendance_by_department(employees, attendances, start_date, end_date)
+            
+            if end_date_str:
+                filename = f'سجل الحضور - {department.name} - {start_date_str} إلى {end_date_str}.xlsx'
+            else:
+                filename = f'سجل الحضور - {department.name} - {start_date_str}.xlsx'
         else:
-            attendances = []
-        
-        # إنشاء ملف Excel وتحميله
-        excel_file = export_attendance_by_department(employees, attendances, start_date, end_date)
-        
-        # تحديد اسم الملف بناءً على القسم والفترة الزمنية
-        if end_date_str:
-            filename = f'سجل الحضور - {department.name} - {start_date_str} إلى {end_date_str}.xlsx'
-        else:
-            filename = f'سجل الحضور - {department.name} - {start_date_str}.xlsx'
+            # تصدير جميع الأقسام
+            departments = Department.query.all()
+            all_employees = Employee.query.filter_by(status='active').all()
+            
+            if all_employees:
+                attendances = Attendance.query.filter(
+                    Attendance.date.between(start_date, end_date),
+                    Attendance.employee_id.in_([emp.id for emp in all_employees])
+                ).all()
+            else:
+                attendances = []
+            
+            excel_file = export_attendance_by_department_with_dashboard(all_employees, attendances, start_date, end_date)
+            
+            if end_date_str:
+                filename = f'سجل الحضور - جميع الأقسام - {start_date_str} إلى {end_date_str}.xlsx'
+            else:
+                filename = f'سجل الحضور - جميع الأقسام - {start_date_str}.xlsx'
         
         return send_file(
             excel_file,
