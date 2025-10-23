@@ -2718,31 +2718,44 @@ def department_bulk_attendance():
     
     return render_template('attendance/department_bulk.html', departments=departments)
 
-@attendance_bp.route('/update', methods=['POST'])
-def update_attendance():
-    """تحديث سجل حضور موجود"""
-    from flask import jsonify
+@attendance_bp.route('/edit/<int:id>', methods=['GET'])
+def edit_attendance_page(id):
+    """عرض صفحة تعديل سجل الحضور"""
     from flask_login import current_user
-    from datetime import datetime, time
+    
+    # الحصول على سجل الحضور
+    attendance = Attendance.query.get_or_404(id)
+    
+    # التحقق من صلاحيات المستخدم
+    if current_user.is_authenticated:
+        employee_departments = [dept.id for dept in attendance.employee.departments]
+        if employee_departments and not any(current_user.can_access_department(dept_id) for dept_id in employee_departments):
+            flash('ليس لديك صلاحية لتعديل هذا السجل', 'error')
+            return redirect(url_for('attendance.department_attendance_view'))
+    
+    return render_template('attendance/edit_attendance.html', attendance=attendance)
+
+@attendance_bp.route('/edit/<int:id>', methods=['POST'])
+def update_attendance_page(id):
+    """تحديث سجل حضور موجود من صفحة التعديل"""
+    from flask_login import current_user
+    from datetime import time as dt_time
     
     try:
-        attendance_id = request.form.get('attendance_id')
-        status = request.form.get('status')
-        check_in_str = request.form.get('check_in', '')
-        check_out_str = request.form.get('check_out', '')
-        
-        if not attendance_id or not status:
-            return jsonify({'success': False, 'message': 'البيانات المطلوبة مفقودة'}), 400
-        
         # الحصول على سجل الحضور
-        attendance = Attendance.query.get_or_404(attendance_id)
+        attendance = Attendance.query.get_or_404(id)
         
         # التحقق من صلاحيات المستخدم
         if current_user.is_authenticated:
-            # التحقق من إمكانية الوصول للقسم
             employee_departments = [dept.id for dept in attendance.employee.departments]
             if employee_departments and not any(current_user.can_access_department(dept_id) for dept_id in employee_departments):
-                return jsonify({'success': False, 'message': 'ليس لديك صلاحية لتعديل هذا السجل'}), 403
+                flash('ليس لديك صلاحية لتعديل هذا السجل', 'error')
+                return redirect(url_for('attendance.department_attendance_view'))
+        
+        # الحصول على البيانات
+        status = request.form.get('status')
+        check_in_str = request.form.get('check_in', '')
+        check_out_str = request.form.get('check_out', '')
         
         # تحديث الحالة
         old_status = attendance.status
@@ -2753,14 +2766,14 @@ def update_attendance():
             if check_in_str:
                 try:
                     hours, minutes = map(int, check_in_str.split(':'))
-                    attendance.check_in = time(hours, minutes)
+                    attendance.check_in = dt_time(hours, minutes)
                 except:
                     attendance.check_in = None
             
             if check_out_str:
                 try:
                     hours, minutes = map(int, check_out_str.split(':'))
-                    attendance.check_out = time(hours, minutes)
+                    attendance.check_out = dt_time(hours, minutes)
                 except:
                     attendance.check_out = None
         else:
@@ -2784,15 +2797,20 @@ def update_attendance():
             employee_name=attendance.employee.name
         )
         
-        return jsonify({
-            'success': True,
-            'message': 'تم تحديث سجل الحضور بنجاح'
-        })
+        flash('تم تحديث سجل الحضور بنجاح', 'success')
+        
+        # العودة لصفحة العرض مع المعاملات
+        department_id = request.args.get('department_id', '')
+        start_date = request.args.get('start_date', '')
+        end_date = request.args.get('end_date', '')
+        
+        return redirect(url_for('attendance.department_attendance_view', 
+                               department_id=department_id,
+                               start_date=start_date,
+                               end_date=end_date))
         
     except Exception as e:
         db.session.rollback()
         print(f"خطأ في تحديث سجل الحضور: {str(e)}")
-        return jsonify({
-            'success': False,
-            'message': f'حدث خطأ: {str(e)}'
-        }), 500
+        flash(f'حدث خطأ: {str(e)}', 'danger')
+        return redirect(url_for('attendance.edit_attendance_page', id=id))

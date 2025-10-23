@@ -1,0 +1,396 @@
+{% extends 'layout.html' %}
+
+{% block styles %}
+<style>
+    body {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    }
+    
+    .edit-card {
+        background: white;
+        border-radius: 20px;
+        padding: 40px;
+        max-width: 700px;
+        margin: 30px auto;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    }
+    
+    .edit-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 30px;
+        border-radius: 20px;
+        margin-bottom: 30px;
+        text-align: center;
+    }
+    
+    .edit-header h2 {
+        margin: 0;
+        font-weight: 700;
+        font-size: 1.8rem;
+    }
+    
+    .edit-header p {
+        margin: 10px 0 0 0;
+        opacity: 0.95;
+    }
+    
+    .info-section {
+        background: linear-gradient(135deg, #e0e7ff 0%, #ddd6fe 100%);
+        border-radius: 15px;
+        padding: 25px;
+        margin-bottom: 30px;
+    }
+    
+    .info-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid rgba(102, 126, 234, 0.2);
+    }
+    
+    .info-item:last-child {
+        margin-bottom: 0;
+        padding-bottom: 0;
+        border-bottom: none;
+    }
+    
+    .info-label {
+        color: #5b21b6;
+        font-weight: 700;
+        font-size: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .info-value {
+        color: #2d3748;
+        font-weight: 600;
+        font-size: 1.1rem;
+    }
+    
+    .form-section {
+        background: #f8f9fa;
+        border-radius: 15px;
+        padding: 30px;
+        margin-bottom: 25px;
+    }
+    
+    .form-section h5 {
+        color: #667eea;
+        font-weight: 700;
+        margin-bottom: 25px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .form-label {
+        font-weight: 700;
+        color: #4a5568;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .form-control, .form-select {
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 14px 18px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.25rem rgba(102, 126, 234, 0.15);
+    }
+    
+    .status-options {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+    }
+    
+    .status-option {
+        position: relative;
+    }
+    
+    .status-option input[type="radio"] {
+        position: absolute;
+        opacity: 0;
+    }
+    
+    .status-option label {
+        display: block;
+        padding: 18px;
+        border: 3px solid #e2e8f0;
+        border-radius: 12px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-weight: 700;
+    }
+    
+    .status-option input[type="radio"]:checked + label {
+        transform: scale(1.05);
+        box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+    }
+    
+    .status-option.present label {
+        border-color: #28a745;
+        color: #28a745;
+    }
+    
+    .status-option.present input[type="radio"]:checked + label {
+        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        color: white;
+        border-color: #28a745;
+    }
+    
+    .status-option.absent label {
+        border-color: #dc3545;
+        color: #dc3545;
+    }
+    
+    .status-option.absent input[type="radio"]:checked + label {
+        background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+        color: white;
+        border-color: #dc3545;
+    }
+    
+    .status-option.leave label {
+        border-color: #ffc107;
+        color: #f57c00;
+    }
+    
+    .status-option.leave input[type="radio"]:checked + label {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+        border-color: #ffc107;
+    }
+    
+    .status-option.sick label {
+        border-color: #17a2b8;
+        color: #17a2b8;
+    }
+    
+    .status-option.sick input[type="radio"]:checked + label {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        color: white;
+        border-color: #17a2b8;
+    }
+    
+    .time-section {
+        background: white;
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 20px;
+    }
+    
+    .btn-save {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        color: white;
+        padding: 16px 40px;
+        border-radius: 25px;
+        font-weight: 700;
+        font-size: 1.1rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+    }
+    
+    .btn-save:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 30px rgba(102, 126, 234, 0.5);
+    }
+    
+    .btn-cancel {
+        background: white;
+        border: 2px solid #e2e8f0;
+        color: #4a5568;
+        padding: 16px 40px;
+        border-radius: 25px;
+        font-weight: 700;
+        font-size: 1.1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-cancel:hover {
+        border-color: #cbd5e0;
+        background: #f8f9fa;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="edit-card">
+        <div class="edit-header">
+            <h2><i class="fas fa-edit me-2"></i>تعديل حالة الحضور</h2>
+            <p>قم بتحديث حالة الحضور وأوقات الدخول والخروج</p>
+        </div>
+        
+        <!-- معلومات السجل -->
+        <div class="info-section">
+            <div class="info-item">
+                <span class="info-label">
+                    <i class="fas fa-user"></i>
+                    اسم الموظف
+                </span>
+                <span class="info-value">{{ attendance.employee.name }}</span>
+            </div>
+            
+            <div class="info-item">
+                <span class="info-label">
+                    <i class="fas fa-id-card"></i>
+                    الرقم الوظيفي
+                </span>
+                <span class="info-value">{{ attendance.employee.employee_id }}</span>
+            </div>
+            
+            <div class="info-item">
+                <span class="info-label">
+                    <i class="fas fa-calendar"></i>
+                    التاريخ
+                </span>
+                <span class="info-value">{{ attendance.date.strftime('%Y-%m-%d') }}</span>
+            </div>
+        </div>
+        
+        <!-- نموذج التعديل -->
+        <form method="POST" action="{{ url_for('attendance.update_attendance_page', id=attendance.id) }}">
+            <!-- حالة الحضور -->
+            <div class="form-section">
+                <h5><i class="fas fa-info-circle"></i>حالة الحضور</h5>
+                <div class="status-options">
+                    <div class="status-option present">
+                        <input type="radio" name="status" value="present" id="status_present" 
+                               {% if attendance.status == 'present' %}checked{% endif %}>
+                        <label for="status_present">
+                            <i class="fas fa-check-circle fa-2x mb-2"></i>
+                            <div>حاضر</div>
+                        </label>
+                    </div>
+                    
+                    <div class="status-option absent">
+                        <input type="radio" name="status" value="absent" id="status_absent" 
+                               {% if attendance.status == 'absent' %}checked{% endif %}>
+                        <label for="status_absent">
+                            <i class="fas fa-times-circle fa-2x mb-2"></i>
+                            <div>غائب</div>
+                        </label>
+                    </div>
+                    
+                    <div class="status-option leave">
+                        <input type="radio" name="status" value="leave" id="status_leave" 
+                               {% if attendance.status == 'leave' %}checked{% endif %}>
+                        <label for="status_leave">
+                            <i class="fas fa-calendar-minus fa-2x mb-2"></i>
+                            <div>إجازة</div>
+                        </label>
+                    </div>
+                    
+                    <div class="status-option sick">
+                        <input type="radio" name="status" value="sick" id="status_sick" 
+                               {% if attendance.status == 'sick' %}checked{% endif %}>
+                        <label for="status_sick">
+                            <i class="fas fa-procedures fa-2x mb-2"></i>
+                            <div>مرضي</div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- أوقات الدخول والخروج -->
+            <div class="form-section" id="timeSection">
+                <h5><i class="fas fa-clock"></i>أوقات الدخول والخروج</h5>
+                <div class="time-section">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="check_in" class="form-label">
+                                <i class="fas fa-sign-in-alt"></i>
+                                وقت الدخول
+                            </label>
+                            <input type="time" class="form-control" id="check_in" name="check_in" 
+                                   value="{{ attendance.check_in.strftime('%H:%M') if attendance.check_in else '' }}">
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="check_out" class="form-label">
+                                <i class="fas fa-sign-out-alt"></i>
+                                وقت الخروج
+                            </label>
+                            <input type="time" class="form-control" id="check_out" name="check_out" 
+                                   value="{{ attendance.check_out.strftime('%H:%M') if attendance.check_out else '' }}">
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info mb-0" style="border-radius: 10px;">
+                        <small>
+                            <i class="fas fa-info-circle me-1"></i>
+                            أوقات الدخول والخروج متاحة فقط لحالة "حاضر"
+                        </small>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- أزرار الإجراءات -->
+            <div class="text-center mt-4">
+                <button type="submit" class="btn btn-save me-3">
+                    <i class="fas fa-save me-2"></i>حفظ التغييرات
+                </button>
+                <a href="{{ url_for('attendance.department_attendance_view', department_id=request.args.get('department_id', ''), start_date=request.args.get('start_date', ''), end_date=request.args.get('end_date', '')) }}" 
+                   class="btn btn-cancel">
+                    <i class="fas fa-times me-2"></i>إلغاء
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // تفعيل/تعطيل حقول الوقت حسب الحالة
+    function toggleTimeInputs() {
+        const statusRadios = document.querySelectorAll('input[name="status"]');
+        const checkInInput = document.getElementById('check_in');
+        const checkOutInput = document.getElementById('check_out');
+        const timeSection = document.getElementById('timeSection');
+        
+        let selectedStatus = 'present';
+        statusRadios.forEach(radio => {
+            if (radio.checked) {
+                selectedStatus = radio.value;
+            }
+        });
+        
+        if (selectedStatus === 'present') {
+            checkInInput.removeAttribute('disabled');
+            checkOutInput.removeAttribute('disabled');
+            timeSection.style.opacity = '1';
+        } else {
+            checkInInput.value = '';
+            checkOutInput.value = '';
+            checkInInput.setAttribute('disabled', 'disabled');
+            checkOutInput.setAttribute('disabled', 'disabled');
+            timeSection.style.opacity = '0.5';
+        }
+    }
+    
+    // تطبيق عند تحميل الصفحة
+    document.addEventListener('DOMContentLoaded', function() {
+        toggleTimeInputs();
+        
+        // إضافة مستمعات للتغييرات
+        document.querySelectorAll('input[name="status"]').forEach(radio => {
+            radio.addEventListener('change', toggleTimeInputs);
+        });
+    });
+</script>
+{% endblock %}
