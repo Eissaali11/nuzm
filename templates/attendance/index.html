@@ -381,6 +381,9 @@
                         <a href="/attendance-dashboard/" class="btn btn-outline-info btn-enhanced mx-1 bg-info text-white">
                             <i class="fas fa-tachometer-alt me-1"></i> اللوحة المحسنة
                         </a>
+                        <a href="{{ url_for('attendance.department_attendance_view') }}" class="btn btn-outline-warning btn-enhanced mx-1 bg-warning text-dark">
+                            <i class="fas fa-calendar-alt me-1"></i> عرض الحضور حسب الفترة
+                        </a>
                         <a href="{{ url_for('attendance.export_page') }}" class="btn btn-outline-success btn-enhanced mx-1 bg-success text-white">
                             <i class="fas fa-file-excel me-1"></i> تصدير لملف إكسل
                         </a>
