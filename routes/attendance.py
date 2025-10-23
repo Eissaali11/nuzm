@@ -2773,7 +2773,12 @@ def update_attendance_page(id):
                 
                 # حذف الملف القديم إذا كان موجوداً
                 if attendance.sick_leave_file:
-                    old_file_path = os.path.join('static', attendance.sick_leave_file)
+                    # التعامل مع المسارات القديمة والجديدة
+                    if attendance.sick_leave_file.startswith('static/'):
+                        old_file_path = attendance.sick_leave_file
+                    else:
+                        old_file_path = os.path.join('static', attendance.sick_leave_file)
+                    
                     if os.path.exists(old_file_path):
                         try:
                             os.remove(old_file_path)
@@ -2784,12 +2789,20 @@ def update_attendance_page(id):
                 filename = secure_filename(file.filename)
                 file_path = upload_image(file, 'sick_leaves', filename)
                 if file_path:
+                    # إزالة "static/" من البداية لأن url_for('static') سيضيفها تلقائياً
+                    if file_path.startswith('static/'):
+                        file_path = file_path[7:]  # إزالة "static/"
                     attendance.sick_leave_file = file_path
         elif status != 'sick':
             # إذا تم تغيير الحالة من مرضي إلى حالة أخرى، نحذف ملف الإجازة المرضية
             if attendance.sick_leave_file:
                 import os
-                old_file_path = os.path.join('static', attendance.sick_leave_file)
+                # التعامل مع المسارات القديمة والجديدة
+                if attendance.sick_leave_file.startswith('static/'):
+                    old_file_path = attendance.sick_leave_file
+                else:
+                    old_file_path = os.path.join('static', attendance.sick_leave_file)
+                
                 if os.path.exists(old_file_path):
                     try:
                         os.remove(old_file_path)
