@@ -5,7 +5,7 @@ from werkzeug.utils import secure_filename
 from sqlalchemy import func
 from datetime import datetime
 from app import db
-from models import Salary, Employee, Department, SystemAudit
+from models import Salary, Employee, Department, SystemAudit, Attendance
 from utils.audit_logger import log_activity
 from utils.excel import parse_salary_excel, generate_salary_excel, generate_comprehensive_employee_report, generate_employee_salary_simple_excel
 # from utils.simple_pdf_generator import create_vehicle_handover_pdf as generate_salary_report_pdf
