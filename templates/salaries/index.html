@@ -617,17 +617,17 @@
                             <td>{{ salary.employee.employee_id }}</td>
                             <td>{{ salary.month }}/{{ salary.year }}</td>
                             {% if has_salary_data and salary.id %}
-                            <td class="salary-value">{{ salary.basic_salary }}</td>
+                            <td class="salary-value">{{ salary.basic_salary|round(2)|float }}</td>
                             <td class="salary-value {% if salary.attendance_bonus > 0 %}text-success fw-bold{% else %}text-danger{% endif %}">
                                 {% if salary.attendance_bonus > 0 %}
-                                ✓ {{ salary.attendance_bonus }}
+                                ✓ {{ salary.attendance_bonus|round(2)|float }}
                                 {% else %}
                                 ✗ 0
                                 {% endif %}
                             </td>
-                            <td class="salary-value">{{ salary.allowances }}</td>
-                            <td class="salary-value">{{ salary.deductions }}</td>
-                            <td class="salary-value">{{ salary.bonus }}</td>
+                            <td class="salary-value">{{ salary.allowances|round(2)|float }}</td>
+                            <td class="salary-value">{{ salary.deductions|round(2)|float }}</td>
+                            <td class="salary-value">{{ salary.bonus|round(2)|float }}</td>
                             <td class="text-center">
                                 {% if salary.attendance_calculated %}
                                 <span class="badge bg-success" title="أيام الحضور">
@@ -646,7 +646,7 @@
                                 <span class="badge bg-secondary" title="لم يتم الحساب">-</span>
                                 {% endif %}
                             </td>
-                            <td class="net-salary-value">{{ salary.net_salary }}</td>
+                            <td class="net-salary-value">{{ salary.net_salary|round(2)|float }}</td>
                             {% else %}
                             <td>
                                 <input type="number" class="form-control form-control-sm salary-input" data-field="basic_salary" data-employee="{{ salary.employee.id }}" placeholder="الراتب الأساسي" required>
