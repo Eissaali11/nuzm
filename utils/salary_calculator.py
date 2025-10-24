@@ -146,6 +146,10 @@ def calculate_salary_with_attendance(employee_id, month, year, basic_salary, all
         if exclude_sick:
             paid_days += attendance_stats['sick_days']
         
+        # حساب راتب اليوم بناءً على إجمالي أيام الشهر (الطريقة الأكثر دقة)
+        total_days_in_month = attendance_stats['total_days']
+        daily_salary = basic_salary / total_days_in_month
+        
         # حساب الراتب بناءً على أيام الحضور الفعلية
         # إذا حضر الموظف جميع أيام العمل أو أكثر، يحصل على الراتب كاملاً
         if paid_days >= working_days_in_month:
@@ -153,7 +157,6 @@ def calculate_salary_with_attendance(employee_id, month, year, basic_salary, all
         else:
             # حساب الخصم بناءً على الأيام الغائبة (أيام العمل - أيام الحضور المدفوعة)
             absent_days = working_days_in_month - paid_days
-            daily_salary = basic_salary / working_days_in_month
             attendance_deduction = round(daily_salary * absent_days, 2)
         
         # حساب إجمالي الخصومات
@@ -173,7 +176,9 @@ def calculate_salary_with_attendance(employee_id, month, year, basic_salary, all
             'attendance_stats': attendance_stats,
             'deductible_days': working_days_in_month - paid_days if paid_days < working_days_in_month else 0,
             'working_days_in_month': working_days_in_month,
-            'paid_days': paid_days
+            'paid_days': paid_days,
+            'daily_salary': daily_salary,
+            'total_days_in_month': total_days_in_month
         }
     except Exception as e:
         print(f"خطأ في حساب الراتب: {str(e)}")
