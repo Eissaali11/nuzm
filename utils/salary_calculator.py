@@ -151,28 +151,28 @@ def calculate_salary_with_attendance(employee_id, month, year, basic_salary, all
         
         # حساب راتب اليوم بناءً على الراتب الأساسي فقط (بدون الحافز) وإجمالي أيام الشهر
         total_days_in_month = attendance_stats['total_days']
-        daily_salary = basic_salary / total_days_in_month
+        daily_salary = round(basic_salary / total_days_in_month, 2)
         
         # تحديد هل الموظف مؤهل للحصول على حافز الدوام الكامل
         # الحافز يُمنح فقط للموظفين الذين حضروا جميع أيام العمل
         if paid_days >= working_days_in_month:
             # موظف حضر كامل أيام العمل - يستحق الحافز
-            earned_bonus = attendance_bonus
+            earned_bonus = round(attendance_bonus, 2)
             bonus_deduction = 0.0
             attendance_deduction = 0.0
         else:
             # موظف غاب - يفقد الحافز ويُخصم من الراتب الأساسي
             earned_bonus = 0.0
-            bonus_deduction = attendance_bonus
+            bonus_deduction = round(attendance_bonus, 2)
             # حساب الخصم بناءً على الأيام الغائبة من الراتب الأساسي فقط
             absent_days = working_days_in_month - paid_days
             attendance_deduction = round(daily_salary * absent_days, 2)
         
-        # حساب إجمالي الخصومات
-        total_deductions = attendance_deduction + bonus_deduction + other_deductions
+        # حساب إجمالي الخصومات مع تقريب نهائي
+        total_deductions = round(attendance_deduction + bonus_deduction + other_deductions, 2)
         
-        # حساب صافي الراتب
-        net_salary = basic_salary + earned_bonus + allowances + bonus - total_deductions
+        # حساب صافي الراتب مع تقريب نهائي
+        net_salary = round(basic_salary + earned_bonus + allowances + bonus - total_deductions, 2)
         
         return {
             'basic_salary': basic_salary,
