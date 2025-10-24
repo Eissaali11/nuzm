@@ -867,8 +867,8 @@ def export_excel():
                 filename_parts.append(f"emp_{employee_id}")
                 filter_description.append(f"موظف: {employee.name}")
             
-        # ترتيب النتائج حسب القسم ثم اسم الموظف
-        query = query.join(Department, Employee.department_id == Department.id).order_by(Department.name, Employee.name)
+        # ترتيب النتائج حسب اسم الموظف
+        query = query.order_by(Employee.name)
         
         # تنفيذ الاستعلام
         salaries = query.all()

@@ -1772,7 +1772,7 @@ def generate_salary_excel(salaries, filter_description=None):
         # تجميع البيانات حسب القسم
         departments_data = {}
         for salary in salaries:
-            dept_name = ', '.join([dept.name for dept in salary.employee.departments]) if salary.employee.departments else 'بدون قسم'
+            dept_name = salary.employee.department.name if salary.employee.department else 'بدون قسم'
             if dept_name not in departments_data:
                 departments_data[dept_name] = []
             
@@ -1918,7 +1918,7 @@ def generate_salary_excel(salaries, filter_description=None):
                 
                 # ترتيب الأعمدة بشكل منطقي
                 ordered_columns = [
-                    'معرف', 'اسم الموظف', 'رقم الموظف', 'الوظيفة', 'القسم',
+                    'معرف', 'اسم الموظف', 'رقم الموظف', 'رقم الهوية', 'الوظيفة', 'القسم',
                     'الشهر', 'السنة', 'الراتب الأساسي', 'البدلات', 'الخصومات',
                     'المكافآت', 'صافي الراتب', 'ملاحظات'
                 ]
