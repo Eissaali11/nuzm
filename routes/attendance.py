@@ -886,6 +886,66 @@ def delete_attendance(id):
     
     return redirect(url_for('attendance.index', date=attendance.date))
 
+@attendance_bp.route('/bulk_delete', methods=['POST'])
+def bulk_delete_attendance():
+    """حذف سجلات حضور متعددة"""
+    from flask import jsonify
+    
+    try:
+        data = request.json
+        attendance_ids = data.get('attendance_ids', [])
+        
+        if not attendance_ids:
+            return jsonify({
+                'success': False,
+                'message': 'لا توجد سجلات محددة للحذف'
+            }), 400
+        
+        deleted_count = 0
+        errors = []
+        
+        for attendance_id in attendance_ids:
+            try:
+                attendance = Attendance.query.get(attendance_id)
+                if attendance:
+                    employee = Employee.query.get(attendance.employee_id)
+                    entity_name = employee.name if employee else f'ID: {attendance_id}'
+                    
+                    # حذف السجل
+                    db.session.delete(attendance)
+                    
+                    # تسجيل في Audit
+                    SystemAudit.create_audit_record(
+                        user_id=None,
+                        action='delete',
+                        entity_type='attendance',
+                        entity_id=attendance_id,
+                        entity_name=entity_name,
+                        details=f'حذف جماعي - تم حذف سجل حضور للموظف: {employee.name if employee else "غير معروف"} بتاريخ {attendance.date}'
+                    )
+                    
+                    deleted_count += 1
+                else:
+                    errors.append(f'السجل {attendance_id} غير موجود')
+                    
+            except Exception as e:
+                errors.append(f'خطأ في حذف السجل {attendance_id}: {str(e)}')
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'deleted_count': deleted_count,
+            'errors': errors
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'message': f'حدث خطأ: {str(e)}'
+        }), 500
+
 @attendance_bp.route('/stats')
 def stats():
     """Get attendance statistics for a date range"""

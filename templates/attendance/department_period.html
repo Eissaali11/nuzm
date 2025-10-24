@@ -513,13 +513,19 @@
 
     <!-- جدول البيانات -->
     <div class="table-card">
-        <div class="table-header">
+        <div class="table-header d-flex justify-content-between align-items-center">
             <h5><i class="fas fa-table me-2"></i>سجلات الحضور التفصيلية</h5>
+            <button id="deleteSelectedBtn" class="btn btn-danger" style="display: none; border-radius: 12px;">
+                <i class="fas fa-trash me-1"></i>حذف المحدد (<span id="selectedCount">0</span>)
+            </button>
         </div>
         <div class="table-responsive">
             <table class="attendance-table table table-hover mb-0">
                 <thead>
                     <tr>
+                        <th style="width: 50px;">
+                            <input type="checkbox" id="selectAll" class="form-check-input" style="cursor: pointer; width: 20px; height: 20px;">
+                        </th>
                         <th><i class="fas fa-user me-1"></i>الموظف</th>
                         <th><i class="fas fa-id-card me-1"></i>الرقم الوظيفي</th>
                         <th><i class="fas fa-building me-1"></i>القسم</th>
@@ -535,6 +541,11 @@
                 <tbody>
                     {% for attendance in attendances %}
                     <tr>
+                        <td>
+                            <input type="checkbox" class="attendance-checkbox form-check-input" 
+                                   data-id="{{ attendance.id }}" 
+                                   style="cursor: pointer; width: 20px; height: 20px;">
+                        </td>
                         <td><span class="employee-name">{{ attendance.employee.name }}</span></td>
                         <td><span class="employee-id">{{ attendance.employee.employee_id }}</span></td>
                         <td>
@@ -648,6 +659,101 @@
     if (startDateInput) {
         startDateInput.addEventListener('change', function() {
             document.getElementById('end_date').min = this.value;
+        });
+    }
+    
+    // نظام التحديد والحذف الجماعي
+    const selectAllCheckbox = document.getElementById('selectAll');
+    const attendanceCheckboxes = document.querySelectorAll('.attendance-checkbox');
+    const deleteBtn = document.getElementById('deleteSelectedBtn');
+    const selectedCountSpan = document.getElementById('selectedCount');
+    
+    // تحديث عداد السجلات المحددة
+    function updateSelectedCount() {
+        const selectedCount = document.querySelectorAll('.attendance-checkbox:checked').length;
+        selectedCountSpan.textContent = selectedCount;
+        
+        if (selectedCount > 0) {
+            deleteBtn.style.display = 'block';
+        } else {
+            deleteBtn.style.display = 'none';
+        }
+    }
+    
+    // تحديد/إلغاء تحديد الكل
+    if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', function() {
+            attendanceCheckboxes.forEach(checkbox => {
+                checkbox.checked = this.checked;
+            });
+            updateSelectedCount();
+        });
+    }
+    
+    // تحديث عند تغيير أي checkbox فردي
+    attendanceCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            // تحديث حالة "تحديد الكل"
+            const allChecked = Array.from(attendanceCheckboxes).every(cb => cb.checked);
+            const someChecked = Array.from(attendanceCheckboxes).some(cb => cb.checked);
+            
+            if (selectAllCheckbox) {
+                selectAllCheckbox.checked = allChecked;
+                selectAllCheckbox.indeterminate = someChecked && !allChecked;
+            }
+            
+            updateSelectedCount();
+        });
+    });
+    
+    // حذف السجلات المحددة
+    if (deleteBtn) {
+        deleteBtn.addEventListener('click', async function() {
+            const selectedIds = Array.from(document.querySelectorAll('.attendance-checkbox:checked'))
+                .map(cb => cb.getAttribute('data-id'));
+            
+            if (selectedIds.length === 0) {
+                alert('الرجاء تحديد سجلات للحذف');
+                return;
+            }
+            
+            const confirmMsg = `هل أنت متأكد من حذف ${selectedIds.length} سجل حضور؟\n\nملاحظة: هذا الإجراء لا يمكن التراجع عنه.`;
+            
+            if (!confirm(confirmMsg)) {
+                return;
+            }
+            
+            // تعطيل الزر وإظهار التحميل
+            this.disabled = true;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>جاري الحذف...';
+            
+            try {
+                const response = await fetch('/attendance/bulk_delete', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        attendance_ids: selectedIds
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert(`تم حذف ${result.deleted_count} سجل بنجاح`);
+                    window.location.reload();
+                } else {
+                    alert('حدث خطأ: ' + result.message);
+                    this.disabled = false;
+                    this.innerHTML = '<i class="fas fa-trash me-1"></i>حذف المحدد (<span id="selectedCount">' + selectedIds.length + '</span>)';
+                }
+            } catch (error) {
+                console.error('خطأ في الحذف:', error);
+                alert('حدث خطأ في الاتصال');
+                this.disabled = false;
+                this.innerHTML = '<i class="fas fa-trash me-1"></i>حذف المحدد (<span id="selectedCount">' + selectedIds.length + '</span>)';
+            }
         });
     }
 </script>
