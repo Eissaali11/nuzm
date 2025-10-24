@@ -213,6 +213,10 @@ def create():
             basic_salary_str = request.form.get('basic_salary', '').strip()
             basic_salary = float(basic_salary_str) if basic_salary_str else 0.0
             
+            # حافز الدوام الكامل
+            attendance_bonus_str = request.form.get('attendance_bonus', '').strip()
+            attendance_bonus = float(attendance_bonus_str) if attendance_bonus_str else 0.0
+            
             selected_dept_ids = {int(dept_id) for dept_id in request.form.getlist('department_ids')}
             
             # Convert empty department_id to None
@@ -248,7 +252,8 @@ def create():
                 housing_drive_links=housing_drive_links,
                 pants_size=pants_size,
                 shirt_size=shirt_size,
-                basic_salary=basic_salary
+                basic_salary=basic_salary,
+                attendance_bonus=attendance_bonus
             )
             if selected_dept_ids:
                 departments_to_assign = Department.query.filter(Department.id.in_(selected_dept_ids)).all()
@@ -465,6 +470,10 @@ def edit(id):
             # تحديث الراتب الأساسي
             basic_salary_str = request.form.get('basic_salary', '').strip()
             employee.basic_salary = float(basic_salary_str) if basic_salary_str else 0.0
+            
+            # تحديث حافز الدوام الكامل
+            attendance_bonus_str = request.form.get('attendance_bonus', '').strip()
+            employee.attendance_bonus = float(attendance_bonus_str) if attendance_bonus_str else 0.0
             
             # معالجة رفع صورة شهادة الإيبان
             bank_iban_image_file = request.files.get('bank_iban_image')
