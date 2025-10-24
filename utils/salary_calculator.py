@@ -20,6 +20,11 @@ def get_attendance_statistics(employee_id, month, year):
         dict: إحصائيات الحضور
     """
     try:
+        # التأكد من تحويل month و year إلى أرقام
+        month = int(month)
+        year = int(year)
+        employee_id = int(employee_id)
+        
         # الحصول على أول وآخر يوم في الشهر
         first_day = datetime(year, month, 1).date()
         _, last_day_num = monthrange(year, month)

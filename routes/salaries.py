@@ -503,8 +503,8 @@ def bulk_calculate_attendance():
     """حساب رواتب جميع الموظفين في شهر محدد بناءً على الحضور"""
     try:
         data = request.json
-        month = data.get('month')
-        year = data.get('year')
+        month = int(data.get('month'))
+        year = int(data.get('year'))
         department_id = data.get('department_id')  # اختياري
         
         if not month or not year:
@@ -513,16 +513,16 @@ def bulk_calculate_attendance():
                 'message': 'يرجى تحديد الشهر والسنة'
             }), 400
         
-        # جلب الموظفين بناءً على القسم
+        # جلب الموظفين النشطين فقط بناءً على القسم
         if department_id:
-            employees = Employee.query.filter_by(department_id=department_id).all()
+            employees = Employee.query.filter_by(department_id=department_id, status='active').all()
         else:
-            employees = Employee.query.all()
+            employees = Employee.query.filter_by(status='active').all()
         
         if not employees:
             return jsonify({
                 'success': False,
-                'message': 'لا يوجد موظفون'
+                'message': 'لا يوجد موظفون نشطون'
             }), 404
         
         # عدد أيام العمل في الشهر
