@@ -134,25 +134,27 @@ def calculate_salary_with_attendance(employee_id, month, year, basic_salary, all
                 'warning': 'لا توجد سجلات حضور للشهر المحدد'
             }
         
-        # حساب أيام الغياب التي سيتم خصمها (الغياب الصريح فقط)
-        # لا نخصم الأيام غير المسجلة بشكل افتراضي (عطلات نهاية الأسبوع والعطل الرسمية)
-        deductible_absent_days = attendance_stats['absent_days']
+        # حساب أيام الحضور الفعلية التي تستحق الراتب
+        # نبدأ بأيام الحضور الفعلي
+        paid_days = attendance_stats['present_days']
         
-        # إضافة أيام الإجازة الرسمية إذا كانت السياسة تقتضي خصمها
-        if not exclude_leave:
-            deductible_absent_days += attendance_stats['leave_days']
+        # إضافة أيام الإجازة الرسمية إذا كانت السياسة تستثنيها من الخصم
+        if exclude_leave:
+            paid_days += attendance_stats['leave_days']
         
-        # إضافة أيام الإجازة المرضية إذا كانت السياسة تقتضي خصمها
-        if not exclude_sick:
-            deductible_absent_days += attendance_stats['sick_days']
+        # إضافة أيام الإجازة المرضية إذا كانت السياسة تستثنيها من الخصم
+        if exclude_sick:
+            paid_days += attendance_stats['sick_days']
         
-        # حساب قيمة الخصم بناءً على أيام العمل فقط
-        attendance_deduction = calculate_absence_deduction(
-            basic_salary,
-            working_days_in_month,
-            deductible_absent_days,
-            'working_days'
-        )
+        # حساب الراتب بناءً على أيام الحضور الفعلية
+        # إذا حضر الموظف جميع أيام العمل أو أكثر، يحصل على الراتب كاملاً
+        if paid_days >= working_days_in_month:
+            attendance_deduction = 0.0
+        else:
+            # حساب الخصم بناءً على الأيام الغائبة (أيام العمل - أيام الحضور المدفوعة)
+            absent_days = working_days_in_month - paid_days
+            daily_salary = basic_salary / working_days_in_month
+            attendance_deduction = round(daily_salary * absent_days, 2)
         
         # حساب إجمالي الخصومات
         total_deductions = attendance_deduction + other_deductions
@@ -169,8 +171,9 @@ def calculate_salary_with_attendance(employee_id, month, year, basic_salary, all
             'total_deductions': total_deductions,
             'net_salary': net_salary,
             'attendance_stats': attendance_stats,
-            'deductible_days': deductible_absent_days,
-            'working_days_in_month': working_days_in_month
+            'deductible_days': working_days_in_month - paid_days if paid_days < working_days_in_month else 0,
+            'working_days_in_month': working_days_in_month,
+            'paid_days': paid_days
         }
     except Exception as e:
         print(f"خطأ في حساب الراتب: {str(e)}")

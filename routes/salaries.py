@@ -534,11 +534,10 @@ def bulk_calculate_attendance():
         
         for employee in employees:
             try:
-                # التحقق من الراتب الأساسي
+                # التحقق من الراتب الأساسي - نخطر بدلاً من التجاهل
                 if not employee.basic_salary or employee.basic_salary == 0:
-                    errors.append(f'{employee.name}: الراتب الأساسي غير محدد')
-                    error_count += 1
-                    continue
+                    errors.append(f'{employee.name}: تحذير - الراتب الأساسي = 0 (تم الحساب بقيمة 0)')
+                    # نستمر في الحساب بدلاً من continue
                 
                 # التحقق من وجود سجل راتب مسبق
                 existing_salary = Salary.query.filter_by(
@@ -548,17 +547,19 @@ def bulk_calculate_attendance():
                 ).first()
                 
                 # حساب الراتب من الحضور
+                # استخدام 0 إذا كان الراتب الأساسي غير محدد
+                basic_salary_value = employee.basic_salary if employee.basic_salary else 0
                 result = calculate_salary_with_attendance(
                     employee_id=employee.id,
                     month=month,
                     year=year,
-                    basic_salary=employee.basic_salary,
+                    basic_salary=basic_salary_value,
                     allowances=0,
                     bonus=0,
                     other_deductions=0,
                     working_days_in_month=working_days_in_month,
-                    exclude_leave=employee.exclude_leave_from_deduction,
-                    exclude_sick=employee.exclude_sick_from_deduction
+                    exclude_leave=employee.exclude_leave_from_deduction if employee.exclude_leave_from_deduction is not None else True,
+                    exclude_sick=employee.exclude_sick_from_deduction if employee.exclude_sick_from_deduction is not None else True
                 )
                 
                 if not result:
