@@ -2371,6 +2371,7 @@ def department_attendance_view():
     status_filter = request.args.get('status_filter', '')
     start_date_str = request.args.get('start_date', '')
     end_date_str = request.args.get('end_date', '')
+    working_days_required = request.args.get('working_days_required', '26')
     
     # تحديد التواريخ الافتراضية (آخر 30 يوم)
     if not start_date_str:
@@ -2437,7 +2438,8 @@ def department_attendance_view():
                           present_count=present_count,
                           absent_count=absent_count,
                           leave_count=leave_count,
-                          sick_count=sick_count)
+                          sick_count=sick_count,
+                          working_days_required=working_days_required)
 
 @attendance_bp.route('/department/export-period', methods=['GET'])
 def export_department_period():
