@@ -125,12 +125,15 @@ def generate_salary_summary_pdf(salaries, department_name=None, month=None, year
         
         _draw_report_title(pdf, title_text)
         
+        # ترتيب الرواتب حسب اسم الموظف
+        sorted_salaries = sorted(salaries, key=lambda s: s.employee.name)
+        
         # ... تحضير بيانات الجدول (نفس المنطق)
         headers = ["اسم الموظف", "الراتب الأساسي", "البدلات", "المكافآت", "الخصومات", "صافي الراتب"]
         widths = [60, 28, 24, 24, 24, 30] # تم تعديل العرض قليلاً
         data_rows = [
             [s.employee.name, f"{float(s.basic_salary):,.0f}", f"{float(s.allowances):,.0f}", f"{float(s.bonus):,.0f}", f"{float(s.deductions):,.0f}", f"{float(s.net_salary):,.0f}"]
-            for s in salaries
+            for s in sorted_salaries
         ]
         
         totals = {k: sum(float(getattr(s, k, 0)) for s in salaries) for k in ['basic_salary', 'allowances', 'bonus', 'deductions', 'net_salary']}
