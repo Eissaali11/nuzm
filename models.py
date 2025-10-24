@@ -114,6 +114,10 @@ class Employee(db.Model):
     # مقاسات الزي الموحد
     pants_size = db.Column(db.String(20), nullable=True)  # مقاس البنطلون
     shirt_size = db.Column(db.String(20), nullable=True)  # مقاس التيشرت
+    
+    # حقول سياسة الخصم - لربط الحضور بالراتب
+    exclude_leave_from_deduction = db.Column(db.Boolean, default=True)  # عدم خصم الإجازات الرسمية
+    exclude_sick_from_deduction = db.Column(db.Boolean, default=True)  # عدم خصم الإجازات المرضية
 
 
     def to_dict(self):
@@ -204,6 +208,16 @@ class Salary(db.Model):
     is_paid = db.Column(db.Boolean, default=False, nullable=False)
     overtime_hours = db.Column(db.Float, default=0.0)
     notes = db.Column(db.Text)
+    
+    # حقول ربط الحضور بالراتب
+    attendance_deduction = db.Column(db.Float, default=0.0)  # خصم الغياب
+    absent_days = db.Column(db.Integer, default=0)  # عدد أيام الغياب
+    present_days = db.Column(db.Integer, default=0)  # عدد أيام الحضور
+    leave_days = db.Column(db.Integer, default=0)  # أيام الإجازة
+    sick_days = db.Column(db.Integer, default=0)  # أيام الإجازة المرضية
+    attendance_calculated = db.Column(db.Boolean, default=False)  # هل تم حساب الحضور
+    attendance_notes = db.Column(db.Text)  # ملاحظات الحضور
+    
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
