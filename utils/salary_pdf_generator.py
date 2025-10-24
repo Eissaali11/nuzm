@@ -92,9 +92,13 @@ def _draw_table(pdf, headers, widths, data_rows, total_row):
     pdf.set_text_color(*FONT_COLOR)
     fill = False
     for row in data_rows:
-        pdf.set_font('Amiri', '', 10)
         pdf.set_fill_color(245, 245, 245) # لون خلفية فاتح للصفوف الفردية
         for i, cell_data in enumerate(row):
+            # استخدام حجم خط أصغر للأسماء (العمود الأول) لضمان احتواء الأسماء الطويلة
+            if i == 0:
+                pdf.set_font('Amiri', '', 8)
+            else:
+                pdf.set_font('Amiri', '', 10)
             align = 'R' if i == 0 else 'C'
             pdf.cell(widths[i], 10, pdf.reshape(str(cell_data)), 1, 0, align, fill=fill)
         fill = not fill # عكس لون التعبئة للصف التالي
@@ -137,7 +141,7 @@ def generate_salary_summary_pdf(salaries, department_name=None, month=None, year
         
         # ... تحضير بيانات الجدول (نفس المنطق)
         headers = ["اسم الموظف", "الراتب الأساسي", "البدلات", "المكافآت", "الخصومات", "صافي الراتب"]
-        widths = [60, 28, 24, 24, 24, 30] # تم تعديل العرض قليلاً
+        widths = [75, 25, 22, 22, 22, 24] # زيادة عرض عمود الأسماء
         data_rows = [
             [format_name(s.employee.name), f"{float(s.basic_salary):,.0f}", f"{float(s.allowances):,.0f}", f"{float(s.bonus):,.0f}", f"{float(s.deductions):,.0f}", f"{float(s.net_salary):,.0f}"]
             for s in sorted_salaries
