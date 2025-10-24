@@ -1790,6 +1790,9 @@ def generate_salary_excel(salaries, filter_description=None):
                 'البدلات': salary.allowances,
                 'الخصومات': salary.deductions,
                 'المكافآت': salary.bonus,
+                'أيام الحضور': salary.present_days if salary.attendance_calculated else '-',
+                'أيام الغياب': salary.absent_days if salary.attendance_calculated else '-',
+                'خصم الغياب': salary.attendance_deduction if salary.attendance_calculated else 0,
                 'صافي الراتب': salary.net_salary,
                 'ملاحظات': salary.notes or ''
             })
@@ -1920,7 +1923,7 @@ def generate_salary_excel(salaries, filter_description=None):
                 ordered_columns = [
                     'معرف', 'اسم الموظف', 'رقم الموظف', 'رقم الهوية', 'الوظيفة', 'القسم',
                     'الشهر', 'السنة', 'الراتب الأساسي', 'البدلات', 'الخصومات',
-                    'المكافآت', 'صافي الراتب', 'ملاحظات'
+                    'المكافآت', 'أيام الحضور', 'أيام الغياب', 'خصم الغياب', 'صافي الراتب', 'ملاحظات'
                 ]
                 
                 # إعادة ترتيب الأعمدة واستبعاد الأعمدة غير الموجودة
@@ -1961,8 +1964,10 @@ def generate_salary_excel(salaries, filter_description=None):
                         cell = dept_sheet.cell(row_idx + 4, col_idx)  # +4 للترويسة والعنوان
                         
                         # تنسيق خاص للخلايا المالية
-                        if column_name in ['الراتب الأساسي', 'البدلات', 'الخصومات', 'المكافآت', 'صافي الراتب']:
+                        if column_name in ['الراتب الأساسي', 'البدلات', 'الخصومات', 'المكافآت', 'خصم الغياب', 'صافي الراتب']:
                             cell.number_format = money_format
+                            cell.alignment = cell_alignment
+                        elif column_name in ['أيام الحضور', 'أيام الغياب']:
                             cell.alignment = cell_alignment
                         else:
                             cell.alignment = text_alignment
@@ -2070,8 +2075,10 @@ def generate_salary_excel(salaries, filter_description=None):
                         cell = all_sheet.cell(row_idx + 4, col_idx)  # +4 للترويسة والعنوان
                         
                         # تنسيق خاص للخلايا المالية
-                        if column_name in ['الراتب الأساسي', 'البدلات', 'الخصومات', 'المكافآت', 'صافي الراتب']:
+                        if column_name in ['الراتب الأساسي', 'البدلات', 'الخصومات', 'المكافآت', 'خصم الغياب', 'صافي الراتب']:
                             cell.number_format = money_format
+                            cell.alignment = cell_alignment
+                        elif column_name in ['أيام الحضور', 'أيام الغياب']:
                             cell.alignment = cell_alignment
                         else:
                             cell.alignment = text_alignment
