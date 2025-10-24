@@ -140,15 +140,19 @@ def generate_salary_summary_pdf(salaries, department_name=None, month=None, year
             return name
         
         # ... تحضير بيانات الجدول (نفس المنطق)
-        headers = ["اسم الموظف", "الراتب الأساسي", "البدلات", "المكافآت", "الخصومات", "صافي الراتب"]
-        widths = [75, 25, 22, 22, 22, 24] # زيادة عرض عمود الأسماء
+        headers = ["اسم الموظف", "الراتب الأساسي", "البدلات", "المكافآت", "الخصومات", "حضور", "غياب", "صافي الراتب"]
+        widths = [65, 22, 18, 18, 18, 12, 12, 25] # تعديل الأعمدة لإضافة الحضور والغياب
         data_rows = [
-            [format_name(s.employee.name), f"{float(s.basic_salary):,.0f}", f"{float(s.allowances):,.0f}", f"{float(s.bonus):,.0f}", f"{float(s.deductions):,.0f}", f"{float(s.net_salary):,.0f}"]
+            [format_name(s.employee.name), f"{float(s.basic_salary):,.0f}", f"{float(s.allowances):,.0f}", 
+             f"{float(s.bonus):,.0f}", f"{float(s.deductions):,.0f}", 
+             str(s.present_days) if s.attendance_calculated else "-",
+             str(s.absent_days) if s.attendance_calculated else "-",
+             f"{float(s.net_salary):,.0f}"]
             for s in sorted_salaries
         ]
         
         totals = {k: sum(float(getattr(s, k, 0)) for s in salaries) for k in ['basic_salary', 'allowances', 'bonus', 'deductions', 'net_salary']}
-        total_row = ["المجموع:", f"{totals['basic_salary']:,.0f}", f"{totals['allowances']:,.0f}", f"{totals['bonus']:,.0f}", f"{totals['deductions']:,.0f}", f"{totals['net_salary']:,.0f}"]
+        total_row = ["المجموع:", f"{totals['basic_salary']:,.0f}", f"{totals['allowances']:,.0f}", f"{totals['bonus']:,.0f}", f"{totals['deductions']:,.0f}", "-", "-", f"{totals['net_salary']:,.0f}"]
         
         # استدعاء دالة رسم الجدول بالتصميم الجديد
         _draw_table(pdf, headers, widths, data_rows, total_row)
