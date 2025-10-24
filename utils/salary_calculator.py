@@ -149,12 +149,14 @@ def calculate_salary_with_attendance(employee_id, month, year, basic_salary, all
         if exclude_sick:
             paid_days += attendance_stats['sick_days']
         
-        # حساب راتب اليوم بناءً على الراتب الأساسي فقط (بدون الحافز) وإجمالي أيام الشهر
-        total_days_in_month = attendance_stats['total_days']
-        daily_salary = round(basic_salary / total_days_in_month, 2)
+        # حساب راتب اليوم بناءً على الراتب الأساسي فقط (بدون الحافز)
+        # نستخدم 30 يوم ثابت كأساس للحساب (معيار ثابت)
+        total_days_in_month = attendance_stats['total_days']  # للمعلومات فقط
+        STANDARD_MONTH_DAYS = 30  # الأساس الثابت للحساب
+        daily_salary = round(basic_salary / STANDARD_MONTH_DAYS, 2)
         
         # سجل للتحقق من القيم
-        print(f"[DEBUG] الموظف {employee_id}: الشهر {month}/{year} - أيام الشهر: {total_days_in_month}, الأجر اليومي: {daily_salary}, الراتب الأساسي: {basic_salary}")
+        print(f"[DEBUG] الموظف {employee_id}: الشهر {month}/{year} - أيام الشهر الفعلية: {total_days_in_month}, أيام الحساب: {STANDARD_MONTH_DAYS}, الأجر اليومي: {daily_salary}, الراتب الأساسي: {basic_salary}")
         
         # تحديد هل الموظف مؤهل للحصول على حافز الدوام الكامل
         # الحافز يُمنح فقط للموظفين الذين حضروا على الأقل working_days_in_month
