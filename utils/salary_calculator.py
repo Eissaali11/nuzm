@@ -153,6 +153,9 @@ def calculate_salary_with_attendance(employee_id, month, year, basic_salary, all
         total_days_in_month = attendance_stats['total_days']
         daily_salary = round(basic_salary / total_days_in_month, 2)
         
+        # سجل للتحقق من القيم
+        print(f"[DEBUG] الموظف {employee_id}: الشهر {month}/{year} - أيام الشهر: {total_days_in_month}, الأجر اليومي: {daily_salary}, الراتب الأساسي: {basic_salary}")
+        
         # تحديد هل الموظف مؤهل للحصول على حافز الدوام الكامل
         # الحافز يُمنح فقط للموظفين الذين حضروا على الأقل working_days_in_month
         if paid_days >= working_days_in_month:
