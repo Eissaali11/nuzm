@@ -23,6 +23,11 @@ from utils.whatsapp_notification import (
     send_batch_salary_notifications_whatsapp,
     send_batch_deduction_notifications_whatsapp
 )
+from utils.salary_calculator import (
+    calculate_salary_with_attendance,
+    get_attendance_statistics,
+    get_attendance_summary_text
+)
 
 salaries_bp = Blueprint('salaries', __name__)
 
@@ -415,6 +420,79 @@ def edit(id):
                           salary=salary,
                           employees=employees,
                           current_year=current_year)
+
+
+@salaries_bp.route('/calculate_from_attendance', methods=['POST'])
+def calculate_from_attendance():
+    """حساب الراتب من سجلات الحضور (API Endpoint)"""
+    try:
+        data = request.json
+        employee_id = int(data.get('employee_id'))
+        month = int(data.get('month'))
+        year = int(data.get('year'))
+        
+        # جلب بيانات الموظف
+        employee = Employee.query.get(employee_id)
+        if not employee:
+            return jsonify({
+                'success': False,
+                'message': 'الموظف غير موجود'
+            }), 404
+        
+        # الحصول على الراتب الأساسي من بيانات الموظف
+        basic_salary = employee.basic_salary if employee.basic_salary else 0
+        
+        if basic_salary == 0:
+            return jsonify({
+                'success': False,
+                'message': 'الراتب الأساسي للموظف غير محدد. يرجى تحديثه من صفحة الموظف.'
+            })
+        
+        # حساب الراتب بناءً على الحضور
+        result = calculate_salary_with_attendance(
+            employee_id=employee_id,
+            month=month,
+            year=year,
+            basic_salary=basic_salary,
+            allowances=0,  # يمكن تمريره من النموذج لاحقاً
+            bonus=0,
+            other_deductions=0,
+            deduction_policy='full',
+            exclude_leave=employee.exclude_leave_from_deduction,
+            exclude_sick=employee.exclude_sick_from_deduction
+        )
+        
+        if not result:
+            return jsonify({
+                'success': False,
+                'message': 'حدث خطأ أثناء حساب الراتب'
+            })
+        
+        # إعداد الرد
+        response = {
+            'success': True,
+            'data': {
+                'basic_salary': result['basic_salary'],
+                'allowances': result['allowances'],
+                'bonus': result['bonus'],
+                'attendance_deduction': result['attendance_deduction'],
+                'other_deductions': result['other_deductions'],
+                'total_deductions': result['total_deductions'],
+                'net_salary': result['net_salary']
+            },
+            'attendance_stats': result.get('attendance_stats'),
+            'deductible_days': result.get('deductible_days', 0),
+            'summary': get_attendance_summary_text(result.get('attendance_stats')) if result.get('attendance_stats') else 'لا توجد بيانات حضور'
+        }
+        
+        return jsonify(response)
+        
+    except Exception as e:
+        print(f"خطأ في حساب الراتب من الحضور: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': f'حدث خطأ: {str(e)}'
+        }), 500
 
 
 @salaries_bp.route('/<int:id>/confirm-delete')
