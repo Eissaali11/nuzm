@@ -449,6 +449,9 @@ def calculate_from_attendance():
             })
         
         # حساب الراتب بناءً على الحضور
+        # عدد أيام العمل في الشهر (26 يوم افتراضياً - استبعاد الجمعة في السعودية)
+        working_days_in_month = 26
+        
         result = calculate_salary_with_attendance(
             employee_id=employee_id,
             month=month,
@@ -457,7 +460,7 @@ def calculate_from_attendance():
             allowances=0,  # يمكن تمريره من النموذج لاحقاً
             bonus=0,
             other_deductions=0,
-            deduction_policy='full',
+            working_days_in_month=working_days_in_month,
             exclude_leave=employee.exclude_leave_from_deduction,
             exclude_sick=employee.exclude_sick_from_deduction
         )
