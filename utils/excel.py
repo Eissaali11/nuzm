@@ -2103,85 +2103,152 @@ def generate_salary_excel(salaries, filter_description=None):
                         cell.number_format = money_format
                         cell.alignment = cell_alignment
             
-            # إنشاء ورقة معلومات التقرير بتنسيق مميز
-            info_data = []
+            # إنشاء داش بورد احترافي لمعلومات التقرير
+            from openpyxl.chart import PieChart, BarChart, Reference
+            from openpyxl.chart.label import DataLabelList
             
-            # إضافة معلومات التصفية
-            if filter_description:
-                info_data.append({
-                    'المعلومة': 'مرشحات البحث',
-                    'القيمة': ' - '.join(filter_description)
-                })
+            info_sheet = writer.book.create_sheet('معلومات التقرير')
             
-            # إضافة معلومات عامة
-            info_data.append({
-                'المعلومة': 'تاريخ التصدير',
-                'القيمة': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            })
-            
-            info_data.append({
-                'المعلومة': 'إجمالي عدد الرواتب',
-                'القيمة': len(salaries)
-            })
-            
-            info_data.append({
-                'المعلومة': 'عدد الأقسام',
-                'القيمة': len(departments_data)
-            })
-            
-            # إضافة إحصائيات عامة
-            info_data.append({
-                'المعلومة': 'متوسط صافي الراتب',
-                'القيمة': total_net / total_salaries if total_salaries > 0 else 0
-            })
-            
-            info_data.append({
-                'المعلومة': 'إجمالي مصاريف الرواتب',
-                'القيمة': total_net
-            })
-            
-            info_df = pd.DataFrame(info_data)
-            info_df.to_excel(writer, sheet_name='معلومات التقرير', index=False, startrow=2)
-            
-            # تنسيق ورقة المعلومات
-            info_sheet = writer.sheets['معلومات التقرير']
-            
-            # دمج الخلايا للعنوان
-            info_sheet.merge_cells('A1:B1')
+            # ==== العنوان الرئيسي ====
+            info_sheet.merge_cells('A1:J1')
             title_cell = info_sheet.cell(1, 1)
-            title_cell.value = "معلومات التقرير"
-            title_cell.font = Font(name="Arial", size=16, bold=True, color="1F4E78")
-            title_cell.alignment = title_alignment
+            title_cell.value = "📊 داش بورد تحليل الرواتب"
+            title_cell.font = Font(name="Arial", size=22, bold=True, color="FFFFFF")
+            title_cell.fill = PatternFill(start_color="1F4E78", end_color="1F4E78", fill_type="solid")
+            title_cell.alignment = Alignment(horizontal='center', vertical='center')
+            info_sheet.row_dimensions[1].height = 35
             
-            # تنسيق الترويسات
-            for col_idx, column_name in enumerate(info_df.columns, 1):
-                cell = info_sheet.cell(3, col_idx)
-                cell.font = header_font
-                cell.fill = header_fill
-                cell.alignment = header_alignment
-                cell.border = thin_border
+            # ==== معلومات التصفية ====
+            info_sheet.merge_cells('A2:J2')
+            filter_cell = info_sheet.cell(2, 1)
+            filter_text = ' | '.join(filter_description) if filter_description else 'جميع البيانات'
+            filter_cell.value = f"المرشحات: {filter_text}"
+            filter_cell.font = Font(name="Arial", size=11, italic=True, color="666666")
+            filter_cell.alignment = Alignment(horizontal='center', vertical='center')
+            info_sheet.row_dimensions[2].height = 20
+            
+            # ==== بطاقات المؤشرات الرئيسية (KPI Cards) ====
+            kpi_row = 4
+            kpis = [
+                {'title': 'إجمالي الموظفين', 'value': total_salaries, 'color': '4472C4', 'icon': '👥'},
+                {'title': 'عدد الأقسام', 'value': len(departments_data), 'color': '70AD47', 'icon': '🏢'},
+                {'title': 'متوسط الراتب', 'value': f'{(total_net / total_salaries if total_salaries > 0 else 0):,.0f} ر.س', 'color': 'FFC000', 'icon': '💰'},
+                {'title': 'إجمالي المصاريف', 'value': f'{total_net:,.0f} ر.س', 'color': 'E74C3C', 'icon': '💵'}
+            ]
+            
+            col_start = 1
+            for idx, kpi in enumerate(kpis):
+                col = col_start + (idx * 3)
                 
-                # ضبط عرض العمود
-                column_width = max(info_df[column_name].astype(str).map(len).max(), len(column_name)) + 4
-                column_letter = get_column_letter(col_idx)
-                info_sheet.column_dimensions[column_letter].width = column_width
+                # دمج خلايا البطاقة
+                info_sheet.merge_cells(start_row=kpi_row, start_column=col, end_row=kpi_row+2, end_column=col+1)
+                
+                # الأيقونة والعنوان
+                header_cell = info_sheet.cell(kpi_row, col)
+                header_cell.value = f"{kpi['icon']} {kpi['title']}"
+                header_cell.font = Font(name="Arial", size=12, bold=True, color="FFFFFF")
+                header_cell.fill = PatternFill(start_color=kpi['color'], end_color=kpi['color'], fill_type="solid")
+                header_cell.alignment = Alignment(horizontal='center', vertical='center')
+                header_cell.border = Border(
+                    left=Side(style='medium', color='000000'),
+                    right=Side(style='medium', color='000000'),
+                    top=Side(style='medium', color='000000'),
+                    bottom=Side(style='medium', color='000000')
+                )
+                
+                # القيمة
+                value_cell = info_sheet.cell(kpi_row+3, col)
+                info_sheet.merge_cells(start_row=kpi_row+3, start_column=col, end_row=kpi_row+3, end_column=col+1)
+                value_cell.value = kpi['value']
+                value_cell.font = Font(name="Arial", size=18, bold=True, color=kpi['color'])
+                value_cell.alignment = Alignment(horizontal='center', vertical='center')
+                value_cell.fill = PatternFill(start_color="F0F0F0", end_color="F0F0F0", fill_type="solid")
+                value_cell.border = Border(
+                    left=Side(style='medium', color='000000'),
+                    right=Side(style='medium', color='000000'),
+                    top=Side(style='thin', color='CCCCCC'),
+                    bottom=Side(style='medium', color='000000')
+                )
+                
+                info_sheet.row_dimensions[kpi_row+3].height = 40
             
-            # تنسيق بيانات المعلومات
-            for row_idx in range(len(info_data)):
-                for col_idx, column_name in enumerate(info_df.columns, 1):
-                    cell = info_sheet.cell(row_idx + 4, col_idx)  # +4 للترويسة والعنوان
-                    
-                    # تنسيق خاص للقيم المالية
-                    if row_idx >= 4:  # الصفين الأخيرين (متوسط الراتب وإجمالي المصاريف)
-                        cell.number_format = money_format
-                    
-                    cell.alignment = text_alignment
-                    cell.font = normal_font
+            # ==== جدول تفصيل الأقسام ====
+            table_row = kpi_row + 6
+            info_sheet.cell(table_row, 1).value = "📋 تفصيل الأقسام"
+            info_sheet.cell(table_row, 1).font = Font(name="Arial", size=14, bold=True, color="1F4E78")
+            
+            # رؤوس الجدول
+            headers = ['القسم', 'عدد الموظفين', 'الرواتب الأساسية', 'البدلات', 'الخصومات', 'المكافآت', 'صافي الرواتب']
+            for col_idx, header in enumerate(headers, 1):
+                cell = info_sheet.cell(table_row + 1, col_idx)
+                cell.value = header
+                cell.font = Font(name="Arial", size=11, bold=True, color="FFFFFF")
+                cell.fill = PatternFill(start_color="4472C4", end_color="4472C4", fill_type="solid")
+                cell.alignment = Alignment(horizontal='center', vertical='center')
+                cell.border = thin_border
+            
+            # بيانات الأقسام
+            data_row = table_row + 2
+            for dept_name, dept_salaries in departments_data.items():
+                dept_count = len(dept_salaries)
+                dept_basic = sum(s['الراتب الأساسي'] for s in dept_salaries)
+                dept_allowances = sum(s['البدلات'] for s in dept_salaries)
+                dept_deductions = sum(s['الخصومات'] for s in dept_salaries)
+                dept_bonus = sum(s['المكافآت'] for s in dept_salaries)
+                dept_net = sum(s['صافي الراتب'] for s in dept_salaries)
+                
+                row_data = [dept_name, dept_count, dept_basic, dept_allowances, dept_deductions, dept_bonus, dept_net]
+                for col_idx, value in enumerate(row_data, 1):
+                    cell = info_sheet.cell(data_row, col_idx)
+                    cell.value = value
+                    if col_idx > 2:
+                        cell.number_format = '#,##0 "ر.س"'
+                    cell.alignment = Alignment(horizontal='center', vertical='center')
                     cell.border = thin_border
-                    
-                    # تمييز الصفوف بألوان متناوبة
-                    if row_idx % 2 == 0:
-                        cell.fill = PatternFill(start_color="F2F2F2", end_color="F2F2F2", fill_type="solid")
+                    cell.fill = PatternFill(start_color="E7E6E6" if data_row % 2 == 0 else "FFFFFF", end_color="E7E6E6" if data_row % 2 == 0 else "FFFFFF", fill_type="solid")
+                data_row += 1
+            
+            # ==== مخطط دائري لتوزيع الموظفين ====
+            pie_chart = PieChart()
+            pie_chart.title = "توزيع الموظفين حسب القسم"
+            pie_chart.style = 10
+            
+            data = Reference(info_sheet, min_col=2, min_row=table_row+1, max_row=data_row-1)
+            cats = Reference(info_sheet, min_col=1, min_row=table_row+2, max_row=data_row-1)
+            pie_chart.add_data(data, titles_from_data=True)
+            pie_chart.set_categories(cats)
+            pie_chart.height = 10
+            pie_chart.width = 15
+            
+            info_sheet.add_chart(pie_chart, f"A{data_row + 2}")
+            
+            # ==== مخطط عمودي للرواتب ====
+            bar_chart = BarChart()
+            bar_chart.type = "col"
+            bar_chart.title = "مقارنة الرواتب حسب القسم"
+            bar_chart.y_axis.title = 'المبلغ (ر.س)'
+            bar_chart.x_axis.title = 'القسم'
+            bar_chart.style = 11
+            
+            data = Reference(info_sheet, min_col=7, min_row=table_row+1, max_row=data_row-1)
+            cats = Reference(info_sheet, min_col=1, min_row=table_row+2, max_row=data_row-1)
+            bar_chart.add_data(data, titles_from_data=True)
+            bar_chart.set_categories(cats)
+            bar_chart.height = 10
+            bar_chart.width = 15
+            
+            info_sheet.add_chart(bar_chart, f"H{data_row + 2}")
+            
+            # ==== معلومات إضافية ====
+            info_row = data_row + 20
+            info_sheet.cell(info_row, 1).value = "📅 تاريخ التصدير:"
+            info_sheet.cell(info_row, 1).font = Font(name="Arial", size=10, bold=True)
+            info_sheet.cell(info_row, 2).value = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            info_sheet.cell(info_row, 2).font = Font(name="Arial", size=10)
+            
+            # ضبط عرض الأعمدة
+            for col in range(1, 11):
+                info_sheet.column_dimensions[get_column_letter(col)].width = 15
             
             # تعيين الصفحة الأولى كصفحة نشطة
             writer.book.active = writer.book.worksheets[0]
