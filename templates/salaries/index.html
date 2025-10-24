@@ -946,7 +946,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
-            const confirmMsg = `سيتم حساب رواتب جميع الموظفين لشهر ${month}/${year} بناءً على بيانات الحضور. هل تريد المتابعة؟`;
+            // إعداد رسالة التأكيد بناءً على اختيار القسم
+            let confirmMsg;
+            if (departmentId) {
+                const departmentSelect = document.getElementById('department_id');
+                const departmentName = departmentSelect.options[departmentSelect.selectedIndex].text;
+                confirmMsg = `سيتم حساب رواتب موظفي قسم "${departmentName}" فقط لشهر ${month}/${year} بناءً على بيانات الحضور.\n\nملاحظة: إذا أردت حساب رواتب جميع الموظفين في كل الأقسام، اختر "الكل" من قائمة الأقسام.\n\nهل تريد المتابعة؟`;
+            } else {
+                confirmMsg = `سيتم حساب رواتب جميع الموظفين النشطين في كل الأقسام لشهر ${month}/${year} بناءً على بيانات الحضور.\n\nهل تريد المتابعة؟`;
+            }
+            
             if (!confirm(confirmMsg)) {
                 return;
             }
