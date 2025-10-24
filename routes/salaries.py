@@ -498,6 +498,150 @@ def calculate_from_attendance():
         }), 500
 
 
+@salaries_bp.route('/bulk_calculate_attendance', methods=['POST'])
+def bulk_calculate_attendance():
+    """حساب رواتب جميع الموظفين في شهر محدد بناءً على الحضور"""
+    try:
+        data = request.json
+        month = data.get('month')
+        year = data.get('year')
+        department_id = data.get('department_id')  # اختياري
+        
+        if not month or not year:
+            return jsonify({
+                'success': False,
+                'message': 'يرجى تحديد الشهر والسنة'
+            }), 400
+        
+        # جلب الموظفين بناءً على القسم
+        if department_id:
+            employees = Employee.query.filter_by(department_id=department_id).all()
+        else:
+            employees = Employee.query.all()
+        
+        if not employees:
+            return jsonify({
+                'success': False,
+                'message': 'لا يوجد موظفون'
+            }), 404
+        
+        # عدد أيام العمل في الشهر
+        working_days_in_month = 26
+        
+        success_count = 0
+        error_count = 0
+        errors = []
+        
+        for employee in employees:
+            try:
+                # التحقق من الراتب الأساسي
+                if not employee.basic_salary or employee.basic_salary == 0:
+                    errors.append(f'{employee.name}: الراتب الأساسي غير محدد')
+                    error_count += 1
+                    continue
+                
+                # التحقق من وجود سجل راتب مسبق
+                existing_salary = Salary.query.filter_by(
+                    employee_id=employee.id,
+                    month=month,
+                    year=year
+                ).first()
+                
+                # حساب الراتب من الحضور
+                result = calculate_salary_with_attendance(
+                    employee_id=employee.id,
+                    month=month,
+                    year=year,
+                    basic_salary=employee.basic_salary,
+                    allowances=0,
+                    bonus=0,
+                    other_deductions=0,
+                    working_days_in_month=working_days_in_month,
+                    exclude_leave=employee.exclude_leave_from_deduction,
+                    exclude_sick=employee.exclude_sick_from_deduction
+                )
+                
+                if not result:
+                    errors.append(f'{employee.name}: فشل حساب الراتب')
+                    error_count += 1
+                    continue
+                
+                # إنشاء أو تحديث سجل الراتب
+                if existing_salary:
+                    # تحديث السجل الموجود
+                    existing_salary.basic_salary = result['basic_salary']
+                    existing_salary.allowances = result['allowances']
+                    existing_salary.bonus = result['bonus']
+                    existing_salary.deductions = result['total_deductions']
+                    existing_salary.net_salary = result['net_salary']
+                    existing_salary.attendance_calculated = True
+                    existing_salary.attendance_deduction = result['attendance_deduction']
+                    
+                    if result.get('attendance_stats'):
+                        existing_salary.present_days = result['attendance_stats']['present_days']
+                        existing_salary.absent_days = result['attendance_stats']['absent_days']
+                        existing_salary.leave_days = result['attendance_stats']['leave_days']
+                        existing_salary.sick_days = result['attendance_stats']['sick_days']
+                else:
+                    # إنشاء سجل جديد
+                    new_salary = Salary(
+                        employee_id=employee.id,
+                        month=month,
+                        year=year,
+                        basic_salary=result['basic_salary'],
+                        allowances=result['allowances'],
+                        bonus=result['bonus'],
+                        deductions=result['total_deductions'],
+                        net_salary=result['net_salary'],
+                        attendance_calculated=True,
+                        attendance_deduction=result['attendance_deduction']
+                    )
+                    
+                    if result.get('attendance_stats'):
+                        new_salary.present_days = result['attendance_stats']['present_days']
+                        new_salary.absent_days = result['attendance_stats']['absent_days']
+                        new_salary.leave_days = result['attendance_stats']['leave_days']
+                        new_salary.sick_days = result['attendance_stats']['sick_days']
+                    
+                    db.session.add(new_salary)
+                
+                success_count += 1
+                
+            except Exception as e:
+                errors.append(f'{employee.name}: {str(e)}')
+                error_count += 1
+                continue
+        
+        # حفظ التغييرات
+        db.session.commit()
+        
+        # تسجيل العملية
+        audit = SystemAudit(
+            action='bulk_calculate_attendance',
+            entity_type='salary',
+            entity_id=0,
+            details=f'تم حساب رواتب {success_count} موظف لشهر {month}/{year}'
+        )
+        db.session.add(audit)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': f'تم حساب رواتب {success_count} موظف بنجاح',
+            'success_count': success_count,
+            'error_count': error_count,
+            'errors': errors
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"خطأ في الحساب الجماعي: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': f'حدث خطأ: {str(e)}'
+        }), 500
+
+
 @salaries_bp.route('/<int:id>/confirm-delete')
 def confirm_delete(id):
     """صفحة تأكيد حذف سجل راتب"""

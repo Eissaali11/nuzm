@@ -541,6 +541,9 @@
             
             <div class="mt-4 text-center">
                 <div class="d-flex justify-content-center gap-3 flex-wrap">
+                    <button id="bulkCalculateBtn" class="btn btn-primary">
+                        <i class="fas fa-calculator me-1"></i> حساب رواتب الشهر تلقائياً
+                    </button>
                     <a href="{{ url_for('salaries.report', month=selected_month, year=selected_year) }}" class="btn btn-info">
                         <i class="fas fa-file-alt me-1"></i> عرض تقرير مفصل
                     </a>
@@ -926,6 +929,69 @@ document.addEventListener('DOMContentLoaded', function() {
                 showErrorAlert('حدث خطأ في الاتصال');
                 this.disabled = false;
                 this.innerHTML = '<i class="fas fa-check-double me-2"></i> إنهاء وحفظ جميع البيانات المُدخلة';
+            }
+        });
+    }
+    
+    // معالجة زر الحساب الجماعي
+    const bulkCalculateBtn = document.getElementById('bulkCalculateBtn');
+    if (bulkCalculateBtn) {
+        bulkCalculateBtn.addEventListener('click', async function() {
+            const month = document.getElementById('month').value;
+            const year = document.getElementById('year').value;
+            const departmentId = document.getElementById('department_id').value;
+            
+            if (!month || !year) {
+                showErrorAlert('يرجى تحديد الشهر والسنة');
+                return;
+            }
+            
+            const confirmMsg = `سيتم حساب رواتب جميع الموظفين لشهر ${month}/${year} بناءً على بيانات الحضور. هل تريد المتابعة؟`;
+            if (!confirm(confirmMsg)) {
+                return;
+            }
+            
+            // تعطيل الزر وإظهار التحميل
+            this.disabled = true;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> جاري حساب الرواتب...';
+            
+            try {
+                const response = await fetch('/salaries/bulk_calculate_attendance', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        month: month,
+                        year: year,
+                        department_id: departmentId || null
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    let message = `تم حساب رواتب ${result.success_count} موظف بنجاح`;
+                    if (result.error_count > 0) {
+                        message += `\nفشل حساب ${result.error_count} موظف`;
+                        console.log('الأخطاء:', result.errors);
+                    }
+                    showSuccessAlert(message);
+                    
+                    // إعادة تحميل الصفحة لعرض البيانات المحدثة
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 2000);
+                } else {
+                    showErrorAlert('حدث خطأ: ' + result.message);
+                    this.disabled = false;
+                    this.innerHTML = '<i class="fas fa-calculator me-1"></i> حساب رواتب الشهر تلقائياً';
+                }
+            } catch (error) {
+                console.error('خطأ في الحساب الجماعي:', error);
+                showErrorAlert('حدث خطأ في الاتصال');
+                this.disabled = false;
+                this.innerHTML = '<i class="fas fa-calculator me-1"></i> حساب رواتب الشهر تلقائياً';
             }
         });
     }

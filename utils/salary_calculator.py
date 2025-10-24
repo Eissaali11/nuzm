@@ -39,19 +39,19 @@ def get_attendance_statistics(employee_id, month, year):
         leave_days = sum(1 for a in attendances if a.status == 'leave')
         sick_days = sum(1 for a in attendances if a.status == 'sick')
         
-        # أيام بدون سجل (تعتبر غياب افتراضياً)
+        # أيام بدون سجل (للمعلومات فقط - لا تُخصم)
         recorded_days = len(attendances)
         unrecorded_days = total_days - recorded_days
         
         return {
             'total_days': total_days,
             'present_days': present_days,
-            'absent_days': absent_days,
+            'absent_days': absent_days,  # الغياب الصريح فقط
             'leave_days': leave_days,
             'sick_days': sick_days,
-            'unrecorded_days': unrecorded_days,
-            'working_days': present_days,  # الأيام الفعلية للعمل
-            'total_absent': absent_days + unrecorded_days  # إجمالي الغياب (المسجل + غير المسجل)
+            'unrecorded_days': unrecorded_days,  # للمعلومات فقط
+            'working_days': present_days,
+            'total_absent': absent_days  # نخصم الغياب الصريح فقط
         }
     except Exception as e:
         print(f"خطأ في حساب إحصائيات الحضور: {str(e)}")
