@@ -161,9 +161,9 @@ def calculate_salary_with_attendance(employee_id, month, year, basic_salary, all
             bonus_deduction = 0.0
             attendance_deduction = 0.0
         else:
-            # موظف غاب - يفقد الحافز ويُخصم من الراتب الأساسي
+            # موظف غاب - يفقد الحافز (لا يحصل عليه) ويُخصم من الراتب الأساسي
             earned_bonus = 0.0
-            bonus_deduction = round(attendance_bonus, 2)
+            bonus_deduction = 0.0  # لا نخصم الحافز لأنه لم يحصل عليه أصلاً
             # حساب الخصم بناءً على الأيام الغائبة من الراتب الأساسي فقط
             absent_days = working_days_in_month - paid_days
             attendance_deduction = round(daily_salary * absent_days, 2)
