@@ -549,6 +549,7 @@ def bulk_calculate_attendance():
                 # حساب الراتب من الحضور
                 # استخدام 0 إذا كان الراتب الأساسي غير محدد
                 basic_salary_value = employee.basic_salary if employee.basic_salary else 0
+                attendance_bonus_value = employee.attendance_bonus if employee.attendance_bonus else 0
                 result = calculate_salary_with_attendance(
                     employee_id=employee.id,
                     month=month,
@@ -559,7 +560,8 @@ def bulk_calculate_attendance():
                     other_deductions=0,
                     working_days_in_month=working_days_in_month,
                     exclude_leave=employee.exclude_leave_from_deduction if employee.exclude_leave_from_deduction is not None else True,
-                    exclude_sick=employee.exclude_sick_from_deduction if employee.exclude_sick_from_deduction is not None else True
+                    exclude_sick=employee.exclude_sick_from_deduction if employee.exclude_sick_from_deduction is not None else True,
+                    attendance_bonus=attendance_bonus_value
                 )
                 
                 if not result:
@@ -571,6 +573,7 @@ def bulk_calculate_attendance():
                 if existing_salary:
                     # تحديث السجل الموجود
                     existing_salary.basic_salary = result['basic_salary']
+                    existing_salary.attendance_bonus = result.get('attendance_bonus', 0)
                     existing_salary.allowances = result['allowances']
                     existing_salary.bonus = result['bonus']
                     existing_salary.deductions = result['total_deductions']
@@ -590,6 +593,7 @@ def bulk_calculate_attendance():
                         month=month,
                         year=year,
                         basic_salary=result['basic_salary'],
+                        attendance_bonus=result.get('attendance_bonus', 0),
                         allowances=result['allowances'],
                         bonus=result['bonus'],
                         deductions=result['total_deductions'],

@@ -96,7 +96,7 @@ def calculate_absence_deduction(basic_salary, working_days_in_month, absent_days
 
 def calculate_salary_with_attendance(employee_id, month, year, basic_salary, allowances=0, bonus=0, 
                                      other_deductions=0, working_days_in_month=26,
-                                     exclude_leave=True, exclude_sick=True):
+                                     exclude_leave=True, exclude_sick=True, attendance_bonus=0):
     """
     حساب الراتب النهائي مع الأخذ في الاعتبار الحضور والغياب
     
@@ -104,13 +104,14 @@ def calculate_salary_with_attendance(employee_id, month, year, basic_salary, all
         employee_id: معرف الموظف
         month: الشهر
         year: السنة
-        basic_salary: الراتب الأساسي
+        basic_salary: الراتب الأساسي (بدون الحافز)
         allowances: البدلات
         bonus: المكافآت
         other_deductions: خصومات أخرى
         working_days_in_month: عدد أيام العمل في الشهر (افتراضي: 26 يوم)
         exclude_leave: عدم خصم أيام الإجازة الرسمية
         exclude_sick: عدم خصم أيام الإجازة المرضية
+        attendance_bonus: حافز الدوام الكامل (يُمنح فقط للحضور الكامل)
     
     Returns:
         dict: تفاصيل الراتب المحسوب
@@ -120,13 +121,15 @@ def calculate_salary_with_attendance(employee_id, month, year, basic_salary, all
         attendance_stats = get_attendance_statistics(employee_id, month, year)
         
         if not attendance_stats:
-            # في حالة عدم وجود سجلات، نرجع الراتب كاملاً
-            net_salary = basic_salary + allowances + bonus - other_deductions
+            # في حالة عدم وجود سجلات، نرجع الراتب كاملاً + الحافز
+            net_salary = basic_salary + attendance_bonus + allowances + bonus - other_deductions
             return {
                 'basic_salary': basic_salary,
+                'attendance_bonus': attendance_bonus,
                 'allowances': allowances,
                 'bonus': bonus,
                 'attendance_deduction': 0.0,
+                'bonus_deduction': 0.0,
                 'other_deductions': other_deductions,
                 'total_deductions': other_deductions,
                 'net_salary': net_salary,
@@ -146,27 +149,35 @@ def calculate_salary_with_attendance(employee_id, month, year, basic_salary, all
         if exclude_sick:
             paid_days += attendance_stats['sick_days']
         
-        # حساب راتب اليوم بناءً على إجمالي أيام الشهر (الطريقة الأكثر دقة)
+        # حساب راتب اليوم بناءً على الراتب الأساسي فقط (بدون الحافز) وإجمالي أيام الشهر
         total_days_in_month = attendance_stats['total_days']
         daily_salary = basic_salary / total_days_in_month
         
-        # حساب الراتب بناءً على أيام الحضور الفعلية
-        # إذا حضر الموظف جميع أيام العمل أو أكثر، يحصل على الراتب كاملاً
+        # تحديد هل الموظف مؤهل للحصول على حافز الدوام الكامل
+        # الحافز يُمنح فقط للموظفين الذين حضروا جميع أيام العمل
         if paid_days >= working_days_in_month:
+            # موظف حضر كامل أيام العمل - يستحق الحافز
+            earned_bonus = attendance_bonus
+            bonus_deduction = 0.0
             attendance_deduction = 0.0
         else:
-            # حساب الخصم بناءً على الأيام الغائبة (أيام العمل - أيام الحضور المدفوعة)
+            # موظف غاب - يفقد الحافز ويُخصم من الراتب الأساسي
+            earned_bonus = 0.0
+            bonus_deduction = attendance_bonus
+            # حساب الخصم بناءً على الأيام الغائبة من الراتب الأساسي فقط
             absent_days = working_days_in_month - paid_days
             attendance_deduction = round(daily_salary * absent_days, 2)
         
         # حساب إجمالي الخصومات
-        total_deductions = attendance_deduction + other_deductions
+        total_deductions = attendance_deduction + bonus_deduction + other_deductions
         
         # حساب صافي الراتب
-        net_salary = basic_salary + allowances + bonus - total_deductions
+        net_salary = basic_salary + earned_bonus + allowances + bonus - total_deductions
         
         return {
             'basic_salary': basic_salary,
+            'attendance_bonus': earned_bonus,
+            'bonus_deduction': bonus_deduction,
             'allowances': allowances,
             'bonus': bonus,
             'attendance_deduction': attendance_deduction,
