@@ -595,6 +595,8 @@
                             <th>البدلات</th>
                             <th>الخصومات</th>
                             <th>المكافآت</th>
+                            <th class="bg-info bg-opacity-10"><i class="fas fa-calendar-check me-1"></i>الحضور</th>
+                            <th class="bg-danger bg-opacity-10"><i class="fas fa-calendar-times me-1"></i>الغياب</th>
                             <th>صافي الراتب</th>
                             <th>الإجراءات</th>
                         </tr>
@@ -615,6 +617,24 @@
                             <td class="salary-value">{{ salary.allowances }}</td>
                             <td class="salary-value">{{ salary.deductions }}</td>
                             <td class="salary-value">{{ salary.bonus }}</td>
+                            <td class="text-center">
+                                {% if salary.attendance_calculated %}
+                                <span class="badge bg-success" title="أيام الحضور">
+                                    <i class="fas fa-check me-1"></i>{{ salary.present_days }}
+                                </span>
+                                {% else %}
+                                <span class="badge bg-secondary" title="لم يتم الحساب">-</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                {% if salary.attendance_calculated %}
+                                <span class="badge bg-danger" title="أيام الغياب | الخصم: {{ salary.attendance_deduction }} ر.س">
+                                    <i class="fas fa-times me-1"></i>{{ salary.absent_days }}
+                                </span>
+                                {% else %}
+                                <span class="badge bg-secondary" title="لم يتم الحساب">-</span>
+                                {% endif %}
+                            </td>
                             <td class="net-salary-value">{{ salary.net_salary }}</td>
                             {% else %}
                             <td>
@@ -628,6 +648,12 @@
                             </td>
                             <td>
                                 <input type="number" class="form-control form-control-sm salary-input" data-field="bonus" data-employee="{{ salary.employee.id }}" placeholder="المكافآت">
+                            </td>
+                            <td class="text-center">
+                                <span class="badge bg-secondary">-</span>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge bg-secondary">-</span>
                             </td>
                             <td class="net-salary-value">
                                 <span class="net-salary-display" data-employee="{{ salary.employee.id }}">0</span>
