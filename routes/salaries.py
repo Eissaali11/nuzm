@@ -521,16 +521,39 @@ def bulk_calculate_attendance():
                 'message': 'عدد أيام العمل يجب أن يكون بين 1 و 31'
             }), 400
         
-        # جلب الموظفين النشطين فقط بناءً على القسم
+        # حساب الفترة الزمنية للشهر المحدد
+        from datetime import datetime
+        from calendar import monthrange
+        first_day = datetime(year, month, 1).date()
+        _, last_day_num = monthrange(year, month)
+        last_day = datetime(year, month, last_day_num).date()
+        
+        # جلب معرفات الموظفين الذين لديهم سجلات حضور في هذا الشهر
+        from sqlalchemy import distinct
+        employees_with_attendance = db.session.query(distinct(Attendance.employee_id)).filter(
+            Attendance.date >= first_day,
+            Attendance.date <= last_day
+        ).all()
+        employee_ids_with_attendance = [emp_id[0] for emp_id in employees_with_attendance]
+        
+        # جلب الموظفين: النشطين + غير النشطين الذين لديهم حضور في هذا الشهر
         if department_id:
-            employees = Employee.query.filter_by(department_id=department_id, status='active').all()
+            # موظفين نشطين في القسم أو لديهم حضور في الشهر
+            employees = Employee.query.filter(
+                Employee.department_id == department_id
+            ).filter(
+                (Employee.status == 'active') | (Employee.id.in_(employee_ids_with_attendance))
+            ).all()
         else:
-            employees = Employee.query.filter_by(status='active').all()
+            # موظفين نشطين أو لديهم حضور في الشهر
+            employees = Employee.query.filter(
+                (Employee.status == 'active') | (Employee.id.in_(employee_ids_with_attendance))
+            ).all()
         
         if not employees:
             return jsonify({
                 'success': False,
-                'message': 'لا يوجد موظفون نشطون'
+                'message': 'لا يوجد موظفون للمعالجة'
             }), 404
         
         success_count = 0
