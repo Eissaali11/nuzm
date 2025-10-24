@@ -128,11 +128,18 @@ def generate_salary_summary_pdf(salaries, department_name=None, month=None, year
         # ترتيب الرواتب حسب اسم الموظف
         sorted_salaries = sorted(salaries, key=lambda s: s.employee.name)
         
+        # دالة لتحسين عرض الأسماء
+        def format_name(name):
+            # تحويل الاسم من UPPERCASE إلى Title Case لتحسين القراءة
+            if name and name.isupper():
+                return name.title()
+            return name
+        
         # ... تحضير بيانات الجدول (نفس المنطق)
         headers = ["اسم الموظف", "الراتب الأساسي", "البدلات", "المكافآت", "الخصومات", "صافي الراتب"]
         widths = [60, 28, 24, 24, 24, 30] # تم تعديل العرض قليلاً
         data_rows = [
-            [s.employee.name, f"{float(s.basic_salary):,.0f}", f"{float(s.allowances):,.0f}", f"{float(s.bonus):,.0f}", f"{float(s.deductions):,.0f}", f"{float(s.net_salary):,.0f}"]
+            [format_name(s.employee.name), f"{float(s.basic_salary):,.0f}", f"{float(s.allowances):,.0f}", f"{float(s.bonus):,.0f}", f"{float(s.deductions):,.0f}", f"{float(s.net_salary):,.0f}"]
             for s in sorted_salaries
         ]
         
