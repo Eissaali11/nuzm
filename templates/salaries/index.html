@@ -595,6 +595,7 @@
                             <th>الرقم الوظيفي</th>
                             <th>الشهر/السنة</th>
                             <th>الراتب الأساسي</th>
+                            <th class="bg-success bg-opacity-10"><i class="fas fa-award me-1"></i>حافز الدوام</th>
                             <th>البدلات</th>
                             <th>الخصومات</th>
                             <th>المكافآت</th>
@@ -617,6 +618,13 @@
                             <td>{{ salary.month }}/{{ salary.year }}</td>
                             {% if has_salary_data and salary.id %}
                             <td class="salary-value">{{ salary.basic_salary }}</td>
+                            <td class="salary-value {% if salary.attendance_bonus > 0 %}text-success fw-bold{% else %}text-danger{% endif %}">
+                                {% if salary.attendance_bonus > 0 %}
+                                ✓ {{ salary.attendance_bonus }}
+                                {% else %}
+                                ✗ 0
+                                {% endif %}
+                            </td>
                             <td class="salary-value">{{ salary.allowances }}</td>
                             <td class="salary-value">{{ salary.deductions }}</td>
                             <td class="salary-value">{{ salary.bonus }}</td>
@@ -642,6 +650,9 @@
                             {% else %}
                             <td>
                                 <input type="number" class="form-control form-control-sm salary-input" data-field="basic_salary" data-employee="{{ salary.employee.id }}" placeholder="الراتب الأساسي" required>
+                            </td>
+                            <td class="text-muted">
+                                <small><i class="fas fa-info-circle me-1"></i>يحسب تلقائياً</small>
                             </td>
                             <td>
                                 <input type="number" class="form-control form-control-sm salary-input" data-field="allowances" data-employee="{{ salary.employee.id }}" placeholder="البدلات">
