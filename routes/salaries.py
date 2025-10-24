@@ -506,11 +506,19 @@ def bulk_calculate_attendance():
         month = int(data.get('month'))
         year = int(data.get('year'))
         department_id = data.get('department_id')  # اختياري
+        working_days_in_month = int(data.get('working_days_in_month', 26))  # القيمة المخصصة أو 26 افتراضياً
         
         if not month or not year:
             return jsonify({
                 'success': False,
                 'message': 'يرجى تحديد الشهر والسنة'
+            }), 400
+        
+        # التحقق من صحة عدد أيام العمل
+        if working_days_in_month < 1 or working_days_in_month > 31:
+            return jsonify({
+                'success': False,
+                'message': 'عدد أيام العمل يجب أن يكون بين 1 و 31'
             }), 400
         
         # جلب الموظفين النشطين فقط بناءً على القسم
@@ -524,9 +532,6 @@ def bulk_calculate_attendance():
                 'success': False,
                 'message': 'لا يوجد موظفون نشطون'
             }), 404
-        
-        # عدد أيام العمل في الشهر
-        working_days_in_month = 26
         
         success_count = 0
         error_count = 0
