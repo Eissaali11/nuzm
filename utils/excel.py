@@ -1781,6 +1781,7 @@ def generate_salary_excel(salaries, filter_description=None):
                 'معرف': salary.id,
                 'اسم الموظف': salary.employee.name,
                 'رقم الموظف': salary.employee.employee_id,
+                'رقم الهوية': salary.employee.national_id or '',
                 'الوظيفة': salary.employee.job_title or '',
                 'القسم': dept_name,
                 'الشهر': salary.month,
