@@ -13,11 +13,38 @@
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
     
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            overflow-x: hidden;
+            max-width: 100%;
+        }
+
         body {
             font-family: 'Cairo', Arial, sans-serif;
             direction: rtl;
             text-align: right;
             background: #ffffff;
+            overflow-x: hidden;
+            max-width: 100%;
+            width: 100%;
+        }
+
+        /* منع أي عنصر من التسبب في horizontal scroll */
+        .container,
+        .container-fluid,
+        .row {
+            max-width: 100%;
+            overflow-x: hidden;
+        }
+
+        img {
+            max-width: 100%;
+            height: auto;
         }
         
         .navbar-brand {
@@ -117,8 +144,28 @@
             color: #28a745;
         }
         
-        /* تحسينات الاستجابة */
+        /* تحسينات الاستجابة العامة للصفحات */
+        @media (max-width: 1200px) {
+            .container {
+                padding-left: 20px !important;
+                padding-right: 20px !important;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .container {
+                padding-left: 18px !important;
+                padding-right: 18px !important;
+            }
+        }
+
+        /* تحسينات القائمة والتنقل */
         @media (max-width: 768px) {
+            .container {
+                padding-left: 15px !important;
+                padding-right: 15px !important;
+            }
+
             .navbar-brand {
                 font-size: 1.6rem;
             }
@@ -165,9 +212,30 @@
                 padding: 20px;
                 box-shadow: 0 10px 40px rgba(0,0,0,0.1);
             }
+
+            footer {
+                padding: 30px 0 15px;
+            }
+
+            footer .row {
+                margin-left: 0;
+                margin-right: 0;
+            }
+
+            footer .col-lg-4,
+            footer .col-lg-2,
+            footer .col-md-6 {
+                padding-left: 15px;
+                padding-right: 15px;
+            }
         }
         
         @media (max-width: 576px) {
+            .container {
+                padding-left: 12px !important;
+                padding-right: 12px !important;
+            }
+
             .navbar-brand {
                 font-size: 1.4rem;
             }
@@ -176,8 +244,41 @@
                 font-size: 1rem;
                 padding: 12px 25px !important;
             }
-            
 
+            footer {
+                padding: 25px 0 10px;
+            }
+
+            footer .col-lg-4,
+            footer .col-lg-2 {
+                margin-bottom: 20px !important;
+            }
+
+            footer h5,
+            footer h6 {
+                font-size: 1.1rem;
+            }
+
+            footer p,
+            footer a {
+                font-size: 0.9rem;
+            }
+
+            footer .social-links a {
+                font-size: 1.2rem;
+                margin: 0 8px;
+            }
+        }
+
+        @media (max-width: 375px) {
+            .container {
+                padding-left: 10px !important;
+                padding-right: 10px !important;
+            }
+
+            .navbar-brand {
+                font-size: 1.2rem;
+            }
         }
     </style>
     

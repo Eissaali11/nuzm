@@ -560,13 +560,24 @@
     /* Mobile Devices */
     @media (max-width: 576px) {
         .landing-hero {
-            padding: 40px 0 60px;
+            padding: 35px 0 50px;
         }
 
         .hero-badge {
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             padding: 6px 15px;
-            margin-bottom: 1.5rem;
+            margin-bottom: 1.2rem;
+        }
+
+        .hero-title {
+            font-size: clamp(1.8rem, 8vw, 2.5rem) !important;
+            margin-bottom: 1rem;
+        }
+
+        .hero-subtitle {
+            font-size: clamp(0.9rem, 2vw, 1.1rem) !important;
+            margin-bottom: 1.8rem;
+            line-height: 1.6;
         }
 
         .hero-features-list {
@@ -574,100 +585,182 @@
         }
 
         .feature-check {
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .feature-check i {
+            font-size: 0.95rem;
+        }
+
+        .hero-buttons {
+            gap: 1rem;
+        }
+
+        .btn-hero {
+            padding: 14px 30px;
+            font-size: 0.95rem;
+            width: 100%;
+            justify-content: center;
         }
 
         .stats-showcase, .features-showcase {
-            padding: 50px 0;
+            padding: 45px 0;
         }
 
         .section-badge {
-            font-size: 0.75rem;
+            font-size: 0.65rem;
             padding: 6px 15px;
         }
 
+        .section-title {
+            font-size: clamp(1.6rem, 5vw, 2.2rem) !important;
+            margin-bottom: 0.8rem;
+        }
+
         .section-subtitle {
-            font-size: 0.95rem;
-            margin-bottom: 2.5rem;
+            font-size: 0.85rem;
+            margin-bottom: 2rem;
+            line-height: 1.6;
         }
 
         .stats-grid {
             grid-template-columns: 1fr;
-            gap: 20px;
+            gap: 18px;
         }
 
         .stat-box {
-            padding: 30px 20px;
+            padding: 25px 18px;
         }
 
         .stat-icon {
-            font-size: 2rem;
+            font-size: 1.8rem;
+            margin-bottom: 10px;
         }
 
         .stat-number {
-            font-size: 2rem;
+            font-size: 1.8rem;
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
         }
 
         .feature-box {
-            padding: 35px 25px;
+            padding: 30px 20px;
         }
 
         .feature-icon-box {
-            width: 65px;
-            height: 65px;
-            font-size: 1.75rem;
-            margin-bottom: 20px;
+            width: 60px;
+            height: 60px;
+            font-size: 1.6rem;
+            margin-bottom: 18px;
         }
 
         .feature-box-title {
-            font-size: 1.25rem;
+            font-size: 1.15rem;
+            margin-bottom: 10px;
         }
 
         .feature-box-description {
-            font-size: 0.95rem;
+            font-size: 0.85rem;
+            line-height: 1.5;
         }
 
         .cta-showcase {
-            padding: 60px 0;
+            padding: 50px 0;
         }
 
         .cta-subtitle {
-            font-size: 1rem;
+            font-size: 0.9rem;
+            margin-bottom: 2rem;
         }
 
         .orb-hero-1, .orb-hero-2 {
-            width: 300px;
-            height: 300px;
+            width: 280px;
+            height: 280px;
         }
 
         .orb-hero-3 {
-            width: 250px;
-            height: 250px;
+            width: 220px;
+            height: 220px;
         }
     }
 
     /* Very Small Mobile */
     @media (max-width: 375px) {
+        .landing-hero {
+            padding: 30px 0 45px;
+        }
+
         .hero-badge {
-            font-size: 0.7rem;
+            font-size: 0.65rem;
+            padding: 5px 12px;
+        }
+
+        .hero-title {
+            font-size: clamp(1.6rem, 8vw, 2rem) !important;
+        }
+
+        .hero-subtitle {
+            font-size: clamp(0.85rem, 2vw, 1rem) !important;
         }
 
         .feature-check {
-            font-size: 0.8rem;
+            font-size: 0.75rem;
+        }
+
+        .feature-check i {
+            font-size: 0.9rem;
         }
 
         .btn-hero {
-            padding: 14px 25px;
-            font-size: 0.95rem;
+            padding: 13px 25px;
+            font-size: 0.9rem;
+        }
+
+        .section-badge {
+            font-size: 0.6rem;
+        }
+
+        .section-title {
+            font-size: clamp(1.4rem, 5vw, 1.8rem) !important;
+        }
+
+        .section-subtitle {
+            font-size: 0.8rem;
         }
 
         .stat-box {
-            padding: 25px 15px;
+            padding: 22px 15px;
+        }
+
+        .stat-icon {
+            font-size: 1.6rem;
+        }
+
+        .stat-number {
+            font-size: 1.6rem;
         }
 
         .feature-box {
-            padding: 30px 20px;
+            padding: 25px 18px;
+        }
+
+        .feature-icon-box {
+            width: 55px;
+            height: 55px;
+            font-size: 1.4rem;
+        }
+
+        .feature-box-title {
+            font-size: 1.05rem;
+        }
+
+        .feature-box-description {
+            font-size: 0.8rem;
         }
     }
 </style>
