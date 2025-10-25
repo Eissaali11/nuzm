@@ -934,15 +934,19 @@ async function shareWorkshopDetails() {
             }
         }
 
-        // إنشاء رسالة منظمة
+        // إنشاء رسالة منظمة ومفصلة
         let shareText = `🚗 تقرير سجل الورشة - {{ vehicle.plate_number }}
-═══════════════════════════════
+═══════════════════════════════════════
 
-📋 معلومات السيارة:
+📋 معلومات السيارة الكاملة:
+━━━━━━━━━━━━━━━━━━━━━━━
 • رقم اللوحة: {{ vehicle.plate_number }}
-• النوع: {{ vehicle.make }} {{ vehicle.model }}
+• الماركة: {{ vehicle.make }}
+• الموديل: {{ vehicle.model }}
+• السنة: {{ vehicle.year }}
 
 🏪 معلومات الورشة:
+━━━━━━━━━━━━━━━━━━━━━━━
 • اسم الورشة: {{ record.workshop_name or 'غير محدد' }}
 • تاريخ الدخول: {{ record.formatted_entry_date or 'غير محدد' }}`;
 
@@ -951,23 +955,28 @@ shareText += `
 • تاريخ الخروج: {{ record.formatted_exit_date }}`;
 {% endif %}
 
-shareText += `
-• حالة الإصلاح: {% if record.repair_status == 'completed' %}✅ تم الإصلاح{% elif record.repair_status == 'in_progress' %}🔄 قيد التنفيذ{% elif record.repair_status == 'pending_approval' %}⏳ بانتظار الموافقة{% else %}{{ record.repair_status or 'غير محدد' }}{% endif %}`;
-
-{% if record.cost and record.cost > 0 %}
-shareText += `
-• التكلفة: {{ '{:,.0f}'.format(record.cost) }} ريال سعودي`;
-{% endif %}
-
 {% if record.technician_name %}
 shareText += `
 • الفني المسؤول: {{ record.technician_name }}`;
 {% endif %}
 
+shareText += `
+
+🔧 تفاصيل الإصلاح:
+━━━━━━━━━━━━━━━━━━━━━━━
+• سبب الدخول: {% if record.reason == 'maintenance' %}🔧 صيانة دورية{% elif record.reason == 'breakdown' %}⚠️ عطل{% elif record.reason == 'accident' %}💥 حادث{% else %}{{ record.reason or 'غير محدد' }}{% endif %}
+• حالة الإصلاح: {% if record.repair_status == 'completed' %}✅ تم الإصلاح{% elif record.repair_status == 'in_progress' %}🔄 قيد التنفيذ{% elif record.repair_status == 'pending_approval' %}⏳ بانتظار الموافقة{% else %}{{ record.repair_status or 'غير محدد' }}{% endif %}`;
+
+{% if record.cost and record.cost > 0 %}
+shareText += `
+• التكلفة الإجمالية: {{ '{:,.2f}'.format(record.cost) }} ريال سعودي`;
+{% endif %}
+
 {% if record.description %}
 shareText += `
 
-🔧 وصف المشكلة:
+📝 وصف المشكلة والأعمال المنفذة:
+━━━━━━━━━━━━━━━━━━━━━━━
 {{ record.description }}`;
 {% endif %}
 
@@ -975,57 +984,77 @@ shareText += `
         if (beforeImages.length > 0 || afterImages.length > 0) {
             shareText += `
 
-📸 الصور المرفقة:`;
+📸 الصور المرفقة (${beforeImages.length + afterImages.length} صورة):
+━━━━━━━━━━━━━━━━━━━━━━━`;
             
             if (beforeImages.length > 0) {
                 shareText += `
-• صور قبل الإصلاح: ${beforeImages.length} صورة`;
+📷 صور قبل الإصلاح (${beforeImages.length} صورة):`;
                 beforeImages.forEach((img, index) => {
                     if (img.description && img.description !== 'صورة قبل الإصلاح') {
                         shareText += `
-  - ${img.description}`;
+  ${index + 1}. ${img.description}`;
+                    } else {
+                        shareText += `
+  ${index + 1}. صورة قبل الإصلاح`;
                     }
                 });
             }
             
             if (afterImages.length > 0) {
                 shareText += `
-• صور بعد الإصلاح: ${afterImages.length} صورة`;
+✅ صور بعد الإصلاح (${afterImages.length} صورة):`;
                 afterImages.forEach((img, index) => {
                     if (img.description && img.description !== 'صورة بعد الإصلاح') {
                         shareText += `
-  - ${img.description}`;
+  ${index + 1}. ${img.description}`;
+                    } else {
+                        shareText += `
+  ${index + 1}. صورة بعد الإصلاح`;
                     }
                 });
             }
+        } else {
+            shareText += `
+
+📸 الصور المرفقة:
+━━━━━━━━━━━━━━━━━━━━━━━
+لا توجد صور مرفقة لهذا السجل`;
         }
 
+{% if record.delivery_link or record.reception_link %}
+shareText += `
+
+🔗 الروابط الخارجية:
+━━━━━━━━━━━━━━━━━━━━━━━`;
 {% if record.delivery_link %}
 shareText += `
-
-🔗 رابط تسليم الورشة:
-{{ record.delivery_link }}`;
+• رابط تسليم الورشة:
+  {{ record.delivery_link }}`;
 {% endif %}
-
 {% if record.reception_link %}
 shareText += `
-
-🔗 رابط استلام من الورشة:
-{{ record.reception_link }}`;
+• رابط استلام من الورشة:
+  {{ record.reception_link }}`;
+{% endif %}
 {% endif %}
 
 {% if record.notes %}
 shareText += `
 
 📝 ملاحظات إضافية:
+━━━━━━━━━━━━━━━━━━━━━━━
 {{ record.notes }}`;
 {% endif %}
 
         shareText += `
 
-═══════════════════════════════
-📅 تاريخ التقرير: ${new Date().toLocaleDateString('ar-SA')}
-🕒 وقت التقرير: ${new Date().toLocaleTimeString('ar-SA')}`;
+═══════════════════════════════════════
+📅 تاريخ إنشاء التقرير: ${new Date().toLocaleDateString('ar-SA')}
+🕒 وقت إنشاء التقرير: ${new Date().toLocaleTimeString('ar-SA')}
+🏢 نظام نُظم لإدارة الأساطيل`;
+
+        console.log('تم إنشاء الرسالة:', shareText);
 
         // محاولة المشاركة مع الملفات
         const shareData = {
