@@ -4,89 +4,190 @@
 
 {% block extra_css %}
 <style>
-    /* الصفحة الرئيسية المطورة */
-    :root {
-        --primary-color: #1e3a5c;
-        --secondary-color: #2c5282;
-        --accent-color: #4fd1c7;
-        --success-color: #28a745;
-        --warning-color: #ffc107;
-        --info-color: #17a2b8;
-        --gradient-primary: linear-gradient(135deg, #1e3a5c 0%, #2c5282 100%);
-        --gradient-accent: linear-gradient(135deg, #4fd1c7 0%, #38b2ac 100%);
-        --shadow-primary: 0 10px 40px rgba(30, 58, 92, 0.15);
-        --shadow-hover: 0 20px 60px rgba(30, 58, 92, 0.25);
+    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap');
+
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
     }
 
-    /* القسم الرئيسي المطور */
-    .hero-section {
-        position: relative;
+    body {
+        font-family: 'Cairo', sans-serif;
+        overflow-x: hidden;
+    }
+
+    /* ========== HERO SECTION ========== */
+    .landing-hero {
         min-height: 100vh;
-        background: var(--gradient-primary);
+        background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 25%, #2d1b4e 50%, #1a1f3a 75%, #0a0e27 100%);
+        position: relative;
         overflow: hidden;
         display: flex;
         align-items: center;
-        color: white;
+        padding: 100px 0;
     }
 
-    .hero-background {
+    .orb-hero-1 {
         position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        overflow: hidden;
-    }
-
-    .hero-shapes {
-        position: absolute;
-        width: 100%;
-        height: 100%;
-    }
-
-    .shape {
-        position: absolute;
+        width: 600px;
+        height: 600px;
         border-radius: 50%;
-        opacity: 0.1;
-        animation: float 6s ease-in-out infinite;
+        background: radial-gradient(circle, rgba(102, 126, 234, 0.4) 0%, transparent 70%);
+        filter: blur(80px);
+        top: -300px;
+        right: -300px;
+        animation: float-orb-slow 25s infinite ease-in-out;
     }
 
-    .shape-1 {
-        width: 300px;
-        height: 300px;
-        background: var(--accent-color);
-        top: 10%;
-        right: 10%;
-        animation-delay: -1s;
+    .orb-hero-2 {
+        position: absolute;
+        width: 500px;
+        height: 500px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(79, 209, 199, 0.3) 0%, transparent 70%);
+        filter: blur(80px);
+        bottom: -250px;
+        left: -250px;
+        animation: float-orb-slow 20s infinite ease-in-out reverse;
     }
 
-    .shape-2 {
-        width: 200px;
-        height: 200px;
-        background: white;
-        bottom: 20%;
-        left: 15%;
-        animation-delay: -3s;
-    }
-
-    .shape-3 {
-        width: 150px;
-        height: 150px;
-        background: var(--accent-color);
+    .orb-hero-3 {
+        position: absolute;
+        width: 400px;
+        height: 400px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(240, 147, 251, 0.2) 0%, transparent 70%);
+        filter: blur(70px);
         top: 50%;
-        left: 5%;
-        animation-delay: -5s;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        animation: pulse-orb 15s infinite ease-in-out;
     }
 
-    @keyframes float {
-        0%, 100% { transform: translateY(0px) rotate(0deg); }
-        50% { transform: translateY(-20px) rotate(180deg); }
+    @keyframes float-orb-slow {
+        0%, 100% { transform: translate(0, 0) scale(1); }
+        33% { transform: translate(100px, -100px) scale(1.2); }
+        66% { transform: translate(-100px, 100px) scale(0.9); }
+    }
+
+    @keyframes pulse-orb {
+        0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.2; }
+        50% { transform: translate(-50%, -50%) scale(1.3); opacity: 0.4; }
     }
 
     .hero-content {
         position: relative;
-        z-index: 2;
-        animation: fadeInUp 1s ease-out;
+        z-index: 10;
+        color: white;
+    }
+
+    .hero-badge {
+        display: inline-block;
+        padding: 10px 30px;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(79, 209, 199, 0.2));
+        border: 2px solid rgba(102, 126, 234, 0.4);
+        border-radius: 50px;
+        color: #667eea;
+        font-weight: 700;
+        margin-bottom: 2rem;
+        font-size: 1rem;
+        animation: fadeInDown 1s ease;
+    }
+
+    .hero-title {
+        font-size: clamp(2.5rem, 8vw, 6rem);
+        font-weight: 900;
+        margin-bottom: 1.5rem;
+        background: linear-gradient(135deg, #ffffff 0%, #667eea 40%, #4fd1c7 60%, #ffffff 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        line-height: 1.2;
+        animation: fadeInUp 1s ease 0.2s both;
+    }
+
+    .hero-subtitle {
+        font-size: clamp(1.1rem, 2vw, 1.5rem);
+        color: #cbd5e1;
+        max-width: 700px;
+        margin-bottom: 3rem;
+        line-height: 1.8;
+        font-weight: 300;
+        animation: fadeInUp 1s ease 0.4s both;
+    }
+
+    .hero-features-list {
+        margin-bottom: 3rem;
+        animation: fadeInUp 1s ease 0.6s both;
+    }
+
+    .feature-check {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 15px;
+        font-size: 1.1rem;
+        color: #e0e7ff;
+    }
+
+    .feature-check i {
+        color: #4fd1c7;
+        font-size: 1.3rem;
+    }
+
+    .hero-buttons {
+        display: flex;
+        gap: 1.5rem;
+        flex-wrap: wrap;
+        animation: fadeInUp 1s ease 0.8s both;
+    }
+
+    .btn-hero {
+        padding: 18px 45px;
+        font-size: 1.15rem;
+        font-weight: 700;
+        border-radius: 50px;
+        text-decoration: none;
+        transition: all 0.5s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        border: none;
+        cursor: pointer;
+    }
+
+    .btn-hero-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        box-shadow: 0 10px 40px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-hero-primary:hover {
+        transform: translateY(-5px) scale(1.05);
+        box-shadow: 0 20px 60px rgba(102, 126, 234, 0.6);
+        color: white;
+        text-decoration: none;
+    }
+
+    .btn-hero-secondary {
+        background: transparent;
+        color: white;
+        border: 2px solid rgba(255, 255, 255, 0.4);
+        backdrop-filter: blur(10px);
+    }
+
+    .btn-hero-secondary:hover {
+        background: rgba(255, 255, 255, 0.15);
+        border-color: white;
+        transform: translateY(-5px) scale(1.05);
+        color: white;
+        text-decoration: none;
+    }
+
+    @keyframes fadeInDown {
+        from { opacity: 0; transform: translateY(-30px); }
+        to { opacity: 1; transform: translateY(0); }
     }
 
     @keyframes fadeInUp {
@@ -94,1037 +195,466 @@
         to { opacity: 1; transform: translateY(0); }
     }
 
-    .hero-badge {
-        display: inline-block;
-        background: rgba(255, 255, 255, 0.2);
-        backdrop-filter: blur(10px);
-        padding: 8px 20px;
-        border-radius: 25px;
-        font-size: 0.9rem;
-        margin-bottom: 1.5rem;
-        border: 1px solid rgba(255, 255, 255, 0.3);
-    }
-
-    .hero-title {
-        font-size: 3.5rem;
-        font-weight: 800;
-        margin-bottom: 1.5rem;
-        line-height: 1.2;
-        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-    }
-
-    .hero-subtitle {
-        font-size: 1.4rem;
-        margin-bottom: 2rem;
-        opacity: 0.95;
-        line-height: 1.6;
-        max-width: 600px;
-    }
-
-    .hero-features {
-        margin-bottom: 2rem;
-    }
-
-    .feature-item {
-        display: flex;
-        align-items: center;
-        margin-bottom: 0.8rem;
-        font-size: 1.1rem;
-    }
-
-    .feature-item i {
-        margin-left: 12px;
-        font-size: 1.2rem;
-    }
-
-    .hero-actions {
-        margin-bottom: 3rem;
-    }
-
-    .hero-actions .btn {
-        padding: 15px 30px;
-        font-size: 1.1rem;
-        font-weight: 600;
-        border-radius: 50px;
-        margin-left: 15px;
-        margin-bottom: 15px;
-        transition: all 0.3s ease;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .hero-actions .btn::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-        transition: left 0.6s ease;
-    }
-
-    .hero-actions .btn:hover::before {
-        left: 100%;
-    }
-
-    .hero-actions .btn:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-    }
-
-    .hero-stats {
-        padding-top: 2rem;
-        border-top: 1px solid rgba(255, 255, 255, 0.2);
-    }
-
-    .stat-item {
+    /* ========== STATS SECTION ========== */
+    .stats-showcase {
+        padding: 100px 0;
+        background: linear-gradient(180deg, #0a0e27 0%, #1a1235 100%);
         text-align: center;
     }
 
-    .stat-item h3 {
-        font-size: 2.2rem;
-        font-weight: 800;
-        margin-bottom: 0.5rem;
-        color: var(--accent-color);
-    }
-
-    .stat-item span {
+    .section-badge {
+        display: inline-block;
+        padding: 8px 20px;
+        background: rgba(102, 126, 234, 0.1);
+        border: 1px solid rgba(102, 126, 234, 0.3);
+        border-radius: 50px;
+        color: #818cf8;
         font-size: 0.9rem;
-        opacity: 0.8;
-    }
-
-    /* واجهة النظام التفاعلية */
-    .hero-image {
-        position: relative;
-        animation: slideInRight 1s ease-out 0.3s both;
-    }
-
-    @keyframes slideInRight {
-        from { opacity: 0; transform: translateX(50px); }
-        to { opacity: 1; transform: translateX(0); }
-    }
-
-    .dashboard-mockup {
-        background: white;
-        border-radius: 20px;
-        box-shadow: var(--shadow-primary);
-        overflow: hidden;
-        transform: perspective(1000px) rotateY(-10deg) rotateX(5deg);
-        transition: all 0.5s ease;
-    }
-
-    .dashboard-mockup:hover {
-        transform: perspective(1000px) rotateY(-5deg) rotateX(2deg) scale(1.02);
-        box-shadow: var(--shadow-hover);
-    }
-
-    .mockup-header {
-        background: var(--gradient-primary);
-        color: white;
-        padding: 15px 20px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-    }
-
-    .mockup-controls {
-        display: flex;
-        gap: 8px;
-    }
-
-    .control {
-        width: 12px;
-        height: 12px;
-        border-radius: 50%;
-    }
-
-    .control-1 { background: #ff5f56; }
-    .control-2 { background: #ffbd2e; }
-    .control-3 { background: #27ca3f; }
-
-    .mockup-title {
         font-weight: 600;
-        font-size: 0.9rem;
+        margin-bottom: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
     }
 
-    .mockup-content {
-        display: flex;
-        height: 400px;
+    .section-title {
+        font-size: clamp(2rem, 5vw, 3.5rem);
+        font-weight: 900;
+        background: linear-gradient(135deg, #ffffff 0%, #667eea 50%, #4fd1c7 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 1rem;
     }
 
-    .mockup-sidebar {
-        width: 200px;
-        background: #f8f9fa;
-        padding: 20px 0;
-        border-left: 1px solid #dee2e6;
-    }
-
-    .sidebar-item {
-        padding: 12px 20px;
-        display: flex;
-        align-items: center;
-        color: #6c757d;
-        transition: all 0.3s ease;
-        cursor: pointer;
-    }
-
-    .sidebar-item:hover {
-        background: rgba(30, 58, 92, 0.1);
-        color: var(--primary-color);
-    }
-
-    .sidebar-item.active {
-        background: var(--primary-color);
-        color: white;
-    }
-
-    .sidebar-item i {
-        margin-left: 12px;
-        width: 16px;
-    }
-
-    .mockup-main {
-        flex: 1;
-        padding: 20px;
+    .section-subtitle {
+        font-size: 1.2rem;
+        color: #cbd5e1;
+        max-width: 700px;
+        margin: 0 auto 4rem;
+        line-height: 1.7;
     }
 
     .stats-grid {
         display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 15px;
-        margin-bottom: 25px;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 40px;
+        margin-top: 60px;
     }
 
-    .stat-card-mock {
-        background: white;
-        padding: 20px;
-        border-radius: 12px;
-        border-right: 4px solid;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        transition: all 0.3s ease;
+    .stat-box {
+        background: linear-gradient(135deg, rgba(26, 31, 58, 0.6), rgba(45, 27, 78, 0.4));
+        border: 1px solid rgba(102, 126, 234, 0.2);
+        border-radius: 25px;
+        padding: 50px 30px;
+        backdrop-filter: blur(10px);
+        transition: all 0.5s ease;
     }
 
-    .stat-card-mock:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 15px rgba(0,0,0,0.15);
-    }
-
-    .stat-card-mock.primary { border-right-color: var(--primary-color); }
-    .stat-card-mock.success { border-right-color: var(--success-color); }
-    .stat-card-mock.warning { border-right-color: var(--warning-color); }
-    .stat-card-mock.info { border-right-color: var(--info-color); }
-
-    .stat-card-mock i {
-        font-size: 1.5rem;
-        margin-bottom: 10px;
-        opacity: 0.7;
-    }
-
-    .stat-card-mock h4 {
-        font-size: 1.5rem;
-        font-weight: 700;
-        margin: 5px 0;
-        color: #343a40;
-    }
-
-    .stat-card-mock span {
-        font-size: 0.8rem;
-        color: #6c757d;
-    }
-
-    .chart-area {
-        background: white;
-        padding: 20px;
-        border-radius: 12px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    }
-
-    .chart-header {
-        margin-bottom: 20px;
-        padding-bottom: 10px;
-        border-bottom: 1px solid #dee2e6;
-    }
-
-    .chart-header h5 {
-        color: #343a40;
-        font-weight: 600;
-        margin: 0;
-    }
-
-    .chart-bars {
-        display: flex;
-        align-items: end;
-        gap: 8px;
-        height: 100px;
-    }
-
-    .bar {
-        flex: 1;
-        background: var(--gradient-accent);
-        border-radius: 4px 4px 0 0;
-        transition: all 0.3s ease;
-        animation: growUp 1s ease-out forwards;
-        transform-origin: bottom;
-        transform: scaleY(0);
-    }
-
-    .bar:hover {
-        opacity: 0.8;
-        transform: scaleY(1) scaleX(1.1);
-    }
-
-    @keyframes growUp {
-        to { transform: scaleY(1); }
-    }
-
-    .bar:nth-child(1) { animation-delay: 0.1s; }
-    .bar:nth-child(2) { animation-delay: 0.2s; }
-    .bar:nth-child(3) { animation-delay: 0.3s; }
-    .bar:nth-child(4) { animation-delay: 0.4s; }
-    .bar:nth-child(5) { animation-delay: 0.5s; }
-    .bar:nth-child(6) { animation-delay: 0.6s; }
-
-    /* البطاقات العائمة */
-    .floating-cards {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        pointer-events: none;
-    }
-
-    .floating-card {
-        position: absolute;
-        background: white;
-        padding: 15px;
-        border-radius: 12px;
-        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        min-width: 200px;
-        animation: floatCard 4s ease-in-out infinite;
-    }
-
-    .card-1 {
-        top: 50px;
-        right: -20px;
-        animation-delay: -1s;
-    }
-
-    .card-2 {
-        bottom: 80px;
-        left: -30px;
-        animation-delay: -3s;
-    }
-
-    @keyframes floatCard {
-        0%, 100% { transform: translateY(0px) rotate(-1deg); }
-        50% { transform: translateY(-10px) rotate(1deg); }
-    }
-
-    .floating-card i {
-        font-size: 1.5rem;
-    }
-
-    .floating-card div {
-        flex: 1;
-    }
-
-    .floating-card strong {
-        display: block;
-        font-size: 0.9rem;
-        color: #343a40;
-        margin-bottom: 2px;
-    }
-
-    .floating-card p {
-        font-size: 0.8rem;
-        color: #6c757d;
-        margin: 0;
-    }
-
-    /* قسم الإحصائيات */
-    .stats-section {
-        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-        padding: 80px 0;
-        position: relative;
-    }
-
-    .stats-section::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 100px;
-        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none"><path d="M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5C438.64,32.43,512.34,53.67,583,72.05c69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V0Z" opacity=".25" fill="%23ffffff"/><path d="M0,0V15.81C13,36.92,27.64,56.86,47.69,72.05,99.41,111.27,165,111,224.58,91.58c31.15-10.15,60.09-26.07,89.67-39.8,40.92-19,84.73-46,130.83-49.67,36.26-2.85,70.9,9.42,98.6,31.56,31.77,25.39,62.32,62,103.63,73,40.44,10.79,81.35-6.69,119.13-24.28s75.16-39,116.92-43.05c59.73-5.85,113.28,22.88,168.9,38.84,30.2,8.66,59,6.17,87.09-7.5,22.43-10.89,48-26.93,60.65-49.24V0Z" opacity=".5" fill="%23ffffff"/><path d="M0,0V5.63C149.93,59,314.09,71.32,475.83,42.57c43-7.64,84.23-20.12,127.61-26.46,59-8.63,112.48,12.24,165.56,35.4C827.93,77.22,886,95.24,951.2,90c86.53-7,172.46-45.71,248.8-84.81V0Z" fill="%23ffffff"/></svg>') no-repeat;
-        background-size: cover;
-    }
-
-    .stat-card {
-        background: white;
-        padding: 40px 20px;
-        border-radius: 20px;
-        text-align: center;
-        box-shadow: var(--shadow-primary);
-        transition: all 0.4s ease;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        position: relative;
-        overflow: hidden;
-    }
-
-    .stat-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(79, 209, 199, 0.1), transparent);
-        transition: left 0.6s ease;
-    }
-
-    .stat-card:hover::before {
-        left: 100%;
-    }
-
-    .stat-card:hover {
+    .stat-box:hover {
         transform: translateY(-10px);
-        box-shadow: var(--shadow-hover);
+        border-color: rgba(102, 126, 234, 0.5);
+        box-shadow: 0 25px 60px rgba(102, 126, 234, 0.4);
     }
 
     .stat-icon {
-        font-size: 3rem;
+        font-size: 3.5rem;
         margin-bottom: 20px;
-        opacity: 0.8;
+        filter: drop-shadow(0 5px 15px rgba(102, 126, 234, 0.3));
     }
 
     .stat-number {
-        font-size: 3rem;
-        font-weight: 800;
-        color: var(--primary-color);
+        font-size: 3.5rem;
+        font-weight: 900;
+        background: linear-gradient(135deg, #667eea 0%, #4fd1c7 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
         margin-bottom: 10px;
         display: block;
     }
 
     .stat-label {
-        font-size: 1.1rem;
-        color: #6c757d;
+        color: #cbd5e1;
+        font-size: 1.05rem;
         font-weight: 500;
     }
 
-    /* أقسام الميزات والمزايا */
-    .features-section, .advantages-section {
-        padding: 80px 0;
+    /* ========== FEATURES SECTION ========== */
+    .features-showcase {
+        padding: 100px 0;
+        background: linear-gradient(180deg, #1a1235 0%, #0a0e27 100%);
     }
 
-    .section-title {
-        font-size: 2.8rem;
-        font-weight: 800;
-        color: var(--primary-color);
-        margin-bottom: 20px;
-        position: relative;
+    .features-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 40px;
+        margin-top: 60px;
     }
 
-    .section-title::after {
-        content: '';
-        width: 80px;
-        height: 4px;
-        background: var(--gradient-accent);
-        display: block;
-        margin: 15px auto;
-        border-radius: 2px;
-    }
-
-    .section-subtitle {
-        font-size: 1.3rem;
-        color: #6c757d;
-        max-width: 600px;
-        margin: 0 auto 60px;
-        line-height: 1.6;
-    }
-
-    .feature-card, .advantage-card {
-        background: white;
-        padding: 40px 30px;
-        border-radius: 20px;
+    .feature-box {
+        background: linear-gradient(135deg, rgba(26, 31, 58, 0.6), rgba(45, 27, 78, 0.4));
+        border: 1px solid rgba(79, 209, 199, 0.2);
+        border-radius: 30px;
+        padding: 50px 40px;
         text-align: center;
-        box-shadow: var(--shadow-primary);
-        transition: all 0.4s ease;
-        height: 100%;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-    }
-
-    .feature-card:hover, .advantage-card:hover {
-        transform: translateY(-10px);
-        box-shadow: var(--shadow-hover);
-    }
-
-    .feature-icon, .advantage-icon {
-        width: 80px;
-        height: 80px;
-        background: var(--gradient-accent);
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 2rem;
-        color: white;
-        margin: 0 auto 25px;
-        transition: all 0.3s ease;
-    }
-
-    .feature-card:hover .feature-icon,
-    .advantage-card:hover .advantage-icon {
-        transform: scale(1.1) rotate(10deg);
-    }
-
-    .feature-title, .advantage-title {
-        font-size: 1.4rem;
-        font-weight: 700;
-        color: var(--primary-color);
-        margin-bottom: 15px;
-    }
-
-    .feature-description, .advantage-description {
-        color: #6c757d;
-        line-height: 1.6;
-        margin-bottom: 20px;
-    }
-
-    .feature-list {
-        list-style: none;
-        padding: 0;
-        text-align: right;
-    }
-
-    .feature-list li {
-        padding: 8px 0;
-        color: #495057;
-        display: flex;
-        align-items: center;
-    }
-
-    .feature-list li i {
-        margin-left: 10px;
-        font-size: 0.9rem;
-    }
-
-    /* قسم الدعوة للعمل */
-    .cta-section {
-        background: var(--gradient-primary);
-        color: white;
-        padding: 80px 0;
+        backdrop-filter: blur(10px);
+        transition: all 0.5s ease;
         position: relative;
         overflow: hidden;
     }
 
-    .cta-section::before {
+    .feature-box::before {
         content: '';
         position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="%23ffffff" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="%23ffffff" opacity="0.1"/><circle cx="50" cy="10" r="1" fill="%23ffffff" opacity="0.05"/><circle cx="20" cy="80" r="1" fill="%23ffffff" opacity="0.05"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>') repeat;
-        opacity: 0.3;
+        inset: 0;
+        border-radius: 30px;
+        padding: 2px;
+        background: linear-gradient(135deg, transparent, rgba(79, 209, 199, 0.3), transparent);
+        -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+        -webkit-mask-composite: xor;
+        mask-composite: exclude;
+        opacity: 0;
+        transition: opacity 0.5s ease;
+    }
+
+    .feature-box:hover::before {
+        opacity: 1;
+    }
+
+    .feature-box:hover {
+        transform: translateY(-10px);
+        border-color: rgba(79, 209, 199, 0.5);
+        box-shadow: 0 25px 70px rgba(79, 209, 199, 0.4);
+    }
+
+    .feature-icon-box {
+        width: 90px;
+        height: 90px;
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.5rem;
+        margin: 0 auto 30px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        transition: all 0.5s ease;
+    }
+
+    .feature-box:hover .feature-icon-box {
+        transform: scale(1.1) rotate(10deg);
+    }
+
+    .feature-box-title {
+        font-size: 1.6rem;
+        font-weight: 700;
+        color: white;
+        margin-bottom: 20px;
+    }
+
+    .feature-box-description {
+        color: #cbd5e1;
+        line-height: 1.7;
+        margin-bottom: 25px;
+    }
+
+    .feature-link {
+        color: #4fd1c7;
+        text-decoration: none;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .feature-link:hover {
+        color: #38b2ac;
+        gap: 12px;
+        text-decoration: none;
+    }
+
+    /* ========== CTA SECTION ========== */
+    .cta-showcase {
+        padding: 120px 0;
+        background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #667eea 100%);
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .cta-showcase::before {
+        content: '';
+        position: absolute;
+        width: 600px;
+        height: 600px;
+        background: radial-gradient(circle, rgba(79, 209, 199, 0.3) 0%, transparent 70%);
+        top: -300px;
+        left: -300px;
+        animation: float-slow 25s infinite;
+    }
+
+    @keyframes float-slow {
+        0%, 100% { transform: translate(0, 0); }
+        50% { transform: translate(150px, 150px); }
+    }
+
+    .cta-content {
+        position: relative;
+        z-index: 10;
     }
 
     .cta-title {
-        font-size: 3rem;
-        font-weight: 800;
-        margin-bottom: 20px;
-        position: relative;
-        z-index: 2;
+        font-size: clamp(2.5rem, 6vw, 4.5rem);
+        font-weight: 900;
+        color: white;
+        margin-bottom: 1.5rem;
+        line-height: 1.2;
     }
 
     .cta-subtitle {
         font-size: 1.3rem;
-        opacity: 0.9;
-        max-width: 600px;
-        margin: 0 auto;
-        position: relative;
-        z-index: 2;
+        color: #e0e7ff;
+        max-width: 700px;
+        margin: 0 auto 3rem;
+        line-height: 1.7;
     }
 
-    .cta-actions {
-        position: relative;
-        z-index: 2;
-    }
-
-    .cta-button {
-        background: white;
-        color: var(--primary-color);
-        padding: 18px 40px;
-        border-radius: 50px;
-        font-size: 1.2rem;
-        font-weight: 700;
-        text-decoration: none;
-        display: inline-block;
-        transition: all 0.4s ease;
-        position: relative;
-        overflow: hidden;
-        border: 2px solid white;
-    }
-
-    .cta-button::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-        transition: left 0.6s ease;
-    }
-
-    .cta-button:hover::before {
-        left: 100%;
-    }
-
-    .cta-button:hover {
-        transform: translateY(-3px) scale(1.05);
-        box-shadow: 0 15px 35px rgba(0,0,0,0.2);
-        color: var(--primary-color);
-        text-decoration: none;
-    }
-
-    /* التحسينات المتجاوبة */
-    @media (max-width: 992px) {
-        .hero-title {
-            font-size: 2.8rem;
-        }
-        
-        .dashboard-mockup {
-            transform: none;
-            margin-top: 50px;
-        }
-        
-        .mockup-content {
-            height: 300px;
-        }
-        
-        .mockup-sidebar {
-            width: 150px;
-        }
-        
-        .stats-grid {
-            grid-template-columns: 1fr;
-        }
-    }
-
+    /* RESPONSIVE */
     @media (max-width: 768px) {
-        .hero-section {
-            min-height: auto;
-            padding: 100px 0;
-        }
-        
-        .hero-title {
-            font-size: 2.2rem;
-        }
-        
-        .hero-subtitle {
-            font-size: 1.2rem;
-        }
-        
-        .hero-actions .btn {
-            display: block;
-            width: 100%;
-            margin: 10px 0;
-        }
-        
-        .stat-item h3 {
-            font-size: 1.8rem;
-        }
-        
-        .floating-cards {
-            display: none;
-        }
-        
-        .dashboard-mockup {
-            margin-top: 30px;
-        }
-        
-        .mockup-content {
+        .hero-buttons {
             flex-direction: column;
-            height: auto;
         }
-        
-        .mockup-sidebar {
-            width: 100%;
-            height: auto;
-            display: flex;
-            overflow-x: auto;
-            padding: 15px;
-        }
-        
-        .sidebar-item {
-            white-space: nowrap;
-            margin-left: 10px;
-        }
-    }
 
-    @media (max-width: 576px) {
-        .hero-title {
-            font-size: 1.8rem;
+        .btn-hero {
+            width: 100%;
+            max-width: 350px;
+            justify-content: center;
         }
-        
-        .hero-subtitle {
-            font-size: 1rem;
+
+        .stats-grid {
+            grid-template-columns: 1fr 1fr;
         }
-        
-        .stat-item h3 {
-            font-size: 1.5rem;
-        }
-        
-        .stat-item span {
-            font-size: 0.8rem;
+
+        .features-grid {
+            grid-template-columns: 1fr;
         }
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<!-- القسم الرئيسي المطور -->
-<section class="hero-section">
-    <div class="hero-background">
-        <div class="hero-shapes">
-            <div class="shape shape-1"></div>
-            <div class="shape shape-2"></div>
-            <div class="shape shape-3"></div>
-        </div>
-    </div>
+
+<!-- HERO SECTION -->
+<section class="landing-hero">
+    <div class="orb-hero-1"></div>
+    <div class="orb-hero-2"></div>
+    <div class="orb-hero-3"></div>
     
     <div class="container">
-        <div class="row align-items-center min-vh-100">
-            <div class="col-lg-6">
-                <div class="hero-content">
+        <div class="row align-items-center">
+            <div class="col-lg-12">
+                <div class="hero-content text-center">
                     <div class="hero-badge">
-                        <i class="fas fa-star text-warning"></i>
-                        الحل الأول في المملكة العربية السعودية
+                        ⭐ الحل الأول في المملكة العربية السعودية
                     </div>
                     
                     <h1 class="hero-title">
-                        {{ settings.hero_title or 'نُظم - نظام إدارة الموظفين والمركبات' }}
+                        نُظم<br>
+                        مستقبل إدارة الأعمال
                     </h1>
                     
                     <p class="hero-subtitle">
-                        {{ settings.hero_subtitle or 'حل شامل ومتكامل لإدارة العمليات الداخلية للشركات والمؤسسات مع واجهة عربية متطورة وأمان عالي' }}
+                        نظام شامل ومتكامل لإدارة الموظفين والمركبات مع واجهة عربية متطورة وذكاء اصطناعي متقدم. حوّل إدارة مؤسستك إلى تجربة سلسة واحترافية
                     </p>
                     
-                    <div class="hero-features mb-4">
-                        <div class="feature-item">
-                            <i class="fas fa-check-circle text-success"></i>
-                            <span>إدارة شاملة للموظفين والمركبات</span>
+                    <div class="hero-features-list">
+                        <div class="feature-check">
+                            <i class="fas fa-check-circle"></i>
+                            <span>إدارة شاملة للموظفين مع نظام حضور ذكي متقدم</span>
                         </div>
-                        <div class="feature-item">
-                            <i class="fas fa-check-circle text-success"></i>
-                            <span>تقارير احترافية وتحليلات ذكية</span>
+                        <div class="feature-check">
+                            <i class="fas fa-check-circle"></i>
+                            <span>تتبع وإدارة أسطول المركبات بكفاءة عالية</span>
                         </div>
-                        <div class="feature-item">
-                            <i class="fas fa-check-circle text-success"></i>
-                            <span>واجهة عربية كاملة وسهلة الاستخدام</span>
+                        <div class="feature-check">
+                            <i class="fas fa-check-circle"></i>
+                            <span>تحليلات ذكية وتوصيات استراتيجية بالذكاء الاصطناعي</span>
                         </div>
                     </div>
                     
-                    <div class="hero-actions">
-                        <a href="/nuzum/demo" class="btn btn-light btn-lg">
-                            <i class="fas fa-play me-2"></i>{{ settings.hero_primary_btn or 'جرب النظام مجاناً' }}
+                    <div class="hero-buttons">
+                        <a href="/nuzum/demo" class="btn-hero btn-hero-primary">
+                            <i class="fas fa-rocket"></i>
+                            ابدأ تجربتك المجانية
                         </a>
-                        <a href="/nuzum/features" class="btn btn-outline-light btn-lg">
-                            <i class="fas fa-info-circle me-2"></i>{{ settings.hero_secondary_btn or 'تعرف على المزايا' }}
+                        <a href="/nuzum/features" class="btn-hero btn-hero-secondary">
+                            <i class="fas fa-sparkles"></i>
+                            استكشف المزايا
                         </a>
-                    </div>
-                    
-                    <div class="hero-stats mt-4">
-                        <div class="row">
-                            <div class="col-4">
-                                <div class="stat-item">
-                                    <h3>{{ stats.companies or '250' }}+</h3>
-                                    <span>شركة تثق بنا</span>
-                                </div>
-                            </div>
-                            <div class="col-4">
-                                <div class="stat-item">
-                                    <h3>{{ stats.employees or '15000' }}+</h3>
-                                    <span>موظف يستخدم النظام</span>
-                                </div>
-                            </div>
-                            <div class="col-4">
-                                <div class="stat-item">
-                                    <h3>{{ stats.satisfaction or '98' }}%</h3>
-                                    <span>رضا العملاء</span>
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- STATS SECTION -->
+<section class="stats-showcase">
+    <div class="container">
+        <div class="text-center">
+            <span class="section-badge">أرقام تتحدث عن نفسها</span>
+            <h2 class="section-title">موثوق من الآلاف</h2>
+            <p class="section-subtitle">
+                أكثر من 500 شركة في المملكة العربية السعودية تستخدم نُظم لإدارة أعمالها
+            </p>
+        </div>
+        
+        <div class="stats-grid">
+            <div class="stat-box">
+                <div class="stat-icon">🏢</div>
+                <span class="stat-number">500+</span>
+                <div class="stat-label">شركة تثق بنا</div>
             </div>
             
-            <div class="col-lg-6">
-                <div class="hero-image">
-                    <div class="dashboard-mockup">
-                        <div class="mockup-header">
-                            <div class="mockup-controls">
-                                <span class="control control-1"></span>
-                                <span class="control control-2"></span>
-                                <span class="control control-3"></span>
-                            </div>
-                            <div class="mockup-title">نُظم - لوحة التحكم</div>
-                        </div>
-                        <div class="mockup-content">
-                            <div class="mockup-sidebar">
-                                <div class="sidebar-item active">
-                                    <i class="fas fa-tachometer-alt"></i>
-                                    <span>الرئيسية</span>
-                                </div>
-                                <div class="sidebar-item">
-                                    <i class="fas fa-users"></i>
-                                    <span>الموظفين</span>
-                                </div>
-                                <div class="sidebar-item">
-                                    <i class="fas fa-car"></i>
-                                    <span>المركبات</span>
-                                </div>
-                                <div class="sidebar-item">
-                                    <i class="fas fa-chart-bar"></i>
-                                    <span>التقارير</span>
-                                </div>
-                            </div>
-                            <div class="mockup-main">
-                                <div class="stats-grid">
-                                    <div class="stat-card-mock primary">
-                                        <i class="fas fa-users"></i>
-                                        <h4>1,250</h4>
-                                        <span>موظف نشط</span>
-                                    </div>
-                                    <div class="stat-card-mock success">
-                                        <i class="fas fa-car"></i>
-                                        <h4>340</h4>
-                                        <span>مركبة</span>
-                                    </div>
-                                    <div class="stat-card-mock warning">
-                                        <i class="fas fa-clock"></i>
-                                        <h4>98%</h4>
-                                        <span>معدل الحضور</span>
-                                    </div>
-                                    <div class="stat-card-mock info">
-                                        <i class="fas fa-money-bill"></i>
-                                        <h4>2.5M</h4>
-                                        <span>إجمالي الرواتب</span>
-                                    </div>
-                                </div>
-                                <div class="chart-area">
-                                    <div class="chart-header">
-                                        <h5>إحصائيات شهرية</h5>
-                                    </div>
-                                    <div class="chart-bars">
-                                        <div class="bar" style="height: 60%"></div>
-                                        <div class="bar" style="height: 80%"></div>
-                                        <div class="bar" style="height: 45%"></div>
-                                        <div class="bar" style="height: 90%"></div>
-                                        <div class="bar" style="height: 70%"></div>
-                                        <div class="bar" style="height: 95%"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- عناصر تفاعلية إضافية -->
-                    <div class="floating-cards">
-                        <div class="floating-card card-1">
-                            <i class="fas fa-bell text-primary"></i>
-                            <div>
-                                <strong>تنبيه جديد</strong>
-                                <p>تم تسجيل 45 موظف اليوم</p>
-                            </div>
-                        </div>
-                        <div class="floating-card card-2">
-                            <i class="fas fa-check-circle text-success"></i>
-                            <div>
-                                <strong>تمت المهمة</strong>
-                                <p>تم إنشاء تقرير الرواتب</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            <div class="stat-box">
+                <div class="stat-icon">👥</div>
+                <span class="stat-number">50K+</span>
+                <div class="stat-label">موظف نشط</div>
+            </div>
+            
+            <div class="stat-box">
+                <div class="stat-icon">🚗</div>
+                <span class="stat-number">10K+</span>
+                <div class="stat-label">مركبة مُدارة</div>
+            </div>
+            
+            <div class="stat-box">
+                <div class="stat-icon">⭐</div>
+                <span class="stat-number">99.9%</span>
+                <div class="stat-label">معدل الرضا</div>
             </div>
         </div>
     </div>
 </section>
 
-<!-- قسم الإحصائيات المطور -->
-<section class="stats-section">
+<!-- FEATURES SECTION -->
+<section class="features-showcase">
     <div class="container">
-        <div class="row text-center">
-            <div class="col-lg-3 col-md-6 mb-4">
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fas fa-building text-primary"></i>
-                    </div>
-                    <div class="stat-number" data-count="{{ stats.companies or '250' }}">0</div>
-                    <div class="stat-label">شركة تثق بنا</div>
-                </div>
-            </div>
-            <div class="col-lg-3 col-md-6 mb-4">
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fas fa-users text-success"></i>
-                    </div>
-                    <div class="stat-number" data-count="{{ stats.employees or '15000' }}">0</div>
-                    <div class="stat-label">موظف يستخدم النظام</div>
-                </div>
-            </div>
-            <div class="col-lg-3 col-md-6 mb-4">
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fas fa-car text-info"></i>
-                    </div>
-                    <div class="stat-number" data-count="{{ stats.vehicles or '3200' }}">0</div>
-                    <div class="stat-label">مركبة تحت الإدارة</div>
-                </div>
-            </div>
-            <div class="col-lg-3 col-md-6 mb-4">
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fas fa-heart text-danger"></i>
-                    </div>
-                    <div class="stat-number" data-count="{{ stats.satisfaction or '98' }}">0</div>
-                    <div class="stat-label">% رضا العملاء</div>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- قسم الميزات الرئيسية -->
-<section class="features-section py-5">
-    <div class="container">
-        <div class="row text-center mb-5">
-            <div class="col-12">
-                <h2 class="section-title">ميزات نُظم الرئيسية</h2>
-                <p class="section-subtitle">اكتشف كيف يمكن لنُظم تحويل إدارة مؤسستك</p>
-            </div>
+        <div class="text-center">
+            <span class="section-badge">المزايا الرئيسية</span>
+            <h2 class="section-title">كل ما تحتاجه في مكان واحد</h2>
+            <p class="section-subtitle">
+                منصة متكاملة تجمع جميع أدوات إدارة الأعمال في واجهة واحدة سهلة وقوية
+            </p>
         </div>
         
-        <div class="row">
-            {% for feature in features %}
-            <div class="col-lg-4 col-md-6 mb-4">
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="{{ feature.icon }}"></i>
-                    </div>
-                    <h4 class="feature-title">{{ feature.title }}</h4>
-                    <p class="feature-description">{{ feature.description }}</p>
-                    <ul class="feature-list">
-                        {% for capability in feature.capabilities %}
-                        <li><i class="fas fa-check text-success"></i> {{ capability }}</li>
-                        {% endfor %}
-                    </ul>
+        <div class="features-grid">
+            <div class="feature-box">
+                <div class="feature-icon-box">
+                    <i class="fas fa-users"></i>
                 </div>
+                <h3 class="feature-box-title">إدارة الموظفين</h3>
+                <p class="feature-box-description">
+                    نظام شامل لإدارة بيانات الموظفين، المستندات، والتقييمات مع واجهة سهلة ومرنة
+                </p>
+                <a href="/nuzum/features" class="feature-link">
+                    اكتشف المزيد <i class="fas fa-arrow-left"></i>
+                </a>
             </div>
-            {% endfor %}
+
+            <div class="feature-box">
+                <div class="feature-icon-box">
+                    <i class="fas fa-fingerprint"></i>
+                </div>
+                <h3 class="feature-box-title">الحضور الذكي</h3>
+                <p class="feature-box-description">
+                    نظام متقدم للحضور بتقنية التعرف على الوجه، Geofencing، وتقارير لحظية دقيقة
+                </p>
+                <a href="/nuzum/features" class="feature-link">
+                    اكتشف المزيد <i class="fas fa-arrow-left"></i>
+                </a>
+            </div>
+
+            <div class="feature-box">
+                <div class="feature-icon-box">
+                    <i class="fas fa-car"></i>
+                </div>
+                <h3 class="feature-box-title">إدارة الأسطول</h3>
+                <p class="feature-box-description">
+                    تتبع شامل للمركبات، الصيانة، التأمين، والمستندات مع تنبيهات ذكية
+                </p>
+                <a href="/nuzum/features" class="feature-link">
+                    اكتشف المزيد <i class="fas fa-arrow-left"></i>
+                </a>
+            </div>
+
+            <div class="feature-box">
+                <div class="feature-icon-box">
+                    <i class="fas fa-brain"></i>
+                </div>
+                <h3 class="feature-box-title">الذكاء الاصطناعي</h3>
+                <p class="feature-box-description">
+                    تحليلات متقدمة وتوصيات استراتيجية بتقنية GPT-4o لتحسين قراراتك
+                </p>
+                <a href="/nuzum/features" class="feature-link">
+                    اكتشف المزيد <i class="fas fa-arrow-left"></i>
+                </a>
+            </div>
+
+            <div class="feature-box">
+                <div class="feature-icon-box">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <h3 class="feature-box-title">التقارير والتحليلات</h3>
+                <p class="feature-box-description">
+                    تقارير PDF و Excel احترافية مع رسوم بيانية تفاعلية ورؤى عميقة
+                </p>
+                <a href="/nuzum/features" class="feature-link">
+                    اكتشف المزيد <i class="fas fa-arrow-left"></i>
+                </a>
+            </div>
+
+            <div class="feature-box">
+                <div class="feature-icon-box">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <h3 class="feature-box-title">الأمان والخصوصية</h3>
+                <p class="feature-box-description">
+                    أعلى معايير الأمان مع تشفير كامل ونسخ احتياطية تلقائية يومية
+                </p>
+                <a href="/nuzum/features" class="feature-link">
+                    اكتشف المزيد <i class="fas fa-arrow-left"></i>
+                </a>
+            </div>
         </div>
     </div>
 </section>
 
-<!-- قسم المزايا التنافسية -->
-<section class="advantages-section py-5 bg-light">
+<!-- CTA SECTION -->
+<section class="cta-showcase">
     <div class="container">
-        <div class="row text-center mb-5">
-            <div class="col-12">
-                <h2 class="section-title">لماذا نُظم؟</h2>
-                <p class="section-subtitle">المزايا التي تجعلنا الخيار الأول للشركات السعودية</p>
+        <div class="cta-content">
+            <h2 class="cta-title">
+                جاهز لتحويل إدارة أعمالك؟
+            </h2>
+            <p class="cta-subtitle">
+                ابدأ تجربتك المجانية اليوم. لا حاجة لبطاقة ائتمان. جرّب نُظم بكامل ميزاته لمدة 14 يومًا
+            </p>
+            
+            <div class="hero-buttons">
+                <a href="/nuzum/demo" class="btn-hero btn-hero-primary">
+                    <i class="fas fa-play-circle"></i>
+                    ابدأ التجربة المجانية
+                </a>
+                <a href="/nuzum/contact" class="btn-hero btn-hero-secondary">
+                    <i class="fas fa-headset"></i>
+                    تحدث مع مستشار
+                </a>
             </div>
-        </div>
-        
-        <div class="row">
-            {% for advantage in advantages %}
-            <div class="col-lg-4 col-md-6 mb-4">
-                <div class="advantage-card">
-                    <div class="advantage-icon">
-                        <i class="{{ advantage.icon }}"></i>
-                    </div>
-                    <h4 class="advantage-title">{{ advantage.title }}</h4>
-                    <p class="advantage-description">{{ advantage.description }}</p>
-                </div>
-            </div>
-            {% endfor %}
         </div>
     </div>
 </section>
 
-<!-- قسم الدعوة للعمل -->
-<section class="cta-section">
-    <div class="container text-center">
-        <h2 class="cta-title">ابدأ رحلتك مع نُظم اليوم</h2>
-        <p class="cta-subtitle mb-4">انضم إلى مئات الشركات التي تثق بنُظم لإدارة عملياتها</p>
-        <div class="cta-actions">
-            <a href="/nuzum/demo" class="cta-button">
-                <i class="fas fa-rocket me-2"></i>جرب النظام مجاناً
-            </a>
-            <a href="/nuzum/contact" class="btn btn-outline-light btn-lg ms-3">
-                <i class="fas fa-phone me-2"></i>تواصل معنا
-            </a>
-        </div>
-    </div>
-</section>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-// تأثير العد للإحصائيات
-function animateCounter(element) {
-    const target = parseInt(element.getAttribute('data-count'));
-    const duration = 2000;
-    const step = target / (duration / 16);
-    let current = 0;
-    
-    const timer = setInterval(() => {
-        current += step;
-        if (current >= target) {
-            current = target;
-            clearInterval(timer);
-        }
-        element.textContent = Math.floor(current).toLocaleString();
-    }, 16);
-}
-
-// تشغيل العد عند الوصول للقسم
-const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-        if (entry.isIntersecting) {
-            const counters = entry.target.querySelectorAll('.stat-number');
-            counters.forEach(counter => {
-                if (!counter.classList.contains('animated')) {
-                    counter.classList.add('animated');
-                    animateCounter(counter);
-                }
-            });
-        }
-    });
-});
-
-observer.observe(document.querySelector('.stats-section'));
-
-// تأثيرات إضافية للتفاعل
-document.addEventListener('DOMContentLoaded', function() {
-    // إضافة تأثيرات التحريك للبطاقات
-    const cards = document.querySelectorAll('.feature-card, .advantage-card, .stat-card');
-    
-    const cardObserver = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.style.animation = 'fadeInUp 0.6s ease-out forwards';
-            }
-        });
-    });
-    
-    cards.forEach(card => cardObserver.observe(card));
-});
-</script>
 {% endblock %}
