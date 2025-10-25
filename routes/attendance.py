@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, send_file
 from flask_login import login_required
-from sqlalchemy import func, extract
+from sqlalchemy import func, extract, or_
 from datetime import datetime, time, timedelta, date
 from app import db
 from models import Attendance, Employee, Department, SystemAudit, VehicleProject, Module, Permission, employee_departments
@@ -1018,17 +1018,28 @@ def export_excel():
                 flash('القسم غير موجود', 'danger')
                 return redirect(url_for('attendance.export_page'))
             
-            employees = department.employees
+            # جلب جميع سجلات الحضور للفترة المحددة أولاً
+            attendances = Attendance.query.filter(
+                Attendance.date.between(start_date, end_date)
+            ).all()
             
-            if employees:
-                attendances = Attendance.query.filter(
-                    Attendance.date.between(start_date, end_date),
-                    Attendance.employee_id.in_([emp.id for emp in employees])
-                ).all()
-            else:
-                attendances = []
+            # جلب معرفات الموظفين الذين لديهم حضور
+            employee_ids_with_attendance = set([att.employee_id for att in attendances])
             
-            excel_file = export_attendance_by_department(employees, attendances, start_date, end_date)
+            # جلب الموظفين النشطين في القسم + الموظفين غير النشطين الذين لديهم حضور
+            department_employee_ids = [emp.id for emp in department.employees]
+            employees_to_export = Employee.query.filter(
+                Employee.id.in_(department_employee_ids),
+                or_(
+                    Employee.status == 'active',
+                    Employee.id.in_(employee_ids_with_attendance)
+                )
+            ).all()
+            
+            # فلترة سجلات الحضور لموظفي هذا القسم فقط
+            attendances = [att for att in attendances if att.employee_id in department_employee_ids]
+            
+            excel_file = export_attendance_by_department(employees_to_export, attendances, start_date, end_date)
             
             if end_date_str:
                 filename = f'سجل الحضور - {department.name} - {start_date_str} إلى {end_date_str}.xlsx'
@@ -1037,15 +1048,22 @@ def export_excel():
         else:
             # تصدير جميع الأقسام
             departments = Department.query.all()
-            all_employees = Employee.query.filter_by(status='active').all()
             
-            if all_employees:
-                attendances = Attendance.query.filter(
-                    Attendance.date.between(start_date, end_date),
-                    Attendance.employee_id.in_([emp.id for emp in all_employees])
-                ).all()
-            else:
-                attendances = []
+            # جلب جميع سجلات الحضور للفترة المحددة أولاً
+            attendances = Attendance.query.filter(
+                Attendance.date.between(start_date, end_date)
+            ).all()
+            
+            # جلب معرفات الموظفين الذين لديهم حضور
+            employee_ids_with_attendance = set([att.employee_id for att in attendances])
+            
+            # جلب الموظفين النشطين + الموظفين غير النشطين الذين لديهم حضور في الفترة
+            all_employees = Employee.query.filter(
+                or_(
+                    Employee.status == 'active',
+                    Employee.id.in_(employee_ids_with_attendance)
+                )
+            ).all()
             
             excel_file = export_attendance_by_department_with_dashboard(all_employees, attendances, start_date, end_date)
             
