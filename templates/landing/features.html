@@ -4,6 +4,8 @@
 
 {% block extra_css %}
 <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap');
+
     * {
         margin: 0;
         padding: 0;
@@ -11,26 +13,25 @@
     }
 
     :root {
-        --primary: #6366f1;
-        --secondary: #8b5cf6;
-        --accent: #ec4899;
-        --success: #10b981;
-        --warning: #f59e0b;
-        --info: #06b6d4;
-        --dark: #0f172a;
-        --light: #f8fafc;
+        --primary: #667eea;
+        --secondary: #764ba2;
+        --accent: #f093fb;
+        --success: #4facfe;
+        --warning: #f6d365;
+        --dark: #0a0e27;
+        --light: #f8f9fd;
     }
 
     body {
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        font-family: 'Cairo', sans-serif;
         overflow-x: hidden;
         background: var(--dark);
     }
 
-    /* ========== HERO SECTION - FUTURISTIC ========== */
+    /* ========== ENHANCED HERO ========== */
     .hero-futuristic {
         min-height: 100vh;
-        background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%);
+        background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 25%, #2d1b4e 50%, #1a1f3a 75%, #0a0e27 100%);
         position: relative;
         overflow: hidden;
         display: flex;
@@ -38,7 +39,49 @@
         justify-content: center;
     }
 
-    /* Animated particles background */
+    /* Animated gradient orbs */
+    .orb {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(80px);
+        opacity: 0.3;
+        animation: float-orb 20s infinite ease-in-out;
+    }
+
+    .orb-1 {
+        width: 600px;
+        height: 600px;
+        background: radial-gradient(circle, #667eea 0%, transparent 70%);
+        top: -300px;
+        right: -300px;
+        animation-delay: 0s;
+    }
+
+    .orb-2 {
+        width: 500px;
+        height: 500px;
+        background: radial-gradient(circle, #f093fb 0%, transparent 70%);
+        bottom: -250px;
+        left: -250px;
+        animation-delay: 5s;
+    }
+
+    .orb-3 {
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(circle, #4facfe 0%, transparent 70%);
+        top: 50%;
+        left: 50%;
+        animation-delay: 10s;
+    }
+
+    @keyframes float-orb {
+        0%, 100% { transform: translate(0, 0) scale(1); }
+        33% { transform: translate(100px, -100px) scale(1.2); }
+        66% { transform: translate(-100px, 100px) scale(0.8); }
+    }
+
+    /* Enhanced particles */
     .particles {
         position: absolute;
         width: 100%;
@@ -48,35 +91,36 @@
 
     .particle {
         position: absolute;
-        width: 3px;
-        height: 3px;
-        background: rgba(99, 102, 241, 0.5);
+        width: 4px;
+        height: 4px;
+        background: linear-gradient(135deg, #667eea, #f093fb);
         border-radius: 50%;
-        animation: float 20s infinite;
+        box-shadow: 0 0 10px #667eea;
+        animation: float-particle 15s infinite;
     }
 
-    @keyframes float {
-        0%, 100% { transform: translateY(0) translateX(0); opacity: 0; }
-        10% { opacity: 1; }
+    @keyframes float-particle {
+        0% { transform: translateY(0) translateX(0) scale(0); opacity: 0; }
+        10% { opacity: 1; transform: scale(1); }
         90% { opacity: 1; }
-        100% { transform: translateY(-100vh) translateX(100px); opacity: 0; }
+        100% { transform: translateY(-100vh) translateX(50px) rotate(360deg) scale(0); opacity: 0; }
     }
 
-    /* Grid overlay */
+    /* Glowing grid */
     .grid-overlay {
         position: absolute;
         width: 100%;
         height: 100%;
         background-image: 
-            linear-gradient(rgba(99, 102, 241, 0.1) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(99, 102, 241, 0.1) 1px, transparent 1px);
-        background-size: 50px 50px;
-        animation: gridMove 20s linear infinite;
+            linear-gradient(rgba(102, 126, 234, 0.05) 2px, transparent 2px),
+            linear-gradient(90deg, rgba(102, 126, 234, 0.05) 2px, transparent 2px);
+        background-size: 60px 60px;
+        animation: gridGlow 10s linear infinite;
     }
 
-    @keyframes gridMove {
-        0% { transform: translateY(0); }
-        100% { transform: translateY(50px); }
+    @keyframes gridGlow {
+        0%, 100% { opacity: 0.3; }
+        50% { opacity: 0.6; }
     }
 
     .hero-content {
@@ -85,101 +129,151 @@
         text-align: center;
         color: white;
         padding: 2rem;
+        max-width: 1200px;
+        margin: 0 auto;
     }
 
     .hero-badge {
         display: inline-block;
-        padding: 10px 30px;
-        background: rgba(99, 102, 241, 0.2);
-        border: 2px solid rgba(99, 102, 241, 0.5);
+        padding: 12px 35px;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(240, 147, 251, 0.2));
+        border: 2px solid rgba(240, 147, 251, 0.4);
         border-radius: 50px;
-        color: #a5b4fc;
-        font-weight: 600;
+        color: #f093fb;
+        font-weight: 700;
         margin-bottom: 2rem;
         backdrop-filter: blur(10px);
-        animation: pulse 2s ease-in-out infinite;
+        box-shadow: 0 8px 32px rgba(240, 147, 251, 0.2);
+        animation: pulse-glow 3s ease-in-out infinite;
+        font-size: 1rem;
     }
 
-    @keyframes pulse {
-        0%, 100% { transform: scale(1); }
-        50% { transform: scale(1.05); }
+    @keyframes pulse-glow {
+        0%, 100% { transform: scale(1); box-shadow: 0 8px 32px rgba(240, 147, 251, 0.2); }
+        50% { transform: scale(1.05); box-shadow: 0 8px 40px rgba(240, 147, 251, 0.4); }
     }
 
     .hero-title {
-        font-size: clamp(2.5rem, 8vw, 5rem);
+        font-size: clamp(2.8rem, 8vw, 6rem);
         font-weight: 900;
         margin-bottom: 1.5rem;
-        background: linear-gradient(135deg, #ffffff 0%, #a5b4fc 50%, #c7d2fe 100%);
+        background: linear-gradient(135deg, #ffffff 0%, #667eea 40%, #f093fb 60%, #ffffff 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
-        line-height: 1.2;
+        line-height: 1.1;
+        text-shadow: 0 0 80px rgba(102, 126, 234, 0.5);
+        animation: text-shimmer 5s ease-in-out infinite;
+    }
+
+    @keyframes text-shimmer {
+        0%, 100% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
     }
 
     .hero-subtitle {
-        font-size: clamp(1.1rem, 2vw, 1.5rem);
-        color: #cbd5e1;
-        max-width: 800px;
-        margin: 0 auto 3rem;
+        font-size: clamp(1.2rem, 2.5vw, 1.6rem);
+        color: #e0e7ff;
+        max-width: 850px;
+        margin: 0 auto 3.5rem;
         line-height: 1.8;
+        font-weight: 300;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
     }
 
     .hero-stats {
-        display: flex;
-        justify-content: center;
-        gap: 3rem;
-        flex-wrap: wrap;
-        margin-top: 4rem;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 2rem;
+        max-width: 900px;
+        margin: 4rem auto 0;
     }
 
     .stat-item {
         text-align: center;
+        padding: 25px;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(240, 147, 251, 0.1));
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        backdrop-filter: blur(10px);
+        transition: all 0.4s ease;
+    }
+
+    .stat-item:hover {
+        transform: translateY(-10px);
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(240, 147, 251, 0.2));
+        box-shadow: 0 20px 60px rgba(102, 126, 234, 0.3);
+        border-color: rgba(240, 147, 251, 0.3);
     }
 
     .stat-number {
-        font-size: 3rem;
+        font-size: 3.5rem;
         font-weight: 900;
-        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        background: linear-gradient(135deg, #667eea 0%, #f093fb 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
         display: block;
+        margin-bottom: 0.5rem;
     }
 
     .stat-label {
-        color: #94a3b8;
+        color: #cbd5e1;
         font-size: 1rem;
-        margin-top: 0.5rem;
+        font-weight: 500;
     }
 
     .hero-cta {
-        display: inline-flex;
-        gap: 1rem;
-        margin-top: 2rem;
+        display: flex;
+        gap: 1.5rem;
+        margin-top: 3rem;
+        justify-content: center;
+        flex-wrap: wrap;
     }
 
     .btn-futuristic {
-        padding: 18px 40px;
-        font-size: 1.1rem;
+        padding: 20px 50px;
+        font-size: 1.15rem;
         font-weight: 700;
         border: none;
-        border-radius: 50px;
+        border-radius: 60px;
         cursor: pointer;
-        transition: all 0.4s ease;
+        transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
         text-decoration: none;
         position: relative;
         overflow: hidden;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .btn-futuristic::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        background: radial-gradient(circle, rgba(255,255,255,0.3), transparent);
+        border-radius: 50%;
+        transition: width 0.6s ease, height 0.6s ease;
+        transform: translate(-50%, -50%);
+    }
+
+    .btn-futuristic:hover::before {
+        width: 300px;
+        height: 300px;
     }
 
     .btn-primary-glow {
-        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
-        box-shadow: 0 0 30px rgba(99, 102, 241, 0.5);
+        box-shadow: 0 10px 40px rgba(102, 126, 234, 0.4);
     }
 
     .btn-primary-glow:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 0 50px rgba(99, 102, 241, 0.8);
+        transform: translateY(-5px) scale(1.05);
+        box-shadow: 0 20px 60px rgba(102, 126, 234, 0.6);
         color: white;
         text-decoration: none;
     }
@@ -187,73 +281,93 @@
     .btn-secondary-glow {
         background: transparent;
         color: white;
-        border: 2px solid rgba(255, 255, 255, 0.3);
+        border: 2px solid rgba(255, 255, 255, 0.4);
         backdrop-filter: blur(10px);
     }
 
     .btn-secondary-glow:hover {
-        background: rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.15);
         border-color: white;
-        transform: translateY(-3px);
+        transform: translateY(-5px) scale(1.05);
         color: white;
         text-decoration: none;
+        box-shadow: 0 20px 60px rgba(255, 255, 255, 0.2);
     }
 
-    /* ========== FEATURES SHOWCASE ========== */
+    /* ========== ENHANCED FEATURES SECTION ========== */
     .features-showcase {
-        padding: 100px 0;
-        background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+        padding: 120px 0;
+        background: linear-gradient(180deg, #0a0e27 0%, #1a1235 50%, #0a0e27 100%);
         position: relative;
+    }
+
+    .features-showcase::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 200px;
+        background: linear-gradient(180deg, #0a0e27, transparent);
     }
 
     .section-header {
         text-align: center;
-        margin-bottom: 80px;
+        margin-bottom: 100px;
+        position: relative;
     }
 
     .section-badge {
         display: inline-block;
-        padding: 8px 20px;
-        background: rgba(99, 102, 241, 0.1);
-        border: 1px solid rgba(99, 102, 241, 0.3);
+        padding: 10px 25px;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.15), rgba(240, 147, 251, 0.15));
+        border: 1px solid rgba(240, 147, 251, 0.3);
         border-radius: 50px;
-        color: #818cf8;
-        font-size: 0.9rem;
-        font-weight: 600;
-        margin-bottom: 1rem;
+        color: #a78bfa;
+        font-size: 0.95rem;
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
     }
 
     .section-title {
-        font-size: clamp(2rem, 5vw, 3.5rem);
+        font-size: clamp(2.5rem, 6vw, 4.5rem);
         font-weight: 900;
-        color: white;
-        margin-bottom: 1rem;
+        background: linear-gradient(135deg, #ffffff 0%, #667eea 50%, #f093fb 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 1.5rem;
+        line-height: 1.2;
     }
 
     .section-subtitle {
-        font-size: 1.2rem;
-        color: #94a3b8;
-        max-width: 700px;
+        font-size: 1.3rem;
+        color: #cbd5e1;
+        max-width: 750px;
         margin: 0 auto;
+        line-height: 1.7;
+        font-weight: 300;
     }
 
-    /* Features Grid */
     .features-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-        gap: 30px;
-        margin-top: 60px;
+        grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+        gap: 40px;
+        margin-top: 80px;
     }
 
     .feature-card-futuristic {
-        background: linear-gradient(135deg, rgba(30, 41, 59, 0.5) 0%, rgba(51, 65, 85, 0.3) 100%);
-        border: 1px solid rgba(99, 102, 241, 0.2);
-        border-radius: 25px;
-        padding: 40px;
-        transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        background: linear-gradient(135deg, rgba(26, 31, 58, 0.6) 0%, rgba(45, 27, 78, 0.4) 100%);
+        border: 1px solid rgba(102, 126, 234, 0.2);
+        border-radius: 30px;
+        padding: 45px;
+        transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
         position: relative;
         overflow: hidden;
-        backdrop-filter: blur(10px);
+        backdrop-filter: blur(20px);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
     }
 
     .feature-card-futuristic::before {
@@ -263,9 +377,23 @@
         right: -50%;
         width: 200%;
         height: 200%;
-        background: radial-gradient(circle, rgba(99, 102, 241, 0.1) 0%, transparent 70%);
-        transition: all 0.5s ease;
+        background: radial-gradient(circle, rgba(102, 126, 234, 0.15) 0%, transparent 70%);
+        transition: all 0.6s ease;
         opacity: 0;
+    }
+
+    .feature-card-futuristic::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: 30px;
+        padding: 2px;
+        background: linear-gradient(135deg, transparent, rgba(240, 147, 251, 0.3), transparent);
+        -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+        -webkit-mask-composite: xor;
+        mask-composite: exclude;
+        opacity: 0;
+        transition: opacity 0.6s ease;
     }
 
     .feature-card-futuristic:hover::before {
@@ -273,184 +401,268 @@
         transform: translate(-25%, -25%);
     }
 
+    .feature-card-futuristic:hover::after {
+        opacity: 1;
+    }
+
     .feature-card-futuristic:hover {
-        transform: translateY(-10px);
-        border-color: rgba(99, 102, 241, 0.5);
-        box-shadow: 0 20px 60px rgba(99, 102, 241, 0.3);
+        transform: translateY(-15px);
+        border-color: rgba(240, 147, 251, 0.5);
+        box-shadow: 0 30px 80px rgba(102, 126, 234, 0.4);
     }
 
     .feature-icon-box {
-        width: 80px;
-        height: 80px;
-        border-radius: 20px;
+        width: 90px;
+        height: 90px;
+        border-radius: 25px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 2.5rem;
-        margin-bottom: 25px;
+        font-size: 2.8rem;
+        margin-bottom: 30px;
         position: relative;
-        transition: all 0.5s ease;
+        transition: all 0.6s ease;
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    .feature-icon-box::before {
+        content: '';
+        position: absolute;
+        inset: -5px;
+        border-radius: 28px;
+        background: inherit;
+        filter: blur(15px);
+        opacity: 0.6;
+        z-index: -1;
     }
 
     .feature-card-futuristic:hover .feature-icon-box {
-        transform: scale(1.1) rotate(5deg);
+        transform: scale(1.15) rotate(10deg);
     }
 
-    .icon-gradient-1 { background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); }
-    .icon-gradient-2 { background: linear-gradient(135deg, #10b981 0%, #06b6d4 100%); }
-    .icon-gradient-3 { background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%); }
-    .icon-gradient-4 { background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); }
-    .icon-gradient-5 { background: linear-gradient(135deg, #06b6d4 0%, #6366f1 100%); }
-    .icon-gradient-6 { background: linear-gradient(135deg, #ef4444 0%, #ec4899 100%); }
+    .icon-gradient-1 { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .icon-gradient-2 { background: linear-gradient(135deg, #00f260 0%, #0575e6 100%); }
+    .icon-gradient-3 { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+    .icon-gradient-4 { background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); }
+    .icon-gradient-5 { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+    .icon-gradient-6 { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
 
     .feature-title-futuristic {
-        font-size: 1.5rem;
+        font-size: 1.7rem;
         font-weight: 800;
         color: white;
-        margin-bottom: 15px;
+        margin-bottom: 18px;
+        line-height: 1.3;
     }
 
     .feature-description-futuristic {
-        color: #cbd5e1;
-        line-height: 1.7;
-        margin-bottom: 25px;
+        color: #e0e7ff;
+        line-height: 1.8;
+        margin-bottom: 30px;
+        font-size: 1.05rem;
+        font-weight: 300;
     }
 
     .feature-list {
         list-style: none;
         padding: 0;
-        margin-bottom: 25px;
+        margin-bottom: 30px;
     }
 
     .feature-list li {
-        color: #94a3b8;
-        padding: 8px 0;
+        color: #cbd5e1;
+        padding: 12px 0;
         display: flex;
         align-items: center;
-        gap: 10px;
-        font-size: 0.95rem;
-    }
-
-    .feature-list li i {
-        color: #10b981;
+        gap: 12px;
         font-size: 1rem;
-    }
-
-    .feature-link {
-        color: #818cf8;
-        text-decoration: none;
-        font-weight: 600;
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
         transition: all 0.3s ease;
     }
 
+    .feature-list li:hover {
+        color: white;
+        transform: translateX(5px);
+    }
+
+    .feature-list li i {
+        color: #4facfe;
+        font-size: 1.1rem;
+        transition: all 0.3s ease;
+    }
+
+    .feature-list li:hover i {
+        transform: scale(1.3);
+        color: #00f2fe;
+    }
+
+    .feature-link {
+        color: #a78bfa;
+        text-decoration: none;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        transition: all 0.4s ease;
+        font-size: 1.05rem;
+    }
+
     .feature-link:hover {
-        color: #a5b4fc;
-        gap: 12px;
+        color: #c4b5fd;
+        gap: 15px;
         text-decoration: none;
     }
 
-    /* ========== INTERACTIVE STATS ========== */
+    .feature-link i {
+        transition: transform 0.4s ease;
+    }
+
+    .feature-link:hover i {
+        transform: translateX(-5px);
+    }
+
+    /* ========== STATS SECTION ========== */
     .stats-interactive {
-        padding: 100px 0;
-        background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+        padding: 120px 0;
+        background: linear-gradient(180deg, #0a0e27 0%, #1a1235 100%);
         text-align: center;
+        position: relative;
     }
 
     .stats-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 40px;
-        margin-top: 60px;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 35px;
+        margin-top: 80px;
+        max-width: 1200px;
+        margin-left: auto;
+        margin-right: auto;
     }
 
     .stat-card {
-        background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
-        border: 1px solid rgba(99, 102, 241, 0.2);
-        border-radius: 20px;
-        padding: 40px 20px;
-        transition: all 0.4s ease;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(240, 147, 251, 0.1) 100%);
+        border: 1px solid rgba(102, 126, 234, 0.2);
+        border-radius: 25px;
+        padding: 50px 25px;
+        transition: all 0.5s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: linear-gradient(90deg, #667eea, #f093fb, #4facfe);
+        transform: scaleX(0);
+        transition: transform 0.5s ease;
+    }
+
+    .stat-card:hover::before {
+        transform: scaleX(1);
     }
 
     .stat-card:hover {
-        transform: translateY(-10px) scale(1.05);
-        border-color: rgba(99, 102, 241, 0.5);
-        box-shadow: 0 20px 40px rgba(99, 102, 241, 0.3);
+        transform: translateY(-15px) scale(1.05);
+        border-color: rgba(240, 147, 251, 0.5);
+        box-shadow: 0 30px 60px rgba(102, 126, 234, 0.4);
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(240, 147, 251, 0.2) 100%);
     }
 
     .stat-icon {
-        font-size: 3rem;
-        margin-bottom: 20px;
+        font-size: 3.5rem;
+        margin-bottom: 25px;
+        filter: drop-shadow(0 5px 15px rgba(102, 126, 234, 0.5));
     }
 
     .stat-value {
-        font-size: 3rem;
+        font-size: 3.5rem;
         font-weight: 900;
-        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        background: linear-gradient(135deg, #667eea 0%, #f093fb 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
-        margin-bottom: 10px;
+        margin-bottom: 15px;
+        display: block;
     }
 
     .stat-description {
-        color: #cbd5e1;
-        font-size: 1rem;
+        color: #e0e7ff;
+        font-size: 1.1rem;
+        font-weight: 500;
     }
 
-    /* ========== TECHNOLOGY STACK ========== */
+    /* ========== TECH STACK ========== */
     .tech-stack {
-        padding: 100px 0;
-        background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+        padding: 120px 0;
+        background: linear-gradient(180deg, #1a1235 0%, #0a0e27 100%);
     }
 
     .tech-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
         gap: 30px;
-        margin-top: 60px;
+        margin-top: 80px;
     }
 
     .tech-item {
-        background: rgba(30, 41, 59, 0.5);
-        border: 1px solid rgba(99, 102, 241, 0.2);
-        border-radius: 15px;
-        padding: 30px;
+        background: linear-gradient(135deg, rgba(26, 31, 58, 0.6), rgba(45, 27, 78, 0.4));
+        border: 1px solid rgba(102, 126, 234, 0.2);
+        border-radius: 20px;
+        padding: 40px 25px;
         text-align: center;
-        transition: all 0.4s ease;
+        transition: all 0.5s ease;
         backdrop-filter: blur(10px);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .tech-item::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(240, 147, 251, 0.1));
+        opacity: 0;
+        transition: opacity 0.5s ease;
+    }
+
+    .tech-item:hover::before {
+        opacity: 1;
     }
 
     .tech-item:hover {
-        transform: translateY(-10px);
-        border-color: rgba(99, 102, 241, 0.6);
-        background: rgba(99, 102, 241, 0.1);
+        transform: translateY(-12px) scale(1.05);
+        border-color: rgba(240, 147, 251, 0.6);
+        box-shadow: 0 25px 50px rgba(102, 126, 234, 0.3);
     }
 
     .tech-icon {
-        font-size: 3rem;
-        margin-bottom: 15px;
-        filter: grayscale(50%);
-        transition: all 0.4s ease;
+        font-size: 4rem;
+        margin-bottom: 20px;
+        filter: grayscale(30%);
+        transition: all 0.5s ease;
+        display: block;
     }
 
     .tech-item:hover .tech-icon {
         filter: grayscale(0%);
-        transform: scale(1.2);
+        transform: scale(1.3) rotateY(360deg);
     }
 
     .tech-name {
         color: white;
         font-weight: 700;
-        font-size: 1.1rem;
+        font-size: 1.15rem;
+        position: relative;
+        z-index: 1;
     }
 
     /* ========== CTA SECTION ========== */
     .cta-futuristic {
-        padding: 120px 0;
-        background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #6366f1 100%);
+        padding: 140px 0;
+        background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #667eea 100%);
         text-align: center;
         position: relative;
         overflow: hidden;
@@ -459,28 +671,28 @@
     .cta-futuristic::before {
         content: '';
         position: absolute;
-        width: 500px;
-        height: 500px;
-        background: radial-gradient(circle, rgba(99, 102, 241, 0.3) 0%, transparent 70%);
-        top: -250px;
-        left: -250px;
+        width: 600px;
+        height: 600px;
+        background: radial-gradient(circle, rgba(102, 126, 234, 0.4) 0%, transparent 70%);
+        top: -300px;
+        left: -300px;
         animation: float-slow 20s infinite;
     }
 
     .cta-futuristic::after {
         content: '';
         position: absolute;
-        width: 400px;
-        height: 400px;
-        background: radial-gradient(circle, rgba(139, 92, 246, 0.3) 0%, transparent 70%);
-        bottom: -200px;
-        right: -200px;
+        width: 500px;
+        height: 500px;
+        background: radial-gradient(circle, rgba(240, 147, 251, 0.4) 0%, transparent 70%);
+        bottom: -250px;
+        right: -250px;
         animation: float-slow 15s infinite reverse;
     }
 
     @keyframes float-slow {
-        0%, 100% { transform: translate(0, 0); }
-        50% { transform: translate(100px, 100px); }
+        0%, 100% { transform: translate(0, 0) scale(1); }
+        50% { transform: translate(150px, 150px) scale(1.2); }
     }
 
     .cta-content {
@@ -489,18 +701,21 @@
     }
 
     .cta-title-big {
-        font-size: clamp(2.5rem, 6vw, 4.5rem);
+        font-size: clamp(3rem, 7vw, 5.5rem);
         font-weight: 900;
         color: white;
-        margin-bottom: 1.5rem;
-        line-height: 1.2;
+        margin-bottom: 2rem;
+        line-height: 1.1;
+        text-shadow: 0 5px 30px rgba(0, 0, 0, 0.5);
     }
 
     .cta-subtitle-big {
-        font-size: 1.4rem;
+        font-size: 1.5rem;
         color: #e0e7ff;
-        max-width: 700px;
-        margin: 0 auto 3rem;
+        max-width: 800px;
+        margin: 0 auto 4rem;
+        line-height: 1.8;
+        font-weight: 300;
     }
 
     /* ========== RESPONSIVE ========== */
@@ -510,11 +725,12 @@
         }
 
         .hero-stats {
-            gap: 2rem;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
         }
 
         .stat-number {
-            font-size: 2rem;
+            font-size: 2.5rem;
         }
 
         .hero-cta {
@@ -523,6 +739,15 @@
 
         .btn-futuristic {
             width: 100%;
+            max-width: 350px;
+        }
+
+        .hero-title {
+            font-size: 2.5rem;
+        }
+
+        .section-title {
+            font-size: 2.2rem;
         }
     }
 
@@ -530,7 +755,7 @@
     @keyframes fadeInUp {
         from {
             opacity: 0;
-            transform: translateY(40px);
+            transform: translateY(50px);
         }
         to {
             opacity: 1;
@@ -540,7 +765,7 @@
 
     .animate-on-scroll {
         opacity: 0;
-        animation: fadeInUp 0.8s ease forwards;
+        animation: fadeInUp 1s ease forwards;
     }
 
     .delay-1 { animation-delay: 0.1s; }
@@ -549,13 +774,34 @@
     .delay-4 { animation-delay: 0.4s; }
     .delay-5 { animation-delay: 0.5s; }
     .delay-6 { animation-delay: 0.6s; }
+
+    /* Scroll indicator */
+    .scroll-indicator {
+        position: absolute;
+        bottom: 40px;
+        left: 50%;
+        transform: translateX(-50%);
+        color: rgba(255, 255, 255, 0.6);
+        font-size: 2rem;
+        animation: bounce 2s infinite;
+        cursor: pointer;
+        z-index: 10;
+    }
+
+    @keyframes bounce {
+        0%, 100% { transform: translateX(-50%) translateY(0); }
+        50% { transform: translateX(-50%) translateY(-20px); }
+    }
 </style>
 {% endblock %}
 
 {% block content %}
 
-<!-- ========== FUTURISTIC HERO ========== -->
+<!-- ========== ENHANCED HERO ========== -->
 <section class="hero-futuristic">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
     <div class="particles" id="particles"></div>
     <div class="grid-overlay"></div>
     
@@ -572,16 +818,16 @@
             
             <p class="hero-subtitle">
                 نظام إدارة أسطول متكامل مع ذكاء اصطناعي، تحليلات صوتية، وتقارير احترافية -
-                كل ما تحتاجه لإدارة مؤسستك بكفاءة عالية
+                كل ما تحتاجه لإدارة مؤسستك بكفاءة عالية وتميز استثنائي
             </p>
             
             <div class="hero-cta">
                 <a href="/nuzum/demo" class="btn-futuristic btn-primary-glow">
-                    <i class="fas fa-rocket me-2"></i>
+                    <i class="fas fa-rocket"></i>
                     ابدأ الآن - تجربة مجانية
                 </a>
                 <a href="#features" class="btn-futuristic btn-secondary-glow">
-                    <i class="fas fa-play me-2"></i>
+                    <i class="fas fa-play"></i>
                     اكتشف الميزات
                 </a>
             </div>
@@ -601,10 +847,14 @@
                 </div>
                 <div class="stat-item">
                     <span class="stat-number" data-target="24">0</span>
-                    <div class="stat-label">دعم فني على مدار الساعة</div>
+                    <div class="stat-label">دعم على مدار الساعة</div>
                 </div>
             </div>
         </div>
+    </div>
+    
+    <div class="scroll-indicator">
+        <i class="fas fa-chevron-down"></i>
     </div>
 </section>
 
@@ -615,7 +865,7 @@
             <span class="section-badge">الميزات الشاملة</span>
             <h2 class="section-title">كل ما تحتاجه في مكان واحد</h2>
             <p class="section-subtitle">
-                نظام متكامل يجمع بين الإدارة الذكية، التحليلات المتقدمة، والأتمتة الكاملة
+                نظام متكامل يجمع بين الإدارة الذكية، التحليلات المتقدمة، والأتمتة الكاملة لتحويل مؤسستك إلى منظومة رقمية متطورة
             </p>
         </div>
         
@@ -627,7 +877,7 @@
                 </div>
                 <h3 class="feature-title-futuristic">🎯 إدارة الموظفين الشاملة</h3>
                 <p class="feature-description-futuristic">
-                    نظام متكامل لإدارة جميع بيانات الموظفين مع تتبع المستندات، الإجازات، والملفات الشخصية
+                    نظام متكامل لإدارة جميع بيانات الموظفين مع تتبع المستندات، الإجازات، والملفات الشخصية بكفاءة عالية
                 </p>
                 <ul class="feature-list">
                     <li><i class="fas fa-check-circle"></i> إدارة البيانات الشخصية والوظيفية</li>
@@ -649,7 +899,7 @@
                 </div>
                 <h3 class="feature-title-futuristic">🚗 إدارة أسطول المركبات</h3>
                 <p class="feature-description-futuristic">
-                    نظام متطور لإدارة المركبات مع تتبع التسليم، الصيانة، والفحوصات الخارجية
+                    نظام متطور لإدارة المركبات مع تتبع التسليم، الصيانة، والفحوصات الخارجية بدقة احترافية
                 </p>
                 <ul class="feature-list">
                     <li><i class="fas fa-check-circle"></i> تسجيل المركبات والوثائق</li>
@@ -671,7 +921,7 @@
                 </div>
                 <h3 class="feature-title-futuristic">⏰ نظام الحضور الذكي</h3>
                 <p class="feature-description-futuristic">
-                    تتبع دقيق للحضور والغياب مع دعم التقويم الهجري والميلادي وحساب الساعات الإضافية
+                    تتبع دقيق للحضور والغياب مع دعم التقويم الهجري والميلادي وحساب الساعات الإضافية تلقائياً
                 </p>
                 <ul class="feature-list">
                     <li><i class="fas fa-check-circle"></i> تسجيل الحضور والانصراف</li>
@@ -715,7 +965,7 @@
                 </div>
                 <h3 class="feature-title-futuristic">📊 تقارير احترافية</h3>
                 <p class="feature-description-futuristic">
-                    تقارير PDF وExcel احترافية مع تصميمات عربية كاملة ودعم الطباعة
+                    تقارير PDF وExcel احترافية مع تصميمات عربية كاملة ودعم الطباعة والمشاركة الإلكترونية
                 </p>
                 <ul class="feature-list">
                     <li><i class="fas fa-check-circle"></i> تقارير PDF بتصميم احترافي عربي</li>
@@ -737,7 +987,7 @@
                 </div>
                 <h3 class="feature-title-futuristic">🤖 ذكاء اصطناعي متقدم</h3>
                 <p class="feature-description-futuristic">
-                    تحليلات ذكية مع OpenAI GPT-4o، توصيات استراتيجية، وتحليل مالي شامل
+                    تحليلات ذكية مع OpenAI GPT-4o، توصيات استراتيجية، وتحليل مالي شامل بالذكاء الاصطناعي
                 </p>
                 <ul class="feature-list">
                     <li><i class="fas fa-check-circle"></i> تحليلات ذكية للموظفين والأسطول</li>
@@ -759,7 +1009,7 @@
                 </div>
                 <h3 class="feature-title-futuristic">📞 تحليل المكالمات الذكي</h3>
                 <p class="feature-description-futuristic">
-                    تكامل مع VoiceHub لتحليل المكالمات، استخراج الكلمات المفتاحية، والتحليل العاطفي
+                    تكامل مع VoiceHub لتحليل المكالمات، استخراج الكلمات المفتاحية، والتحليل العاطفي المتقدم
                 </p>
                 <ul class="feature-list">
                     <li><i class="fas fa-check-circle"></i> تسجيل المكالمات في الوقت الفعلي</li>
@@ -781,7 +1031,7 @@
                 </div>
                 <h3 class="feature-title-futuristic">📚 دليل الحسابات</h3>
                 <p class="feature-description-futuristic">
-                    نظام محاسبي سعودي متكامل مع هيكل شجري للحسابات وتتبع المعاملات
+                    نظام محاسبي سعودي متكامل مع هيكل شجري للحسابات وتتبع المعاملات المالية بدقة
                 </p>
                 <ul class="feature-list">
                     <li><i class="fas fa-check-circle"></i> هيكل حسابات سعودي افتراضي</li>
@@ -803,7 +1053,7 @@
                 </div>
                 <h3 class="feature-title-futuristic">📱 إدارة الأجهزة</h3>
                 <p class="feature-description-futuristic">
-                    نظام شامل لإدارة الأجهزة المحمولة مع تتبع IMEI وربطها بالموظفين
+                    نظام شامل لإدارة الأجهزة المحمولة مع تتبع IMEI وربطها بالموظفين بكفاءة عالية
                 </p>
                 <ul class="feature-list">
                     <li><i class="fas fa-check-circle"></i> تسجيل IMEI والتفاصيل</li>
@@ -825,7 +1075,7 @@
                 </div>
                 <h3 class="feature-title-futuristic">🏢 إدارة العقارات المستأجرة</h3>
                 <p class="feature-description-futuristic">
-                    نظام شامل لإدارة العقارات المستأجرة مع تتبع العقود والدفعات
+                    نظام شامل لإدارة العقارات المستأجرة مع تتبع العقود والدفعات والتنبيهات التلقائية
                 </p>
                 <ul class="feature-list">
                     <li><i class="fas fa-check-circle"></i> إدارة العقود والإيجار</li>
@@ -847,11 +1097,11 @@
                 </div>
                 <h3 class="feature-title-futuristic">🔌 RESTful API</h3>
                 <p class="feature-description-futuristic">
-                    API شامل مع +25 نقطة نهاية، مصادقة JWT، وبحث متقدم
+                    API شامل مع +25 نقطة نهاية، مصادقة JWT، وبحث متقدم لتكامل سلس مع أنظمتك
                 </p>
                 <ul class="feature-list">
                     <li><i class="fas fa-check-circle"></i> +25 endpoint شامل</li>
-                    <li><i class="fas fa-check-circle"></i> مصادقة JWT</li>
+                    <li><i class="fas fa-check-circle"></i> مصادقة JWT آمنة</li>
                     <li><i class="fas fa-check-circle"></i> بحث وفلترة متقدمة</li>
                     <li><i class="fas fa-check-circle"></i> pagination للبيانات</li>
                     <li><i class="fas fa-check-circle"></i> معدلات استجابة سريعة</li>
@@ -869,7 +1119,7 @@
                 </div>
                 <h3 class="feature-title-futuristic">🔒 أمان متقدم</h3>
                 <p class="feature-description-futuristic">
-                    حماية متعددة المستويات مع صلاحيات دقيقة وتشفير كامل
+                    حماية متعددة المستويات مع صلاحيات دقيقة وتشفير كامل لضمان أمان بياناتك
                 </p>
                 <ul class="feature-list">
                     <li><i class="fas fa-check-circle"></i> صلاحيات ثلاثية المستويات</li>
@@ -887,14 +1137,14 @@
     </div>
 </section>
 
-<!-- ========== INTERACTIVE STATS ========== -->
+<!-- ========== STATS ========== -->
 <section class="stats-interactive">
     <div class="container">
         <div class="section-header">
             <span class="section-badge">الأرقام تتحدث</span>
             <h2 class="section-title">نتائج حقيقية، تأثير قابل للقياس</h2>
             <p class="section-subtitle">
-                النتائج التي حققتها الشركات باستخدام نُظم
+                النتائج التي حققتها الشركات باستخدام نُظم - أرقام موثقة وقابلة للتحقق
             </p>
         </div>
         
@@ -945,7 +1195,7 @@
             <span class="section-badge">التقنيات المستخدمة</span>
             <h2 class="section-title">مبني على أحدث التقنيات</h2>
             <p class="section-subtitle">
-                نستخدم أفضل الأدوات والتقنيات لضمان أداء وأمان استثنائيين
+                نستخدم أفضل الأدوات والتقنيات العالمية لضمان أداء وأمان استثنائيين
             </p>
         </div>
         
@@ -993,7 +1243,7 @@
     </div>
 </section>
 
-<!-- ========== FUTURISTIC CTA ========== -->
+<!-- ========== CTA ========== -->
 <section class="cta-futuristic">
     <div class="container">
         <div class="cta-content">
@@ -1002,16 +1252,16 @@
                 إدارة مؤسستك؟
             </h2>
             <p class="cta-subtitle-big">
-                انضم إلى مئات الشركات السعودية التي تثق بنُظم لإدارة عملياتها اليومية
+                انضم إلى مئات الشركات السعودية التي تثق بنُظم لإدارة عملياتها اليومية بكفاءة وتميز
             </p>
             
             <div class="hero-cta">
                 <a href="/nuzum/demo" class="btn-futuristic btn-primary-glow">
-                    <i class="fas fa-rocket me-2"></i>
+                    <i class="fas fa-rocket"></i>
                     ابدأ تجربتك المجانية الآن
                 </a>
                 <a href="/nuzum/contact" class="btn-futuristic btn-secondary-glow">
-                    <i class="fas fa-comments me-2"></i>
+                    <i class="fas fa-comments"></i>
                     تواصل مع فريق المبيعات
                 </a>
             </div>
@@ -1023,26 +1273,28 @@
 
 {% block extra_js %}
 <script>
-// Generate particles
+// Enhanced particles with variety
 const particlesContainer = document.getElementById('particles');
-for (let i = 0; i < 50; i++) {
+for (let i = 0; i < 80; i++) {
     const particle = document.createElement('div');
     particle.className = 'particle';
     particle.style.left = Math.random() * 100 + '%';
-    particle.style.animationDelay = Math.random() * 20 + 's';
+    particle.style.animationDelay = Math.random() * 15 + 's';
     particle.style.animationDuration = (Math.random() * 10 + 10) + 's';
+    particle.style.width = (Math.random() * 3 + 2) + 'px';
+    particle.style.height = particle.style.width;
     particlesContainer.appendChild(particle);
 }
 
-// Animated counter
+// Smooth animated counter
 function animateCounter(element) {
     const target = parseInt(element.getAttribute('data-target'));
-    const duration = 2000;
-    const step = target / (duration / 16);
+    const duration = 2500;
+    const increment = target / (duration / 16);
     let current = 0;
     
     const timer = setInterval(() => {
-        current += step;
+        current += increment;
         if (current >= target) {
             element.textContent = target + (target === 99 ? '%' : target === 24 ? '/7' : '+');
             clearInterval(timer);
@@ -1052,29 +1304,41 @@ function animateCounter(element) {
     }, 16);
 }
 
-// Trigger counters
+// Trigger counters when visible
 const statNumbers = document.querySelectorAll('.stat-number');
-setTimeout(() => {
-    statNumbers.forEach(animateCounter);
-}, 500);
+const heroStatsObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            setTimeout(() => {
+                statNumbers.forEach(animateCounter);
+            }, 300);
+            heroStatsObserver.unobserve(entry.target);
+        }
+    });
+}, { threshold: 0.3 });
+
+const heroStats = document.querySelector('.hero-stats');
+if (heroStats) {
+    heroStatsObserver.observe(heroStats);
+}
 
 // Scroll animations
 const observerOptions = {
-    threshold: 0.1,
-    rootMargin: '0px 0px -100px 0px'
+    threshold: 0.15,
+    rootMargin: '0px 0px -80px 0px'
 };
 
-const observer = new IntersectionObserver((entries) => {
+const scrollObserver = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
         if (entry.isIntersecting) {
             entry.target.style.opacity = '1';
-            observer.unobserve(entry.target);
+            scrollObserver.unobserve(entry.target);
         }
     });
 }, observerOptions);
 
 document.querySelectorAll('.animate-on-scroll').forEach(el => {
-    observer.observe(el);
+    scrollObserver.observe(el);
 });
 
 // Smooth scroll
@@ -1090,5 +1354,24 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         }
     });
 });
+
+// Scroll indicator
+const scrollIndicator = document.querySelector('.scroll-indicator');
+if (scrollIndicator) {
+    scrollIndicator.addEventListener('click', () => {
+        document.querySelector('#features').scrollIntoView({
+            behavior: 'smooth'
+        });
+    });
+    
+    // Hide on scroll
+    window.addEventListener('scroll', () => {
+        if (window.scrollY > 100) {
+            scrollIndicator.style.opacity = '0';
+        } else {
+            scrollIndicator.style.opacity = '1';
+        }
+    });
+}
 </script>
 {% endblock %}
