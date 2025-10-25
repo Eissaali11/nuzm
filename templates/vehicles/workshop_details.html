@@ -812,7 +812,7 @@ body {
                         {% for image in record.images %}
                         <div class="image-card-modern" onclick="window.location.href='{{ url_for('vehicles.view_workshop_image', image_id=image.id) }}'">
                             <div class="image-wrapper">
-                                <img src="/static/{{ image.image_path }}" alt="{{ image.notes or 'صورة من الورشة' }}" loading="lazy">
+                                <img src="/{{ image.image_path }}" alt="{{ image.notes or 'صورة من الورشة' }}" loading="lazy">
                                 {% if image.image_type %}
                                 <div class="image-type-badge-modern 
                                     {% if image.image_type == 'before' %}badge-before
