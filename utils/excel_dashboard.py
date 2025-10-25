@@ -674,9 +674,9 @@ def export_attendance_by_department_with_dashboard(employees, attendances, start
                             cell_value = "S"
                             cell_format = sick_format
                     else:
-                        cell_value = "P"
-                        cell_format = present_format
-                        present_days += 1
+                        # إذا لم يكن هناك سجل حضور، يعتبر غائب وليس حاضر
+                        cell_value = "A"
+                        cell_format = absent_format
                     
                     worksheet.write(row, col, cell_value, cell_format)
                 
