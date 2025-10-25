@@ -1,556 +1,536 @@
 {% extends "landing/layout.html" %}
 
-{% block title %}ميزات نُظم - نظام إدارة شامل{% endblock %}
+{% block title %}ميزات نُظم - نظام إدارة شامل بتقنية مستقبلية{% endblock %}
 
 {% block extra_css %}
 <style>
-    :root {
-        --primary-color: #1e3a5c;
-        --secondary-color: #2c5282;
-        --accent-color: #4fd1c7;
-        --success-color: #28a745;
-        --warning-color: #ffc107;
-        --info-color: #17a2b8;
-        --gradient-primary: linear-gradient(135deg, #1e3a5c 0%, #2c5282 100%);
-        --gradient-accent: linear-gradient(135deg, #4fd1c7 0%, #38b2ac 100%);
-        --gradient-success: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-        --gradient-warning: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
-        --gradient-info: linear-gradient(135deg, #17a2b8 0%, #6f42c1 100%);
-        --shadow-primary: 0 10px 40px rgba(30, 58, 92, 0.15);
-        --shadow-hover: 0 20px 60px rgba(30, 58, 92, 0.25);
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
     }
 
-    /* Hero Section للميزات */
-    .features-hero {
-        background: var(--gradient-primary);
-        color: white;
-        padding: 120px 0 80px;
+    :root {
+        --primary: #6366f1;
+        --secondary: #8b5cf6;
+        --accent: #ec4899;
+        --success: #10b981;
+        --warning: #f59e0b;
+        --info: #06b6d4;
+        --dark: #0f172a;
+        --light: #f8fafc;
+    }
+
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        overflow-x: hidden;
+        background: var(--dark);
+    }
+
+    /* ========== HERO SECTION - FUTURISTIC ========== */
+    .hero-futuristic {
+        min-height: 100vh;
+        background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%);
         position: relative;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* Animated particles background */
+    .particles {
+        position: absolute;
+        width: 100%;
+        height: 100%;
         overflow: hidden;
     }
 
-    .features-hero::before {
-        content: '';
+    .particle {
         position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000"><defs><pattern id="circuit" x="0" y="0" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="20" cy="20" r="2" fill="%23ffffff" opacity="0.1"/><circle cx="80" cy="80" r="2" fill="%23ffffff" opacity="0.1"/><line x1="20" y1="20" x2="80" y2="80" stroke="%23ffffff" stroke-width="1" opacity="0.1"/></pattern></defs><rect width="1000" height="1000" fill="url(%23circuit)"/></svg>') repeat;
-        opacity: 0.3;
+        width: 3px;
+        height: 3px;
+        background: rgba(99, 102, 241, 0.5);
+        border-radius: 50%;
+        animation: float 20s infinite;
+    }
+
+    @keyframes float {
+        0%, 100% { transform: translateY(0) translateX(0); opacity: 0; }
+        10% { opacity: 1; }
+        90% { opacity: 1; }
+        100% { transform: translateY(-100vh) translateX(100px); opacity: 0; }
+    }
+
+    /* Grid overlay */
+    .grid-overlay {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        background-image: 
+            linear-gradient(rgba(99, 102, 241, 0.1) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(99, 102, 241, 0.1) 1px, transparent 1px);
+        background-size: 50px 50px;
+        animation: gridMove 20s linear infinite;
+    }
+
+    @keyframes gridMove {
+        0% { transform: translateY(0); }
+        100% { transform: translateY(50px); }
     }
 
     .hero-content {
         position: relative;
-        z-index: 2;
+        z-index: 10;
         text-align: center;
+        color: white;
+        padding: 2rem;
+    }
+
+    .hero-badge {
+        display: inline-block;
+        padding: 10px 30px;
+        background: rgba(99, 102, 241, 0.2);
+        border: 2px solid rgba(99, 102, 241, 0.5);
+        border-radius: 50px;
+        color: #a5b4fc;
+        font-weight: 600;
+        margin-bottom: 2rem;
+        backdrop-filter: blur(10px);
+        animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
     }
 
     .hero-title {
-        font-size: 3.5rem;
-        font-weight: 800;
+        font-size: clamp(2.5rem, 8vw, 5rem);
+        font-weight: 900;
         margin-bottom: 1.5rem;
-        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        background: linear-gradient(135deg, #ffffff 0%, #a5b4fc 50%, #c7d2fe 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        line-height: 1.2;
     }
 
     .hero-subtitle {
-        font-size: 1.4rem;
-        opacity: 0.95;
-        max-width: 700px;
+        font-size: clamp(1.1rem, 2vw, 1.5rem);
+        color: #cbd5e1;
+        max-width: 800px;
         margin: 0 auto 3rem;
-        line-height: 1.6;
+        line-height: 1.8;
     }
 
-    .breadcrumb-nav {
-        background: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(10px);
-        padding: 15px 30px;
-        border-radius: 50px;
-        display: inline-block;
-        margin-bottom: 2rem;
-    }
-
-    .breadcrumb-nav a {
-        color: rgba(255, 255, 255, 0.8);
-        text-decoration: none;
-        margin: 0 10px;
-        transition: color 0.3s ease;
-    }
-
-    .breadcrumb-nav a:hover {
-        color: white;
-    }
-
-    .breadcrumb-nav .current {
-        color: white;
-        font-weight: 600;
-    }
-
-    /* تصنيفات الميزات */
-    .features-categories {
-        background: #f8f9fa;
-        padding: 60px 0;
-    }
-
-    .category-tabs {
+    .hero-stats {
         display: flex;
         justify-content: center;
+        gap: 3rem;
         flex-wrap: wrap;
-        gap: 15px;
-        margin-bottom: 60px;
+        margin-top: 4rem;
     }
 
-    .category-tab {
-        background: white;
-        color: #6c757d;
-        padding: 12px 30px;
+    .stat-item {
+        text-align: center;
+    }
+
+    .stat-number {
+        font-size: 3rem;
+        font-weight: 900;
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        display: block;
+    }
+
+    .stat-label {
+        color: #94a3b8;
+        font-size: 1rem;
+        margin-top: 0.5rem;
+    }
+
+    .hero-cta {
+        display: inline-flex;
+        gap: 1rem;
+        margin-top: 2rem;
+    }
+
+    .btn-futuristic {
+        padding: 18px 40px;
+        font-size: 1.1rem;
+        font-weight: 700;
+        border: none;
         border-radius: 50px;
-        border: 2px solid #e9ecef;
-        text-decoration: none;
-        font-weight: 600;
-        transition: all 0.3s ease;
         cursor: pointer;
+        transition: all 0.4s ease;
+        text-decoration: none;
+        position: relative;
+        overflow: hidden;
     }
 
-    .category-tab:hover,
-    .category-tab.active {
-        background: var(--primary-color);
+    .btn-primary-glow {
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
         color: white;
-        border-color: var(--primary-color);
-        transform: translateY(-2px);
-        box-shadow: 0 8px 20px rgba(30, 58, 92, 0.2);
+        box-shadow: 0 0 30px rgba(99, 102, 241, 0.5);
+    }
+
+    .btn-primary-glow:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 0 50px rgba(99, 102, 241, 0.8);
+        color: white;
         text-decoration: none;
     }
 
-    /* بطاقات الميزات المطورة */
+    .btn-secondary-glow {
+        background: transparent;
+        color: white;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        backdrop-filter: blur(10px);
+    }
+
+    .btn-secondary-glow:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: white;
+        transform: translateY(-3px);
+        color: white;
+        text-decoration: none;
+    }
+
+    /* ========== FEATURES SHOWCASE ========== */
+    .features-showcase {
+        padding: 100px 0;
+        background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+        position: relative;
+    }
+
+    .section-header {
+        text-align: center;
+        margin-bottom: 80px;
+    }
+
+    .section-badge {
+        display: inline-block;
+        padding: 8px 20px;
+        background: rgba(99, 102, 241, 0.1);
+        border: 1px solid rgba(99, 102, 241, 0.3);
+        border-radius: 50px;
+        color: #818cf8;
+        font-size: 0.9rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+    }
+
+    .section-title {
+        font-size: clamp(2rem, 5vw, 3.5rem);
+        font-weight: 900;
+        color: white;
+        margin-bottom: 1rem;
+    }
+
+    .section-subtitle {
+        font-size: 1.2rem;
+        color: #94a3b8;
+        max-width: 700px;
+        margin: 0 auto;
+    }
+
+    /* Features Grid */
     .features-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-        gap: 40px;
-        margin-bottom: 60px;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 30px;
+        margin-top: 60px;
     }
 
-    .feature-card {
-        background: white;
+    .feature-card-futuristic {
+        background: linear-gradient(135deg, rgba(30, 41, 59, 0.5) 0%, rgba(51, 65, 85, 0.3) 100%);
+        border: 1px solid rgba(99, 102, 241, 0.2);
         border-radius: 25px;
+        padding: 40px;
+        transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
         overflow: hidden;
-        box-shadow: var(--shadow-primary);
-        transition: all 0.4s ease;
-        position: relative;
-        border: 1px solid rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(10px);
     }
 
-    .feature-card:hover {
-        transform: translateY(-15px);
-        box-shadow: var(--shadow-hover);
+    .feature-card-futuristic::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(99, 102, 241, 0.1) 0%, transparent 70%);
+        transition: all 0.5s ease;
+        opacity: 0;
     }
 
-    .feature-header {
-        padding: 40px 30px 30px;
-        position: relative;
-        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    .feature-card-futuristic:hover::before {
+        opacity: 1;
+        transform: translate(-25%, -25%);
     }
 
-    .feature-icon {
+    .feature-card-futuristic:hover {
+        transform: translateY(-10px);
+        border-color: rgba(99, 102, 241, 0.5);
+        box-shadow: 0 20px 60px rgba(99, 102, 241, 0.3);
+    }
+
+    .feature-icon-box {
         width: 80px;
         height: 80px;
         border-radius: 20px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 2.2rem;
-        color: white;
+        font-size: 2.5rem;
         margin-bottom: 25px;
         position: relative;
-        transition: all 0.4s ease;
+        transition: all 0.5s ease;
     }
 
-    .feature-card:hover .feature-icon {
+    .feature-card-futuristic:hover .feature-icon-box {
         transform: scale(1.1) rotate(5deg);
     }
 
-    .feature-icon.management {
-        background: var(--gradient-primary);
-    }
+    .icon-gradient-1 { background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); }
+    .icon-gradient-2 { background: linear-gradient(135deg, #10b981 0%, #06b6d4 100%); }
+    .icon-gradient-3 { background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%); }
+    .icon-gradient-4 { background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); }
+    .icon-gradient-5 { background: linear-gradient(135deg, #06b6d4 0%, #6366f1 100%); }
+    .icon-gradient-6 { background: linear-gradient(135deg, #ef4444 0%, #ec4899 100%); }
 
-    .feature-icon.vehicles {
-        background: var(--gradient-success);
-    }
-
-    .feature-icon.employees {
-        background: var(--gradient-warning);
-    }
-
-    .feature-icon.reports {
-        background: var(--gradient-info);
-    }
-
-    .feature-icon.security {
-        background: linear-gradient(135deg, #dc3545 0%, #e83e8c 100%);
-    }
-
-    .feature-icon.technical {
-        background: linear-gradient(135deg, #6f42c1 0%, #e83e8c 100%);
-    }
-
-    .feature-title {
-        font-size: 1.6rem;
-        font-weight: 700;
-        color: var(--primary-color);
+    .feature-title-futuristic {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: white;
         margin-bottom: 15px;
     }
 
-    .feature-description {
-        color: #6c757d;
-        line-height: 1.6;
-        margin-bottom: 0;
+    .feature-description-futuristic {
+        color: #cbd5e1;
+        line-height: 1.7;
+        margin-bottom: 25px;
     }
 
-    .feature-body {
-        padding: 30px;
-    }
-
-    .feature-capabilities {
+    .feature-list {
         list-style: none;
         padding: 0;
-        margin: 0;
+        margin-bottom: 25px;
     }
 
-    .feature-capabilities li {
-        padding: 12px 0;
-        border-bottom: 1px solid #f1f3f4;
+    .feature-list li {
+        color: #94a3b8;
+        padding: 8px 0;
         display: flex;
         align-items: center;
-        color: #495057;
-        transition: all 0.3s ease;
+        gap: 10px;
+        font-size: 0.95rem;
     }
 
-    .feature-capabilities li:last-child {
-        border-bottom: none;
-    }
-
-    .feature-capabilities li:hover {
-        color: var(--primary-color);
-        padding-right: 10px;
-    }
-
-    .feature-capabilities li i {
-        margin-left: 12px;
-        color: var(--success-color);
+    .feature-list li i {
+        color: #10b981;
         font-size: 1rem;
-        transition: all 0.3s ease;
     }
 
-    .feature-capabilities li:hover i {
-        transform: scale(1.2);
-    }
-
-    .feature-footer {
-        padding: 20px 30px;
-        background: #f8f9fa;
-        border-top: 1px solid #e9ecef;
-    }
-
-    .feature-cta {
-        display: inline-block;
-        background: var(--gradient-accent);
-        color: white;
-        padding: 12px 25px;
-        border-radius: 25px;
+    .feature-link {
+        color: #818cf8;
         text-decoration: none;
         font-weight: 600;
-        transition: all 0.3s ease;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .feature-cta::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-        transition: left 0.6s ease;
-    }
-
-    .feature-cta:hover::before {
-        left: 100%;
-    }
-
-    .feature-cta:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 20px rgba(79, 209, 199, 0.4);
-        text-decoration: none;
-        color: white;
-    }
-
-    /* قسم المقارنة */
-    .comparison-section {
-        padding: 80px 0;
-        background: white;
-    }
-
-    .comparison-table {
-        background: white;
-        border-radius: 20px;
-        overflow: hidden;
-        box-shadow: var(--shadow-primary);
-        margin-top: 40px;
-    }
-
-    .comparison-header {
-        background: var(--gradient-primary);
-        color: white;
-        padding: 30px;
-        text-align: center;
-    }
-
-    .comparison-body {
-        padding: 40px;
-    }
-
-    .comparison-row {
-        display: grid;
-        grid-template-columns: 2fr 1fr 1fr;
-        gap: 20px;
-        padding: 20px 0;
-        border-bottom: 1px solid #e9ecef;
+        display: inline-flex;
         align-items: center;
+        gap: 8px;
+        transition: all 0.3s ease;
     }
 
-    .comparison-row:last-child {
-        border-bottom: none;
+    .feature-link:hover {
+        color: #a5b4fc;
+        gap: 12px;
+        text-decoration: none;
     }
 
-    .comparison-feature {
-        font-weight: 600;
-        color: var(--primary-color);
-    }
-
-    .comparison-check {
+    /* ========== INTERACTIVE STATS ========== */
+    .stats-interactive {
+        padding: 100px 0;
+        background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
         text-align: center;
-        font-size: 1.5rem;
     }
 
-    .check-yes {
-        color: var(--success-color);
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 40px;
+        margin-top: 60px;
     }
 
-    .check-no {
-        color: #dc3545;
-    }
-
-    /* قسم الشهادات */
-    .testimonials-section {
-        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-        padding: 80px 0;
-    }
-
-    .testimonial-card {
-        background: white;
-        padding: 40px;
+    .stat-card {
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+        border: 1px solid rgba(99, 102, 241, 0.2);
         border-radius: 20px;
-        box-shadow: var(--shadow-primary);
-        text-align: center;
-        margin-bottom: 30px;
+        padding: 40px 20px;
         transition: all 0.4s ease;
     }
 
-    .testimonial-card:hover {
+    .stat-card:hover {
+        transform: translateY(-10px) scale(1.05);
+        border-color: rgba(99, 102, 241, 0.5);
+        box-shadow: 0 20px 40px rgba(99, 102, 241, 0.3);
+    }
+
+    .stat-icon {
+        font-size: 3rem;
+        margin-bottom: 20px;
+    }
+
+    .stat-value {
+        font-size: 3rem;
+        font-weight: 900;
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 10px;
+    }
+
+    .stat-description {
+        color: #cbd5e1;
+        font-size: 1rem;
+    }
+
+    /* ========== TECHNOLOGY STACK ========== */
+    .tech-stack {
+        padding: 100px 0;
+        background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+    }
+
+    .tech-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 30px;
+        margin-top: 60px;
+    }
+
+    .tech-item {
+        background: rgba(30, 41, 59, 0.5);
+        border: 1px solid rgba(99, 102, 241, 0.2);
+        border-radius: 15px;
+        padding: 30px;
+        text-align: center;
+        transition: all 0.4s ease;
+        backdrop-filter: blur(10px);
+    }
+
+    .tech-item:hover {
         transform: translateY(-10px);
-        box-shadow: var(--shadow-hover);
+        border-color: rgba(99, 102, 241, 0.6);
+        background: rgba(99, 102, 241, 0.1);
     }
 
-    .testimonial-content {
+    .tech-icon {
+        font-size: 3rem;
+        margin-bottom: 15px;
+        filter: grayscale(50%);
+        transition: all 0.4s ease;
+    }
+
+    .tech-item:hover .tech-icon {
+        filter: grayscale(0%);
+        transform: scale(1.2);
+    }
+
+    .tech-name {
+        color: white;
+        font-weight: 700;
         font-size: 1.1rem;
-        color: #495057;
-        line-height: 1.6;
-        margin-bottom: 25px;
-        font-style: italic;
     }
 
-    .testimonial-author {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 15px;
-    }
-
-    .author-avatar {
-        width: 60px;
-        height: 60px;
-        border-radius: 50%;
-        background: var(--gradient-accent);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-size: 1.5rem;
-        font-weight: 700;
-    }
-
-    .author-info h5 {
-        margin: 0;
-        color: var(--primary-color);
-        font-weight: 700;
-    }
-
-    .author-info p {
-        margin: 0;
-        color: #6c757d;
-        font-size: 0.9rem;
-    }
-
-    .rating {
-        display: flex;
-        justify-content: center;
-        gap: 5px;
-        margin-top: 15px;
-    }
-
-    .star {
-        color: #ffc107;
-        font-size: 1.2rem;
-    }
-
-    /* قسم CTA النهائي */
-    .final-cta {
-        background: var(--gradient-primary);
-        color: white;
-        padding: 80px 0;
+    /* ========== CTA SECTION ========== */
+    .cta-futuristic {
+        padding: 120px 0;
+        background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #6366f1 100%);
         text-align: center;
         position: relative;
         overflow: hidden;
     }
 
-    .final-cta::before {
+    .cta-futuristic::before {
         content: '';
         position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="dots" width="20" height="20" patternUnits="userSpaceOnUse"><circle cx="10" cy="10" r="1" fill="%23ffffff" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23dots)"/></svg>') repeat;
+        width: 500px;
+        height: 500px;
+        background: radial-gradient(circle, rgba(99, 102, 241, 0.3) 0%, transparent 70%);
+        top: -250px;
+        left: -250px;
+        animation: float-slow 20s infinite;
+    }
+
+    .cta-futuristic::after {
+        content: '';
+        position: absolute;
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(circle, rgba(139, 92, 246, 0.3) 0%, transparent 70%);
+        bottom: -200px;
+        right: -200px;
+        animation: float-slow 15s infinite reverse;
+    }
+
+    @keyframes float-slow {
+        0%, 100% { transform: translate(0, 0); }
+        50% { transform: translate(100px, 100px); }
     }
 
     .cta-content {
         position: relative;
-        z-index: 2;
+        z-index: 10;
     }
 
-    .cta-title {
-        font-size: 3rem;
-        font-weight: 800;
-        margin-bottom: 20px;
-    }
-
-    .cta-subtitle {
-        font-size: 1.3rem;
-        opacity: 0.9;
-        max-width: 600px;
-        margin: 0 auto 40px;
-        line-height: 1.6;
-    }
-
-    .cta-buttons {
-        display: flex;
-        justify-content: center;
-        flex-wrap: wrap;
-        gap: 20px;
-    }
-
-    .cta-button {
-        background: white;
-        color: var(--primary-color);
-        padding: 18px 40px;
-        border-radius: 50px;
-        font-size: 1.2rem;
-        font-weight: 700;
-        text-decoration: none;
-        transition: all 0.4s ease;
-        border: 2px solid white;
-    }
-
-    .cta-button:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 15px 35px rgba(0,0,0,0.2);
-        text-decoration: none;
-        color: var(--primary-color);
-    }
-
-    .cta-button.secondary {
-        background: transparent;
+    .cta-title-big {
+        font-size: clamp(2.5rem, 6vw, 4.5rem);
+        font-weight: 900;
         color: white;
-        border: 2px solid white;
+        margin-bottom: 1.5rem;
+        line-height: 1.2;
     }
 
-    .cta-button.secondary:hover {
-        background: white;
-        color: var(--primary-color);
+    .cta-subtitle-big {
+        font-size: 1.4rem;
+        color: #e0e7ff;
+        max-width: 700px;
+        margin: 0 auto 3rem;
     }
 
-    /* التصميم المتجاوب */
-    @media (max-width: 992px) {
-        .features-grid {
-            grid-template-columns: 1fr;
-            gap: 30px;
-        }
-        
-        .hero-title {
-            font-size: 2.8rem;
-        }
-        
-        .comparison-row {
-            grid-template-columns: 1fr;
-            gap: 10px;
-            text-align: center;
-        }
-    }
-
+    /* ========== RESPONSIVE ========== */
     @media (max-width: 768px) {
-        .hero-title {
-            font-size: 2.2rem;
-        }
-        
-        .hero-subtitle {
-            font-size: 1.2rem;
-        }
-        
-        .category-tabs {
-            flex-direction: column;
-            align-items: center;
-        }
-        
         .features-grid {
             grid-template-columns: 1fr;
         }
-        
-        .feature-card {
-            margin-bottom: 20px;
+
+        .hero-stats {
+            gap: 2rem;
         }
-        
-        .cta-title {
-            font-size: 2.2rem;
+
+        .stat-number {
+            font-size: 2rem;
         }
-        
-        .cta-buttons {
+
+        .hero-cta {
             flex-direction: column;
-            align-items: center;
         }
-        
-        .cta-button {
+
+        .btn-futuristic {
             width: 100%;
-            max-width: 300px;
         }
     }
 
-    /* تأثيرات الانيميشن */
+    /* ========== ANIMATIONS ========== */
     @keyframes fadeInUp {
         from {
             opacity: 0;
-            transform: translateY(30px);
+            transform: translateY(40px);
         }
         to {
             opacity: 1;
@@ -558,492 +538,546 @@
         }
     }
 
-    .fade-in-up {
-        animation: fadeInUp 0.8s ease-out forwards;
-    }
-
-    .feature-card {
+    .animate-on-scroll {
         opacity: 0;
-        transform: translateY(30px);
-        transition: all 0.6s ease;
+        animation: fadeInUp 0.8s ease forwards;
     }
 
-    .feature-card.animate {
-        opacity: 1;
-        transform: translateY(0);
-    }
+    .delay-1 { animation-delay: 0.1s; }
+    .delay-2 { animation-delay: 0.2s; }
+    .delay-3 { animation-delay: 0.3s; }
+    .delay-4 { animation-delay: 0.4s; }
+    .delay-5 { animation-delay: 0.5s; }
+    .delay-6 { animation-delay: 0.6s; }
 </style>
 {% endblock %}
 
 {% block content %}
-<!-- Hero Section -->
-<section class="features-hero">
+
+<!-- ========== FUTURISTIC HERO ========== -->
+<section class="hero-futuristic">
+    <div class="particles" id="particles"></div>
+    <div class="grid-overlay"></div>
+    
     <div class="container">
         <div class="hero-content">
-            <nav class="breadcrumb-nav">
-                <a href="/nuzum">الرئيسية</a>
-                <span>/</span>
-                <span class="current">الميزات</span>
-            </nav>
+            <div class="hero-badge">
+                ✨ نظام إدارة شامل بتقنية مستقبلية
+            </div>
             
-            <h1 class="hero-title">ميزات نُظم الشاملة</h1>
+            <h1 class="hero-title">
+                نُظم<br>
+                المستقبل يبدأ هنا
+            </h1>
+            
             <p class="hero-subtitle">
-                اكتشف كيف يمكن لنُظم تحويل إدارة مؤسستك من خلال مجموعة شاملة من الأدوات المتطورة والميزات الاحترافية المصممة خصيصاً للشركات السعودية
+                نظام إدارة أسطول متكامل مع ذكاء اصطناعي، تحليلات صوتية، وتقارير احترافية -
+                كل ما تحتاجه لإدارة مؤسستك بكفاءة عالية
             </p>
+            
+            <div class="hero-cta">
+                <a href="/nuzum/demo" class="btn-futuristic btn-primary-glow">
+                    <i class="fas fa-rocket me-2"></i>
+                    ابدأ الآن - تجربة مجانية
+                </a>
+                <a href="#features" class="btn-futuristic btn-secondary-glow">
+                    <i class="fas fa-play me-2"></i>
+                    اكتشف الميزات
+                </a>
+            </div>
+            
+            <div class="hero-stats">
+                <div class="stat-item">
+                    <span class="stat-number" data-target="25">0</span>
+                    <div class="stat-label">ميزة متقدمة</div>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number" data-target="500">0</span>
+                    <div class="stat-label">شركة تثق بنا</div>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number" data-target="99">0</span>
+                    <div class="stat-label">نسبة الرضا %</div>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number" data-target="24">0</span>
+                    <div class="stat-label">دعم فني على مدار الساعة</div>
+                </div>
+            </div>
         </div>
     </div>
 </section>
 
-<!-- تصنيفات الميزات -->
-<section class="features-categories">
+<!-- ========== FEATURES SHOWCASE ========== -->
+<section class="features-showcase" id="features">
     <div class="container">
-        <div class="category-tabs">
-            <a href="#" class="category-tab active" data-category="all">جميع الميزات</a>
-            <a href="#" class="category-tab" data-category="management">الإدارة</a>
-            <a href="#" class="category-tab" data-category="vehicles">المركبات</a>
-            <a href="#" class="category-tab" data-category="employees">الموظفين</a>
-            <a href="#" class="category-tab" data-category="reports">التقارير</a>
-            <a href="#" class="category-tab" data-category="security">الأمان</a>
-            <a href="#" class="category-tab" data-category="technical">التقنية</a>
+        <div class="section-header">
+            <span class="section-badge">الميزات الشاملة</span>
+            <h2 class="section-title">كل ما تحتاجه في مكان واحد</h2>
+            <p class="section-subtitle">
+                نظام متكامل يجمع بين الإدارة الذكية، التحليلات المتقدمة، والأتمتة الكاملة
+            </p>
         </div>
-
+        
         <div class="features-grid">
             <!-- إدارة الموظفين -->
-            <div class="feature-card" data-category="management employees">
-                <div class="feature-header">
-                    <div class="feature-icon management">
-                        <i class="fas fa-users"></i>
-                    </div>
-                    <h3 class="feature-title">إدارة الموظفين الشاملة</h3>
-                    <p class="feature-description">
-                        نظام متكامل لإدارة جميع بيانات الموظفين مع تتبع المستندات وتواريخ الانتهاء وإدارة الملفات الشخصية
-                    </p>
+            <div class="feature-card-futuristic animate-on-scroll delay-1">
+                <div class="feature-icon-box icon-gradient-1">
+                    <i class="fas fa-users"></i>
                 </div>
-                <div class="feature-body">
-                    <ul class="feature-capabilities">
-                        <li><i class="fas fa-check"></i> إدارة البيانات الشخصية والوظيفية</li>
-                        <li><i class="fas fa-check"></i> تتبع المستندات وتواريخ انتهائها</li>
-                        <li><i class="fas fa-check"></i> رفع وإدارة الصور والملفات</li>
-                        <li><i class="fas fa-check"></i> استيراد البيانات من Excel</li>
-                        <li><i class="fas fa-check"></i> نظام بحث وفلترة متقدم</li>
-                        <li><i class="fas fa-check"></i> إدارة الأقسام والوظائف</li>
-                    </ul>
-                </div>
-                <div class="feature-footer">
-                    <a href="/nuzum/demo" class="feature-cta">
-                        <i class="fas fa-play me-2"></i>شاهد العرض التوضيحي
-                    </a>
-                </div>
+                <h3 class="feature-title-futuristic">🎯 إدارة الموظفين الشاملة</h3>
+                <p class="feature-description-futuristic">
+                    نظام متكامل لإدارة جميع بيانات الموظفين مع تتبع المستندات، الإجازات، والملفات الشخصية
+                </p>
+                <ul class="feature-list">
+                    <li><i class="fas fa-check-circle"></i> إدارة البيانات الشخصية والوظيفية</li>
+                    <li><i class="fas fa-check-circle"></i> تتبع المستندات وتواريخ الانتهاء</li>
+                    <li><i class="fas fa-check-circle"></i> رفع الصور والوثائق (HEIC Support)</li>
+                    <li><i class="fas fa-check-circle"></i> استيراد/تصدير Excel</li>
+                    <li><i class="fas fa-check-circle"></i> إدارة الأقسام المتعددة</li>
+                    <li><i class="fas fa-check-circle"></i> دعم الموظفين النشطين والمتوقفين</li>
+                </ul>
+                <a href="/nuzum/demo" class="feature-link">
+                    اكتشف المزيد <i class="fas fa-arrow-left"></i>
+                </a>
             </div>
 
             <!-- إدارة المركبات -->
-            <div class="feature-card" data-category="vehicles">
-                <div class="feature-header">
-                    <div class="feature-icon vehicles">
-                        <i class="fas fa-car"></i>
-                    </div>
-                    <h3 class="feature-title">إدارة أسطول المركبات</h3>
-                    <p class="feature-description">
-                        نظام متطور لإدارة وتتبع جميع المركبات مع إدارة الوثائق والصيانة والتسليم والاستلام
-                    </p>
+            <div class="feature-card-futuristic animate-on-scroll delay-2">
+                <div class="feature-icon-box icon-gradient-2">
+                    <i class="fas fa-car-side"></i>
                 </div>
-                <div class="feature-body">
-                    <ul class="feature-capabilities">
-                        <li><i class="fas fa-check"></i> تسجيل بيانات المركبات والوثائق</li>
-                        <li><i class="fas fa-check"></i> نظام تسليم واستلام المركبات</li>
-                        <li><i class="fas fa-check"></i> إدارة الصيانة والورش</li>
-                        <li><i class="fas fa-check"></i> تتبع الفحوصات الدورية</li>
-                        <li><i class="fas fa-check"></i> رفع صور الأضرار والتقارير</li>
-                        <li><i class="fas fa-check"></i> التوقيع الرقمي والموافقات</li>
-                    </ul>
-                </div>
-                <div class="feature-footer">
-                    <a href="/nuzum/demo" class="feature-cta">
-                        <i class="fas fa-play me-2"></i>شاهد العرض التوضيحي
-                    </a>
-                </div>
+                <h3 class="feature-title-futuristic">🚗 إدارة أسطول المركبات</h3>
+                <p class="feature-description-futuristic">
+                    نظام متطور لإدارة المركبات مع تتبع التسليم، الصيانة، والفحوصات الخارجية
+                </p>
+                <ul class="feature-list">
+                    <li><i class="fas fa-check-circle"></i> تسجيل المركبات والوثائق</li>
+                    <li><i class="fas fa-check-circle"></i> نظام تسليم/استلام مع التوقيع الرقمي</li>
+                    <li><i class="fas fa-check-circle"></i> إدارة الورش والصيانة</li>
+                    <li><i class="fas fa-check-circle"></i> فحوصات خارجية مع رفع الصور</li>
+                    <li><i class="fas fa-check-circle"></i> تتبع التأمين والرخص</li>
+                    <li><i class="fas fa-check-circle"></i> نظام الإرجاع التلقائي</li>
+                </ul>
+                <a href="/nuzum/demo" class="feature-link">
+                    اكتشف المزيد <i class="fas fa-arrow-left"></i>
+                </a>
             </div>
 
-            <!-- نظام الحضور والغياب -->
-            <div class="feature-card" data-category="employees">
-                <div class="feature-header">
-                    <div class="feature-icon employees">
-                        <i class="fas fa-clock"></i>
-                    </div>
-                    <h3 class="feature-title">نظام الحضور والغياب</h3>
-                    <p class="feature-description">
-                        تتبع دقيق لحضور الموظفين مع حساب الساعات الإضافية ودعم التقويم الهجري والميلادي
-                    </p>
+            <!-- الحضور والغياب -->
+            <div class="feature-card-futuristic animate-on-scroll delay-3">
+                <div class="feature-icon-box icon-gradient-3">
+                    <i class="fas fa-user-clock"></i>
                 </div>
-                <div class="feature-body">
-                    <ul class="feature-capabilities">
-                        <li><i class="fas fa-check"></i> تسجيل الحضور والانصراف</li>
-                        <li><i class="fas fa-check"></i> حساب الساعات الإضافية تلقائياً</li>
-                        <li><i class="fas fa-check"></i> دعم التقويم الهجري والميلادي</li>
-                        <li><i class="fas fa-check"></i> تقارير الحضور الشهرية</li>
-                        <li><i class="fas fa-check"></i> إدارة الإجازات والغياب</li>
-                        <li><i class="fas fa-check"></i> تنبيهات التأخير والغياب</li>
-                    </ul>
-                </div>
-                <div class="feature-footer">
-                    <a href="/nuzum/demo" class="feature-cta">
-                        <i class="fas fa-play me-2"></i>شاهد العرض التوضيحي
-                    </a>
-                </div>
+                <h3 class="feature-title-futuristic">⏰ نظام الحضور الذكي</h3>
+                <p class="feature-description-futuristic">
+                    تتبع دقيق للحضور والغياب مع دعم التقويم الهجري والميلادي وحساب الساعات الإضافية
+                </p>
+                <ul class="feature-list">
+                    <li><i class="fas fa-check-circle"></i> تسجيل الحضور والانصراف</li>
+                    <li><i class="fas fa-check-circle"></i> دعم التقويم الهجري والميلادي</li>
+                    <li><i class="fas fa-check-circle"></i> حساب الساعات الإضافية تلقائياً</li>
+                    <li><i class="fas fa-check-circle"></i> تقارير شهرية وأسبوعية</li>
+                    <li><i class="fas fa-check-circle"></i> فلترة حسب الأقسام</li>
+                    <li><i class="fas fa-check-circle"></i> Dashboard تفاعلي</li>
+                </ul>
+                <a href="/nuzum/demo" class="feature-link">
+                    اكتشف المزيد <i class="fas fa-arrow-left"></i>
+                </a>
             </div>
 
             <!-- إدارة الرواتب -->
-            <div class="feature-card" data-category="management reports">
-                <div class="feature-header">
-                    <div class="feature-icon reports">
-                        <i class="fas fa-money-bill-wave"></i>
-                    </div>
-                    <h3 class="feature-title">نظام إدارة الرواتب</h3>
-                    <p class="feature-description">
-                        نظام محاسبي متكامل لحساب ومعالجة رواتب الموظفين مع البدلات والخصومات والتقارير المالية
-                    </p>
+            <div class="feature-card-futuristic animate-on-scroll delay-4">
+                <div class="feature-icon-box icon-gradient-4">
+                    <i class="fas fa-money-bill-wave"></i>
                 </div>
-                <div class="feature-body">
-                    <ul class="feature-capabilities">
-                        <li><i class="fas fa-check"></i> حساب الرواتب تلقائياً</li>
-                        <li><i class="fas fa-check"></i> إدارة البدلات والخصومات</li>
-                        <li><i class="fas fa-check"></i> ربط الحضور بالراتب</li>
-                        <li><i class="fas fa-check"></i> كشوفات رواتب PDF</li>
-                        <li><i class="fas fa-check"></i> تقارير مالية شاملة</li>
-                        <li><i class="fas fa-check"></i> أرشفة البيانات المالية</li>
-                    </ul>
-                </div>
-                <div class="feature-footer">
-                    <a href="/nuzum/demo" class="feature-cta">
-                        <i class="fas fa-play me-2"></i>شاهد العرض التوضيحي
-                    </a>
-                </div>
+                <h3 class="feature-title-futuristic">💰 نظام الرواتب الذكي</h3>
+                <p class="feature-description-futuristic">
+                    نظام محاسبي متكامل يحسب الرواتب تلقائياً بناءً على الحضور (أيام الحضور × الأجر اليومي)
+                </p>
+                <ul class="feature-list">
+                    <li><i class="fas fa-check-circle"></i> حساب الرواتب بناءً على أيام الحضور الفعلية</li>
+                    <li><i class="fas fa-check-circle"></i> الأجر اليومي ثابت (30 يوم دائماً)</li>
+                    <li><i class="fas fa-check-circle"></i> نظام حافز الدوام الكامل</li>
+                    <li><i class="fas fa-check-circle"></i> إدارة البدلات والخصومات</li>
+                    <li><i class="fas fa-check-circle"></i> كشوفات رواتب PDF احترافية</li>
+                    <li><i class="fas fa-check-circle"></i> تقارير Excel مفصلة</li>
+                </ul>
+                <a href="/nuzum/demo" class="feature-link">
+                    اكتشف المزيد <i class="fas fa-arrow-left"></i>
+                </a>
             </div>
 
-            <!-- التقارير والتحليلات -->
-            <div class="feature-card" data-category="reports">
-                <div class="feature-header">
-                    <div class="feature-icon reports">
-                        <i class="fas fa-chart-bar"></i>
-                    </div>
-                    <h3 class="feature-title">التقارير والتحليلات</h3>
-                    <p class="feature-description">
-                        تقارير شاملة ومرئيات بيانية احترافية تدعم اتخاذ القرارات مع إمكانية التصدير والطباعة
-                    </p>
+            <!-- التقارير -->
+            <div class="feature-card-futuristic animate-on-scroll delay-5">
+                <div class="feature-icon-box icon-gradient-5">
+                    <i class="fas fa-file-contract"></i>
                 </div>
-                <div class="feature-body">
-                    <ul class="feature-capabilities">
-                        <li><i class="fas fa-check"></i> تقارير PDF احترافية بالعربية</li>
-                        <li><i class="fas fa-check"></i> تصدير Excel للبيانات</li>
-                        <li><i class="fas fa-check"></i> رسوم بيانية تفاعلية</li>
-                        <li><i class="fas fa-check"></i> تقارير مخصصة حسب الفترة</li>
-                        <li><i class="fas fa-check"></i> لوحات معلومات تفاعلية</li>
-                        <li><i class="fas fa-check"></i> إحصائيات الأداء الشاملة</li>
-                    </ul>
-                </div>
-                <div class="feature-footer">
-                    <a href="/nuzum/demo" class="feature-cta">
-                        <i class="fas fa-play me-2"></i>شاهد العرض التوضيحي
-                    </a>
-                </div>
+                <h3 class="feature-title-futuristic">📊 تقارير احترافية</h3>
+                <p class="feature-description-futuristic">
+                    تقارير PDF وExcel احترافية مع تصميمات عربية كاملة ودعم الطباعة
+                </p>
+                <ul class="feature-list">
+                    <li><i class="fas fa-check-circle"></i> تقارير PDF بتصميم احترافي عربي</li>
+                    <li><i class="fas fa-check-circle"></i> Excel مع 3 صفحات (Dashboard، Data، Complete)</li>
+                    <li><i class="fas fa-check-circle"></i> رسوم بيانية تفاعلية</li>
+                    <li><i class="fas fa-check-circle"></i> مشاركة عبر البريد الإلكتروني</li>
+                    <li><i class="fas fa-check-circle"></i> تقارير مخصصة حسب الفترة</li>
+                    <li><i class="fas fa-check-circle"></i> إحصائيات شاملة ومرئية</li>
+                </ul>
+                <a href="/nuzum/demo" class="feature-link">
+                    اكتشف المزيد <i class="fas fa-arrow-left"></i>
+                </a>
             </div>
 
-            <!-- إدارة الأجهزة المحمولة -->
-            <div class="feature-card" data-category="technical management">
-                <div class="feature-header">
-                    <div class="feature-icon technical">
-                        <i class="fas fa-mobile-alt"></i>
-                    </div>
-                    <h3 class="feature-title">إدارة الأجهزة المحمولة</h3>
-                    <p class="feature-description">
-                        نظام شامل لتتبع وإدارة الأجهزة المحمولة المخصصة للموظفين مع تتبع IMEI وحالة الجهاز
-                    </p>
+            <!-- الذكاء الاصطناعي -->
+            <div class="feature-card-futuristic animate-on-scroll delay-6">
+                <div class="feature-icon-box icon-gradient-6">
+                    <i class="fas fa-brain"></i>
                 </div>
-                <div class="feature-body">
-                    <ul class="feature-capabilities">
-                        <li><i class="fas fa-check"></i> تسجيل تفاصيل الأجهزة والـ IMEI</li>
-                        <li><i class="fas fa-check"></i> ربط الأجهزة بالموظفين</li>
-                        <li><i class="fas fa-check"></i> تتبع حالة الجهاز والصيانة</li>
-                        <li><i class="fas fa-check"></i> إدارة أرقام الهواتف</li>
-                        <li><i class="fas fa-check"></i> تقارير استخدام الأجهزة</li>
-                        <li><i class="fas fa-check"></i> نظام بحث متقدم للأجهزة</li>
-                    </ul>
-                </div>
-                <div class="feature-footer">
-                    <a href="/nuzum/demo" class="feature-cta">
-                        <i class="fas fa-play me-2"></i>شاهد العرض التوضيحي
-                    </a>
-                </div>
+                <h3 class="feature-title-futuristic">🤖 ذكاء اصطناعي متقدم</h3>
+                <p class="feature-description-futuristic">
+                    تحليلات ذكية مع OpenAI GPT-4o، توصيات استراتيجية، وتحليل مالي شامل
+                </p>
+                <ul class="feature-list">
+                    <li><i class="fas fa-check-circle"></i> تحليلات ذكية للموظفين والأسطول</li>
+                    <li><i class="fas fa-check-circle"></i> توصيات استراتيجية بالذكاء الاصطناعي</li>
+                    <li><i class="fas fa-check-circle"></i> تحليل مالي مع OpenAI</li>
+                    <li><i class="fas fa-check-circle"></i> توصيات في الوقت الفعلي</li>
+                    <li><i class="fas fa-check-circle"></i> رؤى تنبؤية للأداء</li>
+                    <li><i class="fas fa-check-circle"></i> تقارير باللغة العربية</li>
+                </ul>
+                <a href="/nuzum/demo" class="feature-link">
+                    اكتشف المزيد <i class="fas fa-arrow-left"></i>
+                </a>
             </div>
 
-            <!-- الأمان والحماية -->
-            <div class="feature-card" data-category="security">
-                <div class="feature-header">
-                    <div class="feature-icon security">
-                        <i class="fas fa-shield-alt"></i>
-                    </div>
-                    <h3 class="feature-title">الأمان والحماية</h3>
-                    <p class="feature-description">
-                        نظام أمان متقدم لحماية البيانات مع تشفير المعلومات الحساسة وإدارة الصلاحيات
-                    </p>
+            <!-- VoiceHub -->
+            <div class="feature-card-futuristic animate-on-scroll delay-1">
+                <div class="feature-icon-box icon-gradient-1">
+                    <i class="fas fa-phone-volume"></i>
                 </div>
-                <div class="feature-body">
-                    <ul class="feature-capabilities">
-                        <li><i class="fas fa-check"></i> تشفير البيانات الحساسة</li>
-                        <li><i class="fas fa-check"></i> إدارة الأدوار والصلاحيات</li>
-                        <li><i class="fas fa-check"></i> سجل العمليات والأنشطة</li>
-                        <li><i class="fas fa-check"></i> نسخ احتياطية تلقائية</li>
-                        <li><i class="fas fa-check"></i> حماية ضد الاختراق</li>
-                        <li><i class="fas fa-check"></i> مصادقة ثنائية العامل</li>
-                    </ul>
-                </div>
-                <div class="feature-footer">
-                    <a href="/nuzum/demo" class="feature-cta">
-                        <i class="fas fa-play me-2"></i>شاهد العرض التوضيحي
-                    </a>
-                </div>
+                <h3 class="feature-title-futuristic">📞 تحليل المكالمات الذكي</h3>
+                <p class="feature-description-futuristic">
+                    تكامل مع VoiceHub لتحليل المكالمات، استخراج الكلمات المفتاحية، والتحليل العاطفي
+                </p>
+                <ul class="feature-list">
+                    <li><i class="fas fa-check-circle"></i> تسجيل المكالمات في الوقت الفعلي</li>
+                    <li><i class="fas fa-check-circle"></i> تحليل عاطفي متقدم</li>
+                    <li><i class="fas fa-check-circle"></i> استخراج الكلمات المفتاحية</li>
+                    <li><i class="fas fa-check-circle"></i> نصوص المحادثات بالعربية</li>
+                    <li><i class="fas fa-check-circle"></i> Knowledge API للاستعلامات</li>
+                    <li><i class="fas fa-check-circle"></i> إدارة حسب الأقسام</li>
+                </ul>
+                <a href="/nuzum/demo" class="feature-link">
+                    اكتشف المزيد <i class="fas fa-arrow-left"></i>
+                </a>
             </div>
 
-            <!-- الواجهة العربية -->
-            <div class="feature-card" data-category="technical">
-                <div class="feature-header">
-                    <div class="feature-icon technical">
-                        <i class="fas fa-language"></i>
-                    </div>
-                    <h3 class="feature-title">واجهة عربية كاملة</h3>
-                    <p class="feature-description">
-                        تصميم احترافي يدعم الكتابة من اليمين لليسار مع خطوط عربية واضحة وتجربة مستخدم متميزة
-                    </p>
+            <!-- دليل الحسابات -->
+            <div class="feature-card-futuristic animate-on-scroll delay-2">
+                <div class="feature-icon-box icon-gradient-2">
+                    <i class="fas fa-sitemap"></i>
                 </div>
-                <div class="feature-body">
-                    <ul class="feature-capabilities">
-                        <li><i class="fas fa-check"></i> تصميم RTL كامل</li>
-                        <li><i class="fas fa-check"></i> خطوط عربية احترافية</li>
-                        <li><i class="fas fa-check"></i> دعم التقويم الهجري</li>
-                        <li><i class="fas fa-check"></i> تواريخ وأرقام عربية</li>
-                        <li><i class="fas fa-check"></i> واجهة سهلة الاستخدام</li>
-                        <li><i class="fas fa-check"></i> تجربة مستخدم محلية</li>
-                    </ul>
+                <h3 class="feature-title-futuristic">📚 دليل الحسابات</h3>
+                <p class="feature-description-futuristic">
+                    نظام محاسبي سعودي متكامل مع هيكل شجري للحسابات وتتبع المعاملات
+                </p>
+                <ul class="feature-list">
+                    <li><i class="fas fa-check-circle"></i> هيكل حسابات سعودي افتراضي</li>
+                    <li><i class="fas fa-check-circle"></i> إدارة الحسابات الهرمية</li>
+                    <li><i class="fas fa-check-circle"></i> صفحات أرصدة الحسابات</li>
+                    <li><i class="fas fa-check-circle"></i> تاريخ المعاملات</li>
+                    <li><i class="fas fa-check-circle"></i> تكامل مع نظام الرواتب</li>
+                    <li><i class="fas fa-check-circle"></i> تقارير مالية شاملة</li>
+                </ul>
+                <a href="/nuzum/demo" class="feature-link">
+                    اكتشف المزيد <i class="fas fa-arrow-left"></i>
+                </a>
+            </div>
+
+            <!-- الأجهزة المحمولة -->
+            <div class="feature-card-futuristic animate-on-scroll delay-3">
+                <div class="feature-icon-box icon-gradient-3">
+                    <i class="fas fa-mobile-alt"></i>
                 </div>
-                <div class="feature-footer">
-                    <a href="/nuzum/demo" class="feature-cta">
-                        <i class="fas fa-play me-2"></i>شاهد العرض التوضيحي
-                    </a>
+                <h3 class="feature-title-futuristic">📱 إدارة الأجهزة</h3>
+                <p class="feature-description-futuristic">
+                    نظام شامل لإدارة الأجهزة المحمولة مع تتبع IMEI وربطها بالموظفين
+                </p>
+                <ul class="feature-list">
+                    <li><i class="fas fa-check-circle"></i> تسجيل IMEI والتفاصيل</li>
+                    <li><i class="fas fa-check-circle"></i> ربط الأجهزة بالموظفين</li>
+                    <li><i class="fas fa-check-circle"></i> فلترة حسب القسم/الحالة</li>
+                    <li><i class="fas fa-check-circle"></i> استيراد/تصدير Excel</li>
+                    <li><i class="fas fa-check-circle"></i> تتبع حالة الجهاز</li>
+                    <li><i class="fas fa-check-circle"></i> بحث متقدم</li>
+                </ul>
+                <a href="/nuzum/demo" class="feature-link">
+                    اكتشف المزيد <i class="fas fa-arrow-left"></i>
+                </a>
+            </div>
+
+            <!-- العقارات -->
+            <div class="feature-card-futuristic animate-on-scroll delay-4">
+                <div class="feature-icon-box icon-gradient-4">
+                    <i class="fas fa-building"></i>
                 </div>
+                <h3 class="feature-title-futuristic">🏢 إدارة العقارات المستأجرة</h3>
+                <p class="feature-description-futuristic">
+                    نظام شامل لإدارة العقارات المستأجرة مع تتبع العقود والدفعات
+                </p>
+                <ul class="feature-list">
+                    <li><i class="fas fa-check-circle"></i> إدارة العقود والإيجار</li>
+                    <li><i class="fas fa-check-circle"></i> تتبع الدفعات</li>
+                    <li><i class="fas fa-check-circle"></i> رفع صور العقار (HEIC)</li>
+                    <li><i class="fas fa-check-circle"></i> جرد الأثاث</li>
+                    <li><i class="fas fa-check-circle"></i> تنبيهات انتهاء العقود</li>
+                    <li><i class="fas fa-check-circle"></i> تقارير مالية مفصلة</li>
+                </ul>
+                <a href="/nuzum/demo" class="feature-link">
+                    اكتشف المزيد <i class="fas fa-arrow-left"></i>
+                </a>
+            </div>
+
+            <!-- نظام API -->
+            <div class="feature-card-futuristic animate-on-scroll delay-5">
+                <div class="feature-icon-box icon-gradient-5">
+                    <i class="fas fa-code"></i>
+                </div>
+                <h3 class="feature-title-futuristic">🔌 RESTful API</h3>
+                <p class="feature-description-futuristic">
+                    API شامل مع +25 نقطة نهاية، مصادقة JWT، وبحث متقدم
+                </p>
+                <ul class="feature-list">
+                    <li><i class="fas fa-check-circle"></i> +25 endpoint شامل</li>
+                    <li><i class="fas fa-check-circle"></i> مصادقة JWT</li>
+                    <li><i class="fas fa-check-circle"></i> بحث وفلترة متقدمة</li>
+                    <li><i class="fas fa-check-circle"></i> pagination للبيانات</li>
+                    <li><i class="fas fa-check-circle"></i> معدلات استجابة سريعة</li>
+                    <li><i class="fas fa-check-circle"></i> توثيق شامل</li>
+                </ul>
+                <a href="/nuzum/demo" class="feature-link">
+                    اكتشف المزيد <i class="fas fa-arrow-left"></i>
+                </a>
+            </div>
+
+            <!-- الأمان -->
+            <div class="feature-card-futuristic animate-on-scroll delay-6">
+                <div class="feature-icon-box icon-gradient-6">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <h3 class="feature-title-futuristic">🔒 أمان متقدم</h3>
+                <p class="feature-description-futuristic">
+                    حماية متعددة المستويات مع صلاحيات دقيقة وتشفير كامل
+                </p>
+                <ul class="feature-list">
+                    <li><i class="fas fa-check-circle"></i> صلاحيات ثلاثية المستويات</li>
+                    <li><i class="fas fa-check-circle"></i> تشفير البيانات الحساسة</li>
+                    <li><i class="fas fa-check-circle"></i> سجل العمليات الكامل</li>
+                    <li><i class="fas fa-check-circle"></i> مصادقة Firebase</li>
+                    <li><i class="fas fa-check-circle"></i> CSRF Protection</li>
+                    <li><i class="fas fa-check-circle"></i> نسخ احتياطية تلقائية</li>
+                </ul>
+                <a href="/nuzum/demo" class="feature-link">
+                    اكتشف المزيد <i class="fas fa-arrow-left"></i>
+                </a>
             </div>
         </div>
     </div>
 </section>
 
-<!-- قسم المقارنة -->
-<section class="comparison-section">
+<!-- ========== INTERACTIVE STATS ========== -->
+<section class="stats-interactive">
     <div class="container">
-        <div class="row text-center mb-5">
-            <div class="col-12">
-                <h2 class="section-title">مقارنة مع الحلول التقليدية</h2>
-                <p class="section-subtitle">اكتشف الفرق الذي يحدثه نُظم في إدارة مؤسستك</p>
-            </div>
+        <div class="section-header">
+            <span class="section-badge">الأرقام تتحدث</span>
+            <h2 class="section-title">نتائج حقيقية، تأثير قابل للقياس</h2>
+            <p class="section-subtitle">
+                النتائج التي حققتها الشركات باستخدام نُظم
+            </p>
         </div>
         
-        <div class="comparison-table">
-            <div class="comparison-header">
-                <h3>نُظم مقابل الطرق التقليدية</h3>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">⚡</div>
+                <div class="stat-value">75%</div>
+                <div class="stat-description">تقليل الوقت الإداري</div>
             </div>
-            <div class="comparison-body">
-                <div class="comparison-row">
-                    <div class="comparison-feature">واجهة عربية كاملة</div>
-                    <div class="comparison-check check-yes"><i class="fas fa-check-circle"></i></div>
-                    <div class="comparison-check check-no"><i class="fas fa-times-circle"></i></div>
-                </div>
-                <div class="comparison-row">
-                    <div class="comparison-feature">تقارير PDF احترافية</div>
-                    <div class="comparison-check check-yes"><i class="fas fa-check-circle"></i></div>
-                    <div class="comparison-check check-no"><i class="fas fa-times-circle"></i></div>
-                </div>
-                <div class="comparison-row">
-                    <div class="comparison-feature">نظام أمان متقدم</div>
-                    <div class="comparison-check check-yes"><i class="fas fa-check-circle"></i></div>
-                    <div class="comparison-check check-no"><i class="fas fa-times-circle"></i></div>
-                </div>
-                <div class="comparison-row">
-                    <div class="comparison-feature">تتبع المركبات والصيانة</div>
-                    <div class="comparison-check check-yes"><i class="fas fa-check-circle"></i></div>
-                    <div class="comparison-check check-no"><i class="fas fa-times-circle"></i></div>
-                </div>
-                <div class="comparison-row">
-                    <div class="comparison-feature">إدارة الأجهزة المحمولة</div>
-                    <div class="comparison-check check-yes"><i class="fas fa-check-circle"></i></div>
-                    <div class="comparison-check check-no"><i class="fas fa-times-circle"></i></div>
-                </div>
-                <div class="comparison-row">
-                    <div class="comparison-feature">دعم فني متخصص</div>
-                    <div class="comparison-check check-yes"><i class="fas fa-check-circle"></i></div>
-                    <div class="comparison-check check-no"><i class="fas fa-times-circle"></i></div>
-                </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">📈</div>
+                <div class="stat-value">90%</div>
+                <div class="stat-description">تحسين الكفاءة</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">💰</div>
+                <div class="stat-value">60%</div>
+                <div class="stat-description">توفير التكاليف</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">✅</div>
+                <div class="stat-value">99.9%</div>
+                <div class="stat-description">دقة البيانات</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">🎯</div>
+                <div class="stat-value">100%</div>
+                <div class="stat-description">التزام مع السعودة</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">⏱️</div>
+                <div class="stat-value">24/7</div>
+                <div class="stat-description">دعم فني مستمر</div>
             </div>
         </div>
     </div>
 </section>
 
-<!-- شهادات العملاء -->
-<section class="testimonials-section">
+<!-- ========== TECH STACK ========== -->
+<section class="tech-stack">
     <div class="container">
-        <div class="row text-center mb-5">
-            <div class="col-12">
-                <h2 class="section-title">ماذا يقول عملاؤنا</h2>
-                <p class="section-subtitle">تجارب حقيقية من الشركات التي تستخدم نُظم</p>
-            </div>
+        <div class="section-header">
+            <span class="section-badge">التقنيات المستخدمة</span>
+            <h2 class="section-title">مبني على أحدث التقنيات</h2>
+            <p class="section-subtitle">
+                نستخدم أفضل الأدوات والتقنيات لضمان أداء وأمان استثنائيين
+            </p>
         </div>
         
-        <div class="row">
-            <div class="col-lg-4 col-md-6 mb-4">
-                <div class="testimonial-card">
-                    <div class="testimonial-content">
-                        "نُظم غيّر طريقة عملنا بالكامل. أصبحت إدارة الموظفين والمركبات أسهل وأكثر دقة، ووفرنا الكثير من الوقت والجهد."
-                    </div>
-                    <div class="testimonial-author">
-                        <div class="author-avatar">أ.س</div>
-                        <div class="author-info">
-                            <h5>أحمد السعيد</h5>
-                            <p>مدير الموارد البشرية - شركة الرياض للخدمات</p>
-                        </div>
-                    </div>
-                    <div class="rating">
-                        <span class="star">★</span>
-                        <span class="star">★</span>
-                        <span class="star">★</span>
-                        <span class="star">★</span>
-                        <span class="star">★</span>
-                    </div>
-                </div>
+        <div class="tech-grid">
+            <div class="tech-item">
+                <div class="tech-icon">🐍</div>
+                <div class="tech-name">Python</div>
             </div>
             
-            <div class="col-lg-4 col-md-6 mb-4">
-                <div class="testimonial-card">
-                    <div class="testimonial-content">
-                        "النظام سهل الاستخدام ويوفر تقارير مفصلة تساعدنا في اتخاذ القرارات. الواجهة العربية تجعل العمل أكثر سلاسة."
-                    </div>
-                    <div class="testimonial-author">
-                        <div class="author-avatar">ف.ع</div>
-                        <div class="author-info">
-                            <h5>فاطمة العتيبي</h5>
-                            <p>مديرة العمليات - مؤسسة الخليج التجارية</p>
-                        </div>
-                    </div>
-                    <div class="rating">
-                        <span class="star">★</span>
-                        <span class="star">★</span>
-                        <span class="star">★</span>
-                        <span class="star">★</span>
-                        <span class="star">★</span>
-                    </div>
-                </div>
+            <div class="tech-item">
+                <div class="tech-icon">🌶️</div>
+                <div class="tech-name">Flask</div>
             </div>
             
-            <div class="col-lg-4 col-md-6 mb-4">
-                <div class="testimonial-card">
-                    <div class="testimonial-content">
-                        "دعم فني ممتاز وتطوير مستمر للنظام. نُظم شريك موثوق في نجاح أعمالنا وتطوير عملياتنا الداخلية."
-                    </div>
-                    <div class="testimonial-author">
-                        <div class="author-avatar">م.ص</div>
-                        <div class="author-info">
-                            <h5>محمد الصالح</h5>
-                            <p>المدير التنفيذي - شركة النماء للاستثمار</p>
-                        </div>
-                    </div>
-                    <div class="rating">
-                        <span class="star">★</span>
-                        <span class="star">★</span>
-                        <span class="star">★</span>
-                        <span class="star">★</span>
-                        <span class="star">★</span>
-                    </div>
-                </div>
+            <div class="tech-item">
+                <div class="tech-icon">🐘</div>
+                <div class="tech-name">PostgreSQL</div>
+            </div>
+            
+            <div class="tech-item">
+                <div class="tech-icon">🔥</div>
+                <div class="tech-name">Firebase</div>
+            </div>
+            
+            <div class="tech-item">
+                <div class="tech-icon">🤖</div>
+                <div class="tech-name">OpenAI GPT-4</div>
+            </div>
+            
+            <div class="tech-item">
+                <div class="tech-icon">📊</div>
+                <div class="tech-name">Chart.js</div>
+            </div>
+            
+            <div class="tech-item">
+                <div class="tech-icon">📧</div>
+                <div class="tech-name">SendGrid</div>
+            </div>
+            
+            <div class="tech-item">
+                <div class="tech-icon">📞</div>
+                <div class="tech-name">VoiceHub</div>
             </div>
         </div>
     </div>
 </section>
 
-<!-- CTA النهائي -->
-<section class="final-cta">
+<!-- ========== FUTURISTIC CTA ========== -->
+<section class="cta-futuristic">
     <div class="container">
         <div class="cta-content">
-            <h2 class="cta-title">جاهز لتحويل إدارة مؤسستك؟</h2>
-            <p class="cta-subtitle">
-                ابدأ رحلتك مع نُظم اليوم واكتشف كيف يمكن لهذه الميزات المتطورة تحسين كفاءة عملياتك وتوفير الوقت والجهد
+            <h2 class="cta-title-big">
+                جاهز لتحويل<br>
+                إدارة مؤسستك؟
+            </h2>
+            <p class="cta-subtitle-big">
+                انضم إلى مئات الشركات السعودية التي تثق بنُظم لإدارة عملياتها اليومية
             </p>
-            <div class="cta-buttons">
-                <a href="/nuzum/demo" class="cta-button">
-                    <i class="fas fa-rocket me-2"></i>ابدأ التجربة المجانية
+            
+            <div class="hero-cta">
+                <a href="/nuzum/demo" class="btn-futuristic btn-primary-glow">
+                    <i class="fas fa-rocket me-2"></i>
+                    ابدأ تجربتك المجانية الآن
                 </a>
-                <a href="/nuzum/contact" class="cta-button secondary">
-                    <i class="fas fa-phone me-2"></i>تحدث مع خبير
+                <a href="/nuzum/contact" class="btn-futuristic btn-secondary-glow">
+                    <i class="fas fa-comments me-2"></i>
+                    تواصل مع فريق المبيعات
                 </a>
             </div>
         </div>
     </div>
 </section>
+
 {% endblock %}
 
 {% block extra_js %}
 <script>
-// تفعيل التبويبات
-document.addEventListener('DOMContentLoaded', function() {
-    const categoryTabs = document.querySelectorAll('.category-tab');
-    const featureCards = document.querySelectorAll('.feature-card');
+// Generate particles
+const particlesContainer = document.getElementById('particles');
+for (let i = 0; i < 50; i++) {
+    const particle = document.createElement('div');
+    particle.className = 'particle';
+    particle.style.left = Math.random() * 100 + '%';
+    particle.style.animationDelay = Math.random() * 20 + 's';
+    particle.style.animationDuration = (Math.random() * 10 + 10) + 's';
+    particlesContainer.appendChild(particle);
+}
+
+// Animated counter
+function animateCounter(element) {
+    const target = parseInt(element.getAttribute('data-target'));
+    const duration = 2000;
+    const step = target / (duration / 16);
+    let current = 0;
     
-    categoryTabs.forEach(tab => {
-        tab.addEventListener('click', function(e) {
-            e.preventDefault();
-            
-            // إزالة الحالة النشطة من جميع التبويبات
-            categoryTabs.forEach(t => t.classList.remove('active'));
-            // إضافة الحالة النشطة للتبويب المحدد
-            this.classList.add('active');
-            
-            const selectedCategory = this.getAttribute('data-category');
-            
-            // فلترة البطاقات
-            featureCards.forEach(card => {
-                const cardCategories = card.getAttribute('data-category');
-                
-                if (selectedCategory === 'all' || cardCategories.includes(selectedCategory)) {
-                    card.style.display = 'block';
-                    setTimeout(() => {
-                        card.classList.add('animate');
-                    }, 100);
-                } else {
-                    card.style.display = 'none';
-                    card.classList.remove('animate');
-                }
-            });
-        });
+    const timer = setInterval(() => {
+        current += step;
+        if (current >= target) {
+            element.textContent = target + (target === 99 ? '%' : target === 24 ? '/7' : '+');
+            clearInterval(timer);
+        } else {
+            element.textContent = Math.floor(current);
+        }
+    }, 16);
+}
+
+// Trigger counters
+const statNumbers = document.querySelectorAll('.stat-number');
+setTimeout(() => {
+    statNumbers.forEach(animateCounter);
+}, 500);
+
+// Scroll animations
+const observerOptions = {
+    threshold: 0.1,
+    rootMargin: '0px 0px -100px 0px'
+};
+
+const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            entry.target.style.opacity = '1';
+            observer.unobserve(entry.target);
+        }
     });
-    
-    // تأثيرات الانيميشن عند التمرير
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('animate');
-            }
-        });
-    }, {
-        threshold: 0.1
-    });
-    
-    featureCards.forEach(card => {
-        observer.observe(card);
-    });
-    
-    // تأثيرات إضافية للشهادات
-    const testimonialCards = document.querySelectorAll('.testimonial-card');
-    testimonialCards.forEach(card => {
-        observer.observe(card);
-    });
+}, observerOptions);
+
+document.querySelectorAll('.animate-on-scroll').forEach(el => {
+    observer.observe(el);
 });
 
-// تأثير التحريك السلس للروابط
+// Smooth scroll
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     anchor.addEventListener('click', function (e) {
         e.preventDefault();
