@@ -4,1111 +4,674 @@
 
 {% block extra_css %}
 <style>
-    :root {
-        --primary-color: #1e3a5c;
-        --secondary-color: #2c5282;
-        --accent-color: #4fd1c7;
-        --success-color: #28a745;
-        --warning-color: #ffc107;
-        --info-color: #17a2b8;
-        --gradient-primary: linear-gradient(135deg, #1e3a5c 0%, #2c5282 100%);
-        --gradient-accent: linear-gradient(135deg, #4fd1c7 0%, #38b2ac 100%);
-        --gradient-success: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-        --gradient-warning: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
-        --shadow-primary: 0 10px 40px rgba(30, 58, 92, 0.15);
-        --shadow-hover: 0 20px 60px rgba(30, 58, 92, 0.25);
+    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap');
+
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
     }
 
-    /* Hero Section للعرض التوضيحي */
+    body {
+        font-family: 'Cairo', sans-serif;
+        overflow-x: hidden;
+    }
+
+    /* ========== DEMO HERO ========== */
     .demo-hero {
-        background: var(--gradient-primary);
-        color: white;
-        padding: 120px 0 80px;
+        min-height: 80vh;
+        background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 25%, #2d1b4e 50%, #1a1f3a 75%, #0a0e27 100%);
         position: relative;
         overflow: hidden;
+        display: flex;
+        align-items: center;
+        padding: 100px 0;
     }
 
-    .demo-hero::before {
-        content: '';
+    .orb-demo-1 {
         position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000"><defs><pattern id="demo-pattern" x="0" y="0" width="60" height="60" patternUnits="userSpaceOnUse"><circle cx="30" cy="30" r="2" fill="%23ffffff" opacity="0.1"/><path d="M0,30 Q30,0 60,30 Q30,60 0,30" stroke="%23ffffff" stroke-width="1" fill="none" opacity="0.05"/></pattern></defs><rect width="1000" height="1000" fill="url(%23demo-pattern)"/></svg>') repeat;
+        width: 500px;
+        height: 500px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(102, 126, 234, 0.3) 0%, transparent 70%);
+        filter: blur(60px);
+        top: -250px;
+        right: -250px;
+        animation: float-orb 20s infinite ease-in-out;
     }
 
-    .hero-content {
+    .orb-demo-2 {
+        position: absolute;
+        width: 400px;
+        height: 400px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(240, 147, 251, 0.3) 0%, transparent 70%);
+        filter: blur(60px);
+        bottom: -200px;
+        left: -200px;
+        animation: float-orb 15s infinite ease-in-out reverse;
+    }
+
+    @keyframes float-orb {
+        0%, 100% { transform: translate(0, 0) scale(1); }
+        33% { transform: translate(80px, -80px) scale(1.1); }
+        66% { transform: translate(-80px, 80px) scale(0.9); }
+    }
+
+    .demo-hero-content {
         position: relative;
-        z-index: 2;
+        z-index: 10;
         text-align: center;
+        color: white;
+    }
+
+    .demo-badge {
+        display: inline-block;
+        padding: 10px 30px;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(240, 147, 251, 0.2));
+        border: 2px solid rgba(240, 147, 251, 0.4);
+        border-radius: 50px;
+        color: #f093fb;
+        font-weight: 700;
+        margin-bottom: 2rem;
+        font-size: 1rem;
     }
 
     .demo-title {
-        font-size: 3.5rem;
-        font-weight: 800;
+        font-size: clamp(2.5rem, 7vw, 5rem);
+        font-weight: 900;
         margin-bottom: 1.5rem;
-        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        background: linear-gradient(135deg, #ffffff 0%, #667eea 40%, #f093fb 60%, #ffffff 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        line-height: 1.2;
     }
 
     .demo-subtitle {
-        font-size: 1.4rem;
-        opacity: 0.95;
-        max-width: 700px;
+        font-size: clamp(1.1rem, 2vw, 1.4rem);
+        color: #e0e7ff;
+        max-width: 750px;
         margin: 0 auto 3rem;
-        line-height: 1.6;
+        line-height: 1.7;
+        font-weight: 300;
     }
 
-    .demo-features-list {
-        display: flex;
-        justify-content: center;
+    .demo-cta {
+        display: inline-flex;
+        gap: 1.5rem;
         flex-wrap: wrap;
-        gap: 30px;
-        margin-bottom: 3rem;
+        justify-content: center;
     }
 
-    .demo-feature-badge {
-        background: rgba(255, 255, 255, 0.1);
+    .btn-demo {
+        padding: 18px 45px;
+        font-size: 1.1rem;
+        font-weight: 700;
+        border: none;
+        border-radius: 50px;
+        cursor: pointer;
+        transition: all 0.5s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .btn-demo-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        box-shadow: 0 10px 40px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-demo-primary:hover {
+        transform: translateY(-5px) scale(1.05);
+        box-shadow: 0 20px 60px rgba(102, 126, 234, 0.6);
+        color: white;
+        text-decoration: none;
+    }
+
+    .btn-demo-secondary {
+        background: transparent;
+        color: white;
+        border: 2px solid rgba(255, 255, 255, 0.4);
         backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 25px;
-        padding: 15px 25px;
+    }
+
+    .btn-demo-secondary:hover {
+        background: rgba(255, 255, 255, 0.15);
+        border-color: white;
+        transform: translateY(-5px) scale(1.05);
         color: white;
+        text-decoration: none;
+    }
+
+    /* ========== DEMO FEATURES ========== */
+    .demo-features {
+        padding: 100px 0;
+        background: linear-gradient(180deg, #0a0e27 0%, #1a1235 100%);
+    }
+
+    .section-badge {
+        display: inline-block;
+        padding: 8px 20px;
+        background: rgba(102, 126, 234, 0.1);
+        border: 1px solid rgba(102, 126, 234, 0.3);
+        border-radius: 50px;
+        color: #818cf8;
+        font-size: 0.9rem;
         font-weight: 600;
-        transition: all 0.3s ease;
+        margin-bottom: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
     }
 
-    .demo-feature-badge:hover {
-        background: rgba(255, 255, 255, 0.2);
-        transform: translateY(-3px);
+    .section-title {
+        font-size: clamp(2rem, 5vw, 3.5rem);
+        font-weight: 900;
+        background: linear-gradient(135deg, #ffffff 0%, #667eea 50%, #f093fb 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 1rem;
     }
 
-    /* قسم الفيديوهات التوضيحية */
-    .demo-videos-section {
-        padding: 80px 0;
-        background: #f8f9fa;
+    .section-subtitle {
+        font-size: 1.2rem;
+        color: #cbd5e1;
+        max-width: 700px;
+        margin: 0 auto 4rem;
+        line-height: 1.7;
     }
 
-    .video-showcase {
-        background: white;
+    .demo-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 30px;
+        margin-top: 60px;
+    }
+
+    .demo-card {
+        background: linear-gradient(135deg, rgba(26, 31, 58, 0.6), rgba(45, 27, 78, 0.4));
+        border: 1px solid rgba(102, 126, 234, 0.2);
         border-radius: 25px;
-        overflow: hidden;
-        box-shadow: var(--shadow-primary);
-        margin-bottom: 40px;
-        transition: all 0.4s ease;
-    }
-
-    .video-showcase:hover {
-        transform: translateY(-10px);
-        box-shadow: var(--shadow-hover);
-    }
-
-    .video-header {
-        background: var(--gradient-primary);
-        color: white;
-        padding: 30px;
+        padding: 40px;
+        transition: all 0.5s ease;
+        backdrop-filter: blur(10px);
         text-align: center;
+        position: relative;
+        overflow: hidden;
     }
 
-    .video-icon {
+    .demo-card::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: 25px;
+        padding: 2px;
+        background: linear-gradient(135deg, transparent, rgba(240, 147, 251, 0.3), transparent);
+        -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+        -webkit-mask-composite: xor;
+        mask-composite: exclude;
+        opacity: 0;
+        transition: opacity 0.5s ease;
+    }
+
+    .demo-card:hover::before {
+        opacity: 1;
+    }
+
+    .demo-card:hover {
+        transform: translateY(-10px);
+        border-color: rgba(240, 147, 251, 0.5);
+        box-shadow: 0 25px 70px rgba(102, 126, 234, 0.4);
+    }
+
+    .demo-icon {
         width: 80px;
         height: 80px;
-        background: rgba(255, 255, 255, 0.2);
-        border-radius: 50%;
+        border-radius: 20px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 2rem;
-        margin: 0 auto 20px;
+        font-size: 2.5rem;
+        margin: 0 auto 25px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        transition: all 0.5s ease;
     }
 
-    .video-title {
-        font-size: 1.8rem;
+    .demo-card:hover .demo-icon {
+        transform: scale(1.1) rotate(10deg);
+    }
+
+    .demo-card-title {
+        font-size: 1.5rem;
         font-weight: 700;
-        margin-bottom: 10px;
-    }
-
-    .video-description {
-        opacity: 0.9;
-        font-size: 1.1rem;
-    }
-
-    .video-container {
-        position: relative;
-        padding: 40px;
-        background: #f8f9fa;
-    }
-
-    .video-player {
-        position: relative;
-        border-radius: 15px;
-        overflow: hidden;
-        background: #000;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-    }
-
-    .video-player video {
-        width: 100%;
-        height: auto;
-        max-height: 400px;
-        object-fit: cover;
-        border-radius: 15px;
-    }
-
-    .video-overlay {
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        background: linear-gradient(transparent, rgba(0,0,0,0.8));
         color: white;
-        padding: 30px 20px 20px;
-        transform: translateY(100%);
-        transition: all 0.3s ease;
+        margin-bottom: 15px;
     }
 
-    .video-player:hover .video-overlay {
-        transform: translateY(0);
+    .demo-card-description {
+        color: #cbd5e1;
+        line-height: 1.7;
+        margin-bottom: 20px;
     }
 
-    .video-overlay h4 {
-        font-size: 1.2rem;
-        font-weight: 700;
-        margin-bottom: 8px;
-    }
-
-    .video-overlay p {
-        font-size: 0.95rem;
-        opacity: 0.9;
-        margin: 0;
-    }
-
-    /* تصميم العروض التوضيحية التفاعلية */
-    .demo-showcase {
-        position: relative;
-        border-radius: 15px;
-        overflow: hidden;
-        background: #f8f9fa;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        transition: all 0.4s ease;
-    }
-
-    .demo-showcase:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 20px 40px rgba(0,0,0,0.15);
-    }
-
-    .demo-showcase iframe {
-        width: 100%;
-        min-height: 400px;
-        border: none;
-        background: white;
-    }
-
-    .demo-controls {
-        padding: 20px;
-        background: white;
-        display: flex;
-        justify-content: center;
-        gap: 15px;
-        border-top: 1px solid #e9ecef;
-    }
-
-    .demo-btn {
-        background: #f8f9fa;
-        border: 2px solid #e9ecef;
-        color: var(--primary-color);
-        padding: 12px 20px;
-        border-radius: 25px;
-        font-weight: 600;
-        font-size: 0.9rem;
+    .demo-link {
+        color: #a78bfa;
         text-decoration: none;
-        transition: all 0.3s ease;
-        cursor: pointer;
+        font-weight: 600;
         display: inline-flex;
         align-items: center;
         gap: 8px;
+        transition: all 0.3s ease;
     }
 
-    .demo-btn:hover {
-        background: var(--primary-color);
-        color: white;
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(30, 58, 92, 0.2);
+    .demo-link:hover {
+        color: #c4b5fd;
+        gap: 12px;
         text-decoration: none;
     }
 
-    .demo-btn-primary {
-        background: var(--gradient-accent);
-        color: white;
-        border-color: var(--accent-color);
+    /* ========== VIDEO SECTION ========== */
+    .video-section {
+        padding: 100px 0;
+        background: linear-gradient(180deg, #1a1235 0%, #0a0e27 100%);
+        text-align: center;
     }
 
-    .demo-btn-primary:hover {
-        background: var(--gradient-primary);
-        border-color: var(--primary-color);
-        color: white;
-    }
-
-    /* تحسين مشغل الفيديو */
-    .video-player video::-webkit-media-controls-panel {
-        background: linear-gradient(transparent, rgba(0,0,0,0.8));
-    }
-
-    .video-player video::-webkit-media-controls-play-button {
-        background-color: var(--accent-color);
-        border-radius: 50%;
+    .video-container {
+        max-width: 900px;
+        margin: 0 auto;
+        position: relative;
     }
 
     .video-placeholder {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border-radius: 15px;
-        padding: 60px 40px;
-        text-align: center;
+        border-radius: 30px;
+        padding: 100px 50px;
         color: white;
         position: relative;
         overflow: hidden;
         cursor: pointer;
-        transition: all 0.3s ease;
+        transition: all 0.4s ease;
+        box-shadow: 0 20px 60px rgba(102, 126, 234, 0.4);
     }
 
     .video-placeholder:hover {
         transform: scale(1.02);
+        box-shadow: 0 30px 80px rgba(102, 126, 234, 0.6);
     }
 
-    .video-placeholder::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
-        transition: left 0.6s ease;
-    }
-
-    .video-placeholder:hover::before {
-        left: 100%;
-    }
-
-    .play-button {
-        width: 80px;
-        height: 80px;
+    .play-icon {
+        width: 100px;
+        height: 100px;
         background: rgba(255, 255, 255, 0.9);
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
+        font-size: 3rem;
+        color: #667eea;
+        margin: 0 auto 30px;
+        transition: all 0.4s ease;
+    }
+
+    .video-placeholder:hover .play-icon {
+        transform: scale(1.15);
+        background: white;
+    }
+
+    .video-title {
         font-size: 2rem;
-        color: var(--primary-color);
-        margin: 0 auto 20px;
-        transition: all 0.3s ease;
+        font-weight: 700;
+        margin-bottom: 10px;
     }
 
-    .video-placeholder:hover .play-button {
-        transform: scale(1.1);
-        background: white;
+    .video-description {
+        font-size: 1.1rem;
+        opacity: 0.9;
     }
 
-    .video-info {
-        padding: 30px;
+    /* ========== STEPS SECTION ========== */
+    .steps-section {
+        padding: 100px 0;
+        background: linear-gradient(180deg, #0a0e27 0%, #1a1235 100%);
     }
 
-    .video-features {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-    }
-
-    .video-features li {
-        padding: 10px 0;
-        border-bottom: 1px solid #e9ecef;
-        display: flex;
-        align-items: center;
-        color: #495057;
-    }
-
-    .video-features li:last-child {
-        border-bottom: none;
-    }
-
-    .video-features li i {
-        margin-left: 12px;
-        color: var(--success-color);
-        font-size: 1rem;
-    }
-
-    /* قسم الخطوات التفاعلية */
-    .interactive-steps {
-        padding: 80px 0;
-        background: white;
+    .steps-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 40px;
+        margin-top: 60px;
     }
 
     .step-card {
-        background: white;
-        border-radius: 20px;
+        background: linear-gradient(135deg, rgba(26, 31, 58, 0.6), rgba(45, 27, 78, 0.4));
+        border: 1px solid rgba(102, 126, 234, 0.2);
+        border-radius: 25px;
         padding: 40px 30px;
-        box-shadow: var(--shadow-primary);
         text-align: center;
-        position: relative;
-        transition: all 0.4s ease;
-        border: 2px solid transparent;
+        transition: all 0.5s ease;
+        backdrop-filter: blur(10px);
     }
 
     .step-card:hover {
         transform: translateY(-10px);
-        border-color: var(--accent-color);
-        box-shadow: var(--shadow-hover);
+        border-color: rgba(240, 147, 251, 0.5);
+        box-shadow: 0 25px 60px rgba(102, 126, 234, 0.4);
     }
 
     .step-number {
-        width: 60px;
-        height: 60px;
-        background: var(--gradient-accent);
+        width: 70px;
+        height: 70px;
         border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #f093fb 100%);
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.5rem;
-        font-weight: 700;
+        font-size: 2rem;
+        font-weight: 900;
         color: white;
         margin: 0 auto 25px;
-        position: relative;
-    }
-
-    .step-card:nth-child(2) .step-number {
-        background: var(--gradient-success);
-    }
-
-    .step-card:nth-child(3) .step-number {
-        background: var(--gradient-warning);
+        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
     }
 
     .step-title {
-        font-size: 1.4rem;
+        font-size: 1.3rem;
         font-weight: 700;
-        color: var(--primary-color);
+        color: white;
         margin-bottom: 15px;
     }
 
     .step-description {
-        color: #6c757d;
+        color: #cbd5e1;
         line-height: 1.6;
-        margin-bottom: 25px;
     }
 
-    .step-action {
-        background: var(--gradient-primary);
-        color: white;
-        padding: 12px 25px;
-        border-radius: 25px;
-        text-decoration: none;
-        font-weight: 600;
-        transition: all 0.3s ease;
-        display: inline-block;
-    }
-
-    .step-action:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 20px rgba(30, 58, 92, 0.3);
-        text-decoration: none;
-        color: white;
-    }
-
-    /* قسم المزايا الفورية */
-    .immediate-benefits {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 80px 0;
+    /* ========== CTA SECTION ========== */
+    .demo-cta-section {
+        padding: 120px 0;
+        background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #667eea 100%);
+        text-align: center;
         position: relative;
         overflow: hidden;
     }
 
-    .immediate-benefits::before {
+    .demo-cta-section::before {
         content: '';
         position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="benefits-pattern" width="20" height="20" patternUnits="userSpaceOnUse"><circle cx="10" cy="10" r="1" fill="%23ffffff" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23benefits-pattern)"/></svg>') repeat;
-        opacity: 0.3;
+        width: 500px;
+        height: 500px;
+        background: radial-gradient(circle, rgba(240, 147, 251, 0.3) 0%, transparent 70%);
+        top: -250px;
+        left: -250px;
+        animation: float-slow 20s infinite;
     }
 
-    .benefit-card {
-        background: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 20px;
-        padding: 40px 30px;
-        text-align: center;
-        transition: all 0.4s ease;
-        position: relative;
-        z-index: 2;
-    }
-
-    .benefit-card:hover {
-        background: rgba(255, 255, 255, 0.2);
-        transform: translateY(-10px);
-    }
-
-    .benefit-icon {
-        font-size: 3rem;
-        margin-bottom: 20px;
-        opacity: 0.9;
-    }
-
-    .benefit-title {
-        font-size: 1.4rem;
-        font-weight: 700;
-        margin-bottom: 15px;
-    }
-
-    .benefit-description {
-        opacity: 0.9;
-        line-height: 1.6;
-    }
-
-    /* قسم CTA النهائي */
-    .final-demo-cta {
-        background: var(--gradient-primary);
-        color: white;
-        padding: 100px 0;
-        text-align: center;
-        position: relative;
-        overflow: hidden;
+    @keyframes float-slow {
+        0%, 100% { transform: translate(0, 0); }
+        50% { transform: translate(100px, 100px); }
     }
 
     .cta-content {
         position: relative;
-        z-index: 2;
+        z-index: 10;
     }
 
     .cta-title {
-        font-size: 3.2rem;
-        font-weight: 800;
-        margin-bottom: 25px;
+        font-size: clamp(2.5rem, 6vw, 4.5rem);
+        font-weight: 900;
+        color: white;
+        margin-bottom: 1.5rem;
+        line-height: 1.2;
     }
 
     .cta-subtitle {
-        font-size: 1.4rem;
-        opacity: 0.95;
+        font-size: 1.3rem;
+        color: #e0e7ff;
         max-width: 700px;
-        margin: 0 auto 40px;
-        line-height: 1.6;
+        margin: 0 auto 3rem;
+        line-height: 1.7;
     }
 
-    .cta-buttons {
-        display: flex;
-        justify-content: center;
-        flex-wrap: wrap;
-        gap: 25px;
-    }
-
-    .cta-button {
-        background: white;
-        color: var(--primary-color);
-        padding: 20px 45px;
-        border-radius: 50px;
-        font-size: 1.2rem;
-        font-weight: 700;
-        text-decoration: none;
-        transition: all 0.4s ease;
-        border: 2px solid white;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .cta-button::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-        transition: left 0.6s ease;
-    }
-
-    .cta-button:hover::before {
-        left: 100%;
-    }
-
-    .cta-button:hover {
-        transform: translateY(-3px) scale(1.05);
-        box-shadow: 0 15px 35px rgba(0,0,0,0.2);
-        text-decoration: none;
-        color: var(--primary-color);
-    }
-
-    .cta-button.secondary {
-        background: transparent;
-        color: white;
-        border: 2px solid white;
-    }
-
-    .cta-button.secondary:hover {
-        background: white;
-        color: var(--primary-color);
-    }
-
-    /* التصميم المتجاوب */
-    @media (max-width: 992px) {
-        .demo-title {
-            font-size: 2.8rem;
-        }
-        
-        .demo-features-list {
-            flex-direction: column;
-            align-items: center;
-        }
-        
-        .video-showcase {
-            margin-bottom: 30px;
-        }
-    }
-
+    /* RESPONSIVE */
     @media (max-width: 768px) {
-        .demo-title {
-            font-size: 2.2rem;
+        .demo-grid {
+            grid-template-columns: 1fr;
         }
-        
-        .demo-subtitle {
-            font-size: 1.2rem;
-        }
-        
-        .cta-title {
-            font-size: 2.4rem;
-        }
-        
-        .cta-buttons {
+
+        .demo-cta {
             flex-direction: column;
-            align-items: center;
         }
-        
-        .cta-button {
+
+        .btn-demo {
             width: 100%;
-            max-width: 300px;
+            max-width: 350px;
         }
-    }
 
-    /* تأثيرات الانيميشن */
-    @keyframes fadeInUp {
-        from {
-            opacity: 0;
-            transform: translateY(30px);
+        .video-placeholder {
+            padding: 60px 30px;
         }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    .fade-in-up {
-        animation: fadeInUp 0.8s ease-out forwards;
-    }
-
-    @keyframes pulse {
-        0% { transform: scale(1); }
-        50% { transform: scale(1.05); }
-        100% { transform: scale(1); }
-    }
-
-    .pulse {
-        animation: pulse 2s ease-in-out infinite;
-    }
-
-    @keyframes float {
-        0% { transform: translateY(0px); }
-        50% { transform: translateY(-20px); }
-        100% { transform: translateY(0px); }
-    }
-
-    .float {
-        animation: float 3s ease-in-out infinite;
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<!-- Hero Section للعرض التوضيحي -->
+
+<!-- HERO SECTION -->
 <section class="demo-hero">
+    <div class="orb-demo-1"></div>
+    <div class="orb-demo-2"></div>
+    
     <div class="container">
-        <div class="hero-content">
-            <h1 class="demo-title">شاهد نُظم في العمل</h1>
+        <div class="demo-hero-content">
+            <div class="demo-badge">
+                🎬 عرض توضيحي تفاعلي
+            </div>
+            
+            <h1 class="demo-title">
+                جرّب نُظم الآن<br>
+                بدون التزام
+            </h1>
+            
             <p class="demo-subtitle">
-                اكتشف كيف يمكن لنُظم تحويل عمليات مؤسستك من خلال عروض توضيحية تفاعلية تُظهر الإمكانيات الحقيقية للنظام
+                استكشف جميع ميزات النظام من خلال عرض توضيحي تفاعلي. شاهد كيف يمكن لنُظم تحويل إدارة مؤسستك بكفاءة وسهولة
             </p>
             
-            <div class="demo-features-list">
-                <div class="demo-feature-badge">
-                    <i class="fas fa-users me-2"></i>إدارة الموظفين
-                </div>
-                <div class="demo-feature-badge">
-                    <i class="fas fa-car me-2"></i>إدارة المركبات
-                </div>
-                <div class="demo-feature-badge">
-                    <i class="fas fa-clock me-2"></i>نظام الحضور
-                </div>
-                <div class="demo-feature-badge">
-                    <i class="fas fa-chart-bar me-2"></i>التقارير المتقدمة
-                </div>
+            <div class="demo-cta">
+                <a href="/nuzum/login" class="btn-demo btn-demo-primary">
+                    <i class="fas fa-play-circle"></i>
+                    ابدأ العرض التوضيحي
+                </a>
+                <a href="/nuzum/contact" class="btn-demo btn-demo-secondary">
+                    <i class="fas fa-headset"></i>
+                    تحدث مع مستشار
+                </a>
             </div>
         </div>
     </div>
 </section>
 
-<!-- قسم الفيديوهات التوضيحية -->
-<section class="demo-videos-section">
+<!-- DEMO FEATURES -->
+<section class="demo-features">
     <div class="container">
-        <div class="row text-center mb-5">
-            <div class="col-12">
-                <h2 class="section-title">عروض توضيحية تفاعلية</h2>
-                <p class="section-subtitle">شاهد النظام وهو يعمل في بيئة حقيقية</p>
-            </div>
+        <div class="text-center">
+            <span class="section-badge">ماذا سترى في العرض</span>
+            <h2 class="section-title">تجربة كاملة للنظام</h2>
+            <p class="section-subtitle">
+                استكشف جميع الوحدات والميزات في بيئة آمنة وتفاعلية
+            </p>
         </div>
         
-        <div class="row">
-            <!-- فيديو إدارة الموظفين -->
-            <div class="col-lg-6 col-md-12 mb-4">
-                <div class="video-showcase">
-                    <div class="video-header">
-                        <div class="video-icon">
-                            <i class="fas fa-users"></i>
-                        </div>
-                        <h3 class="video-title">إدارة الموظفين الذكية</h3>
-                        <p class="video-description">شاهد كيفية إضافة موظف جديد وإدارة ملفه الشخصي</p>
-                    </div>
-                    <div class="video-container">
-                        <div class="demo-showcase">
-                            <iframe src="/nuzum/demo-iframe/employees" 
-                                    width="100%" 
-                                    height="400" 
-                                    frameborder="0" 
-                                    style="border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);"
-                                    allowfullscreen>
-                            </iframe>
-                            <div class="demo-controls">
-                                <button class="demo-btn" onclick="refreshDemo('employees')">
-                                    <i class="fas fa-sync-alt"></i> إعادة تشغيل العرض
-                                </button>
-                                <a href="/dashboard/employees" class="demo-btn demo-btn-primary" target="_blank">
-                                    <i class="fas fa-external-link-alt"></i> جرب النظام مباشرة
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="video-info">
-                        <h5 class="mb-3">ما ستشاهده في هذا العرض:</h5>
-                        <ul class="video-features">
-                            <li><i class="fas fa-check"></i> إضافة موظف جديد بالتفصيل</li>
-                            <li><i class="fas fa-check"></i> رفع المستندات والصور</li>
-                            <li><i class="fas fa-check"></i> إدارة البيانات الشخصية</li>
-                            <li><i class="fas fa-check"></i> تتبع تواريخ انتهاء المستندات</li>
-                            <li><i class="fas fa-check"></i> البحث والفلترة المتقدمة</li>
-                        </ul>
-                    </div>
+        <div class="demo-grid">
+            <div class="demo-card">
+                <div class="demo-icon">
+                    <i class="fas fa-users"></i>
                 </div>
+                <h3 class="demo-card-title">إدارة الموظفين</h3>
+                <p class="demo-card-description">
+                    تصفح قاعدة بيانات موظفين تجريبية، إضافة وتعديل البيانات، وإدارة المستندات
+                </p>
+                <a href="/nuzum/login" class="demo-link">
+                    جرّب الآن <i class="fas fa-arrow-left"></i>
+                </a>
             </div>
-            
-            <!-- فيديو إدارة المركبات -->
-            <div class="col-lg-6 col-md-12 mb-4">
-                <div class="video-showcase">
-                    <div class="video-header">
-                        <div class="video-icon">
-                            <i class="fas fa-car"></i>
-                        </div>
-                        <h3 class="video-title">إدارة أسطول المركبات</h3>
-                        <p class="video-description">تعلم كيفية تسجيل مركبة وإدارة عملية التسليم</p>
-                    </div>
-                    <div class="video-container">
-                        <div class="demo-showcase">
-                            <iframe src="/nuzum/demo-iframe/vehicles" 
-                                    width="100%" 
-                                    height="400" 
-                                    frameborder="0" 
-                                    style="border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);"
-                                    allowfullscreen>
-                            </iframe>
-                            <div class="demo-controls">
-                                <button class="demo-btn" onclick="refreshDemo('vehicles')">
-                                    <i class="fas fa-sync-alt"></i> إعادة تشغيل العرض
-                                </button>
-                                <a href="/dashboard/vehicles" class="demo-btn demo-btn-primary" target="_blank">
-                                    <i class="fas fa-external-link-alt"></i> جرب النظام مباشرة
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="video-info">
-                        <h5 class="mb-3">ما ستشاهده في هذا العرض:</h5>
-                        <ul class="video-features">
-                            <li><i class="fas fa-check"></i> تسجيل مركبة جديدة</li>
-                            <li><i class="fas fa-check"></i> رفع الوثائق والتأمين</li>
-                            <li><i class="fas fa-check"></i> عملية تسليم المركبة</li>
-                            <li><i class="fas fa-check"></i> التوقيع الرقمي</li>
-                            <li><i class="fas fa-check"></i> تتبع حالة المركبة</li>
-                        </ul>
-                    </div>
+
+            <div class="demo-card">
+                <div class="demo-icon">
+                    <i class="fas fa-car"></i>
                 </div>
+                <h3 class="demo-card-title">أسطول المركبات</h3>
+                <p class="demo-card-description">
+                    شاهد نظام إدارة المركبات، تسليم واستلام، صيانة، وتقارير شاملة
+                </p>
+                <a href="/nuzum/login" class="demo-link">
+                    جرّب الآن <i class="fas fa-arrow-left"></i>
+                </a>
             </div>
-        </div>
-        
-        <div class="row">
-            <!-- فيديو نظام الحضور -->
-            <div class="col-lg-6 col-md-12 mb-4">
-                <div class="video-showcase">
-                    <div class="video-header">
-                        <div class="video-icon">
-                            <i class="fas fa-clock"></i>
-                        </div>
-                        <h3 class="video-title">نظام الحضور الذكي</h3>
-                        <p class="video-description">استكشف ميزات تسجيل الحضور وحساب الساعات</p>
-                    </div>
-                    <div class="video-container">
-                        <div class="demo-showcase">
-                            <iframe src="/nuzum/demo-iframe/attendance" 
-                                    width="100%" 
-                                    height="400" 
-                                    frameborder="0" 
-                                    style="border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);"
-                                    allowfullscreen>
-                            </iframe>
-                            <div class="demo-controls">
-                                <button class="demo-btn" onclick="refreshDemo('attendance')">
-                                    <i class="fas fa-sync-alt"></i> إعادة تشغيل العرض
-                                </button>
-                                <a href="/dashboard/attendance" class="demo-btn demo-btn-primary" target="_blank">
-                                    <i class="fas fa-external-link-alt"></i> جرب النظام مباشرة
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="video-info">
-                        <h5 class="mb-3">ما ستشاهده في هذا العرض:</h5>
-                        <ul class="video-features">
-                            <li><i class="fas fa-check"></i> تسجيل الحضور والانصراف</li>
-                            <li><i class="fas fa-check"></i> حساب الساعات الإضافية</li>
-                            <li><i class="fas fa-check"></i> تقارير الحضور الشهرية</li>
-                            <li><i class="fas fa-check"></i> التقويم الهجري والميلادي</li>
-                            <li><i class="fas fa-check"></i> إدارة الإجازات</li>
-                        </ul>
-                    </div>
+
+            <div class="demo-card">
+                <div class="demo-icon">
+                    <i class="fas fa-fingerprint"></i>
                 </div>
+                <h3 class="demo-card-title">الحضور الذكي</h3>
+                <p class="demo-card-description">
+                    استكشف نظام الحضور المتقدم مع تقارير فورية ولوحة تحكم تفاعلية
+                </p>
+                <a href="/nuzum/login" class="demo-link">
+                    جرّب الآن <i class="fas fa-arrow-left"></i>
+                </a>
             </div>
-            
-            <!-- فيديو التقارير -->
-            <div class="col-lg-6 col-md-12 mb-4">
-                <div class="video-showcase">
-                    <div class="video-header">
-                        <div class="video-icon">
-                            <i class="fas fa-chart-bar"></i>
-                        </div>
-                        <h3 class="video-title">التقارير والتحليلات</h3>
-                        <p class="video-description">اكتشف قوة التقارير المتقدمة ولوحات المعلومات</p>
-                    </div>
-                    <div class="video-container">
-                        <div class="demo-showcase">
-                            <iframe src="/nuzum/demo-iframe/reports" 
-                                    width="100%" 
-                                    height="400" 
-                                    frameborder="0" 
-                                    style="border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);"
-                                    allowfullscreen>
-                            </iframe>
-                            <div class="demo-controls">
-                                <button class="demo-btn" onclick="refreshDemo('reports')">
-                                    <i class="fas fa-sync-alt"></i> إعادة تشغيل العرض
-                                </button>
-                                <a href="/dashboard/reports" class="demo-btn demo-btn-primary" target="_blank">
-                                    <i class="fas fa-external-link-alt"></i> جرب النظام مباشرة
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="video-info">
-                        <h5 class="mb-3">ما ستشاهده في هذا العرض:</h5>
-                        <ul class="video-features">
-                            <li><i class="fas fa-check"></i> إنشاء تقارير PDF احترافية</li>
-                            <li><i class="fas fa-check"></i> تصدير البيانات لـ Excel</li>
-                            <li><i class="fas fa-check"></i> الرسوم البيانية التفاعلية</li>
-                            <li><i class="fas fa-check"></i> لوحات معلومات ذكية</li>
-                            <li><i class="fas fa-check"></i> تحليلات الأداء</li>
-                        </ul>
-                    </div>
+
+            <div class="demo-card">
+                <div class="demo-icon">
+                    <i class="fas fa-chart-line"></i>
                 </div>
+                <h3 class="demo-card-title">التقارير والتحليلات</h3>
+                <p class="demo-card-description">
+                    اطلع على تقارير PDF وExcel احترافية مع رسوم بيانية تفاعلية
+                </p>
+                <a href="/nuzum/login" class="demo-link">
+                    جرّب الآن <i class="fas fa-arrow-left"></i>
+                </a>
+            </div>
+
+            <div class="demo-card">
+                <div class="demo-icon">
+                    <i class="fas fa-brain"></i>
+                </div>
+                <h3 class="demo-card-title">الذكاء الاصطناعي</h3>
+                <p class="demo-card-description">
+                    جرّب التحليلات الذكية والتوصيات الاستراتيجية بتقنية AI
+                </p>
+                <a href="/nuzum/login" class="demo-link">
+                    جرّب الآن <i class="fas fa-arrow-left"></i>
+                </a>
+            </div>
+
+            <div class="demo-card">
+                <div class="demo-icon">
+                    <i class="fas fa-mobile-alt"></i>
+                </div>
+                <h3 class="demo-card-title">تطبيق الموبايل</h3>
+                <p class="demo-card-description">
+                    شاهد كيف يعمل تطبيق الموظفين للحضور والإدارة الذاتية
+                </p>
+                <a href="/nuzum/login" class="demo-link">
+                    جرّب الآن <i class="fas fa-arrow-left"></i>
+                </a>
             </div>
         </div>
     </div>
 </section>
 
-<!-- قسم الخطوات التفاعلية -->
-<section class="interactive-steps">
+<!-- VIDEO SECTION -->
+<section class="video-section">
     <div class="container">
-        <div class="row text-center mb-5">
-            <div class="col-12">
-                <h2 class="section-title">ابدأ رحلتك مع نُظم في 3 خطوات</h2>
-                <p class="section-subtitle">عملية بسيطة وسريعة للبدء مع النظام</p>
-            </div>
+        <div class="text-center mb-5">
+            <span class="section-badge">شاهد النظام في العمل</span>
+            <h2 class="section-title">فيديو توضيحي سريع</h2>
+            <p class="section-subtitle">
+                شاهد كيف يعمل نُظم في 3 دقائق فقط
+            </p>
         </div>
         
-        <div class="row">
-            <div class="col-lg-4 col-md-6 mb-4">
-                <div class="step-card">
-                    <div class="step-number">1</div>
-                    <h3 class="step-title">احجز عرضاً مخصصاً</h3>
-                    <p class="step-description">
-                        تحدث مع أحد خبرائنا لفهم احتياجاتك وشاهد النظام يعمل مع بياناتك الحقيقية
-                    </p>
-                    <a href="/nuzum/contact" class="step-action">
-                        <i class="fas fa-calendar me-2"></i>احجز موعداً
-                    </a>
+        <div class="video-container">
+            <div class="video-placeholder">
+                <div class="play-icon">
+                    <i class="fas fa-play"></i>
                 </div>
-            </div>
-            
-            <div class="col-lg-4 col-md-6 mb-4">
-                <div class="step-card">
-                    <div class="step-number">2</div>
-                    <h3 class="step-title">إعداد مخصص</h3>
-                    <p class="step-description">
-                        فريقنا التقني سيقوم بإعداد النظام ليناسب احتياجات مؤسستك وتدريب فريقك
-                    </p>
-                    <a href="/nuzum/contact" class="step-action">
-                        <i class="fas fa-cogs me-2"></i>ابدأ الإعداد
-                    </a>
-                </div>
-            </div>
-            
-            <div class="col-lg-4 col-md-6 mb-4">
-                <div class="step-card">
-                    <div class="step-number">3</div>
-                    <h3 class="step-title">انطلق نحو النجاح</h3>
-                    <p class="step-description">
-                        ابدأ في استخدام النظام مع دعم فني مستمر ومتابعة شخصية لضمان نجاحك
-                    </p>
-                    <a href="/nuzum/pricing" class="step-action">
-                        <i class="fas fa-rocket me-2"></i>اختر خطتك
-                    </a>
-                </div>
+                <h3 class="video-title">جولة سريعة في نُظم</h3>
+                <p class="video-description">مدة الفيديو: 3 دقائق</p>
             </div>
         </div>
     </div>
 </section>
 
-<!-- قسم المزايا الفورية -->
-<section class="immediate-benefits">
+<!-- STEPS SECTION -->
+<section class="steps-section">
     <div class="container">
-        <div class="row text-center mb-5">
-            <div class="col-12">
-                <h2 class="section-title">فوائد فورية ستلاحظها من اليوم الأول</h2>
-                <p class="section-subtitle">نتائج حقيقية يحققها عملاؤنا بمجرد البدء مع نُظم</p>
-            </div>
+        <div class="text-center">
+            <span class="section-badge">كيف تبدأ</span>
+            <h2 class="section-title">ثلاث خطوات بسيطة</h2>
+            <p class="section-subtitle">
+                ابدأ استخدام نُظم في أقل من 5 دقائق
+            </p>
         </div>
         
-        <div class="row">
-            <div class="col-lg-3 col-md-6 mb-4">
-                <div class="benefit-card">
-                    <div class="benefit-icon">⚡</div>
-                    <h3 class="benefit-title">توفير 40% من الوقت</h3>
-                    <p class="benefit-description">
-                        أتمتة العمليات الإدارية توفر ساعات يومياً من العمل اليدوي
-                    </p>
-                </div>
+        <div class="steps-grid">
+            <div class="step-card">
+                <div class="step-number">1</div>
+                <h3 class="step-title">سجّل الدخول</h3>
+                <p class="step-description">
+                    استخدم حساب تجريبي جاهز أو أنشئ حسابك الخاص
+                </p>
             </div>
-            
-            <div class="col-lg-3 col-md-6 mb-4">
-                <div class="benefit-card">
-                    <div class="benefit-icon">📊</div>
-                    <h3 class="benefit-title">دقة 99.9%</h3>
-                    <p class="benefit-description">
-                        إزالة الأخطاء البشرية وضمان دقة البيانات والحسابات
-                    </p>
-                </div>
+
+            <div class="step-card">
+                <div class="step-number">2</div>
+                <h3 class="step-title">استكشف النظام</h3>
+                <p class="step-description">
+                    تصفح جميع الميزات وجرّب الوظائف المختلفة
+                </p>
             </div>
-            
-            <div class="col-lg-3 col-md-6 mb-4">
-                <div class="benefit-card">
-                    <div class="benefit-icon">💰</div>
-                    <h3 class="benefit-title">توفير التكاليف</h3>
-                    <p class="benefit-description">
-                        تقليل التكاليف التشغيلية بنسبة 30% من خلال الأتمتة الذكية
-                    </p>
-                </div>
-            </div>
-            
-            <div class="col-lg-3 col-md-6 mb-4">
-                <div class="benefit-card">
-                    <div class="benefit-icon">🚀</div>
-                    <h3 class="benefit-title">زيادة الإنتاجية</h3>
-                    <p class="benefit-description">
-                        تحسين الإنتاجية بنسبة 65% من خلال تبسيط العمليات
-                    </p>
-                </div>
+
+            <div class="step-card">
+                <div class="step-number">3</div>
+                <h3 class="step-title">تحدث معنا</h3>
+                <p class="step-description">
+                    احصل على استشارة مجانية لمناقشة احتياجاتك
+                </p>
             </div>
         </div>
     </div>
 </section>
 
-<!-- CTA النهائي -->
-<section class="final-demo-cta">
+<!-- CTA SECTION -->
+<section class="demo-cta-section">
     <div class="container">
         <div class="cta-content">
-            <h2 class="cta-title">مستعد لرؤية نُظم في مؤسستك؟</h2>
+            <h2 class="cta-title">
+                جاهز لتجربة نُظم؟
+            </h2>
             <p class="cta-subtitle">
-                احجز عرضاً توضيحياً مخصصاً اليوم وشاهد كيف يمكن لنُظم تحويل طريقة عمل مؤسستك إلى الأفضل
+                ابدأ العرض التوضيحي الآن وشاهد كيف يمكن لنُظم تحويل إدارة مؤسستك
             </p>
-            <div class="cta-buttons">
-                <a href="/nuzum/contact" class="cta-button">
-                    <i class="fas fa-video me-2"></i>احجز عرضاً مخصصاً
+            
+            <div class="demo-cta">
+                <a href="/nuzum/login" class="btn-demo btn-demo-primary">
+                    <i class="fas fa-rocket"></i>
+                    ابدأ العرض التوضيحي المجاني
                 </a>
-                <a href="/nuzum/contact" class="cta-button secondary">
-                    <i class="fas fa-phone me-2"></i>تحدث مع خبير
+                <a href="/nuzum/pricing" class="btn-demo btn-demo-secondary">
+                    <i class="fas fa-tag"></i>
+                    شاهد الأسعار
                 </a>
             </div>
         </div>
     </div>
 </section>
 
-<!-- نافذة الفيديو المنبثقة -->
-<div class="modal fade" id="videoModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-xl">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="videoModalLabel">عرض توضيحي</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="إغلاق"></button>
-            </div>
-            <div class="modal-body">
-                <div id="videoContent" class="text-center">
-                    <!-- سيتم إدراج محتوى الفيديو هنا -->
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-// معالج العروض التوضيحية التفاعلية
-function refreshDemo(type) {
-    const iframe = document.querySelector(`iframe[src*="${type}"]`);
-    if (iframe) {
-        const src = iframe.src;
-        iframe.src = '';
-        setTimeout(() => {
-            iframe.src = src;
-        }, 100);
-    }
-}
-
-// تحسين تجربة العروض التوضيحية
-document.addEventListener('DOMContentLoaded', function() {
-    // إضافة مؤشر تحميل للايفريمات
-    const iframes = document.querySelectorAll('.demo-showcase iframe');
-    
-    iframes.forEach(iframe => {
-        // إضافة مؤشر تحميل
-        const showcase = iframe.closest('.demo-showcase');
-        const loader = document.createElement('div');
-        loader.className = 'demo-loader';
-        loader.innerHTML = `
-            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; z-index: 10;">
-                <div style="font-size: 3rem; margin-bottom: 20px;">⏳</div>
-                <h4>جاري تحميل العرض التوضيحي...</h4>
-                <p style="opacity: 0.7;">يرجى الانتظار لحظة</p>
-            </div>
-        `;
-        loader.style.cssText = `
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(248, 249, 250, 0.95);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 15px;
-            z-index: 5;
-        `;
-        
-        showcase.appendChild(loader);
-        
-        iframe.addEventListener('load', function() {
-            setTimeout(() => {
-                loader.style.opacity = '0';
-                setTimeout(() => {
-                    if (loader.parentNode) {
-                        loader.parentNode.removeChild(loader);
-                    }
-                }, 300);
-            }, 1000);
-        });
-        
-        iframe.addEventListener('error', function() {
-            loader.innerHTML = `
-                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; z-index: 10; color: #dc3545;">
-                    <div style="font-size: 3rem; margin-bottom: 20px;">⚠️</div>
-                    <h4>عذراً، لا يمكن تحميل العرض</h4>
-                    <p style="opacity: 0.7;">يرجى المحاولة لاحقاً</p>
-                    <button onclick="refreshDemo('${iframe.src.split('/').pop()}')" style="background: #dc3545; color: white; border: none; padding: 10px 20px; border-radius: 20px; font-weight: 600; cursor: pointer;">
-                        <i class="fas fa-sync-alt"></i> إعادة المحاولة
-                    </button>
-                </div>
-            `;
-        });
-    });
-    
-    // تحسين تفاعل الأزرار
-    document.querySelectorAll('.demo-btn').forEach(btn => {
-        btn.addEventListener('click', function(e) {
-            if (this.onclick || this.getAttribute('onclick')) {
-                e.preventDefault();
-                // إضافة تأثير النقر
-                this.style.transform = 'translateY(0px) scale(0.95)';
-                setTimeout(() => {
-                    this.style.transform = '';
-                    if (this.onclick) {
-                        this.onclick();
-                    } else if (this.getAttribute('onclick')) {
-                        eval(this.getAttribute('onclick'));
-                    }
-                }, 150);
-            }
-        });
-    });
-});
-
-// تأثيرات الانيميشن عند التمرير
-document.addEventListener('DOMContentLoaded', function() {
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('fade-in-up');
-            }
-        });
-    }, {
-        threshold: 0.1
-    });
-    
-    // مراقبة العناصر للانيميشن
-    document.querySelectorAll('.video-showcase, .step-card, .benefit-card').forEach(el => {
-        observer.observe(el);
-    });
-    
-    // تأثير التحريك السلس للروابط
-    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-        anchor.addEventListener('click', function (e) {
-            e.preventDefault();
-            const target = document.querySelector(this.getAttribute('href'));
-            if (target) {
-                target.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'start'
-                });
-            }
-        });
-    });
-});
-</script>
 {% endblock %}
