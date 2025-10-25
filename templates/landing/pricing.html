@@ -504,14 +504,125 @@
         text-decoration: none;
     }
 
-    /* RESPONSIVE */
-    @media (max-width: 768px) {
+    /* ========== RESPONSIVE DESIGN ========== */
+    
+    /* Large Tablets and Small Desktops */
+    @media (max-width: 1024px) {
+        .pricing-hero {
+            padding: 80px 0;
+        }
+
         .plans-grid {
-            grid-template-columns: 1fr;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 30px;
         }
 
         .plan-card.popular {
             transform: scale(1);
+        }
+
+        .plan-card:nth-child(3) {
+            grid-column: 1 / -1;
+            max-width: 500px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .faq-grid {
+            max-width: 100%;
+        }
+    }
+
+    /* Tablets */
+    @media (max-width: 768px) {
+        .pricing-hero {
+            padding: 60px 0 80px;
+            min-height: auto;
+        }
+
+        .pricing-badge {
+            font-size: 0.85rem;
+            padding: 8px 20px;
+        }
+
+        .pricing-subtitle {
+            font-size: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .section-badge {
+            font-size: 0.75rem;
+            padding: 6px 15px;
+        }
+
+        .section-subtitle {
+            font-size: 0.95rem;
+        }
+
+        .plans-grid {
+            grid-template-columns: 1fr;
+            gap: 25px;
+        }
+
+        .plan-card {
+            padding: 35px 25px;
+        }
+
+        .plan-card.popular {
+            transform: scale(1);
+        }
+
+        .plan-card:nth-child(3) {
+            grid-column: auto;
+            max-width: 100%;
+        }
+
+        .plan-icon i {
+            font-size: 2rem;
+        }
+
+        .plan-name {
+            font-size: 1.6rem;
+        }
+
+        .price-amount {
+            font-size: 2.5rem;
+        }
+
+        .plan-cta {
+            padding: 14px 35px;
+            font-size: 1rem;
+        }
+
+        .features-title {
+            font-size: 1.1rem;
+        }
+
+        .feature-list li {
+            font-size: 0.9rem;
+        }
+
+        .faq-question {
+            font-size: 1.05rem;
+            padding: 20px 25px;
+        }
+
+        .faq-answer {
+            padding: 0 25px;
+            font-size: 0.95rem;
+        }
+
+        .faq-item.active .faq-answer {
+            padding: 0 25px 20px;
+        }
+
+        .cta-title {
+            font-size: 2.5rem;
+        }
+
+        .cta-subtitle {
+            font-size: 1.1rem;
+            margin-bottom: 2.5rem;
         }
 
         .cta-buttons {
@@ -521,6 +632,150 @@
         .cta-button {
             width: 100%;
             max-width: 350px;
+            padding: 16px 40px;
+        }
+
+        .orb-price-1, .orb-price-2 {
+            width: 400px;
+            height: 400px;
+        }
+    }
+
+    /* Mobile Devices */
+    @media (max-width: 576px) {
+        .pricing-hero {
+            padding: 40px 0 60px;
+        }
+
+        .pricing-badge {
+            font-size: 0.75rem;
+            padding: 6px 15px;
+            margin-bottom: 1.5rem;
+        }
+
+        .pricing-subtitle {
+            margin-bottom: 1.5rem;
+        }
+
+        .section-badge {
+            font-size: 0.7rem;
+        }
+
+        .section-subtitle {
+            font-size: 0.9rem;
+            margin-bottom: 2rem;
+        }
+
+        .plan-card {
+            padding: 30px 20px;
+        }
+
+        .plan-icon i {
+            font-size: 1.75rem;
+        }
+
+        .plan-name {
+            font-size: 1.4rem;
+            margin-bottom: 10px;
+        }
+
+        .plan-description {
+            font-size: 0.9rem;
+        }
+
+        .price-amount {
+            font-size: 2rem;
+        }
+
+        .price-currency {
+            font-size: 1.2rem;
+        }
+
+        .price-period {
+            font-size: 0.85rem;
+        }
+
+        .price-note {
+            font-size: 0.8rem;
+        }
+
+        .plan-cta {
+            padding: 13px 30px;
+            font-size: 0.95rem;
+        }
+
+        .features-title {
+            font-size: 1rem;
+            margin-bottom: 20px;
+        }
+
+        .feature-list li {
+            font-size: 0.85rem;
+            padding: 10px 0;
+        }
+
+        .faq-question {
+            font-size: 1rem;
+            padding: 18px 20px;
+        }
+
+        .faq-icon {
+            font-size: 1.25rem;
+        }
+
+        .faq-answer {
+            padding: 0 20px;
+            font-size: 0.9rem;
+        }
+
+        .faq-item.active .faq-answer {
+            padding: 0 20px 18px;
+        }
+
+        .pricing-cta {
+            padding: 80px 0;
+        }
+
+        .cta-title {
+            font-size: 2rem;
+        }
+
+        .cta-subtitle {
+            font-size: 1rem;
+        }
+
+        .cta-button {
+            padding: 15px 35px;
+            font-size: 1rem;
+        }
+
+        .orb-price-1, .orb-price-2 {
+            width: 300px;
+            height: 300px;
+        }
+    }
+
+    /* Very Small Mobile */
+    @media (max-width: 375px) {
+        .pricing-badge {
+            font-size: 0.7rem;
+        }
+
+        .plan-card {
+            padding: 25px 15px;
+        }
+
+        .plan-cta {
+            padding: 12px 25px;
+            font-size: 0.9rem;
+        }
+
+        .faq-question {
+            padding: 16px 18px;
+        }
+
+        .cta-button {
+            padding: 14px 30px;
         }
     }
 </style>

@@ -406,7 +406,20 @@
         color: #ef4444;
     }
 
-    /* RESPONSIVE */
+    /* ========== RESPONSIVE DESIGN ========== */
+    
+    /* Large Tablets and Small Desktops */
+    @media (max-width: 1024px) {
+        .contact-hero {
+            padding: 80px 0;
+        }
+
+        .contact-grid {
+            gap: 30px;
+        }
+    }
+
+    /* Tablets and Below */
     @media (max-width: 992px) {
         .contact-grid {
             grid-template-columns: 1fr;
@@ -415,15 +428,233 @@
         .form-row {
             grid-template-columns: 1fr;
         }
+
+        .contact-info-card {
+            grid-column: auto;
+        }
     }
 
+    /* Tablets */
     @media (max-width: 768px) {
+        .contact-hero {
+            padding: 60px 0 80px;
+            min-height: auto;
+        }
+
+        .contact-badge {
+            font-size: 0.85rem;
+            padding: 8px 20px;
+        }
+
+        .contact-subtitle {
+            font-size: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .section-badge {
+            font-size: 0.75rem;
+            padding: 6px 15px;
+        }
+
+        .section-subtitle {
+            font-size: 0.95rem;
+        }
+
         .contact-form-wrapper {
-            padding: 30px;
+            padding: 30px 25px;
+        }
+
+        .form-group label {
+            font-size: 0.9rem;
+        }
+
+        .form-control {
+            padding: 12px 18px;
+            font-size: 0.95rem;
+        }
+
+        .form-control textarea {
+            min-height: 140px;
+        }
+
+        .btn-submit {
+            padding: 14px 35px;
+            font-size: 1rem;
+        }
+
+        .contact-info-card {
+            padding: 30px 25px;
+        }
+
+        .info-icon {
+            width: 55px;
+            height: 55px;
+            font-size: 1.5rem;
+        }
+
+        .info-title {
+            font-size: 1.2rem;
+        }
+
+        .info-text {
+            font-size: 0.95rem;
         }
 
         .stats-grid {
             grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .stat-box {
+            padding: 25px 20px;
+        }
+
+        .stat-icon {
+            font-size: 2rem;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+        }
+
+        .orb-contact-1, .orb-contact-2 {
+            width: 400px;
+            height: 400px;
+        }
+    }
+
+    /* Mobile Devices */
+    @media (max-width: 576px) {
+        .contact-hero {
+            padding: 40px 0 60px;
+        }
+
+        .contact-badge {
+            font-size: 0.75rem;
+            padding: 6px 15px;
+            margin-bottom: 1.5rem;
+        }
+
+        .contact-subtitle {
+            margin-bottom: 1.5rem;
+        }
+
+        .section-badge {
+            font-size: 0.7rem;
+        }
+
+        .section-subtitle {
+            font-size: 0.9rem;
+            margin-bottom: 2rem;
+        }
+
+        .contact-form-wrapper {
+            padding: 25px 20px;
+        }
+
+        .form-title {
+            font-size: 1.6rem;
+        }
+
+        .form-description {
+            font-size: 0.9rem;
+        }
+
+        .form-group label {
+            font-size: 0.85rem;
+            margin-bottom: 6px;
+        }
+
+        .form-control {
+            padding: 11px 16px;
+            font-size: 0.9rem;
+        }
+
+        .form-control textarea {
+            min-height: 120px;
+        }
+
+        .btn-submit {
+            padding: 13px 30px;
+            font-size: 0.95rem;
+        }
+
+        .contact-info-card {
+            padding: 25px 20px;
+        }
+
+        .info-icon {
+            width: 50px;
+            height: 50px;
+            font-size: 1.35rem;
+            margin-bottom: 15px;
+        }
+
+        .info-title {
+            font-size: 1.1rem;
+            margin-bottom: 8px;
+        }
+
+        .info-text {
+            font-size: 0.9rem;
+        }
+
+        .stats-grid {
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+
+        .stat-box {
+            padding: 20px 15px;
+        }
+
+        .stat-icon {
+            font-size: 1.75rem;
+        }
+
+        .stat-number {
+            font-size: 1.75rem;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+        }
+
+        .orb-contact-1, .orb-contact-2 {
+            width: 300px;
+            height: 300px;
+        }
+    }
+
+    /* Very Small Mobile */
+    @media (max-width: 375px) {
+        .contact-badge {
+            font-size: 0.7rem;
+        }
+
+        .contact-form-wrapper {
+            padding: 20px 15px;
+        }
+
+        .form-control {
+            padding: 10px 14px;
+        }
+
+        .btn-submit {
+            padding: 12px 25px;
+            font-size: 0.9rem;
+        }
+
+        .contact-info-card {
+            padding: 20px 15px;
+        }
+
+        .stat-box {
+            padding: 18px 12px;
         }
     }
 </style>
