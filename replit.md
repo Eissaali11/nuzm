@@ -29,6 +29,7 @@ Preferred communication style: Simple, everyday language.
 - **Employee Management**: CRUD operations, department assignment, document management with expiry tracking, profile image/ID uploads, bulk import/export. Includes comprehensive housing documentation with multi-image upload (HEIC support) and Google Drive links integration.
 - **Vehicle Management**: Registration, tracking, handover/return, workshop records, reports, document management (registration, plates, insurance), external safety checks with photo uploads, and automated return system.
 - **Attendance System**: Daily tracking, overtime, monthly/weekly reports, Hijri calendar integration, department-based filtering, and enhanced dashboard with dual-calendar display.
+- **Smart Attendance System (Future)**: Advanced mobile-based attendance with face recognition (ML Kit), geofencing, mock location detection, real-time verification, shift management, and web-based admin dashboard for multi-location workforce management.
 - **Salary Management**: Calculation, processing, allowances/deductions, monthly payroll reports.
 - **Department Management**: Organizational structure and hierarchy, with department-based access control across all modules.
 - **User Management**: Role-based access control, permission management, multi-tenant authentication/authorization.
@@ -58,8 +59,9 @@ Preferred communication style: Simple, everyday language.
 - **Image Processing**: Pillow 11.2.1
 - **SMS Notifications**: twilio 9.5.2
 - **Email Services**: sendgrid 6.11.0
-- **Authentication/Storage**: Firebase SDK
+- **Authentication**: Flask-Login, Firebase SDK
 - **Charting**: Chart.js
 - **Mapping**: Fabric.js
 - **AI**: OpenAI GPT-4o
 - **Voice AI**: VoiceHub
+- **Face Recognition (Future)**: Google ML Kit, TensorFlow Lite
