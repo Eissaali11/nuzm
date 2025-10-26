@@ -27,12 +27,18 @@ def generate_handover_report_pdf_weasyprint(handover):
                 os.path.join(current_app.root_path, file_path),
                 os.path.join(current_app.root_path, 'static', file_path),
                 os.path.join(current_app.root_path, 'uploads', file_path),
-                os.path.join(current_app.root_path, 'static', 'uploads', file_path)
+                os.path.join(current_app.root_path, 'static', 'uploads', file_path),
+                os.path.join(current_app.static_folder, file_path),
+                os.path.join(current_app.static_folder, 'uploads', file_path)
             ]
+            
+            # Log the paths being tried
+            current_app.logger.info(f"Looking for image: {file_path}")
             
             for path in possible_paths:
                 if os.path.exists(path):
                     try:
+                        current_app.logger.info(f"Found image at: {path}")
                         with open(path, 'rb') as img_file:
                             img_data = img_file.read()
                             img_b64 = base64.b64encode(img_data).decode('utf-8')
@@ -51,7 +57,7 @@ def generate_handover_report_pdf_weasyprint(handover):
                         current_app.logger.warning(f"Failed to read image {path}: {e}")
                         continue
             
-            current_app.logger.warning(f"Image not found in any location: {file_path}")
+            current_app.logger.error(f"Image not found in any location: {file_path}. Tried paths: {possible_paths}")
             return None
 
         # Convert all image paths to base64
