@@ -1628,8 +1628,10 @@ def edit_documents(id):
                                 # إضافة معلومات إضافية إذا توفرت
                                 if operation.employee:
                                     handover.employee_id = operation.employee.id
+                                    if hasattr(operation.employee, 'mobilePersonal'):
+                                        handover.driver_phone_number = operation.employee.mobilePersonal
                                     if hasattr(operation.employee, 'mobile'):
-                                        handover.driver_phone_number = operation.employee.mobile
+                                        handover.driver_work_phone = operation.employee.mobile
                                     if hasattr(operation.employee, 'national_id'):
                                         handover.driver_residency_number = operation.employee.national_id
                                 
@@ -2964,7 +2966,8 @@ def create_handover(id):
                 vehicle_model_year=str(vehicle.year), employee_id=driver.id if driver else None,
                 person_name=driver.name if driver else person_name_from_form,
                 driver_company_id=driver.employee_id if driver else None,
-                driver_phone_number=driver.mobile if driver else None,
+                driver_phone_number=driver.mobilePersonal if driver else None,
+                driver_work_phone=driver.mobile if driver else None,
                 driver_residency_number=driver.national_id if driver else None,
                 driver_contract_status=driver.contract_status if driver else None,
                 driver_license_status=driver.license_status if driver else None,

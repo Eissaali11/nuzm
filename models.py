@@ -750,7 +750,8 @@ class VehicleHandover(db.Model):
 
     # **جديد**: حقول إضافية لبيانات السائق المنسوخة
     driver_company_id = db.Column(db.String(50), nullable=True) # رقم شركة السائق
-    driver_phone_number = db.Column(db.String(20), nullable=True) # رقم جوال السائق
+    driver_phone_number = db.Column(db.String(20), nullable=True) # رقم جوال السائق الشخصي
+    driver_work_phone = db.Column(db.String(20), nullable=True) # رقم جوال العمل للسائق
     driver_residency_number = db.Column(db.String(50), nullable=True) # رقم إقامة السائق
     driver_contract_status = db.Column(db.String(50), nullable=True) # حالة عقد السائق
     driver_license_status = db.Column(db.String(50), nullable=True) # حالة رخصة السائق
