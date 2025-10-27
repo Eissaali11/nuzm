@@ -6,9 +6,6 @@
     <title>تسجيل الدخول - نُظم</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -17,296 +14,237 @@
         }
 
         body {
-            font-family: 'Tajawal', sans-serif;
-            min-height: 100vh;
-            overflow: hidden;
-            position: relative;
-            background: #0f0c29;
-        }
-
-        /* خلفية متحركة متدرجة */
-        .animated-gradient {
-            position: fixed;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #4facfe 75%, #00f2fe 100%);
-            background-size: 400% 400%;
-            animation: gradientShift 15s ease infinite;
-            z-index: 0;
-        }
-
-        @keyframes gradientShift {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        /* دوائر عائمة في الخلفية */
-        .floating-shapes {
-            position: fixed;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            z-index: 1;
-        }
-
-        .shape {
-            position: absolute;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(20px);
-            animation: float 20s infinite ease-in-out;
-        }
-
-        .shape:nth-child(1) {
-            width: 300px;
-            height: 300px;
-            top: -150px;
-            left: -100px;
-            animation-delay: 0s;
-        }
-
-        .shape:nth-child(2) {
-            width: 200px;
-            height: 200px;
-            bottom: -100px;
-            right: -50px;
-            animation-delay: 7s;
-        }
-
-        .shape:nth-child(3) {
-            width: 150px;
-            height: 150px;
-            top: 50%;
-            left: 10%;
-            animation-delay: 3s;
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0) rotate(0deg); }
-            50% { transform: translateY(-50px) rotate(180deg); }
-        }
-
-        /* المحتوى الرئيسي */
-        .login-wrapper {
-            position: relative;
-            z-index: 10;
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8f9fb;
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 20px;
+            direction: rtl;
         }
 
-        .login-card {
+        .phone-container {
+            max-width: 375px;
             width: 100%;
-            max-width: 420px;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px);
-            border-radius: 30px;
-            padding: 50px 40px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3),
-                        0 0 100px rgba(102, 126, 234, 0.2);
-            animation: slideInUp 0.8s ease-out;
-            border: 1px solid rgba(255, 255, 255, 0.3);
+            background: white;
+            min-height: 100vh;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            position: relative;
         }
 
-        @keyframes slideInUp {
-            from {
-                opacity: 0;
-                transform: translateY(50px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        /* شريط الحالة */
+        .status-bar {
+            background: white;
+            height: 44px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            font-size: 14px;
+            font-weight: 600;
+            border-bottom: 1px solid #f0f0f5;
+        }
+
+        .status-time {
+            color: #000;
+        }
+
+        .status-icons {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            color: #000;
+        }
+
+        /* محتوى تسجيل الدخول */
+        .login-container {
+            padding: 60px 30px 40px;
+            min-height: calc(100vh - 44px);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }
 
         /* الشعار */
-        .logo-container {
-            text-align: center;
-            margin-bottom: 40px;
-        }
-
         .app-logo {
-            width: 100px;
-            height: 100px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 25px;
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #4A90E2 0%, #357ABD 100%);
+            border-radius: 20px;
             margin: 0 auto 20px;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            font-size: 36px;
-            font-weight: 900;
-            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.4),
-                        0 0 0 15px rgba(102, 126, 234, 0.05);
-            animation: logoFloat 3s ease-in-out infinite;
-            transform-style: preserve-3d;
-        }
-
-        @keyframes logoFloat {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
+            font-size: 28px;
+            font-weight: 700;
+            box-shadow: 0 4px 16px rgba(74, 144, 226, 0.2);
         }
 
         .app-name {
-            font-size: 32px;
-            font-weight: 900;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            font-size: 24px;
+            font-weight: 700;
+            color: #1a1a1a;
+            text-align: center;
             margin-bottom: 8px;
         }
 
         .app-tagline {
-            font-size: 16px;
-            color: #6c757d;
-            font-weight: 500;
+            font-size: 14px;
+            color: #8e8e93;
+            text-align: center;
+            margin-bottom: 40px;
         }
 
-        /* العنوان */
+        /* رأس تسجيل الدخول */
         .login-header {
             text-align: center;
-            margin-bottom: 35px;
+            margin-bottom: 30px;
         }
 
         .login-title {
-            font-size: 28px;
-            font-weight: 700;
-            color: #2d3748;
-            margin-bottom: 10px;
+            font-size: 20px;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-bottom: 8px;
         }
 
         .login-subtitle {
-            font-size: 15px;
-            color: #718096;
-            font-weight: 500;
+            font-size: 14px;
+            color: #8e8e93;
+        }
+
+        /* رسائل التنبيه */
+        .alert-box {
+            padding: 12px 16px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .alert-error {
+            background: rgba(255, 59, 48, 0.1);
+            border: 1px solid rgba(255, 59, 48, 0.2);
+            color: #FF3B30;
+        }
+
+        .alert-success {
+            background: rgba(52, 199, 89, 0.1);
+            border: 1px solid rgba(52, 199, 89, 0.2);
+            color: #34C759;
         }
 
         /* النموذج */
         .form-group {
-            margin-bottom: 25px;
-            position: relative;
+            margin-bottom: 16px;
+        }
+
+        .input-label {
+            font-size: 14px;
+            font-weight: 500;
+            color: #1a1a1a;
+            margin-bottom: 8px;
+            display: block;
         }
 
         .input-wrapper {
             position: relative;
         }
 
-        .input-icon {
-            position: absolute;
-            right: 18px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #a0aec0;
-            font-size: 18px;
-            z-index: 2;
-        }
-
         .form-control {
             width: 100%;
-            padding: 18px 55px 18px 20px;
-            border: 2px solid #e2e8f0;
-            border-radius: 15px;
+            padding: 14px 16px;
+            border: 1px solid #e5e5ea;
+            border-radius: 12px;
             font-size: 16px;
             background: white;
-            transition: all 0.3s ease;
-            direction: rtl;
-            font-family: 'Tajawal', sans-serif;
-            color: #2d3748;
+            transition: all 0.2s ease;
+            color: #1a1a1a;
         }
 
         .form-control:focus {
             outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
-            background: #f7fafc;
+            border-color: #4A90E2;
+            box-shadow: 0 0 0 4px rgba(74, 144, 226, 0.1);
         }
 
         .form-control::placeholder {
-            color: #cbd5e0;
-            font-weight: 400;
+            color: #c7c7cc;
         }
 
         .password-toggle {
             position: absolute;
-            left: 18px;
+            left: 16px;
             top: 50%;
             transform: translateY(-50%);
             background: none;
             border: none;
-            color: #a0aec0;
+            color: #8e8e93;
             font-size: 18px;
             cursor: pointer;
-            padding: 5px;
-            transition: color 0.3s ease;
-            z-index: 2;
+            padding: 0;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.2s ease;
         }
 
         .password-toggle:hover {
-            color: #667eea;
+            color: #4A90E2;
         }
 
         /* زر تسجيل الدخول */
         .login-btn {
             width: 100%;
-            padding: 18px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 14px;
+            background: linear-gradient(135deg, #4A90E2 0%, #357ABD 100%);
             color: white;
             border: none;
-            border-radius: 15px;
-            font-size: 18px;
-            font-weight: 700;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s ease;
-            margin-top: 10px;
-            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .login-btn::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-            transition: left 0.5s;
-        }
-
-        .login-btn:hover::before {
-            left: 100%;
+            transition: all 0.2s ease;
+            margin-top: 20px;
+            box-shadow: 0 2px 8px rgba(74, 144, 226, 0.2);
         }
 
         .login-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 15px 35px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
+            transform: translateY(-1px);
         }
 
         .login-btn:active {
             transform: translateY(0);
         }
 
-        .login-btn-content {
+        .login-btn.loading {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
+        .btn-content {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
+            gap: 8px;
         }
 
         .spinner {
             display: none;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255, 255, 255, 0.3);
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
             border-top-color: white;
             border-radius: 50%;
-            animation: spin 0.8s linear infinite;
+            animation: spin 0.6s linear infinite;
+        }
+
+        .login-btn.loading .spinner {
+            display: inline-block;
         }
 
         @keyframes spin {
@@ -316,136 +254,115 @@
         /* رابط نسيت كلمة المرور */
         .forgot-password {
             text-align: center;
-            margin-top: 25px;
+            margin-top: 20px;
         }
 
         .forgot-password a {
-            color: #667eea;
+            color: #4A90E2;
             text-decoration: none;
-            font-size: 15px;
-            font-weight: 600;
-            transition: all 0.3s ease;
+            font-size: 14px;
+            font-weight: 500;
         }
 
         .forgot-password a:hover {
-            color: #764ba2;
             text-decoration: underline;
         }
 
-        /* رسائل التنبيه */
-        .alert-box {
-            padding: 15px 20px;
-            border-radius: 12px;
-            margin-bottom: 25px;
-            font-size: 14px;
-            font-weight: 500;
-            display: none;
-            animation: slideDown 0.3s ease-out;
+        /* فاصل */
+        .divider {
+            text-align: center;
+            margin: 30px 0 20px;
+            position: relative;
         }
 
-        @keyframes slideDown {
+        .divider::before,
+        .divider::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            width: 45%;
+            height: 1px;
+            background: #e5e5ea;
+        }
+
+        .divider::before {
+            right: 0;
+        }
+
+        .divider::after {
+            left: 0;
+        }
+
+        .divider-text {
+            background: white;
+            padding: 0 15px;
+            color: #8e8e93;
+            font-size: 13px;
+            position: relative;
+        }
+
+        /* تحسينات للشاشات الصغيرة */
+        @media (max-width: 414px) {
+            .phone-container {
+                box-shadow: none;
+                border-radius: 0;
+            }
+
+            .login-container {
+                padding: 40px 25px;
+            }
+
+            .app-logo {
+                width: 70px;
+                height: 70px;
+                font-size: 24px;
+            }
+
+            .app-name {
+                font-size: 22px;
+            }
+        }
+
+        /* تأثير التحميل */
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
             from {
                 opacity: 0;
-                transform: translateY(-10px);
+                transform: translateY(20px);
             }
             to {
                 opacity: 1;
                 transform: translateY(0);
             }
         }
-
-        .alert-error {
-            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
-            border: 2px solid #fca5a5;
-            color: #dc2626;
-        }
-
-        .alert-success {
-            background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
-            border: 2px solid #86efac;
-            color: #16a34a;
-        }
-
-        /* تحسينات الاستجابة */
-        @media (max-width: 480px) {
-            .login-card {
-                padding: 40px 30px;
-                border-radius: 25px;
-            }
-
-            .app-logo {
-                width: 80px;
-                height: 80px;
-                font-size: 30px;
-                border-radius: 20px;
-            }
-
-            .app-name {
-                font-size: 28px;
-            }
-
-            .login-title {
-                font-size: 24px;
-            }
-
-            .form-control {
-                padding: 16px 50px 16px 18px;
-                font-size: 15px;
-            }
-
-            .login-btn {
-                padding: 16px;
-                font-size: 16px;
-            }
-        }
-
-        /* Decorative elements */
-        .decorative-line {
-            width: 60px;
-            height: 4px;
-            background: linear-gradient(90deg, #667eea, #764ba2);
-            margin: 0 auto 30px;
-            border-radius: 2px;
-        }
-
-        /* Loading state */
-        .login-btn.loading {
-            pointer-events: none;
-            opacity: 0.8;
-        }
-
-        .login-btn.loading .spinner {
-            display: inline-block;
-        }
     </style>
 </head>
 <body>
-    <!-- الخلفية المتحركة -->
-    <div class="animated-gradient"></div>
-    
-    <!-- الأشكال العائمة -->
-    <div class="floating-shapes">
-        <div class="shape"></div>
-        <div class="shape"></div>
-        <div class="shape"></div>
-    </div>
-
-    <!-- صفحة تسجيل الدخول -->
-    <div class="login-wrapper">
-        <div class="login-card">
-            <!-- الشعار -->
-            <div class="logo-container">
-                <div class="app-logo">نُظم</div>
-                <h1 class="app-name">نُظم</h1>
-                <p class="app-tagline">نظام إدارة شامل ومتكامل</p>
+    <div class="phone-container">
+        <!-- شريط الحالة -->
+        <div class="status-bar">
+            <span class="status-time" id="currentTime">9:41</span>
+            <div class="status-icons">
+                <i class="fas fa-signal"></i>
+                <i class="fas fa-wifi"></i>
+                <i class="fas fa-battery-full"></i>
             </div>
+        </div>
 
-            <div class="decorative-line"></div>
+        <!-- محتوى تسجيل الدخول -->
+        <div class="login-container fade-in">
+            <!-- الشعار -->
+            <div class="app-logo">نُظم</div>
+            <h1 class="app-name">نُظم</h1>
+            <p class="app-tagline">نظام إدارة شامل ومتكامل</p>
 
-            <!-- عنوان تسجيل الدخول -->
+            <!-- رأس تسجيل الدخول -->
             <div class="login-header">
-                <h2 class="login-title">مرحباً بعودتك</h2>
-                <p class="login-subtitle">سجّل دخولك للوصول إلى حسابك</p>
+                <h2 class="login-title">مرحباً بك</h2>
+                <p class="login-subtitle">سجّل دخولك للمتابعة</p>
             </div>
 
             <!-- رسائل التنبيه -->
@@ -456,7 +373,7 @@
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
                     {% for category, message in messages %}
-                        <div class="alert-box alert-{{ 'error' if category == 'danger' else category }}" style="display: block;">
+                        <div class="alert-box alert-{{ 'error' if category == 'danger' else 'success' }}" style="display: block;">
                             <i class="fas fa-{{ 'exclamation-circle' if category == 'danger' else 'check-circle' }} me-2"></i>
                             {{ message }}
                         </div>
@@ -469,38 +386,38 @@
                 {{ form.hidden_tag() }}
                 
                 <div class="form-group">
+                    <label class="input-label" for="username">اسم المستخدم</label>
                     <div class="input-wrapper">
-                        <i class="fas fa-user input-icon"></i>
-                        {{ form.username(class="form-control", id="username", placeholder="اسم المستخدم", autocomplete="username") }}
+                        {{ form.username(class="form-control", id="username", placeholder="أدخل اسم المستخدم", autocomplete="username") }}
                     </div>
                     {% if form.username.errors %}
-                        <div class="alert-box alert-error" style="display: block; margin-top: 10px;">
+                        <div class="alert-box alert-error" style="display: block; margin-top: 8px;">
                             {% for error in form.username.errors %}
-                                <i class="fas fa-exclamation-circle me-2"></i>{{ error }}
+                                {{ error }}
                             {% endfor %}
                         </div>
                     {% endif %}
                 </div>
 
                 <div class="form-group">
+                    <label class="input-label" for="password">كلمة المرور</label>
                     <div class="input-wrapper">
-                        <i class="fas fa-lock input-icon"></i>
-                        {{ form.password(class="form-control", type="password", id="password", placeholder="كلمة المرور", autocomplete="current-password") }}
+                        {{ form.password(class="form-control", type="password", id="password", placeholder="أدخل كلمة المرور", autocomplete="current-password") }}
                         <button type="button" class="password-toggle" onclick="togglePassword()">
                             <i class="fas fa-eye" id="passwordIcon"></i>
                         </button>
                     </div>
                     {% if form.password.errors %}
-                        <div class="alert-box alert-error" style="display: block; margin-top: 10px;">
+                        <div class="alert-box alert-error" style="display: block; margin-top: 8px;">
                             {% for error in form.password.errors %}
-                                <i class="fas fa-exclamation-circle me-2"></i>{{ error }}
+                                {{ error }}
                             {% endfor %}
                         </div>
                     {% endif %}
                 </div>
 
                 <button type="submit" class="login-btn" id="loginBtn">
-                    <div class="login-btn-content">
+                    <div class="btn-content">
                         <span id="loginText">تسجيل الدخول</span>
                         <div class="spinner"></div>
                     </div>
@@ -509,7 +426,6 @@
 
             <div class="forgot-password">
                 <a href="{{ url_for('mobile.forgot_password') if 'mobile.forgot_password' in url_map else '#' }}">
-                    <i class="fas fa-key me-1"></i>
                     نسيت كلمة المرور؟
                 </a>
             </div>
@@ -518,6 +434,16 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // تحديث الوقت في شريط الحالة
+        function updateTime() {
+            const now = new Date();
+            const hours = now.getHours().toString().padStart(2, '0');
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            document.getElementById('currentTime').textContent = `${hours}:${minutes}`;
+        }
+        updateTime();
+        setInterval(updateTime, 1000);
+
         // تبديل إظهار/إخفاء كلمة المرور
         function togglePassword() {
             const passwordInput = document.getElementById('password');
@@ -568,12 +494,12 @@
             loginBtn.classList.add('loading');
         });
 
-        // التركيز التلقائي على حقل اسم المستخدم
+        // التركيز التلقائي
         window.addEventListener('load', function() {
             document.getElementById('username').focus();
         });
 
-        // الانتقال بين الحقول بالضغط على Enter
+        // الانتقال بين الحقول
         document.getElementById('username').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
@@ -585,7 +511,7 @@
         document.getElementById('username').addEventListener('input', hideAlerts);
         document.getElementById('password').addEventListener('input', hideAlerts);
 
-        // إخفاء رسائل Flask التلقائية بعد 5 ثوانٍ
+        // إخفاء رسائل Flask بعد 5 ثوانٍ
         window.addEventListener('load', function() {
             const flashMessages = document.querySelectorAll('.alert-box[style*="display: block"]');
             flashMessages.forEach(function(msg) {
