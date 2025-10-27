@@ -1737,6 +1737,101 @@ def share_with_outlook(operation_id):
                 pass
 
 
+@operations_bp.route('/<int:operation_id>/share-data', methods=['GET'])
+@login_required
+def share_data(operation_id):
+    """إرجاع بيانات للمشاركة عبر Web Share API"""
+    
+    try:
+        operation = OperationRequest.query.get_or_404(operation_id)
+        
+        # بناء الرسالة المنسقة
+        message_parts = ["مرحباً 👋\n\n"]
+        message_parts.append("═══════════════════════════\n")
+        
+        # نوع العملية
+        if operation.operation_type == 'handover':
+            handover = VehicleHandover.query.get(operation.related_record_id) if operation.related_record_id else None
+            if handover:
+                operation_title = "🚙 تسليم مركبة" if handover.handover_type == 'delivery' else "🔄 استلام مركبة"
+            else:
+                operation_title = "🚙 عملية تسليم/استلام"
+        elif operation.operation_type == 'workshop':
+            operation_title = "🔧 دخول ورشة"
+        elif operation.operation_type == 'safety_inspection':
+            operation_title = "✅ فحص سلامة"
+        else:
+            operation_title = "📋 عملية"
+        
+        message_parts.append(f"{operation_title}\n")
+        message_parts.append("═══════════════════════════\n")
+        
+        # معلومات المركبة
+        if operation.vehicle:
+            vehicle_info = f"{operation.vehicle.plate_number} - {operation.vehicle.make} {operation.vehicle.model}"
+            message_parts.append(f"• رقم السيارة: {vehicle_info}\n")
+        
+        # نوع العملية
+        if operation.operation_type == 'handover':
+            handover = VehicleHandover.query.get(operation.related_record_id) if operation.related_record_id else None
+            if handover:
+                operation_type_text = "تسليم" if handover.handover_type == 'delivery' else "استلام"
+                message_parts.append(f"• نوع العملية: {operation_type_text}\n")
+                message_parts.append(f"• تاريخ العملية: {handover.handover_date.strftime('%Y-%m-%d')}\n")
+                
+                # معلومات السائق
+                if handover.person_name:
+                    message_parts.append("\n═══════════════════════════\n")
+                    message_parts.append("👤 معلومات السائق\n")
+                    message_parts.append("═══════════════════════════\n")
+                    message_parts.append(f"• الاسم: {handover.person_name}\n")
+                    if handover.driver_phone_number:
+                        message_parts.append(f"• الجوال: {handover.driver_phone_number}\n")
+                    if handover.driver_residency_number:
+                        message_parts.append(f"• رقم الإقامة: {handover.driver_residency_number}\n")
+                
+                # معلومات إضافية
+                message_parts.append("\n═══════════════════════════\n")
+                message_parts.append("📊 تفاصيل إضافية\n")
+                message_parts.append("═══════════════════════════\n")
+                message_parts.append(f"• المسافة: {handover.mileage} كم\n")
+                if handover.city:
+                    message_parts.append(f"• المدينة: {handover.city}\n")
+                if handover.project_name:
+                    message_parts.append(f"• المشروع: {handover.project_name}\n")
+                
+                if handover.notes:
+                    message_parts.append(f"\n💬 ملاحظات:\n{handover.notes}\n")
+        
+        message_parts.append("\n═══════════════════════════\n")
+        message_parts.append("📎 مرفقات: ملف Excel + ملف PDF\n")
+        message_parts.append("═══════════════════════════")
+        
+        message = ''.join(message_parts)
+        
+        # بناء URLs للملفات
+        excel_url = url_for('operations.export_operation_excel', operation_id=operation_id, _external=True)
+        
+        # URL لملف PDF (نحتاج related_record_id)
+        pdf_url = None
+        if operation.operation_type == 'handover' and operation.related_record_id:
+            pdf_url = url_for('vehicles.handover_pdf_public', handover_id=operation.related_record_id, _external=True)
+        
+        return jsonify({
+            'success': True,
+            'message': message,
+            'excelUrl': excel_url,
+            'pdfUrl': pdf_url
+        })
+        
+    except Exception as e:
+        current_app.logger.error(f"خطأ في إنشاء بيانات المشاركة للعملية {operation_id}: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
 @operations_bp.route('/<int:operation_id>/share-package', methods=['GET'])
 @login_required
 def share_package(operation_id):

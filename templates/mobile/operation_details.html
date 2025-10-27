@@ -1085,7 +1085,7 @@ function sendEmail() {
     });
 }
 
-// دالة المشاركة الخارجية الشاملة
+// دالة المشاركة عبر Web Share API مع رسالة منسقة وملفات
 async function sharePackage(operationId) {
     try {
         // عرض مؤشر التحميل
@@ -1101,126 +1101,145 @@ async function sharePackage(operationId) {
         const toast = new bootstrap.Toast(loadingToast);
         toast.show();
         
-        // تنزيل الحزمة
-        const response = await fetch(`/operations/${operationId}/share-package`);
+        // 1. جلب بيانات المشاركة (الرسالة + روابط الملفات)
+        const dataResponse = await fetch(`/operations/${operationId}/share-data`);
+        if (!dataResponse.ok) throw new Error('فشل في جلب البيانات');
         
-        if (!response.ok) {
-            throw new Error('فشل في تحميل الملف');
+        const data = await dataResponse.json();
+        if (!data.success) throw new Error(data.error || 'خطأ في البيانات');
+        
+        // 2. تحميل ملف Excel
+        const excelResponse = await fetch(data.excelUrl);
+        if (!excelResponse.ok) throw new Error('فشل في تحميل Excel');
+        const excelBlob = await excelResponse.blob();
+        const excelFile = new File([excelBlob], `عملية_${operationId}.xlsx`, { 
+            type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+        });
+        
+        // 3. تحميل ملف PDF (إن وُجد)
+        const files = [excelFile];
+        if (data.pdfUrl) {
+            const pdfResponse = await fetch(data.pdfUrl);
+            if (pdfResponse.ok) {
+                const pdfBlob = await pdfResponse.blob();
+                const pdfFile = new File([pdfBlob], `عملية_${operationId}.pdf`, { 
+                    type: 'application/pdf' 
+                });
+                files.push(pdfFile);
+            }
         }
-        
-        const blob = await response.blob();
-        const fileName = `عملية_${operationId}_شاملة.zip`;
         
         // إخفاء مؤشر التحميل
         toast.hide();
         setTimeout(() => loadingToast.remove(), 500);
         
-        // محاولة استخدام Web Share API
-        if (navigator.share && navigator.canShare) {
-            const file = new File([blob], fileName, { type: 'application/zip' });
-            
-            if (navigator.canShare({ files: [file] })) {
-                try {
-                    await navigator.share({
-                        title: 'مشاركة تفاصيل العملية',
-                        text: 'حزمة شاملة تحتوي على: ملف نصي تفصيلي + Excel + PDF + الصور المرفقة',
-                        files: [file]
-                    });
-                    
-                    // نجحت المشاركة
-                    const successToast = document.createElement('div');
-                    successToast.className = 'toast position-fixed bottom-0 end-0 m-3';
-                    successToast.innerHTML = `
-                        <div class="toast-body bg-success text-white rounded-3">
-                            <i class="fas fa-check-circle me-2"></i>
-                            تمت المشاركة بنجاح!
-                        </div>
-                    `;
-                    document.body.appendChild(successToast);
-                    const toast2 = new bootstrap.Toast(successToast);
-                    toast2.show();
-                    setTimeout(() => successToast.remove(), 3000);
-                    return;
-                } catch (shareError) {
-                    // إذا ألغى المستخدم المشاركة
-                    if (shareError.name === 'AbortError') {
-                        return;
-                    }
-                    // في حالة فشل المشاركة، نكمل للتنزيل المباشر
-                }
+        // 4. محاولة المشاركة عبر Web Share API
+        if (navigator.share && navigator.canShare && navigator.canShare({ files: files })) {
+            try {
+                await navigator.share({
+                    title: 'مشاركة تفاصيل العملية',
+                    text: data.message,
+                    files: files
+                });
+                
+                // نجحت المشاركة
+                const successToast = document.createElement('div');
+                successToast.className = 'toast position-fixed bottom-0 end-0 m-3';
+                successToast.innerHTML = `
+                    <div class="toast-body bg-success text-white rounded-3">
+                        <i class="fas fa-check-circle me-2"></i>
+                        تمت المشاركة بنجاح!
+                    </div>
+                `;
+                document.body.appendChild(successToast);
+                const toast2 = new bootstrap.Toast(successToast);
+                toast2.show();
+                setTimeout(() => successToast.remove(), 3000);
+                return;
+            } catch (shareError) {
+                if (shareError.name === 'AbortError') return;
+                console.error('Web Share API failed:', shareError);
             }
         }
         
-        // الطريقة البديلة: تنزيل الملف مع رسالة توضيحية
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = fileName;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        a.remove();
-        
-        // عرض رسالة توضيحية
-        setTimeout(() => {
-            const instructionsModal = `
-                <div class="modal fade" id="outlookInstructions" tabindex="-1">
-                    <div class="modal-dialog modal-dialog-centered">
-                        <div class="modal-content">
-                            <div class="modal-header bg-success text-white">
-                                <h5 class="modal-title">
-                                    <i class="fas fa-download me-2"></i>
-                                    تم تنزيل الحزمة بنجاح
-                                </h5>
-                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        // 5. البديل: عرض الرسالة للنسخ + تنزيل الملفات
+        const fallbackModal = `
+            <div class="modal fade" id="shareFallback" tabindex="-1">
+                <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+                    <div class="modal-content">
+                        <div class="modal-header bg-gradient text-white" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                            <h5 class="modal-title">
+                                <i class="fas fa-share-alt me-2"></i>
+                                مشاركة تفاصيل العملية
+                            </h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">📋 انسخ الرسالة التالية:</label>
+                                <textarea class="form-control text-end" id="shareMessage" rows="14" readonly style="font-family: 'Tajawal', sans-serif; direction: rtl; font-size: 0.9rem; background: #f8f9fa;">${data.message}</textarea>
                             </div>
-                            <div class="modal-body text-center py-4">
-                                <div class="mb-4">
-                                    <i class="fas fa-check-circle text-success" style="font-size: 3rem;"></i>
-                                </div>
-                                <h6 class="mb-3">محتويات الحزمة:</h6>
-                                <div class="text-end" style="background: #f8f9fa; padding: 20px; border-radius: 10px;">
-                                    <ul class="mb-0">
-                                        <li class="mb-2"><i class="fas fa-file-alt text-primary me-2"></i><strong>ملف نصي:</strong> تفاصيل العملية الكاملة</li>
-                                        <li class="mb-2"><i class="fas fa-file-excel text-success me-2"></i><strong>ملف Excel:</strong> بيانات منظمة قابلة للتحرير</li>
-                                        <li class="mb-2"><i class="fas fa-file-pdf text-danger me-2"></i><strong>ملف PDF:</strong> تقرير احترافي للطباعة</li>
-                                        <li class="mb-2"><i class="fas fa-images text-info me-2"></i><strong>الصور:</strong> جميع الصور المرفقة بالعملية</li>
-                                    </ul>
-                                </div>
-                                <div class="alert alert-success mt-3 mb-0" style="font-size: 0.85rem;">
-                                    <i class="fas fa-share-alt me-1"></i>
-                                    <strong>يمكنك الآن:</strong> فك ضغط الملف ومشاركة المحتويات عبر أي تطبيق (WhatsApp, Email, إلخ)
-                                </div>
+                            <button class="btn btn-primary w-100 mb-3" onclick="copyShareMessage()">
+                                <i class="fas fa-copy me-2"></i>
+                                نسخ الرسالة
+                            </button>
+                            <div class="alert alert-info mb-0">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <strong>الملفات المرفقة:</strong> سيتم تنزيل ${files.length} ملف تلقائياً (Excel${files.length > 1 ? ' + PDF' : ''})
                             </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-success" data-bs-dismiss="modal">
-                                    <i class="fas fa-check me-1"></i>
-                                    حسناً
-                                </button>
-                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
                         </div>
                     </div>
                 </div>
-            `;
-            
-            // إضافة وعرض Modal
-            const modalDiv = document.createElement('div');
-            modalDiv.innerHTML = instructionsModal;
-            document.body.appendChild(modalDiv.firstElementChild);
-            
-            const modal = new bootstrap.Modal(document.getElementById('outlookInstructions'));
-            modal.show();
-            
-            // حذف Modal عند الإغلاق
-            document.getElementById('outlookInstructions').addEventListener('hidden.bs.modal', function() {
-                this.remove();
-            });
-        }, 500);
+            </div>
+        `;
+        
+        document.body.insertAdjacentHTML('beforeend', fallbackModal);
+        const modal = new bootstrap.Modal(document.getElementById('shareFallback'));
+        modal.show();
+        
+        document.getElementById('shareFallback').addEventListener('hidden.bs.modal', function() {
+            this.remove();
+        });
+        
+        // تنزيل الملفات تلقائياً
+        files.forEach((file, index) => {
+            setTimeout(() => {
+                const url = window.URL.createObjectURL(file);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = file.name;
+                a.click();
+                window.URL.revokeObjectURL(url);
+            }, index * 500);
+        });
         
     } catch (error) {
         console.error('خطأ في المشاركة:', error);
-        alert('حدث خطأ أثناء تجهيز الملف. يرجى المحاولة مرة أخرى.');
+        alert(`حدث خطأ: ${error.message}`);
     }
+}
+
+// دالة نسخ الرسالة
+function copyShareMessage() {
+    const messageTextarea = document.getElementById('shareMessage');
+    messageTextarea.select();
+    messageTextarea.setSelectionRange(0, 99999);
+    document.execCommand('copy');
+    
+    const copyBtn = event.target.closest('button');
+    const originalHTML = copyBtn.innerHTML;
+    copyBtn.innerHTML = '<i class="fas fa-check me-2"></i>تم النسخ!';
+    copyBtn.classList.remove('btn-primary');
+    copyBtn.classList.add('btn-success');
+    
+    setTimeout(() => {
+        copyBtn.innerHTML = originalHTML;
+        copyBtn.classList.remove('btn-success');
+        copyBtn.classList.add('btn-primary');
+    }, 2000);
 }
 
 // إضافة مستمع للتحقق من صحة الإيميل فورياً
