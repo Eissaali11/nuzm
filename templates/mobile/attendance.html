@@ -8,31 +8,31 @@
 <!-- أزرار الإجراءات -->
 <style>
 .action-buttons-bar {
-    position: fixed;
-    top: 60px;
-    right: 0;
-    left: 0;
     background: white;
-    padding: 10px 20px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    padding: 12px 20px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
     display: flex;
-    gap: 10px;
+    gap: 8px;
     justify-content: flex-start;
-    z-index: 999;
+    margin-bottom: 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
 }
 
 .action-btn-modern {
-    padding: 10px 16px;
+    padding: 8px 14px;
     border: none;
-    border-radius: 12px;
-    font-size: 14px;
+    border-radius: 10px;
+    font-size: 13px;
     font-weight: 600;
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
     cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    white-space: nowrap;
 }
 
 .btn-dashboard {
@@ -55,7 +55,24 @@
 }
 
 .content-with-actions {
-    margin-top: 60px;
+    padding-top: 0;
+}
+
+/* تحسين للشاشات الصغيرة */
+@media (max-width: 380px) {
+    .action-btn-modern {
+        padding: 8px 10px;
+        font-size: 12px;
+        gap: 4px;
+    }
+    
+    .action-btn-modern span {
+        display: none;
+    }
+    
+    .action-btn-modern i {
+        font-size: 16px;
+    }
 }
 </style>
 
