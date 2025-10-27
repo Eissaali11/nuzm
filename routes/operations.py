@@ -1776,8 +1776,15 @@ def share_package(operation_id):
                 f.write('─' * 50 + '\n')
                 f.write(f'رقم اللوحة: {operation.vehicle.plate_number}\n')
                 f.write(f'النوع: {operation.vehicle.make} {operation.vehicle.model}\n')
-                if operation.vehicle.current_driver:
-                    f.write(f'السائق: {operation.vehicle.current_driver}\n')
+                
+                # محاولة الحصول على السائق من آخر عملية تسليم
+                last_handover = VehicleHandover.query.filter_by(
+                    vehicle_id=operation.vehicle.id,
+                    handover_type='delivery'
+                ).order_by(VehicleHandover.handover_date.desc()).first()
+                
+                if last_handover and last_handover.person_name:
+                    f.write(f'السائق الحالي: {last_handover.person_name}\n')
                 f.write('\n')
             
             # تفاصيل خاصة بنوع العملية
