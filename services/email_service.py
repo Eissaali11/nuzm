@@ -337,7 +337,7 @@ class EmailService:
             # إنشاء الموضوع
             subject = f"عملية {operation_type_text}"
             
-            # إنشاء محتوى الرسالة المحسّن
+            # إنشاء محتوى الرسالة المبسّط والمباشر
             html_content = f"""
             <!DOCTYPE html>
             <html dir="rtl" lang="ar">
@@ -355,7 +355,7 @@ class EmailService:
                         padding: 20px;
                     }}
                     .container {{
-                        max-width: 600px;
+                        max-width: 500px;
                         margin: 0 auto;
                         background: white;
                         border-radius: 12px;
@@ -365,98 +365,50 @@ class EmailService:
                     .header {{
                         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
                         color: white;
-                        padding: 30px;
+                        padding: 25px;
                         text-align: center;
                     }}
                     .header h1 {{
-                        margin: 0 0 10px 0;
-                        font-size: 28px;
-                    }}
-                    .header p {{
                         margin: 0;
-                        opacity: 0.9;
-                        font-size: 16px;
+                        font-size: 24px;
                     }}
                     .content {{
-                        padding: 40px 30px;
+                        padding: 30px;
                     }}
-                    .success-message {{
+                    .message {{
                         background: #d4edda;
                         border: 2px solid #28a745;
                         border-radius: 8px;
-                        padding: 20px;
-                        margin-bottom: 25px;
+                        padding: 25px;
                         text-align: center;
-                    }}
-                    .success-message h2 {{
-                        color: #155724;
-                        margin: 0 0 10px 0;
-                        font-size: 22px;
-                    }}
-                    .success-message p {{
-                        color: #155724;
-                        margin: 0;
-                        font-size: 16px;
-                        line-height: 1.6;
-                    }}
-                    .info-box {{
-                        background: #f8f9fa;
-                        border-radius: 8px;
-                        padding: 20px;
                         margin-bottom: 20px;
                     }}
-                    .info-row {{
-                        display: flex;
-                        justify-content: space-between;
-                        margin-bottom: 12px;
-                        padding: 10px 0;
-                        border-bottom: 1px solid #e9ecef;
+                    .icon {{
+                        font-size: 48px;
+                        margin-bottom: 15px;
                     }}
-                    .info-row:last-child {{
-                        border-bottom: none;
-                        margin-bottom: 0;
-                    }}
-                    .info-label {{
-                        font-weight: 600;
-                        color: #6c757d;
-                    }}
-                    .info-value {{
-                        color: #333;
+                    .message p {{
+                        color: #155724;
+                        margin: 0;
+                        font-size: 18px;
+                        line-height: 1.8;
                         font-weight: 500;
                     }}
                     .vehicle-plate {{
                         background: linear-gradient(135deg, #667eea, #764ba2);
                         color: white;
-                        padding: 8px 16px;
-                        border-radius: 6px;
+                        padding: 6px 14px;
+                        border-radius: 5px;
                         font-weight: bold;
                         display: inline-block;
-                    }}
-                    .attachments {{
-                        background: #e3f2fd;
-                        border: 2px solid #2196f3;
-                        border-radius: 8px;
-                        padding: 20px;
-                        margin-top: 25px;
-                    }}
-                    .attachments h3 {{
-                        margin: 0 0 15px 0;
-                        color: #1976d2;
-                        font-size: 18px;
-                    }}
-                    .attachment-item {{
-                        display: flex;
-                        align-items: center;
-                        gap: 10px;
-                        margin: 8px 0;
-                        font-size: 15px;
+                        margin: 0 5px;
                     }}
                     .footer {{
                         background: #f8f9fa;
-                        padding: 20px;
+                        padding: 15px;
                         text-align: center;
                         color: #6c757d;
-                        font-size: 14px;
+                        font-size: 13px;
                         border-top: 1px solid #e9ecef;
                     }}
                 </style>
@@ -465,73 +417,34 @@ class EmailService:
                 <div class="container">
                     <div class="header">
                         <h1>نظام نُظم</h1>
-                        <p>نظام إدارة الموظفين والمركبات</p>
                     </div>
                     
                     <div class="content">
-                        <div class="success-message">
-                            <h2>✓ تمت العملية بنجاح</h2>
-                            <p>تمت عملية {operation_type_text} <span class="vehicle-plate">{vehicle_plate}</span> - {driver_name or 'غير محدد'} بنجاح.<br>
+                        <div class="message">
+                            <div class="icon">✓</div>
+                            <p>تمت عملية {operation_type_text} <span class="vehicle-plate">{vehicle_plate}</span> - {driver_name or 'غير محدد'} بنجاح.<br><br>
                             يرجى مراجعة التفاصيل في المرفقات.</p>
-                        </div>
-                        
-                        <div class="info-box">
-                            <div class="info-row">
-                                <span class="info-label">نوع العملية:</span>
-                                <span class="info-value">عملية {operation_type_text}</span>
-                            </div>
-                            <div class="info-row">
-                                <span class="info-label">رقم اللوحة:</span>
-                                <span class="info-value">{vehicle_plate}</span>
-                            </div>
-                            <div class="info-row">
-                                <span class="info-label">اسم السائق:</span>
-                                <span class="info-value">{driver_name or 'غير محدد'}</span>
-                            </div>
-                            <div class="info-row">
-                                <span class="info-label">تاريخ العملية:</span>
-                                <span class="info-value">{handover_record.handover_date.strftime('%Y/%m/%d') if handover_record.handover_date else 'غير محدد'}</span>
-                            </div>
-                        </div>
-                        
-                        <div class="attachments">
-                            <h3>📎 الملفات المرفقة:</h3>
-                            {f'<div class="attachment-item">📊 ملف Excel - تفاصيل العملية الكاملة</div>' if excel_file_path else ''}
-                            {f'<div class="attachment-item">📄 ملف PDF - نموذج {operation_type_text} رسمي</div>' if pdf_file_path else ''}
                         </div>
                     </div>
                     
                     <div class="footer">
-                        <p><strong>نظام نُظم</strong> لإدارة الموظفين والمركبات</p>
-                        <p>تم إنشاء هذه الرسالة تلقائياً من النظام</p>
+                        <p>نظام نُظم لإدارة الموظفين والمركبات</p>
                     </div>
                 </div>
             </body>
             </html>
             """
             
-            # النص البديل
+            # النص البديل - بسيط ومباشر
             text_content = f"""
-نظام نُظم - عملية {operation_type_text}
-
-✓ تمت العملية بنجاح
+نظام نُظم
 
 تمت عملية {operation_type_text} {vehicle_plate} - {driver_name or 'غير محدد'} بنجاح.
+
 يرجى مراجعة التفاصيل في المرفقات.
-
-تفاصيل العملية:
-- نوع العملية: عملية {operation_type_text}
-- رقم اللوحة: {vehicle_plate}
-- اسم السائق: {driver_name or 'غير محدد'}
-- تاريخ العملية: {handover_record.handover_date.strftime('%Y/%m/%d') if handover_record.handover_date else 'غير محدد'}
-
-الملفات المرفقة:
-{f'- ملف Excel: تفاصيل العملية الكاملة' if excel_file_path else ''}
-{f'- ملف PDF: نموذج {operation_type_text} رسمي' if pdf_file_path else ''}
 
 ---
 نظام نُظم لإدارة الموظفين والمركبات
-تم إنشاء هذه الرسالة تلقائياً من النظام
             """
             
             # إنشاء الرسالة
