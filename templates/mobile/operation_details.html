@@ -726,14 +726,11 @@
         </div>
         
         {% if operation.operation_type == 'handover' and operation.related_record_id %}
-        <a href="{{ url_for('operations.share_with_outlook', operation_id=operation.id) }}" 
-           class="btn-export" style="background: linear-gradient(135deg, #0078d4, #0063b1); color: white; position: relative; overflow: visible;">
-            <i class="fab fa-microsoft" style="font-size: 1.2rem;"></i>
-            <span style="display: flex; flex-direction: column; align-items: flex-start; gap: 2px;">
-                <strong style="font-size: 1rem;">مشاركة شاملة مع Outlook</strong>
-                <small style="opacity: 0.9; font-size: 0.75rem;">يتضمن Excel + PDF + رسالة تفصيلية</small>
-            </span>
-        </a>
+        <button onclick="shareWithOutlook({{ operation.id }})" 
+           class="btn-export" style="background: linear-gradient(135deg, #0078d4, #0063b1); color: white;">
+            <i class="fab fa-microsoft"></i>
+            <span>مشاركة شاملة (Excel + PDF)</span>
+        </button>
         {% endif %}
         
         <button class="btn-export" style="background: linear-gradient(135deg, #6610f2, #e83e8c); color: white;" onclick="showEmailForm()">
@@ -1088,6 +1085,134 @@ function sendEmail() {
         sendBtn.disabled = false;
         sendBtn.innerHTML = originalText;
     });
+}
+
+// دالة المشاركة الشاملة مع Outlook
+async function shareWithOutlook(operationId) {
+    try {
+        // عرض مؤشر التحميل
+        const loadingToast = document.createElement('div');
+        loadingToast.className = 'toast position-fixed bottom-0 end-0 m-3';
+        loadingToast.innerHTML = `
+            <div class="toast-body bg-primary text-white rounded-3">
+                <i class="fas fa-spinner fa-spin me-2"></i>
+                جاري تجهيز الملفات للمشاركة...
+            </div>
+        `;
+        document.body.appendChild(loadingToast);
+        const toast = new bootstrap.Toast(loadingToast);
+        toast.show();
+        
+        // تنزيل الملف
+        const response = await fetch(`/operations/${operationId}/share-outlook`);
+        
+        if (!response.ok) {
+            throw new Error('فشل في تحميل الملف');
+        }
+        
+        const blob = await response.blob();
+        const fileName = 'عملية_تسليم_استلام.eml';
+        
+        // إخفاء مؤشر التحميل
+        toast.hide();
+        setTimeout(() => loadingToast.remove(), 500);
+        
+        // محاولة استخدام Web Share API
+        if (navigator.share && navigator.canShare) {
+            const file = new File([blob], fileName, { type: 'message/rfc822' });
+            
+            if (navigator.canShare({ files: [file] })) {
+                try {
+                    await navigator.share({
+                        title: 'مشاركة عملية تسليم/استلام',
+                        text: 'ملف يحتوي على تفاصيل العملية (Excel + PDF + رسالة تفصيلية)',
+                        files: [file]
+                    });
+                    return;
+                } catch (shareError) {
+                    // إذا ألغى المستخدم المشاركة
+                    if (shareError.name === 'AbortError') {
+                        return;
+                    }
+                }
+            }
+        }
+        
+        // الطريقة البديلة: تنزيل الملف مع رسالة توضيحية
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        a.remove();
+        
+        // عرض رسالة توضيحية
+        setTimeout(() => {
+            const instructionsModal = `
+                <div class="modal fade" id="outlookInstructions" tabindex="-1">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header bg-primary text-white">
+                                <h5 class="modal-title">
+                                    <i class="fab fa-microsoft me-2"></i>
+                                    تم تنزيل الملف بنجاح
+                                </h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body text-center py-4">
+                                <div class="mb-4">
+                                    <i class="fas fa-check-circle text-success" style="font-size: 3rem;"></i>
+                                </div>
+                                <h6 class="mb-3">الخطوات التالية:</h6>
+                                <div class="text-end" style="background: #f8f9fa; padding: 20px; border-radius: 10px;">
+                                    <ol class="mb-0">
+                                        <li class="mb-2">افتح الملف المُنزَّل <strong>"${fileName}"</strong></li>
+                                        <li class="mb-2">سيفتح Outlook تلقائياً مع رسالة جاهزة</li>
+                                        <li class="mb-2">المرفقات تتضمن:
+                                            <ul class="mt-2">
+                                                <li>ملف Excel بالتفاصيل الكاملة</li>
+                                                <li>ملف PDF للطباعة</li>
+                                            </ul>
+                                        </li>
+                                        <li>أضف عنوان المستلم واضغط إرسال</li>
+                                    </ol>
+                                </div>
+                                <div class="alert alert-info mt-3 mb-0" style="font-size: 0.85rem;">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    <strong>ملاحظة:</strong> تأكد من تثبيت Microsoft Outlook على جهازك
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">
+                                    <i class="fas fa-check me-1"></i>
+                                    فهمت
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // إضافة وعرض Modal
+            const modalDiv = document.createElement('div');
+            modalDiv.innerHTML = instructionsModal;
+            document.body.appendChild(modalDiv.firstElementChild);
+            
+            const modal = new bootstrap.Modal(document.getElementById('outlookInstructions'));
+            modal.show();
+            
+            // حذف Modal عند الإغلاق
+            document.getElementById('outlookInstructions').addEventListener('hidden.bs.modal', function() {
+                this.remove();
+            });
+        }, 500);
+        
+    } catch (error) {
+        console.error('خطأ في المشاركة:', error);
+        alert('حدث خطأ أثناء تجهيز الملف. يرجى المحاولة مرة أخرى.');
+    }
 }
 
 // إضافة مستمع للتحقق من صحة الإيميل فورياً
