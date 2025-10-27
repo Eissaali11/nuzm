@@ -479,12 +479,92 @@ def export_attendance():
 @login_required
 def add_attendance():
     """إضافة سجل حضور جديد للنسخة المحمولة"""
-    # الحصول على قائمة الموظفين
+    # الحصول على قائمة الموظفين والأقسام
     employees = Employee.query.order_by(Employee.name).all()
+    departments = Department.query.order_by(Department.name).all()
     current_date = datetime.now().date()
 
     if request.method == 'POST':
-        # معالجة النموذج المرسل
+        # التحقق من التسجيل الجماعي للأقسام
+        mass_attendance = request.form.get('mass_attendance') == 'true'
+        
+        if mass_attendance:
+            # معالجة التسجيل الجماعي للأقسام
+            department_ids = request.form.getlist('department_ids')
+            start_date_str = request.form.get('start_date')
+            end_date_str = request.form.get('end_date')
+            status = request.form.get('status')
+            
+            if not department_ids:
+                flash('يرجى اختيار قسم واحد على الأقل', 'danger')
+                return render_template('mobile/add_attendance.html', 
+                                     employees=employees, 
+                                     departments=departments,
+                                     current_date=current_date)
+            
+            try:
+                start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+                end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+                
+                if end_date < start_date:
+                    flash('تاريخ النهاية يجب أن يكون بعد تاريخ البداية', 'danger')
+                    return render_template('mobile/add_attendance.html', 
+                                         employees=employees, 
+                                         departments=departments,
+                                         current_date=current_date)
+                
+                # الحصول على جميع الموظفين في الأقسام المحددة
+                selected_employees = []
+                for dept_id in department_ids:
+                    dept = Department.query.get(dept_id)
+                    if dept:
+                        # إضافة الموظفين النشطين فقط
+                        active_emps = [emp for emp in dept.employees if emp.active]
+                        selected_employees.extend(active_emps)
+                
+                # إزالة التكرار
+                selected_employees = list(set(selected_employees))
+                
+                # إنشاء سجلات الحضور
+                success_count = 0
+                current_date_iter = start_date
+                
+                while current_date_iter <= end_date:
+                    for emp in selected_employees:
+                        # التحقق من عدم وجود سجل مسبق
+                        existing = Attendance.query.filter_by(
+                            employee_id=emp.id,
+                            date=current_date_iter
+                        ).first()
+                        
+                        if not existing:
+                            new_attendance = Attendance(
+                                employee_id=emp.id,
+                                date=current_date_iter,
+                                status=status,
+                                check_in='09:00' if status == 'حاضر' else None,
+                                check_out='17:00' if status == 'حاضر' else None,
+                                notes=f'تسجيل جماعي عبر النظام المحمول'
+                            )
+                            db.session.add(new_attendance)
+                            success_count += 1
+                    
+                    current_date_iter += timedelta(days=1)
+                
+                db.session.commit()
+                flash(f'تم تسجيل {success_count} سجل حضور بنجاح', 'success')
+                return redirect(url_for('mobile.attendance'))
+                
+            except Exception as e:
+                db.session.rollback()
+                flash(f'حدث خطأ أثناء التسجيل: {str(e)}', 'danger')
+                print(f"خطأ في التسجيل الجماعي: {str(e)}")
+                return render_template('mobile/add_attendance.html', 
+                                     employees=employees, 
+                                     departments=departments,
+                                     current_date=current_date)
+        
+        # معالجة النموذج المرسل العادي
         employee_id = request.form.get('employee_id')
         date_str = request.form.get('date')
         status = request.form.get('status')
@@ -580,9 +660,10 @@ def add_attendance():
             else:
                 flash('يرجى اختيار موظف صالح', 'warning')
 
-    # المتغيرات المطلوبة لعرض الصفحة - استخدام الصفحة الجديدة لتجنب الخطأ
-    return render_template('mobile/add_attendance_new.html',
+    # المتغيرات المطلوبة لعرض الصفحة
+    return render_template('mobile/add_attendance.html',
                           employees=employees,
+                          departments=departments,
                           current_date=current_date)
 
 # تعديل سجل حضور - النسخة المحمولة

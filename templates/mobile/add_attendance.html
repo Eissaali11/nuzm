@@ -2,231 +2,714 @@
 
 {% block title %}تسجيل حضور - نظام إدارة الموظفين{% endblock %}
 
-{% block header_title %}تسجيل حضور جديد{% endblock %}
+{% block header_title %}تسجيل الحضور{% endblock %}
 
 {% block content %}
-<div class="mobile-card">
-    <div class="mobile-card-title">
-        <i class="fas fa-calendar-plus"></i> تسجيل حضور وغياب
-    </div>
-    
-    <div class="mobile-card-content">
-        <form action="{{ url_for('mobile.add_attendance') }}" method="POST" class="mobile-form">
-            {{ form.hidden_tag() if form }}
-            
-            <div class="mobile-form-group">
-                <label>التاريخ*</label>
-                <input type="date" name="date" class="mobile-form-control" required 
-                       value="{{ current_date.strftime('%Y-%m-%d') }}">
-            </div>
-            
-            <div class="mobile-form-group">
-                <label>الموظف*</label>
-                <select name="employee_id" class="mobile-form-select" required>
-                    <option value="">اختر الموظف</option>
-                    {% for employee in employees %}
-                    <option value="{{ employee.id }}">{{ employee.name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            
-            <div class="mobile-form-group">
-                <label>الحالة*</label>
-                <select name="status" class="mobile-form-select" required>
-                    <option value="">اختر الحالة</option>
-                    <option value="حاضر">حاضر</option>
-                    <option value="غائب">غائب</option>
-                    <option value="إجازة">إجازة</option>
-                    <option value="تأخير">تأخير</option>
-                    <option value="مغادرة مبكرة">مغادرة مبكرة</option>
-                </select>
-            </div>
-            
-            <div class="mobile-form-row">
-                <div class="mobile-form-group">
-                    <label>وقت الحضور</label>
-                    <input type="time" name="check_in" class="mobile-form-control">
-                </div>
-                
-                <div class="mobile-form-group">
-                    <label>وقت الإنصراف</label>
-                    <input type="time" name="check_out" class="mobile-form-control">
-                </div>
-            </div>
-            
-            <div class="mobile-form-group">
-                <label>ملاحظات</label>
-                <textarea name="notes" class="mobile-form-control" rows="3" placeholder="ملاحظات إضافية"></textarea>
-            </div>
-            
-            <div class="form-actions">
-                <button type="submit" class="mobile-btn mobile-btn-primary w-100">
-                    <i class="fas fa-save"></i> حفظ التسجيل
-                </button>
-                <a href="{{ url_for('mobile.attendance') }}" class="mobile-btn mobile-btn-secondary w-100 mt-2">
-                    <i class="fas fa-times"></i> إلغاء
-                </a>
-            </div>
-        </form>
-    </div>
-</div>
+<style>
+/* عداد الموظفين المحددين */
+.selected-summary {
+    background: linear-gradient(135deg, #FF9500 0%, #FF6B00 100%);
+    border-radius: 16px;
+    padding: 20px;
+    margin: 0 20px 20px;
+    box-shadow: 0 4px 12px rgba(255, 149, 0, 0.3);
+    display: none;
+}
 
-<!-- تسجيل حضور سريع -->
-<div class="mobile-card">
-    <div class="mobile-card-title">
-        <i class="fas fa-user-clock"></i> تسجيل حضور سريع
-    </div>
-    
-    <div class="mobile-card-content">
-        <div class="quick-attendance-form">
-            <p class="text-center mb-3">يمكنك تسجيل حضور أو انصراف سريع للموظف المختار</p>
-            
-            <form action="{{ url_for('mobile.add_attendance') }}" method="POST" class="mobile-form">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <input type="hidden" name="quick" value="true">
-                
-                <div class="mobile-form-group">
-                    <select name="employee_id" class="mobile-form-select" required>
-                        <option value="">اختر الموظف</option>
-                        {% for employee in employees %}
-                        <option value="{{ employee.id }}">{{ employee.name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                
-                <div class="quick-actions">
-                    <button type="submit" name="action" value="check_in" class="quick-action-btn check-in">
-                        <i class="fas fa-sign-in-alt"></i>
-                        <span>تسجيل حضور</span>
-                    </button>
-                    
-                    <button type="submit" name="action" value="check_out" class="quick-action-btn check-out">
-                        <i class="fas fa-sign-out-alt"></i>
-                        <span>تسجيل انصراف</span>
-                    </button>
-                </div>
-            </form>
+.selected-summary.show {
+    display: block;
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+.summary-item {
+    text-align: center;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 12px;
+    border-radius: 12px;
+}
+
+.summary-number {
+    font-size: 28px;
+    font-weight: 700;
+    color: white;
+    line-height: 1;
+}
+
+.summary-label {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.95);
+    margin-top: 4px;
+}
+
+/* البطاقات */
+.form-card {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    border: 1px solid #f0f0f5;
+    margin: 0 20px 16px;
+    overflow: hidden;
+}
+
+.card-header {
+    padding: 16px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    border-bottom: 1px solid #f0f0f5;
+}
+
+.card-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.card-title i {
+    color: #4A90E2;
+    font-size: 18px;
+}
+
+.card-content {
+    padding: 16px;
+}
+
+/* حقول التاريخ */
+.date-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.form-group {
+    margin-bottom: 16px;
+}
+
+.form-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #8e8e93;
+    margin-bottom: 8px;
+    display: block;
+}
+
+.form-input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid #e5e5ea;
+    border-radius: 10px;
+    font-size: 15px;
+    color: #1a1a1a;
+    transition: border-color 0.2s ease;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: #4A90E2;
+}
+
+/* أزرار الحالة */
+.status-options {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.status-option {
+    position: relative;
+}
+
+.status-option input[type="radio"] {
+    display: none;
+}
+
+.status-label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 2px solid #f0f0f5;
+}
+
+.status-label i {
+    font-size: 24px;
+    margin-bottom: 8px;
+}
+
+.status-label span {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.status-count {
+    font-size: 11px;
+    margin-top: 4px;
+    background: white;
+    padding: 2px 8px;
+    border-radius: 8px;
+    font-weight: 700;
+}
+
+.status-option input:checked + .status-label {
+    border-color: currentColor;
+    box-shadow: 0 4px 12px currentColor;
+    transform: scale(1.05);
+}
+
+.status-present {
+    color: #34C759;
+    background: rgba(52, 199, 89, 0.1);
+}
+
+.status-absent {
+    color: #FF3B30;
+    background: rgba(255, 59, 48, 0.1);
+}
+
+.status-leave {
+    color: #FF9500;
+    background: rgba(255, 149, 0, 0.1);
+}
+
+.status-sick {
+    color: #007AFF;
+    background: rgba(0, 122, 255, 0.1);
+}
+
+/* بطاقات الأقسام */
+.departments-section {
+    padding: 0 20px 16px;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.section-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1a1a1a;
+}
+
+.select-all-btn {
+    background: rgba(74, 144, 226, 0.1);
+    color: #4A90E2;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.select-all-btn.active {
+    background: #4A90E2;
+    color: white;
+}
+
+.departments-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    max-height: 350px;
+    overflow-y: auto;
+    padding: 2px;
+}
+
+.department-card {
+    background: white;
+    border: 2px solid #f0f0f5;
+    border-radius: 12px;
+    padding: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.department-card.selected {
+    border-color: #4A90E2;
+    background: linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%);
+}
+
+.department-card input[type="checkbox"] {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+
+.department-info {
+    padding-left: 36px;
+}
+
+.department-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-bottom: 6px;
+}
+
+.department-card.selected .department-name {
+    color: #4A90E2;
+}
+
+.employee-count {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: linear-gradient(135deg, #4A90E2 0%, #357ABD 100%);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.department-card.selected .employee-count {
+    background: linear-gradient(135deg, #34C759 0%, #28a745 100%);
+}
+
+.employee-count-number {
+    font-size: 16px;
+    font-weight: 700;
+}
+
+/* تنبيه */
+.info-alert {
+    background: rgba(0, 122, 255, 0.1);
+    border-right: 4px solid #007AFF;
+    padding: 12px;
+    border-radius: 10px;
+    margin: 0 20px 16px;
+    font-size: 13px;
+    color: #1a1a1a;
+    line-height: 1.5;
+}
+
+.info-alert i {
+    color: #007AFF;
+    margin-left: 6px;
+}
+
+/* أزرار الإجراءات */
+.actions-wrapper {
+    padding: 0 20px 80px;
+}
+
+.submit-btn {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #4A90E2 0%, #357ABD 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
+    cursor: pointer;
+    margin-bottom: 12px;
+}
+
+.submit-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.submit-btn:active:not(:disabled) {
+    transform: scale(0.98);
+}
+
+.reset-btn {
+    width: 100%;
+    padding: 14px;
+    background: white;
+    color: #1a1a1a;
+    border: 1px solid #e5e5ea;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.reset-btn:active {
+    background: #f8f9fa;
+}
+
+/* Scrollbar مخصص */
+.departments-grid::-webkit-scrollbar {
+    width: 6px;
+}
+
+.departments-grid::-webkit-scrollbar-track {
+    background: #f0f0f5;
+    border-radius: 3px;
+}
+
+.departments-grid::-webkit-scrollbar-thumb {
+    background: #c7c7cc;
+    border-radius: 3px;
+}
+
+.departments-grid::-webkit-scrollbar-thumb:hover {
+    background: #8e8e93;
+}
+
+/* رسائل */
+.flash-message {
+    margin: 0 20px 16px;
+    padding: 12px 16px;
+    border-radius: 12px;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.flash-success {
+    background: rgba(52, 199, 89, 0.1);
+    border: 1px solid rgba(52, 199, 89, 0.3);
+    color: #34C759;
+}
+
+.flash-error {
+    background: rgba(255, 59, 48, 0.1);
+    border: 1px solid rgba(255, 59, 48, 0.3);
+    color: #FF3B30;
+}
+</style>
+
+<!-- رسائل Flash -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+        <div class="flash-message flash-{{ 'success' if category == 'success' else 'error' }}">
+            <i class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-circle' }}"></i>
+            <span>{{ message }}</span>
+        </div>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+
+<!-- عداد الموظفين المحددين -->
+<div class="selected-summary" id="selectedSummary">
+    <div class="summary-grid">
+        <div class="summary-item">
+            <div class="summary-number" id="totalEmployees">0</div>
+            <div class="summary-label">موظف محدد</div>
+        </div>
+        <div class="summary-item">
+            <div class="summary-number" id="totalDepartments">0</div>
+            <div class="summary-label">قسم محدد</div>
+        </div>
+        <div class="summary-item">
+            <div class="summary-number" id="totalDays">1</div>
+            <div class="summary-label">يوم</div>
+        </div>
+        <div class="summary-item">
+            <div class="summary-number" id="totalRecords">0</div>
+            <div class="summary-label">إجمالي السجلات</div>
         </div>
     </div>
 </div>
 
-<!-- temporarily removed bulk attendance section -->
+<form action="{{ url_for('mobile.add_attendance') }}" method="POST" id="massAttendanceForm">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="mass_attendance" value="true">
+    
+    <!-- بطاقة التواريخ -->
+    <div class="form-card">
+        <div class="card-header">
+            <h2 class="card-title">
+                <i class="fas fa-calendar-alt"></i>
+                <span>الفترة الزمنية</span>
+            </h2>
+        </div>
+        <div class="card-content">
+            <div class="date-group">
+                <div class="form-group">
+                    <label class="form-label">من تاريخ</label>
+                    <input type="date" name="start_date" id="startDate" class="form-input" 
+                           value="{{ current_date.strftime('%Y-%m-%d') }}" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">إلى تاريخ</label>
+                    <input type="date" name="end_date" id="endDate" class="form-input" 
+                           value="{{ current_date.strftime('%Y-%m-%d') }}" required>
+                </div>
+            </div>
+        </div>
+    </div>
 
-<style>
-.mobile-form-row {
-    display: flex;
-    gap: 10px;
-}
+    <!-- بطاقة حالة الحضور -->
+    <div class="form-card">
+        <div class="card-header">
+            <h2 class="card-title">
+                <i class="fas fa-clipboard-check"></i>
+                <span>حالة الحضور</span>
+            </h2>
+        </div>
+        <div class="card-content">
+            <div class="status-options">
+                <div class="status-option">
+                    <input type="radio" name="status" id="statusPresent" value="حاضر" checked>
+                    <label for="statusPresent" class="status-label status-present">
+                        <i class="fas fa-check-circle"></i>
+                        <span>حاضر</span>
+                        <span class="status-count" id="countPresent">0</span>
+                    </label>
+                </div>
+                
+                <div class="status-option">
+                    <input type="radio" name="status" id="statusAbsent" value="غائب">
+                    <label for="statusAbsent" class="status-label status-absent">
+                        <i class="fas fa-times-circle"></i>
+                        <span>غائب</span>
+                        <span class="status-count" id="countAbsent">0</span>
+                    </label>
+                </div>
+                
+                <div class="status-option">
+                    <input type="radio" name="status" id="statusLeave" value="إجازة">
+                    <label for="statusLeave" class="status-label status-leave">
+                        <i class="fas fa-umbrella-beach"></i>
+                        <span>إجازة</span>
+                        <span class="status-count" id="countLeave">0</span>
+                    </label>
+                </div>
+                
+                <div class="status-option">
+                    <input type="radio" name="status" id="statusSick" value="مرضي">
+                    <label for="statusSick" class="status-label status-sick">
+                        <i class="fas fa-notes-medical"></i>
+                        <span>مرضي</span>
+                        <span class="status-count" id="countSick">0</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
 
-.mobile-form-row .mobile-form-group {
-    flex: 1;
-}
+    <!-- الأقسام -->
+    <div class="departments-section">
+        <div class="section-header">
+            <h2 class="section-title">
+                <i class="fas fa-building"></i>
+                اختر الأقسام
+            </h2>
+            <button type="button" class="select-all-btn" id="selectAllBtn">
+                <i class="fas fa-check-square"></i> تحديد الكل
+            </button>
+        </div>
 
-.mobile-form-group {
-    margin-bottom: 15px;
-}
+        <div class="departments-grid">
+            {% if departments %}
+                {% for department in departments %}
+                <div class="department-card" id="deptCard{{ department.id }}" onclick="toggleDepartment({{ department.id }})">
+                    <input type="checkbox" name="department_ids" value="{{ department.id }}" 
+                           id="dept{{ department.id }}" onclick="event.stopPropagation()" 
+                           data-employees="{{ department.employees|selectattr('active', 'equalto', True)|list|length }}">
+                    <div class="department-info">
+                        <div class="department-name">{{ department.name }}</div>
+                        <div class="employee-count">
+                            <i class="fas fa-users"></i>
+                            <span class="employee-count-number">{{ department.employees|selectattr('active', 'equalto', True)|list|length }}</span>
+                            <span>موظف</span>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div style="text-align: center; padding: 40px; color: #8e8e93;">
+                    <i class="fas fa-inbox" style="font-size: 48px; margin-bottom: 12px; opacity: 0.3;"></i>
+                    <p style="margin: 0;">لا توجد أقسام متاحة</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
 
-.mobile-form-group label {
-    display: block;
-    margin-bottom: 5px;
-    font-weight: 500;
-}
+    <!-- تنبيه -->
+    <div class="info-alert">
+        <i class="fas fa-info-circle"></i>
+        <strong>ملاحظة:</strong> سيتم تطبيق حالة الحضور المحددة على جميع موظفي الأقسام المختارة خلال الفترة الزمنية المحددة.
+    </div>
 
-.mobile-form-control, .mobile-form-select {
-    width: 100%;
-    padding: 10px 12px;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    font-size: 16px;
-}
+    <!-- الأزرار -->
+    <div class="actions-wrapper">
+        <button type="submit" class="submit-btn" id="submitBtn" disabled>
+            <i class="fas fa-save"></i> تسجيل الحضور
+        </button>
+        <button type="reset" class="reset-btn">
+            <i class="fas fa-undo"></i> إعادة تعيين
+        </button>
+    </div>
+</form>
 
-.mobile-form-control:focus, .mobile-form-select:focus {
-    border-color: var(--primary-color);
-    outline: none;
-    box-shadow: 0 0 0 2px rgba(var(--primary-color-rgb), 0.25);
-}
-
-.form-actions {
-    margin-top: 20px;
-}
-
-.quick-attendance-form {
-    padding: 10px 0;
-}
-
-.quick-actions {
-    display: flex;
-    gap: 10px;
-    margin-top: 15px;
-}
-
-.quick-action-btn {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 15px;
-    border: none;
-    border-radius: 8px;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.quick-action-btn.check-in {
-    background-color: rgba(40, 167, 69, 0.1);
-    color: #28a745;
-}
-
-.quick-action-btn.check-out {
-    background-color: rgba(0, 123, 255, 0.1);
-    color: #007bff;
-}
-
-.quick-action-btn:hover {
-    filter: brightness(0.9);
-}
-
-.quick-action-btn i {
-    font-size: 1.5rem;
-    margin-bottom: 8px;
-}
-
-.mobile-btn-outline {
-    background-color: transparent;
-    border: 1px solid var(--primary-color);
-    color: var(--primary-color);
-}
-
-.mobile-btn-outline:hover {
-    background-color: rgba(var(--primary-color-rgb), 0.1);
-}
-</style>
 {% endblock %}
 
 {% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // الحصول على عناصر النموذج
-    const statusSelect = document.querySelector('select[name="status"]');
-    const checkInInput = document.querySelector('input[name="check_in"]');
-    const checkOutInput = document.querySelector('input[name="check_out"]');
+    const selectAllBtn = document.getElementById('selectAllBtn');
+    const departmentCheckboxes = document.querySelectorAll('input[name="department_ids"]');
+    const submitBtn = document.getElementById('submitBtn');
+    const selectedSummary = document.getElementById('selectedSummary');
+    const startDate = document.getElementById('startDate');
+    const endDate = document.getElementById('endDate');
     
-    // تعطيل حقول الوقت إذا كانت الحالة غائب أو إجازة
-    if (statusSelect && checkInInput && checkOutInput) {
-        statusSelect.addEventListener('change', function() {
-            const isAbsent = this.value === 'غائب' || this.value === 'إجازة';
-            
-            checkInInput.disabled = isAbsent;
-            checkOutInput.disabled = isAbsent;
-            
-            if (isAbsent) {
-                checkInInput.value = '';
-                checkOutInput.value = '';
+    // Toggle تحديد قسم
+    window.toggleDepartment = function(id) {
+        const checkbox = document.getElementById('dept' + id);
+        const card = document.getElementById('deptCard' + id);
+        
+        checkbox.checked = !checkbox.checked;
+        if (checkbox.checked) {
+            card.classList.add('selected');
+        } else {
+            card.classList.remove('selected');
+        }
+        
+        updateCounts();
+    };
+    
+    // تحديد الكل
+    selectAllBtn.addEventListener('click', function() {
+        const allSelected = Array.from(departmentCheckboxes).every(cb => cb.checked);
+        
+        departmentCheckboxes.forEach(checkbox => {
+            checkbox.checked = !allSelected;
+            const card = document.getElementById('deptCard' + checkbox.value);
+            if (!allSelected) {
+                card.classList.add('selected');
+            } else {
+                card.classList.remove('selected');
             }
         });
+        
+        if (!allSelected) {
+            selectAllBtn.classList.add('active');
+            selectAllBtn.innerHTML = '<i class="fas fa-check-square"></i> إلغاء الكل';
+        } else {
+            selectAllBtn.classList.remove('active');
+            selectAllBtn.innerHTML = '<i class="fas fa-check-square"></i> تحديد الكل';
+        }
+        
+        updateCounts();
+    });
+    
+    // تحديث العدادات
+    function updateCounts() {
+        let totalEmployees = 0;
+        let totalDepartments = 0;
+        
+        departmentCheckboxes.forEach(checkbox => {
+            if (checkbox.checked) {
+                totalDepartments++;
+                totalEmployees += parseInt(checkbox.dataset.employees) || 0;
+            }
+        });
+        
+        // حساب عدد الأيام
+        const days = calculateDays();
+        const totalRecords = totalEmployees * days;
+        
+        // تحديث العرض
+        document.getElementById('totalEmployees').textContent = totalEmployees;
+        document.getElementById('totalDepartments').textContent = totalDepartments;
+        document.getElementById('totalDays').textContent = days;
+        document.getElementById('totalRecords').textContent = totalRecords;
+        
+        // تحديث عدادات الحالة
+        document.getElementById('countPresent').textContent = totalEmployees;
+        document.getElementById('countAbsent').textContent = totalEmployees;
+        document.getElementById('countLeave').textContent = totalEmployees;
+        document.getElementById('countSick').textContent = totalEmployees;
+        
+        // إظهار/إخفاء العداد
+        if (totalDepartments > 0) {
+            selectedSummary.classList.add('show');
+            submitBtn.disabled = false;
+        } else {
+            selectedSummary.classList.remove('show');
+            submitBtn.disabled = true;
+        }
     }
+    
+    // حساب عدد الأيام
+    function calculateDays() {
+        const start = new Date(startDate.value);
+        const end = new Date(endDate.value);
+        const diffTime = Math.abs(end - start);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        return diffDays + 1; // +1 لتضمين اليوم الأخير
+    }
+    
+    // عند تغيير التواريخ
+    startDate.addEventListener('change', updateCounts);
+    endDate.addEventListener('change', updateCounts);
+    
+    // عند تغيير checkbox
+    departmentCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const card = document.getElementById('deptCard' + this.value);
+            if (this.checked) {
+                card.classList.add('selected');
+            } else {
+                card.classList.remove('selected');
+            }
+            updateCounts();
+        });
+    });
+    
+    // إعادة التعيين
+    document.querySelector('.reset-btn').addEventListener('click', function(e) {
+        e.preventDefault();
+        departmentCheckboxes.forEach(checkbox => {
+            checkbox.checked = false;
+            document.getElementById('deptCard' + checkbox.value).classList.remove('selected');
+        });
+        selectAllBtn.classList.remove('active');
+        selectAllBtn.innerHTML = '<i class="fas fa-check-square"></i> تحديد الكل';
+        updateCounts();
+    });
+    
+    // تأكيد قبل الإرسال
+    document.getElementById('massAttendanceForm').addEventListener('submit', function(e) {
+        const totalRecords = parseInt(document.getElementById('totalRecords').textContent);
+        if (totalRecords > 100) {
+            if (!confirm(`سيتم إنشاء ${totalRecords} سجل حضور. هل أنت متأكد؟`)) {
+                e.preventDefault();
+            }
+        }
+    });
 });
 </script>
 {% endblock %}
