@@ -1571,6 +1571,165 @@ def send_operation_email(operation_id):
         return jsonify({'success': False, 'message': f'حدث خطأ: {str(e)}'})
 
 
+@operations_bp.route('/<int:operation_id>/share-outlook', methods=['GET'])
+@login_required
+def share_with_outlook(operation_id):
+    """إنشاء ملف .eml لمشاركته مع Outlook"""
+    
+    operation = OperationRequest.query.get_or_404(operation_id)
+    
+    try:
+        # التحقق من أن العملية من نوع handover
+        if operation.operation_type != 'handover' or not operation.related_record_id:
+            flash('هذه الميزة متاحة فقط لعمليات التسليم/الاستلام', 'warning')
+            return redirect(url_for('operations.view_operation', operation_id=operation_id))
+        
+        # الحصول على سجل التسليم/الاستلام
+        handover_record = VehicleHandover.query.get(operation.related_record_id)
+        if not handover_record:
+            flash('لم يتم العثور على سجل التسليم/الاستلام', 'danger')
+            return redirect(url_for('operations.view_operation', operation_id=operation_id))
+        
+        # الحصول على معلومات المركبة
+        vehicle = operation.vehicle
+        if not vehicle:
+            flash('لا توجد مركبة مرتبطة بهذه العملية', 'danger')
+            return redirect(url_for('operations.view_operation', operation_id=operation_id))
+        
+        vehicle_plate = vehicle.plate_number
+        driver_name = getattr(vehicle, 'driver_name', None) or 'غير محدد'
+        
+        # إنشاء الملفات المؤقتة (Excel و PDF)
+        excel_file_path = None
+        pdf_file_path = None
+        
+        try:
+            # إنشاء ملف Excel
+            excel_filename = f"handover_{operation_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+            excel_file_path = os.path.join('/tmp', excel_filename)
+            
+            from openpyxl import Workbook
+            from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+            
+            wb = Workbook()
+            ws = wb.active
+            ws.title = 'تفاصيل العملية'
+            
+            # تنسيق الخلايا
+            header_font = Font(name='Arial', size=12, bold=True, color='FFFFFF')
+            header_fill = PatternFill(start_color='4472C4', end_color='4472C4', fill_type='solid')
+            data_font = Font(name='Arial', size=11)
+            alignment = Alignment(horizontal='center', vertical='center')
+            border = Border(
+                left=Side(border_style='thin'),
+                right=Side(border_style='thin'),
+                top=Side(border_style='thin'),
+                bottom=Side(border_style='thin')
+            )
+            
+            # إضافة البيانات
+            headers = ['البيان', 'القيمة']
+            for col_num, header in enumerate(headers, 1):
+                cell = ws.cell(row=1, column=col_num, value=header)
+                cell.font = header_font
+                cell.fill = header_fill
+                cell.alignment = alignment
+                cell.border = border
+                ws.column_dimensions[cell.column_letter].width = 25
+            
+            operation_type_text = "تسليم" if handover_record.is_driver_receiving else "استلام"
+            
+            data_rows = [
+                ('رقم العملية', f"#{operation.id}"),
+                ('نوع العملية', operation_type_text),
+                ('رقم لوحة المركبة', vehicle_plate),
+                ('السائق', driver_name),
+                ('اسم المستلم', handover_record.person_name),
+                ('تاريخ العملية', handover_record.handover_date.strftime('%Y/%m/%d') if handover_record.handover_date else 'غير محدد'),
+                ('الموقع', handover_record.location or 'غير محدد'),
+            ]
+            
+            if handover_record.notes:
+                data_rows.append(('ملاحظات', handover_record.notes))
+            
+            for row_num, (label, value) in enumerate(data_rows, 2):
+                ws.cell(row=row_num, column=1, value=label).font = Font(name='Arial', size=11, bold=True)
+                ws.cell(row=row_num, column=1).alignment = alignment
+                ws.cell(row=row_num, column=1).border = border
+                
+                ws.cell(row=row_num, column=2, value=value).font = data_font
+                ws.cell(row=row_num, column=2).alignment = alignment
+                ws.cell(row=row_num, column=2).border = border
+            
+            wb.save(excel_file_path)
+            
+            # إنشاء ملف PDF
+            try:
+                from utils.simple_pdf_generator import create_vehicle_handover_pdf
+                pdf_content = create_vehicle_handover_pdf(handover_record.id)
+                pdf_filename = f"handover_{operation_id}_report.pdf"
+                pdf_file_path = os.path.join('/tmp', pdf_filename)
+                with open(pdf_file_path, 'wb') as f:
+                    f.write(pdf_content)
+            except Exception as pdf_error:
+                current_app.logger.warning(f"فشل في إنشاء PDF: {str(pdf_error)}")
+                pdf_file_path = None
+            
+            # إنشاء ملف .eml
+            from services.email_service import EmailService
+            email_service = EmailService()
+            
+            eml_bytes, eml_filename = email_service.build_handover_eml(
+                to_email="recipient@example.com",
+                to_name="المستلم",
+                handover_record=handover_record,
+                vehicle_plate=vehicle_plate,
+                driver_name=driver_name,
+                excel_file_path=excel_file_path,
+                pdf_file_path=pdf_file_path
+            )
+            
+            if not eml_bytes:
+                flash('فشل في إنشاء ملف البريد الإلكتروني', 'danger')
+                return redirect(url_for('operations.view_operation', operation_id=operation_id))
+            
+            # تسجيل العملية
+            log_audit(
+                user_id=current_user.id,
+                action='share_outlook',
+                entity_type='operation_request',
+                entity_id=operation.id,
+                details=f'إنشاء ملف .eml لمشاركة العملية {operation_id} مع Outlook'
+            )
+            
+            # إرسال الملف للتنزيل
+            return send_file(
+                eml_bytes,
+                mimetype='message/rfc822',
+                as_attachment=True,
+                download_name=eml_filename
+            )
+            
+        finally:
+            # حذف الملفات المؤقتة
+            if excel_file_path and os.path.exists(excel_file_path):
+                try:
+                    os.remove(excel_file_path)
+                except:
+                    pass
+            
+            if pdf_file_path and os.path.exists(pdf_file_path):
+                try:
+                    os.remove(pdf_file_path)
+                except:
+                    pass
+    
+    except Exception as e:
+        current_app.logger.error(f"خطأ في إنشاء ملف .eml للعملية {operation_id}: {str(e)}")
+        flash(f'حدث خطأ: {str(e)}', 'danger')
+        return redirect(url_for('operations.view_operation', operation_id=operation_id))
+
+
 def get_operation_type_name(operation_type):
     """تحويل نوع العملية إلى النص العربي"""
     type_names = {
