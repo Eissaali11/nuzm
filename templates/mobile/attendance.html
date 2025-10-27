@@ -11,43 +11,44 @@
     background: white;
     padding: 12px 20px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-    display: flex;
+    display: flex !important;
     gap: 8px;
     justify-content: flex-start;
-    margin-bottom: 0;
-    position: sticky;
-    top: 0;
+    margin: 0;
+    position: relative;
+    width: 100%;
     z-index: 100;
 }
 
 .action-btn-modern {
-    padding: 8px 14px;
+    padding: 10px 14px;
     border: none;
     border-radius: 10px;
     font-size: 13px;
     font-weight: 600;
-    display: flex;
+    display: flex !important;
     align-items: center;
     gap: 5px;
     cursor: pointer;
     transition: all 0.2s ease;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
     white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .btn-dashboard {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    color: white !important;
 }
 
 .btn-add {
-    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-    color: white;
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%) !important;
+    color: white !important;
 }
 
 .btn-export {
-    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-    color: white;
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%) !important;
+    color: white !important;
 }
 
 .action-btn-modern:active {
@@ -60,8 +61,13 @@
 
 /* تحسين للشاشات الصغيرة */
 @media (max-width: 380px) {
+    .action-buttons-bar {
+        padding: 10px 15px;
+        gap: 6px;
+    }
+    
     .action-btn-modern {
-        padding: 8px 10px;
+        padding: 10px 12px;
         font-size: 12px;
         gap: 4px;
     }
@@ -71,7 +77,21 @@
     }
     
     .action-btn-modern i {
-        font-size: 16px;
+        font-size: 18px;
+    }
+}
+
+/* التأكد من الظهور على جميع الأجهزة */
+@media (max-width: 767px) {
+    .action-buttons-bar {
+        display: flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+    
+    .action-btn-modern {
+        display: flex !important;
+        visibility: visible !important;
     }
 }
 </style>
