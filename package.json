@@ -1,0 +1,15 @@
+{
+  "name": "workspace",
+  "version": "1.0.0",
+  "description": "```\r # متغيرات قاعدة البيانات\r # ملاحظة: يبدو أن الاستضافة تستخدم MySQL وليس PostgreSQL\r # صيغة الاتصال بـ MySQL مع ترميز الرموز الخاصة في كلمة المرور\r DATABASE_URL=\"mysql://username:password@localhost:3306/u800258840_eissa\"",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@sendgrid/mail": "^8.1.6"
+  }
+}

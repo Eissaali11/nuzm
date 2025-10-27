@@ -5,22 +5,68 @@ from sendgrid.helpers.mail import Mail, Email, To, Content, Attachment, MailSett
 import base64
 import mimetypes
 from flask import current_app
+import requests
+import json
 
 class EmailService:
     def __init__(self):
+        self.sendgrid_key = None
+        self.from_email = None
+        self._load_sendgrid_credentials()
+        
+    def _load_sendgrid_credentials(self):
+        """تحميل بيانات اعتماد SendGrid من Replit Connection أو المتغيرات البيئية"""
+        try:
+            # محاولة الحصول على البيانات من Replit Connection
+            hostname = os.environ.get('REPLIT_CONNECTORS_HOSTNAME')
+            repl_identity = os.environ.get('REPL_IDENTITY')
+            
+            if hostname and repl_identity:
+                x_replit_token = f'repl {repl_identity}'
+                
+                response = requests.get(
+                    f'https://{hostname}/api/v2/connection?include_secrets=true&connector_names=sendgrid',
+                    headers={
+                        'Accept': 'application/json',
+                        'X_REPLIT_TOKEN': x_replit_token
+                    }
+                )
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    if data.get('items') and len(data['items']) > 0:
+                        connection_settings = data['items'][0]
+                        self.sendgrid_key = connection_settings.get('settings', {}).get('api_key')
+                        self.from_email = connection_settings.get('settings', {}).get('from_email')
+                        
+                        if self.sendgrid_key and self.from_email:
+                            current_app.logger.info("تم تحميل بيانات SendGrid من Replit Connection بنجاح")
+                            self.sg = SendGridAPIClient(self.sendgrid_key)
+                            return
+        except Exception as e:
+            current_app.logger.warning(f"فشل تحميل بيانات SendGrid من Connection: {str(e)}")
+        
+        # الاحتياطي: استخدام المتغيرات البيئية القديمة
         self.sendgrid_key = os.environ.get('SENDGRID_API_KEY')
-        if not self.sendgrid_key:
-            current_app.logger.error("SENDGRID_API_KEY environment variable must be set")
-            return
-        self.sg = SendGridAPIClient(self.sendgrid_key)
+        self.from_email = "test@sink.sendgrid.net"
+        
+        if self.sendgrid_key:
+            current_app.logger.info("تم تحميل بيانات SendGrid من المتغيرات البيئية")
+            self.sg = SendGridAPIClient(self.sendgrid_key)
+        else:
+            current_app.logger.error("SENDGRID_API_KEY غير متوفر")
     
-    def send_vehicle_operation_files(self, to_email, to_name, operation, vehicle_plate, driver_name, excel_file_path=None, pdf_file_path=None, sender_email="test@sink.sendgrid.net"):
+    def send_vehicle_operation_files(self, to_email, to_name, operation, vehicle_plate, driver_name, excel_file_path=None, pdf_file_path=None, sender_email=None):
         """
         إرسال ملفات العملية مع تفاصيل السيارة عبر الإيميل
         """
         try:
             if not self.sendgrid_key:
                 return {"success": False, "message": "SendGrid API key not configured"}
+            
+            # استخدام البريد الإلكتروني من الاتصال إذا لم يتم تحديد واحد
+            if sender_email is None:
+                sender_email = self.from_email or "test@sink.sendgrid.net"
             
             # إنشاء الموضوع
             subject = f"تفاصيل العملية #{operation.id} - مركبة رقم {vehicle_plate}"
@@ -323,13 +369,17 @@ class EmailService:
                 "solution": "1. دخول حساب SendGrid\n2. Settings → Sender Authentication\n3. إضافة Single Sender مع الإيميل المطلوب\n4. تأكيد الإيميل من صندوق الوارد"
             }
     
-    def send_handover_operation_email(self, to_email, to_name, handover_record, vehicle_plate, driver_name, excel_file_path=None, pdf_file_path=None, sender_email="test@sink.sendgrid.net"):
+    def send_handover_operation_email(self, to_email, to_name, handover_record, vehicle_plate, driver_name, excel_file_path=None, pdf_file_path=None, sender_email=None):
         """
         إرسال ملفات عملية التسليم/الاستلام عبر الإيميل بتنسيق محسّن
         """
         try:
             if not self.sendgrid_key:
                 return {"success": False, "message": "SendGrid API key not configured"}
+            
+            # استخدام البريد الإلكتروني من الاتصال إذا لم يتم تحديد واحد
+            if sender_email is None:
+                sender_email = self.from_email or "test@sink.sendgrid.net"
             
             # تحديد نوع العملية
             operation_type_text = "تسليم" if handover_record.is_driver_receiving else "استلام"
