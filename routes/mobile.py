@@ -519,7 +519,7 @@ def add_attendance():
                     dept = Department.query.get(dept_id)
                     if dept:
                         # إضافة الموظفين النشطين فقط
-                        active_emps = [emp for emp in dept.employees if emp.active]
+                        active_emps = [emp for emp in dept.employees if emp.status == 'active']
                         selected_employees.extend(active_emps)
                 
                 # إزالة التكرار
