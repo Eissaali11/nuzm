@@ -1,0 +1,477 @@
+{% extends 'mobile/layout.html' %}
+
+{% block title %}لوحة معلومات الحضور - نُظم{% endblock %}
+
+{% block header_title %}لوحة معلومات الحضور{% endblock %}
+
+{% block header_actions %}
+<button class="mobile-menu-button" aria-label="تصدير Excel" onclick="exportExcel()">
+    <i class="fas fa-file-excel"></i>
+</button>
+<button class="mobile-menu-button" aria-label="رجوع" onclick="location.href='{{ url_for('mobile.attendance') }}'">
+    <i class="fas fa-arrow-right"></i>
+</button>
+{% endblock %}
+
+{% block content %}
+<style>
+/* تصميم مستقبلي للـ Dashboard */
+:root {
+    --gradient-1: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --gradient-2: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    --gradient-3: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+    --gradient-4: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    --gradient-5: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+/* فلتر التاريخ */
+.date-filter-card {
+    background: var(--gradient-1);
+    border-radius: 20px;
+    padding: 20px;
+    margin: 0 20px 20px;
+    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+}
+
+.filter-title {
+    color: white;
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.date-input-modern {
+    width: 100%;
+    padding: 14px 16px;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    background: rgba(255, 255, 255, 0.95);
+    color: #1a1a1a;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* الإحصائيات الإجمالية */
+.overall-stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    padding: 0 20px 20px;
+}
+
+.stat-box {
+    background: white;
+    border-radius: 16px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-box::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+}
+
+.stat-box.total::before {
+    background: var(--gradient-1);
+}
+
+.stat-box.present::before {
+    background: var(--gradient-2);
+}
+
+.stat-box.absent::before {
+    background: var(--gradient-3);
+}
+
+.stat-box.leave::before {
+    background: var(--gradient-4);
+}
+
+.stat-icon-large {
+    font-size: 36px;
+    margin-bottom: 12px;
+}
+
+.stat-box.total .stat-icon-large {
+    background: var(--gradient-1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.stat-box.present .stat-icon-large {
+    background: var(--gradient-2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.stat-box.absent .stat-icon-large {
+    background: var(--gradient-3);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.stat-box.leave .stat-icon-large {
+    background: var(--gradient-4);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.stat-value {
+    font-size: 32px;
+    font-weight: 800;
+    color: #1a1a1a;
+    margin-bottom: 4px;
+}
+
+.stat-percentage {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+
+.stat-box.total .stat-percentage {
+    color: #667eea;
+}
+
+.stat-box.present .stat-percentage {
+    color: #11998e;
+}
+
+.stat-box.absent .stat-percentage {
+    color: #eb3349;
+}
+
+.stat-box.leave .stat-percentage {
+    color: #f093fb;
+}
+
+.stat-label-large {
+    font-size: 13px;
+    color: #8e8e93;
+    font-weight: 600;
+}
+
+/* إحصائيات حسب المشروع */
+.projects-section {
+    padding: 0 20px 80px;
+}
+
+.section-title-dashboard {
+    font-size: 20px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.section-title-dashboard i {
+    background: var(--gradient-1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-size: 24px;
+}
+
+.project-card {
+    background: white;
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    border: 1px solid #f0f0f5;
+}
+
+.project-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.project-name {
+    font-size: 17px;
+    font-weight: 700;
+    color: #1a1a1a;
+    flex: 1;
+}
+
+.project-total {
+    background: var(--gradient-1);
+    color: white;
+    padding: 6px 14px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+/* Progress Bar */
+.progress-wrapper {
+    margin-bottom: 16px;
+}
+
+.progress-bar-container {
+    height: 12px;
+    background: #f0f0f5;
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative;
+    margin-bottom: 8px;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    border-radius: 10px;
+    transition: width 0.6s ease;
+    position: relative;
+}
+
+.progress-present {
+    background: var(--gradient-2);
+}
+
+.progress-absent {
+    background: var(--gradient-3);
+}
+
+.progress-leave {
+    background: var(--gradient-4);
+}
+
+.progress-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: #8e8e93;
+}
+
+/* Project Stats Grid */
+.project-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+
+.project-stat-item {
+    text-align: center;
+    padding: 12px;
+    border-radius: 12px;
+}
+
+.project-stat-item.present {
+    background: rgba(17, 153, 142, 0.1);
+}
+
+.project-stat-item.absent {
+    background: rgba(235, 51, 73, 0.1);
+}
+
+.project-stat-item.leave {
+    background: rgba(240, 147, 251, 0.1);
+}
+
+.stat-icon-small {
+    font-size: 20px;
+    margin-bottom: 6px;
+}
+
+.project-stat-item.present .stat-icon-small {
+    color: #11998e;
+}
+
+.project-stat-item.absent .stat-icon-small {
+    color: #eb3349;
+}
+
+.project-stat-item.leave .stat-icon-small {
+    color: #f093fb;
+}
+
+.project-stat-number {
+    font-size: 20px;
+    font-weight: 800;
+    margin-bottom: 2px;
+}
+
+.project-stat-item.present .project-stat-number {
+    color: #11998e;
+}
+
+.project-stat-item.absent .project-stat-number {
+    color: #eb3349;
+}
+
+.project-stat-item.leave .project-stat-number {
+    color: #f093fb;
+}
+
+.project-stat-label {
+    font-size: 11px;
+    color: #8e8e93;
+    font-weight: 600;
+}
+
+/* حالة فارغة */
+.empty-dashboard {
+    text-align: center;
+    padding: 60px 20px;
+}
+
+.empty-icon-dash {
+    font-size: 80px;
+    background: var(--gradient-1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 20px;
+}
+
+.empty-title-dash {
+    font-size: 20px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 8px;
+}
+
+.empty-text-dash {
+    font-size: 14px;
+    color: #8e8e93;
+}
+</style>
+
+<!-- فلتر التاريخ -->
+<div class="date-filter-card">
+    <div class="filter-title">
+        <i class="fas fa-calendar-alt"></i>
+        <span>اختر التاريخ</span>
+    </div>
+    <form action="{{ url_for('mobile.attendance_dashboard') }}" method="GET">
+        <input type="date" name="date" class="date-input-modern" 
+               value="{{ selected_date.strftime('%Y-%m-%d') }}"
+               onchange="this.form.submit()">
+    </form>
+</div>
+
+<!-- الإحصائيات الإجمالية -->
+<div class="overall-stats">
+    <div class="stat-box total">
+        <div class="stat-icon-large">
+            <i class="fas fa-users"></i>
+        </div>
+        <div class="stat-value">{{ total_employees }}</div>
+        <div class="stat-label-large">إجمالي الموظفين</div>
+    </div>
+    
+    <div class="stat-box present">
+        <div class="stat-icon-large">
+            <i class="fas fa-user-check"></i>
+        </div>
+        <div class="stat-value">{{ total_present }}</div>
+        <div class="stat-percentage">{{ '%.1f'|format((total_present / total_employees * 100) if total_employees > 0 else 0) }}%</div>
+        <div class="stat-label-large">حاضر</div>
+    </div>
+    
+    <div class="stat-box absent">
+        <div class="stat-icon-large">
+            <i class="fas fa-user-times"></i>
+        </div>
+        <div class="stat-value">{{ total_absent }}</div>
+        <div class="stat-percentage">{{ '%.1f'|format((total_absent / total_employees * 100) if total_employees > 0 else 0) }}%</div>
+        <div class="stat-label-large">غائب</div>
+    </div>
+    
+    <div class="stat-box leave">
+        <div class="stat-icon-large">
+            <i class="fas fa-calendar-minus"></i>
+        </div>
+        <div class="stat-value">{{ total_leave + total_sick }}</div>
+        <div class="stat-percentage">{{ '%.1f'|format(((total_leave + total_sick) / total_employees * 100) if total_employees > 0 else 0) }}%</div>
+        <div class="stat-label-large">إجازة/مرضي</div>
+    </div>
+</div>
+
+<!-- إحصائيات حسب المشروع/القسم -->
+{% if department_stats %}
+<div class="projects-section">
+    <div class="section-title-dashboard">
+        <i class="fas fa-project-diagram"></i>
+        <span>التفصيل حسب القسم</span>
+    </div>
+    
+    {% for dept in department_stats %}
+    <div class="project-card">
+        <div class="project-header">
+            <div class="project-name">{{ dept.name }}</div>
+            <div class="project-total">{{ dept.employees_count }}</div>
+        </div>
+        
+        <!-- Progress Bar للحضور -->
+        <div class="progress-wrapper">
+            <div class="progress-bar-container">
+                <div class="progress-bar-fill progress-present" 
+                     style="width: {{ dept.present_percentage }}%"></div>
+            </div>
+            <div class="progress-labels">
+                <span>نسبة الحضور</span>
+                <span style="font-weight: 700; color: #11998e;">{{ '%.1f'|format(dept.present_percentage) }}%</span>
+            </div>
+        </div>
+        
+        <!-- الإحصائيات التفصيلية -->
+        <div class="project-stats-grid">
+            <div class="project-stat-item present">
+                <div class="stat-icon-small">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="project-stat-number">{{ dept.present_count }}</div>
+                <div class="project-stat-label">حاضر</div>
+            </div>
+            
+            <div class="project-stat-item absent">
+                <div class="stat-icon-small">
+                    <i class="fas fa-times-circle"></i>
+                </div>
+                <div class="project-stat-number">{{ dept.absent_count }}</div>
+                <div class="project-stat-label">غائب</div>
+            </div>
+            
+            <div class="project-stat-item leave">
+                <div class="stat-icon-small">
+                    <i class="fas fa-umbrella-beach"></i>
+                </div>
+                <div class="project-stat-number">{{ dept.leave_count + dept.sick_count }}</div>
+                <div class="project-stat-label">إجازة</div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-dashboard">
+    <div class="empty-icon-dash">
+        <i class="fas fa-chart-pie"></i>
+    </div>
+    <div class="empty-title-dash">لا توجد بيانات</div>
+    <div class="empty-text-dash">لم يتم تسجيل أي حضور في هذا التاريخ</div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function exportExcel() {
+    const date = '{{ selected_date.strftime('%Y-%m-%d') }}';
+    window.location.href = `/attendance-dashboard/export-excel?date=${date}`;
+}
+</script>
+{% endblock %}

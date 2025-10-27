@@ -5,6 +5,9 @@
 {% block header_title %}الحضور والغياب{% endblock %}
 
 {% block header_actions %}
+<button class="mobile-menu-button" aria-label="Dashboard" onclick="location.href='{{ url_for('mobile.attendance_dashboard') }}'">
+    <i class="fas fa-chart-pie"></i>
+</button>
 <button class="mobile-menu-button" aria-label="إضافة" onclick="location.href='{{ url_for('mobile.add_attendance') }}'">
     <i class="fas fa-plus"></i>
 </button>

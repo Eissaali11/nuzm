@@ -483,6 +483,139 @@ def attendance():
                           today_stats=today_stats,
                           pagination=pagination)
 
+@mobile_bp.route('/attendance-dashboard')
+@login_required
+def attendance_dashboard():
+    """لوحة معلومات الحضور للموبايل"""
+    # التحقق من التاريخ المحدد أو استخدام اليوم الحالي
+    date_str = request.args.get('date')
+    
+    try:
+        if date_str:
+            selected_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+        else:
+            selected_date = datetime.now().date()
+    except ValueError:
+        selected_date = datetime.now().date()
+    
+    # الحصول على جميع الأقسام
+    departments = Department.query.order_by(Department.name).all()
+    
+    # إحصائيات إجمالية - عدد الموظفين النشطين فقط
+    total_employees = Employee.query.filter_by(status='active').count()
+    
+    # حساب إحصائيات الحضور الإجمالية (باللغة العربية والإنجليزية)
+    total_present = db.session.query(func.count(Attendance.id)).join(
+        Employee, Employee.id == Attendance.employee_id
+    ).filter(
+        Employee.status == 'active',
+        Attendance.date == selected_date,
+        db.or_(Attendance.status == 'present', Attendance.status == 'حاضر')
+    ).scalar() or 0
+    
+    total_absent = db.session.query(func.count(Attendance.id)).join(
+        Employee, Employee.id == Attendance.employee_id
+    ).filter(
+        Employee.status == 'active',
+        Attendance.date == selected_date,
+        db.or_(Attendance.status == 'absent', Attendance.status == 'غائب')
+    ).scalar() or 0
+    
+    total_leave = db.session.query(func.count(Attendance.id)).join(
+        Employee, Employee.id == Attendance.employee_id
+    ).filter(
+        Employee.status == 'active',
+        Attendance.date == selected_date,
+        db.or_(Attendance.status == 'leave', Attendance.status == 'إجازة')
+    ).scalar() or 0
+    
+    total_sick = db.session.query(func.count(Attendance.id)).join(
+        Employee, Employee.id == Attendance.employee_id
+    ).filter(
+        Employee.status == 'active',
+        Attendance.date == selected_date,
+        Attendance.status == 'sick'
+    ).scalar() or 0
+    
+    # إحصائيات حسب القسم
+    department_stats = []
+    
+    # جمع إحصائيات كل قسم
+    for dept in departments:
+        # عدد الموظفين في القسم باستخدام علاقة many-to-many
+        active_employees = [emp for emp in dept.employees if emp.status == 'active']
+        employees_count = len(active_employees)
+        employee_ids = [emp.id for emp in active_employees]
+        
+        if employees_count == 0:
+            continue
+        
+        # عدد الحاضرين (باللغة العربية والإنجليزية)
+        if employee_ids:
+            present_count = db.session.query(func.count(Attendance.id)).filter(
+                Attendance.employee_id.in_(employee_ids),
+                Attendance.date == selected_date,
+                db.or_(Attendance.status == 'present', Attendance.status == 'حاضر')
+            ).scalar() or 0
+        else:
+            present_count = 0
+        
+        # عدد الغائبين
+        if employee_ids:
+            absent_count = db.session.query(func.count(Attendance.id)).filter(
+                Attendance.employee_id.in_(employee_ids),
+                Attendance.date == selected_date,
+                db.or_(Attendance.status == 'absent', Attendance.status == 'غائب')
+            ).scalar() or 0
+        else:
+            absent_count = 0
+        
+        # عدد الإجازات
+        if employee_ids:
+            leave_count = db.session.query(func.count(Attendance.id)).filter(
+                Attendance.employee_id.in_(employee_ids),
+                Attendance.date == selected_date,
+                db.or_(Attendance.status == 'leave', Attendance.status == 'إجازة')
+            ).scalar() or 0
+        else:
+            leave_count = 0
+        
+        # عدد الإجازات المرضية
+        if employee_ids:
+            sick_count = db.session.query(func.count(Attendance.id)).filter(
+                Attendance.employee_id.in_(employee_ids),
+                Attendance.date == selected_date,
+                Attendance.status == 'sick'
+            ).scalar() or 0
+        else:
+            sick_count = 0
+        
+        # حساب النسب المئوية
+        present_percentage = (present_count / employees_count * 100) if employees_count > 0 else 0
+        absent_percentage = (absent_count / employees_count * 100) if employees_count > 0 else 0
+        leave_percentage = ((leave_count + sick_count) / employees_count * 100) if employees_count > 0 else 0
+        
+        department_stats.append({
+            'name': dept.name,
+            'employees_count': employees_count,
+            'present_count': present_count,
+            'absent_count': absent_count,
+            'leave_count': leave_count,
+            'sick_count': sick_count,
+            'present_percentage': present_percentage,
+            'absent_percentage': absent_percentage,
+            'leave_percentage': leave_percentage
+        })
+    
+    return render_template('mobile/attendance_dashboard.html',
+                          selected_date=selected_date,
+                          total_employees=total_employees,
+                          total_present=total_present,
+                          total_absent=total_absent,
+                          total_leave=total_leave,
+                          total_sick=total_sick,
+                          department_stats=department_stats)
+
 # صفحة تصدير بيانات الحضور - النسخة المحمولة
 @mobile_bp.route('/attendance/export', methods=['GET', 'POST'])
 @login_required
