@@ -741,17 +741,19 @@
 
 {% block scripts %}
 <script>
-// البحث التلقائي عند الكتابة
+// البحث التلقائي عند الكتابة - فقط لحقل البحث
 let searchTimeout;
-const searchInput = document.querySelector('.search-input');
 const searchForm = document.getElementById('searchForm');
+const searchInput = searchForm.querySelector('input[name="search"]');
 
-searchInput.addEventListener('input', function() {
-    clearTimeout(searchTimeout);
-    searchTimeout = setTimeout(() => {
-        searchForm.submit();
-    }, 800);
-});
+if (searchInput) {
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            searchForm.submit();
+        }, 800);
+    });
+}
 
 // تغيير الفلتر
 function setFilter(name, value) {
