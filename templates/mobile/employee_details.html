@@ -11,277 +11,47 @@
 {% endblock %}
 
 {% block content %}
-<!-- معلومات الموظف -->
-<div class="mobile-card">
-    <div class="profile-header">
-        <div class="profile-avatar">
-            {% if employee.profile_image %}
-            <img src="{{ url_for('static', filename=employee.profile_image) }}" alt="{{ employee.name }}" class="profile-img">
-            {% else %}
-            <i class="fas fa-user"></i>
-            {% endif %}
-        </div>
-        <h2 class="profile-name">{{ employee.name }}</h2>
-        <p class="profile-position">{{ employee.job_title }}</p>
-    </div>
-    
-    <div class="mobile-card-content">
-        <div class="info-group">
-            <div class="info-label">الرقم الوظيفي</div>
-            <div class="info-value">{{ employee.employee_id }}</div>
-        </div>
-        
-        <div class="info-group">
-            <div class="info-label">القسم</div>
-            <div class="info-value">{{ employee.department.name if employee.department else 'غير محدد' }}</div>
-        </div>
-        
-        <div class="info-group">
-            <div class="info-label">رقم الجوال</div>
-            <div class="info-value">
-                {% if employee.mobile %}
-                <a href="tel:{{ employee.mobile }}" class="phone-link">
-                    <i class="fas fa-phone"></i> {{ employee.mobile }}
-                </a>
-                {% else %}
-                <span class="text-muted">غير متوفر</span>
-                {% endif %}
-            </div>
-        </div>
-        
-        {% if employee.mobilePersonal %}
-        <div class="info-group">
-            <div class="info-label">الجوال الشخصي</div>
-            <div class="info-value">
-                <a href="tel:{{ employee.mobilePersonal }}" class="phone-link">
-                    <i class="fas fa-mobile-alt"></i> {{ employee.mobilePersonal }}
-                </a>
-            </div>
-        </div>
-        {% endif %}
-        
-        <div class="info-group">
-            <div class="info-label">البريد الإلكتروني</div>
-            <div class="info-value">
-                {% if employee.email %}
-                <a href="mailto:{{ employee.email }}" class="email-link">{{ employee.email }}</a>
-                {% else %}
-                <span class="text-muted">غير متوفر</span>
-                {% endif %}
-            </div>
-        </div>
-        
-        <div class="info-group">
-            <div class="info-label">تاريخ التعيين</div>
-            <div class="info-value">
-                {% if employee.hire_date %}
-                {{ employee.hire_date.strftime('%Y-%m-%d') }}
-                {% else %}
-                <span class="text-muted">غير متوفر</span>
-                {% endif %}
-            </div>
-        </div>
-        
-        <div class="info-group">
-            <div class="info-label">الجنسية</div>
-            <div class="info-value">{{ employee.nationality or 'غير محدد' }}</div>
-        </div>
-        
-        <div class="info-group">
-            <div class="info-label">رقم الهوية</div>
-            <div class="info-value">{{ employee.national_id or 'غير متوفر' }}</div>
-        </div>
-        
-        {% if employee.national_id_image %}
-        <div class="info-group" style="display: block;">
-            <div class="info-label" style="margin-bottom: 10px;">صورة الهوية الوطنية</div>
-            <div class="info-value">
-                <img src="{{ url_for('static', filename=employee.national_id_image) }}" 
-                     alt="الهوية الوطنية" 
-                     class="national-id-img"
-                     onclick="openImageModal(this.src)">
-            </div>
-        </div>
-        {% endif %}
-        
-        <div class="info-group">
-            <div class="info-label">الحالة</div>
-            <div class="info-value">
-                {% if employee.active %}
-                <span class="badge bg-success">نشط</span>
-                {% else %}
-                <span class="badge bg-danger">غير نشط</span>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- أقسام المعلومات الإضافية -->
-<div class="mobile-tabs">
-    <div class="mobile-tab-buttons">
-        <button class="mobile-tab-button active" data-target="attendance-tab">الحضور</button>
-        <button class="mobile-tab-button" data-target="salary-tab">الراتب</button>
-        <button class="mobile-tab-button" data-target="documents-tab">الوثائق</button>
-    </div>
-    
-    <!-- قسم الحضور -->
-    <div id="attendance-tab" class="mobile-tab-content">
-        <div class="mobile-card">
-            <div class="mobile-card-title">
-                <i class="fas fa-calendar-check"></i> سجل الحضور
-            </div>
-            
-            <div class="mobile-card-content">
-                {% if attendance_records %}
-                <div class="mobile-table">
-                    {% for record in attendance_records %}
-                    <div class="mobile-table-row">
-                        <div class="mobile-table-cell">{{ record.date }}</div>
-                        <div class="mobile-table-cell">
-                            {% if record.status == 'حاضر' %}
-                            <span class="badge bg-success">حاضر</span>
-                            {% elif record.status == 'غائب' %}
-                            <span class="badge bg-danger">غائب</span>
-                            {% elif record.status == 'إجازة' %}
-                            <span class="badge bg-info">إجازة</span>
-                            {% else %}
-                            <span class="badge bg-secondary">{{ record.status }}</span>
-                            {% endif %}
-                        </div>
-                        <div class="mobile-table-cell">{{ record.check_in }}</div>
-                        <div class="mobile-table-cell">{{ record.check_out }}</div>
-                    </div>
-                    {% endfor %}
-                </div>
-                {% else %}
-                <div class="text-center py-3">
-                    <p class="text-secondary">لا توجد سجلات حضور</p>
-                </div>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-    
-    <!-- قسم الراتب -->
-    <div id="salary-tab" class="mobile-tab-content" style="display: none;">
-        <div class="mobile-card">
-            <div class="mobile-card-title">
-                <i class="fas fa-money-bill-wave"></i> معلومات الراتب
-            </div>
-            
-            <div class="mobile-card-content">
-                {% if salary %}
-                <div class="info-group">
-                    <div class="info-label">الراتب الأساسي</div>
-                    <div class="info-value">{{ '{:,.2f}'.format(salary.basic_salary) }}</div>
-                </div>
-                
-                <div class="info-group">
-                    <div class="info-label">البدلات</div>
-                    <div class="info-value">{{ '{:,.2f}'.format(salary.allowances) }}</div>
-                </div>
-                
-                <div class="info-group">
-                    <div class="info-label">المكافآت</div>
-                    <div class="info-value">{{ '{:,.2f}'.format(salary.bonus) }}</div>
-                </div>
-                
-                <div class="info-group">
-                    <div class="info-label">الخصومات</div>
-                    <div class="info-value">{{ '{:,.2f}'.format(salary.deductions) }}</div>
-                </div>
-                
-                <div class="info-group total-salary">
-                    <div class="info-label">صافي الراتب</div>
-                    <div class="info-value">{{ '{:,.2f}'.format(salary.net_salary) }}</div>
-                </div>
-                {% else %}
-                <div class="text-center py-3">
-                    <p class="text-secondary">لا توجد معلومات راتب</p>
-                </div>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-    
-    <!-- قسم الوثائق -->
-    <div id="documents-tab" class="mobile-tab-content" style="display: none;">
-        <div class="mobile-card">
-            <div class="mobile-card-title">
-                <i class="fas fa-file-alt"></i> الوثائق
-            </div>
-            
-            <div class="mobile-card-content">
-                {% if documents %}
-                <div class="mobile-table">
-                    {% for doc in documents %}
-                    <div class="mobile-table-row">
-                        <div class="mobile-table-cell">{{ doc.name }}</div>
-                        <div class="mobile-table-cell">{{ doc.document_number }}</div>
-                        <div class="mobile-table-cell">{{ doc.issue_date.strftime('%Y-%m-%d') }}</div>
-                        <div class="mobile-table-cell">
-                            {% if doc.expiry_date %}
-                                {% if doc.expiry_date < current_date %}
-                                <span class="badge bg-danger">منتهية</span>
-                                {% elif (doc.expiry_date - current_date).days <= 30 %}
-                                <span class="badge bg-warning">تنتهي قريباً</span>
-                                {% else %}
-                                <span class="badge bg-success">سارية</span>
-                                {% endif %}
-                            {% else %}
-                            <span class="badge bg-secondary">غير محدد</span>
-                            {% endif %}
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-                {% else %}
-                <div class="text-center py-3">
-                    <p class="text-secondary">لا توجد وثائق</p>
-                </div>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="action-buttons">
-    <a href="{{ url_for('mobile.employees') }}" class="mobile-btn mobile-btn-secondary">
-        <i class="fas fa-arrow-right"></i> العودة للقائمة
-    </a>
-</div>
-
-<!-- Modal لعرض الصورة -->
-<div id="imageModal" class="image-modal" onclick="closeImageModal()">
-    <span class="image-modal-close" onclick="closeImageModal()">&times;</span>
-    <img class="image-modal-content" id="modalImage">
-</div>
-
 <style>
+/* بطاقة الملف الشخصي */
+.profile-card {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    border: 1px solid #f0f0f5;
+    margin: 0 20px 20px;
+    overflow: hidden;
+}
+
 .profile-header {
+    background: linear-gradient(135deg, #4A90E2 0%, #357ABD 100%);
+    padding: 30px 20px 20px;
     text-align: center;
-    padding: 20px 0;
-    border-bottom: 1px solid #eee;
+    position: relative;
+}
+
+.profile-avatar-wrapper {
+    width: 100px;
+    height: 100px;
+    margin: 0 auto 15px;
+    position: relative;
 }
 
 .profile-avatar {
-    width: 100px;
-    height: 100px;
-    background-color: #f0f0f0;
+    width: 100%;
+    height: 100%;
+    background: white;
     border-radius: 50%;
     display: flex;
-    justify-content: center;
     align-items: center;
-    margin: 0 auto 15px;
+    justify-content: center;
     overflow: hidden;
-    border: 3px solid #fff;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border: 3px solid white;
 }
 
 .profile-avatar i {
-    font-size: 2.5rem;
-    color: #757575;
+    font-size: 40px;
+    color: #8e8e93;
 }
 
 .profile-img {
@@ -291,61 +61,413 @@
 }
 
 .profile-name {
-    font-size: 1.5rem;
+    font-size: 22px;
+    font-weight: 700;
+    color: white;
     margin-bottom: 5px;
 }
 
-.profile-position {
-    color: #757575;
+.profile-job-title {
+    font-size: 15px;
+    color: rgba(255, 255, 255, 0.9);
     margin-bottom: 0;
 }
 
-.info-group {
-    display: flex;
-    padding: 12px 0;
-    border-bottom: 1px solid #f5f5f5;
+/* بطاقة المعلومات الأساسية */
+.info-card {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    border: 1px solid #f0f0f5;
+    margin: 0 20px 20px;
+    overflow: hidden;
 }
 
-.info-group:last-child {
+.info-card-header {
+    padding: 16px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #f0f0f5;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.info-card-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin: 0;
+}
+
+.info-card-icon {
+    color: #4A90E2;
+    font-size: 16px;
+}
+
+.info-card-content {
+    padding: 0;
+}
+
+.info-row {
+    display: flex;
+    align-items: flex-start;
+    padding: 14px 16px;
+    border-bottom: 1px solid #f0f0f5;
+}
+
+.info-row:last-child {
     border-bottom: none;
 }
 
 .info-label {
-    flex: 1;
-    font-weight: bold;
-    color: #757575;
+    font-size: 14px;
+    color: #8e8e93;
+    font-weight: 500;
+    flex: 0 0 100px;
 }
 
 .info-value {
-    flex: 2;
+    font-size: 14px;
+    color: #1a1a1a;
+    font-weight: 500;
+    flex: 1;
+    word-break: break-word;
 }
 
-.phone-link, .email-link {
-    color: var(--primary-color);
+.info-value a {
+    color: #4A90E2;
     text-decoration: none;
     display: inline-flex;
     align-items: center;
-    gap: 5px;
+    gap: 6px;
 }
 
-.phone-link i {
-    font-size: 0.9rem;
+.info-value a:active {
+    opacity: 0.7;
 }
 
-.national-id-img {
+.status-badge {
+    padding: 4px 10px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 500;
+    display: inline-block;
+}
+
+.status-badge.active {
+    background: rgba(52, 199, 89, 0.1);
+    color: #34C759;
+}
+
+.status-badge.inactive {
+    background: rgba(255, 59, 48, 0.1);
+    color: #FF3B30;
+}
+
+/* صورة الهوية */
+.id-image-wrapper {
+    padding: 16px;
+}
+
+.id-image {
     width: 100%;
-    max-width: 400px;
-    height: auto;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border-radius: 12px;
     cursor: pointer;
-    transition: transform 0.2s;
+    transition: transform 0.2s ease;
 }
 
-.national-id-img:hover {
-    transform: scale(1.02);
+.id-image:active {
+    transform: scale(0.98);
 }
 
+/* التبويبات */
+.tabs-wrapper {
+    margin: 0 20px 20px;
+}
+
+.tabs-buttons {
+    display: flex;
+    background: white;
+    border-radius: 12px;
+    padding: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    border: 1px solid #f0f0f5;
+    margin-bottom: 16px;
+}
+
+.tab-button {
+    flex: 1;
+    padding: 10px;
+    background: none;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #8e8e93;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.tab-button.active {
+    background: #4A90E2;
+    color: white;
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* قائمة السجلات */
+.records-list {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    border: 1px solid #f0f0f5;
+    overflow: hidden;
+}
+
+.record-item {
+    padding: 14px 16px;
+    border-bottom: 1px solid #f0f0f5;
+}
+
+.record-item:last-child {
+    border-bottom: none;
+}
+
+.record-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.record-date {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1a1a1a;
+}
+
+.record-status {
+    padding: 3px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.record-status.present {
+    background: rgba(52, 199, 89, 0.1);
+    color: #34C759;
+}
+
+.record-status.absent {
+    background: rgba(255, 59, 48, 0.1);
+    color: #FF3B30;
+}
+
+.record-status.leave {
+    background: rgba(74, 144, 226, 0.1);
+    color: #4A90E2;
+}
+
+.record-times {
+    display: flex;
+    gap: 16px;
+    font-size: 12px;
+    color: #8e8e93;
+}
+
+.record-time {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* معلومات الراتب */
+.salary-summary {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    border: 1px solid #f0f0f5;
+    overflow: hidden;
+}
+
+.salary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 16px;
+    border-bottom: 1px solid #f0f0f5;
+}
+
+.salary-row:last-child {
+    border-bottom: none;
+}
+
+.salary-row.total {
+    background: #f8f9fa;
+    font-weight: 700;
+}
+
+.salary-label {
+    font-size: 14px;
+    color: #8e8e93;
+    font-weight: 500;
+}
+
+.salary-row.total .salary-label {
+    color: #1a1a1a;
+    font-size: 15px;
+}
+
+.salary-value {
+    font-size: 15px;
+    font-weight: 600;
+    color: #1a1a1a;
+}
+
+.salary-row.total .salary-value {
+    font-size: 18px;
+    color: #4A90E2;
+}
+
+/* قائمة الوثائق */
+.documents-list {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    border: 1px solid #f0f0f5;
+    overflow: hidden;
+}
+
+.document-item {
+    padding: 14px 16px;
+    border-bottom: 1px solid #f0f0f5;
+}
+
+.document-item:last-child {
+    border-bottom: none;
+}
+
+.document-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-bottom: 6px;
+}
+
+.document-details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    font-size: 12px;
+    color: #8e8e93;
+}
+
+.document-detail {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.document-status {
+    padding: 3px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.document-status.valid {
+    background: rgba(52, 199, 89, 0.1);
+    color: #34C759;
+}
+
+.document-status.expired {
+    background: rgba(255, 59, 48, 0.1);
+    color: #FF3B30;
+}
+
+.document-status.expiring {
+    background: rgba(255, 149, 0, 0.1);
+    color: #FF9500;
+}
+
+.document-status.undefined {
+    background: rgba(142, 142, 147, 0.1);
+    color: #8e8e93;
+}
+
+/* حالة فارغة */
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.empty-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: rgba(142, 142, 147, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 12px;
+}
+
+.empty-icon i {
+    font-size: 24px;
+    color: #8e8e93;
+}
+
+.empty-text {
+    font-size: 14px;
+    color: #8e8e93;
+}
+
+/* أزرار الإجراءات */
+.actions-section {
+    padding: 0 20px 80px;
+}
+
+.action-btn {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #4A90E2 0%, #357ABD 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-shadow: 0 2px 8px rgba(74, 144, 226, 0.2);
+    transition: all 0.2s ease;
+}
+
+.action-btn:active {
+    transform: scale(0.98);
+}
+
+.action-btn.secondary {
+    background: white;
+    color: #1a1a1a;
+    border: 1px solid #e5e5ea;
+    box-shadow: none;
+    margin-top: 12px;
+}
+
+.action-btn.secondary:active {
+    background: #f8f9fa;
+}
+
+/* Modal الصورة */
 .image-modal {
     display: none;
     position: fixed;
@@ -354,120 +476,345 @@
     top: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0,0,0,0.9);
-    padding: 20px;
+    background: rgba(0, 0, 0, 0.95);
 }
 
-.image-modal-content {
+.modal-close {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    z-index: 10000;
+}
+
+.modal-image {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     max-width: 90%;
     max-height: 90%;
-    margin: auto;
-    display: block;
-    position: relative;
-    top: 50%;
-    transform: translateY(-50%);
-}
-
-.image-modal-close {
-    position: absolute;
-    top: 15px;
-    right: 35px;
-    color: #fff;
-    font-size: 40px;
-    font-weight: bold;
-    cursor: pointer;
-}
-
-.total-salary {
-    font-weight: bold;
-    font-size: 1.1rem;
-}
-
-.mobile-tabs {
-    margin-top: 15px;
-}
-
-.mobile-tab-buttons {
-    display: flex;
-    background-color: white;
     border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    margin: 0 1rem 15px;
-    overflow: hidden;
-}
-
-.mobile-tab-button {
-    flex: 1;
-    background: none;
-    border: none;
-    padding: 12px;
-    font-size: 0.9rem;
-    cursor: pointer;
-    transition: background-color 0.2s;
-}
-
-.mobile-tab-button.active {
-    background-color: var(--primary-color);
-    color: white;
-}
-
-.action-buttons {
-    margin: 20px 1rem;
 }
 </style>
+
+<!-- بطاقة الملف الشخصي -->
+<div class="profile-card">
+    <div class="profile-header">
+        <div class="profile-avatar-wrapper">
+            <div class="profile-avatar">
+                {% if employee.profile_image %}
+                <img src="{{ url_for('static', filename=employee.profile_image) }}" alt="{{ employee.name }}" class="profile-img">
+                {% else %}
+                <i class="fas fa-user"></i>
+                {% endif %}
+            </div>
+        </div>
+        <h1 class="profile-name">{{ employee.name }}</h1>
+        <p class="profile-job-title">{{ employee.job_title }}</p>
+    </div>
+</div>
+
+<!-- المعلومات الأساسية -->
+<div class="info-card">
+    <div class="info-card-header">
+        <i class="fas fa-info-circle info-card-icon"></i>
+        <h2 class="info-card-title">المعلومات الأساسية</h2>
+    </div>
+    <div class="info-card-content">
+        <div class="info-row">
+            <div class="info-label">الرقم الوظيفي</div>
+            <div class="info-value">{{ employee.employee_id }}</div>
+        </div>
+        
+        <div class="info-row">
+            <div class="info-label">القسم</div>
+            <div class="info-value">{{ employee.department.name if employee.department else 'غير محدد' }}</div>
+        </div>
+        
+        <div class="info-row">
+            <div class="info-label">رقم الجوال</div>
+            <div class="info-value">
+                {% if employee.mobile %}
+                <a href="tel:{{ employee.mobile }}">
+                    <i class="fas fa-phone"></i> {{ employee.mobile }}
+                </a>
+                {% else %}
+                <span style="color: #c7c7cc;">غير متوفر</span>
+                {% endif %}
+            </div>
+        </div>
+        
+        {% if employee.mobilePersonal %}
+        <div class="info-row">
+            <div class="info-label">الجوال الشخصي</div>
+            <div class="info-value">
+                <a href="tel:{{ employee.mobilePersonal }}">
+                    <i class="fas fa-mobile-alt"></i> {{ employee.mobilePersonal }}
+                </a>
+            </div>
+        </div>
+        {% endif %}
+        
+        <div class="info-row">
+            <div class="info-label">البريد الإلكتروني</div>
+            <div class="info-value">
+                {% if employee.email %}
+                <a href="mailto:{{ employee.email }}">{{ employee.email }}</a>
+                {% else %}
+                <span style="color: #c7c7cc;">غير متوفر</span>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="info-row">
+            <div class="info-label">تاريخ التعيين</div>
+            <div class="info-value">
+                {% if employee.hire_date %}
+                {{ employee.hire_date.strftime('%Y-%m-%d') }}
+                {% else %}
+                <span style="color: #c7c7cc;">غير متوفر</span>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="info-row">
+            <div class="info-label">الجنسية</div>
+            <div class="info-value">{{ employee.nationality or 'غير محدد' }}</div>
+        </div>
+        
+        <div class="info-row">
+            <div class="info-label">رقم الهوية</div>
+            <div class="info-value">{{ employee.national_id or 'غير متوفر' }}</div>
+        </div>
+        
+        <div class="info-row">
+            <div class="info-label">الحالة</div>
+            <div class="info-value">
+                {% if employee.active %}
+                <span class="status-badge active">نشط</span>
+                {% else %}
+                <span class="status-badge inactive">غير نشط</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- صورة الهوية -->
+{% if employee.national_id_image %}
+<div class="info-card">
+    <div class="info-card-header">
+        <i class="fas fa-id-card info-card-icon"></i>
+        <h2 class="info-card-title">صورة الهوية الوطنية</h2>
+    </div>
+    <div class="id-image-wrapper">
+        <img src="{{ url_for('static', filename=employee.national_id_image) }}" 
+             alt="الهوية الوطنية" 
+             class="id-image"
+             onclick="openImageModal(this.src)">
+    </div>
+</div>
+{% endif %}
+
+<!-- التبويبات -->
+<div class="tabs-wrapper">
+    <div class="tabs-buttons">
+        <button class="tab-button active" data-tab="attendance">الحضور</button>
+        <button class="tab-button" data-tab="salary">الراتب</button>
+        <button class="tab-button" data-tab="documents">الوثائق</button>
+    </div>
+    
+    <!-- تبويب الحضور -->
+    <div id="attendance" class="tab-content active">
+        {% if attendance_records %}
+        <div class="records-list">
+            {% for record in attendance_records %}
+            <div class="record-item">
+                <div class="record-header">
+                    <span class="record-date">{{ record.date }}</span>
+                    <span class="record-status 
+                        {% if record.status == 'حاضر' %}present
+                        {% elif record.status == 'غائب' %}absent
+                        {% elif record.status == 'إجازة' %}leave
+                        {% endif %}">
+                        {{ record.status }}
+                    </span>
+                </div>
+                <div class="record-times">
+                    <div class="record-time">
+                        <i class="fas fa-sign-in-alt"></i>
+                        <span>{{ record.check_in }}</span>
+                    </div>
+                    <div class="record-time">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>{{ record.check_out }}</span>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="records-list">
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <i class="fas fa-calendar-times"></i>
+                </div>
+                <p class="empty-text">لا توجد سجلات حضور</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- تبويب الراتب -->
+    <div id="salary" class="tab-content">
+        {% if salary %}
+        <div class="salary-summary">
+            <div class="salary-row">
+                <span class="salary-label">الراتب الأساسي</span>
+                <span class="salary-value">{{ '{:,.2f}'.format(salary.basic_salary) }} ريال</span>
+            </div>
+            <div class="salary-row">
+                <span class="salary-label">البدلات</span>
+                <span class="salary-value">{{ '{:,.2f}'.format(salary.allowances) }} ريال</span>
+            </div>
+            <div class="salary-row">
+                <span class="salary-label">المكافآت</span>
+                <span class="salary-value">{{ '{:,.2f}'.format(salary.bonus) }} ريال</span>
+            </div>
+            <div class="salary-row">
+                <span class="salary-label">الخصومات</span>
+                <span class="salary-value">{{ '{:,.2f}'.format(salary.deductions) }} ريال</span>
+            </div>
+            <div class="salary-row total">
+                <span class="salary-label">صافي الراتب</span>
+                <span class="salary-value">{{ '{:,.2f}'.format(salary.net_salary) }} ريال</span>
+            </div>
+        </div>
+        {% else %}
+        <div class="salary-summary">
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <i class="fas fa-money-bill-wave"></i>
+                </div>
+                <p class="empty-text">لا توجد معلومات راتب</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- تبويب الوثائق -->
+    <div id="documents" class="tab-content">
+        {% if documents %}
+        <div class="documents-list">
+            {% for doc in documents %}
+            <div class="document-item">
+                <div class="document-name">{{ doc.name }}</div>
+                <div class="document-details">
+                    <div class="document-detail">
+                        <i class="fas fa-hashtag"></i>
+                        <span>{{ doc.document_number }}</span>
+                    </div>
+                    <div class="document-detail">
+                        <i class="fas fa-calendar"></i>
+                        <span>{{ doc.issue_date.strftime('%Y-%m-%d') }}</span>
+                    </div>
+                    {% if doc.expiry_date %}
+                        {% if doc.expiry_date < current_date %}
+                        <span class="document-status expired">منتهية</span>
+                        {% elif (doc.expiry_date - current_date).days <= 30 %}
+                        <span class="document-status expiring">تنتهي قريباً</span>
+                        {% else %}
+                        <span class="document-status valid">سارية</span>
+                        {% endif %}
+                    {% else %}
+                    <span class="document-status undefined">غير محدد</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="documents-list">
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <i class="fas fa-file-alt"></i>
+                </div>
+                <p class="empty-text">لا توجد وثائق</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- أزرار الإجراءات -->
+<div class="actions-section">
+    <a href="{{ url_for('mobile.edit_employee', employee_id=employee.id) }}" class="action-btn">
+        <i class="fas fa-edit"></i> تعديل البيانات
+    </a>
+    <a href="{{ url_for('mobile.employees') }}" class="action-btn secondary">
+        <i class="fas fa-arrow-right"></i> العودة للقائمة
+    </a>
+</div>
+
+<!-- Modal الصورة -->
+<div id="imageModal" class="image-modal" onclick="closeImageModal()">
+    <div class="modal-close" onclick="closeImageModal()">
+        <i class="fas fa-times"></i>
+    </div>
+    <img id="modalImage" class="modal-image">
+</div>
+
 {% endblock %}
 
 {% block scripts %}
 <script>
+// التبديل بين التبويبات
 document.addEventListener('DOMContentLoaded', function() {
-    // تفعيل التبديل بين علامات التبويب
-    const tabButtons = document.querySelectorAll('.mobile-tab-button');
+    const tabButtons = document.querySelectorAll('.tab-button');
+    const tabContents = document.querySelectorAll('.tab-content');
     
     tabButtons.forEach(button => {
         button.addEventListener('click', function() {
-            const targetId = this.getAttribute('data-target');
+            const targetTab = this.getAttribute('data-tab');
             
-            // إزالة الفئة النشطة من جميع الأزرار
+            // إزالة active من جميع الأزرار والمحتويات
             tabButtons.forEach(btn => btn.classList.remove('active'));
+            tabContents.forEach(content => content.classList.remove('active'));
             
-            // إضافة الفئة النشطة للزر الحالي
+            // إضافة active للزر والمحتوى المستهدف
             this.classList.add('active');
-            
-            // إخفاء جميع محتويات التبويب
-            const tabContents = document.querySelectorAll('.mobile-tab-content');
-            tabContents.forEach(content => content.style.display = 'none');
-            
-            // إظهار المحتوى المستهدف
-            const targetContent = document.getElementById(targetId);
-            if (targetContent) {
-                targetContent.style.display = 'block';
-            }
+            document.getElementById(targetTab).classList.add('active');
         });
     });
 });
 
-// فتح modal الصورة
+// فتح وإغلاق modal الصورة
 function openImageModal(imageSrc) {
     const modal = document.getElementById('imageModal');
     const modalImg = document.getElementById('modalImage');
     
     modal.style.display = 'block';
     modalImg.src = imageSrc;
-    
-    // منع التمرير في الخلفية
     document.body.style.overflow = 'hidden';
 }
 
-// إغلاق modal الصورة
 function closeImageModal() {
     const modal = document.getElementById('imageModal');
     modal.style.display = 'none';
-    
-    // إعادة تفعيل التمرير
     document.body.style.overflow = 'auto';
 }
 
-// إغلاق modal عند الضغط على Escape
+// إغلاق modal بالضغط على Escape
 document.addEventListener('keydown', function(event) {
     if (event.key === 'Escape') {
         closeImageModal();
