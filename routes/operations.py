@@ -1461,15 +1461,42 @@ def send_operation_email(operation_id):
                 from services.email_service import EmailService
                 
                 email_service = EmailService()
-                result = email_service.send_vehicle_operation_files(
-                    to_email=to_email,
-                    to_name=to_name or 'العميل',
-                    operation=operation,
-                    vehicle_plate=vehicle_plate,
-                    driver_name=driver_name,
-                    excel_file_path=excel_file_path if include_excel else None,
-                    pdf_file_path=pdf_file_path if include_pdf else None
-                )
+                
+                # استخدام الدالة المحسّنة لعمليات التسليم/الاستلام
+                if operation.operation_type == 'handover' and operation.related_record_id:
+                    handover_record = VehicleHandover.query.get(operation.related_record_id)
+                    if handover_record:
+                        result = email_service.send_handover_operation_email(
+                            to_email=to_email,
+                            to_name=to_name or 'العميل',
+                            handover_record=handover_record,
+                            vehicle_plate=vehicle_plate,
+                            driver_name=driver_name,
+                            excel_file_path=excel_file_path if include_excel else None,
+                            pdf_file_path=pdf_file_path if include_pdf else None
+                        )
+                    else:
+                        # استخدام الدالة العادية إذا لم يتم العثور على سجل التسليم
+                        result = email_service.send_vehicle_operation_files(
+                            to_email=to_email,
+                            to_name=to_name or 'العميل',
+                            operation=operation,
+                            vehicle_plate=vehicle_plate,
+                            driver_name=driver_name,
+                            excel_file_path=excel_file_path if include_excel else None,
+                            pdf_file_path=pdf_file_path if include_pdf else None
+                        )
+                else:
+                    # استخدام الدالة العادية للعمليات الأخرى
+                    result = email_service.send_vehicle_operation_files(
+                        to_email=to_email,
+                        to_name=to_name or 'العميل',
+                        operation=operation,
+                        vehicle_plate=vehicle_plate,
+                        driver_name=driver_name,
+                        excel_file_path=excel_file_path if include_excel else None,
+                        pdf_file_path=pdf_file_path if include_pdf else None
+                    )
                 
                 if result.get('success'):
                     current_app.logger.info(f'تم إرسال الإيميل بنجاح عبر SendGrid إلى {to_email}')
