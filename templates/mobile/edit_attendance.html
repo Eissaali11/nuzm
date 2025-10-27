@@ -1,0 +1,437 @@
+{% extends 'mobile/layout.html' %}
+
+{% block title %}تعديل سجل حضور - نُظم{% endblock %}
+
+{% block header_title %}تعديل سجل الحضور{% endblock %}
+
+{% block content %}
+<style>
+/* تصميم iOS نظيف */
+.form-card {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    border: 1px solid #f0f0f5;
+    margin: 0 20px 16px;
+    overflow: hidden;
+}
+
+.card-header {
+    padding: 16px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    border-bottom: 1px solid #f0f0f5;
+}
+
+.card-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.card-title i {
+    color: #4A90E2;
+    font-size: 18px;
+}
+
+.card-content {
+    padding: 16px;
+}
+
+.form-group {
+    margin-bottom: 16px;
+}
+
+.form-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #8e8e93;
+    margin-bottom: 8px;
+    display: block;
+}
+
+.form-input,
+.form-select {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid #e5e5ea;
+    border-radius: 10px;
+    font-size: 15px;
+    color: #1a1a1a;
+    transition: border-color 0.2s ease;
+    background: white;
+}
+
+.form-input:focus,
+.form-select:focus {
+    outline: none;
+    border-color: #4A90E2;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+/* أزرار الحالة */
+.status-options {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.status-option {
+    position: relative;
+}
+
+.status-option input[type="radio"] {
+    display: none;
+}
+
+.status-label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 2px solid #f0f0f5;
+}
+
+.status-label i {
+    font-size: 24px;
+    margin-bottom: 8px;
+}
+
+.status-label span {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.status-option input:checked + .status-label {
+    border-color: currentColor;
+    box-shadow: 0 4px 12px currentColor;
+    transform: scale(1.05);
+}
+
+.status-present {
+    color: #34C759;
+    background: rgba(52, 199, 89, 0.1);
+}
+
+.status-absent {
+    color: #FF3B30;
+    background: rgba(255, 59, 48, 0.1);
+}
+
+.status-leave {
+    color: #FF9500;
+    background: rgba(255, 149, 0, 0.1);
+}
+
+.status-sick {
+    color: #007AFF;
+    background: rgba(0, 122, 255, 0.1);
+}
+
+.status-late {
+    color: #FF9500;
+    background: rgba(255, 149, 0, 0.1);
+}
+
+.status-early-leave {
+    color: #5856D6;
+    background: rgba(88, 86, 214, 0.1);
+}
+
+/* الأزرار */
+.actions-wrapper {
+    padding: 0 20px 80px;
+}
+
+.submit-btn {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #4A90E2 0%, #357ABD 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
+    cursor: pointer;
+    margin-bottom: 12px;
+}
+
+.submit-btn:active {
+    transform: scale(0.98);
+}
+
+.delete-btn {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #FF3B30 0%, #DC143C 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(255, 59, 48, 0.3);
+    cursor: pointer;
+    margin-bottom: 12px;
+}
+
+.delete-btn:active {
+    transform: scale(0.98);
+}
+
+.cancel-btn {
+    width: 100%;
+    padding: 14px;
+    background: white;
+    color: #1a1a1a;
+    border: 1px solid #e5e5ea;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    display: block;
+    text-align: center;
+}
+
+.cancel-btn:active {
+    background: #f8f9fa;
+}
+
+/* رسائل */
+.flash-message {
+    margin: 0 20px 16px;
+    padding: 12px 16px;
+    border-radius: 12px;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.flash-success {
+    background: rgba(52, 199, 89, 0.1);
+    border: 1px solid rgba(52, 199, 89, 0.3);
+    color: #34C759;
+}
+
+.flash-error {
+    background: rgba(255, 59, 48, 0.1);
+    border: 1px solid rgba(255, 59, 48, 0.3);
+    color: #FF3B30;
+}
+</style>
+
+<!-- رسائل Flash -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+        <div class="flash-message flash-{{ 'success' if category == 'success' else 'error' }}">
+            <i class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-circle' }}"></i>
+            <span>{{ message }}</span>
+        </div>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+
+<form action="{{ url_for('mobile.edit_attendance', record_id=record.id) }}" method="POST">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    
+    <!-- معلومات الموظف -->
+    <div class="form-card">
+        <div class="card-header">
+            <h2 class="card-title">
+                <i class="fas fa-user"></i>
+                <span>معلومات الموظف</span>
+            </h2>
+        </div>
+        <div class="card-content">
+            <div class="form-group">
+                <label class="form-label">الموظف</label>
+                <select name="employee_id" class="form-select" required>
+                    {% for employee in employees %}
+                    <option value="{{ employee.id }}" {% if employee.id == record.employee_id %}selected{% endif %}>
+                        {{ employee.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">التاريخ</label>
+                <input type="date" name="date" class="form-input" 
+                       value="{{ record.date.strftime('%Y-%m-%d') }}" required>
+            </div>
+        </div>
+    </div>
+
+    <!-- حالة الحضور -->
+    <div class="form-card">
+        <div class="card-header">
+            <h2 class="card-title">
+                <i class="fas fa-clipboard-check"></i>
+                <span>حالة الحضور</span>
+            </h2>
+        </div>
+        <div class="card-content">
+            <div class="status-options">
+                <div class="status-option">
+                    <input type="radio" name="status" id="statusPresent" value="حاضر" 
+                           {% if record.status == 'حاضر' %}checked{% endif %}>
+                    <label for="statusPresent" class="status-label status-present">
+                        <i class="fas fa-check-circle"></i>
+                        <span>حاضر</span>
+                    </label>
+                </div>
+                
+                <div class="status-option">
+                    <input type="radio" name="status" id="statusAbsent" value="غائب"
+                           {% if record.status == 'غائب' %}checked{% endif %}>
+                    <label for="statusAbsent" class="status-label status-absent">
+                        <i class="fas fa-times-circle"></i>
+                        <span>غائب</span>
+                    </label>
+                </div>
+                
+                <div class="status-option">
+                    <input type="radio" name="status" id="statusLeave" value="إجازة"
+                           {% if record.status == 'إجازة' %}checked{% endif %}>
+                    <label for="statusLeave" class="status-label status-leave">
+                        <i class="fas fa-umbrella-beach"></i>
+                        <span>إجازة</span>
+                    </label>
+                </div>
+                
+                <div class="status-option">
+                    <input type="radio" name="status" id="statusSick" value="مرضي"
+                           {% if record.status == 'مرضي' %}checked{% endif %}>
+                    <label for="statusSick" class="status-label status-sick">
+                        <i class="fas fa-notes-medical"></i>
+                        <span>مرضي</span>
+                    </label>
+                </div>
+                
+                <div class="status-option">
+                    <input type="radio" name="status" id="statusLate" value="تأخير"
+                           {% if record.status == 'تأخير' %}checked{% endif %}>
+                    <label for="statusLate" class="status-label status-late">
+                        <i class="fas fa-clock"></i>
+                        <span>تأخير</span>
+                    </label>
+                </div>
+                
+                <div class="status-option">
+                    <input type="radio" name="status" id="statusEarlyLeave" value="مغادرة مبكرة"
+                           {% if record.status == 'مغادرة مبكرة' %}checked{% endif %}>
+                    <label for="statusEarlyLeave" class="status-label status-early-leave">
+                        <i class="fas fa-door-open"></i>
+                        <span>مغادرة مبكرة</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- أوقات الحضور -->
+    <div class="form-card">
+        <div class="card-header">
+            <h2 class="card-title">
+                <i class="fas fa-clock"></i>
+                <span>أوقات الحضور والانصراف</span>
+            </h2>
+        </div>
+        <div class="card-content">
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">وقت الحضور</label>
+                    <input type="time" name="check_in" class="form-input" 
+                           value="{{ record.check_in.strftime('%H:%M') if record.check_in else '' }}">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">وقت الانصراف</label>
+                    <input type="time" name="check_out" class="form-input" 
+                           value="{{ record.check_out.strftime('%H:%M') if record.check_out else '' }}">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">ملاحظات</label>
+                <textarea name="notes" class="form-input" rows="3" 
+                          placeholder="ملاحظات إضافية">{{ record.notes or '' }}</textarea>
+            </div>
+        </div>
+    </div>
+
+    <!-- الأزرار -->
+    <div class="actions-wrapper">
+        <button type="submit" class="submit-btn">
+            <i class="fas fa-save"></i> حفظ التعديلات
+        </button>
+        
+        <button type="button" class="delete-btn" onclick="confirmDelete()">
+            <i class="fas fa-trash"></i> حذف السجل
+        </button>
+        
+        <a href="{{ url_for('mobile.attendance') }}" class="cancel-btn">
+            <i class="fas fa-times"></i> إلغاء
+        </a>
+    </div>
+</form>
+
+<!-- نموذج الحذف المخفي -->
+<form id="deleteForm" action="{{ url_for('mobile.delete_attendance', record_id=record.id) }}" 
+      method="POST" style="display: none;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+</form>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // تعطيل حقول الوقت للحالات التي لا تحتاج لها
+    const statusInputs = document.querySelectorAll('input[name="status"]');
+    const checkInInput = document.querySelector('input[name="check_in"]');
+    const checkOutInput = document.querySelector('input[name="check_out"]');
+    
+    function updateTimeFields() {
+        const selectedStatus = document.querySelector('input[name="status"]:checked').value;
+        const disableTime = ['غائب', 'إجازة', 'مرضي'].includes(selectedStatus);
+        
+        checkInInput.disabled = disableTime;
+        checkOutInput.disabled = disableTime;
+        
+        if (disableTime) {
+            checkInInput.value = '';
+            checkOutInput.value = '';
+        }
+    }
+    
+    statusInputs.forEach(input => {
+        input.addEventListener('change', updateTimeFields);
+    });
+    
+    // تطبيق القاعدة عند تحميل الصفحة
+    updateTimeFields();
+});
+
+function confirmDelete() {
+    if (confirm('هل أنت متأكد من حذف هذا السجل؟ لا يمكن التراجع عن هذا الإجراء.')) {
+        document.getElementById('deleteForm').submit();
+    }
+}
+</script>
+{% endblock %}
