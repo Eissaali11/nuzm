@@ -388,7 +388,7 @@ class EmailService:
                 sender_email = self.from_email or "test@sink.sendgrid.net"
             
             # تحديد نوع العملية
-            operation_type_text = "تسليم" if handover_record.is_driver_receiving else "استلام"
+            operation_type_text = "تسليم" if handover_record.handover_type == 'delivery' else "استلام"
             
             # إنشاء الموضوع
             subject = f"عملية {operation_type_text}"
@@ -607,7 +607,7 @@ class EmailService:
                 sender_email = self.from_email or "noreply@nuzum.local"
             
             # تحديد نوع العملية
-            operation_type_text = "تسليم" if handover_record.is_driver_receiving else "استلام"
+            operation_type_text = "تسليم" if handover_record.handover_type == 'delivery' else "استلام"
             
             # إنشاء الموضوع
             subject = f"عملية {operation_type_text}"

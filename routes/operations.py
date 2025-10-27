@@ -1636,7 +1636,7 @@ def share_with_outlook(operation_id):
             cell.border = border
             ws.column_dimensions[cell.column_letter].width = 25
         
-        operation_type_text = "تسليم" if handover_record.is_driver_receiving else "استلام"
+        operation_type_text = "تسليم" if handover_record.handover_type == 'delivery' else "استلام"
         
         data_rows = [
             ('رقم العملية', f"#{operation.id}"),
