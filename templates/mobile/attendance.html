@@ -135,17 +135,17 @@
         {% if pagination and pagination.pages > 1 %}
         <div class="mobile-pagination">
             {% if pagination.has_prev %}
-            <a href="{{ url_for('mobile.attendance', page=pagination.prev_num, **request.args) }}" class="mobile-pagination-item">
+            <a href="{{ url_for('mobile.attendance', page=pagination.prev_num) }}" class="mobile-pagination-item">
                 <i class="fas fa-chevron-right"></i>
             </a>
             {% endif %}
             
-            {% for page in pagination.iter_pages() %}
-                {% if page %}
-                    {% if page != pagination.page %}
-                    <a href="{{ url_for('mobile.attendance', page=page, **request.args) }}" class="mobile-pagination-item">{{ page }}</a>
+            {% for page_num in pagination.iter_pages() %}
+                {% if page_num %}
+                    {% if page_num != pagination.page %}
+                    <a href="{{ url_for('mobile.attendance', page=page_num) }}" class="mobile-pagination-item">{{ page_num }}</a>
                     {% else %}
-                    <span class="mobile-pagination-item active">{{ page }}</span>
+                    <span class="mobile-pagination-item active">{{ page_num }}</span>
                     {% endif %}
                 {% else %}
                     <span class="mobile-pagination-item">...</span>
@@ -153,7 +153,7 @@
             {% endfor %}
             
             {% if pagination.has_next %}
-            <a href="{{ url_for('mobile.attendance', page=pagination.next_num, **request.args) }}" class="mobile-pagination-item">
+            <a href="{{ url_for('mobile.attendance', page=pagination.next_num) }}" class="mobile-pagination-item">
                 <i class="fas fa-chevron-left"></i>
             </a>
             {% endif %}

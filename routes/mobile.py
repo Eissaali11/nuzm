@@ -684,15 +684,50 @@ def add_attendance():
 @login_required
 def edit_attendance(record_id):
     """تعديل سجل حضور للنسخة المحمولة"""
-    # يمكن تنفيذ هذه الوظيفة لاحقًا
-    attendance = Attendance.query.get_or_404(record_id)
-    employees = Employee.query.order_by(Employee.name).all()
-    current_date = datetime.now().date()
-
+    record = Attendance.query.get_or_404(record_id)
+    employees = Employee.query.filter_by(status='active').order_by(Employee.name).all()
+    
+    if request.method == 'POST':
+        try:
+            # تحديث البيانات
+            record.employee_id = request.form.get('employee_id')
+            record.date = datetime.strptime(request.form.get('date'), '%Y-%m-%d').date()
+            record.status = request.form.get('status')
+            
+            # أوقات الحضور والانصراف
+            check_in = request.form.get('check_in')
+            check_out = request.form.get('check_out')
+            
+            record.check_in = datetime.strptime(check_in, '%H:%M').time() if check_in else None
+            record.check_out = datetime.strptime(check_out, '%H:%M').time() if check_out else None
+            record.notes = request.form.get('notes')
+            
+            db.session.commit()
+            flash('تم تحديث سجل الحضور بنجاح', 'success')
+            return redirect(url_for('mobile.attendance'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'حدث خطأ أثناء التحديث: {str(e)}', 'danger')
+    
     return render_template('mobile/edit_attendance.html',
-                          attendance=attendance,
-                          employees=employees,
-                          current_date=current_date)
+                          record=record,
+                          employees=employees)
+
+# حذف سجل حضور - النسخة المحمولة
+@mobile_bp.route('/attendance/<int:record_id>/delete', methods=['POST'])
+@login_required
+def delete_attendance(record_id):
+    """حذف سجل حضور للنسخة المحمولة"""
+    try:
+        record = Attendance.query.get_or_404(record_id)
+        db.session.delete(record)
+        db.session.commit()
+        flash('تم حذف سجل الحضور بنجاح', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'حدث خطأ أثناء الحذف: {str(e)}', 'danger')
+    
+    return redirect(url_for('mobile.attendance'))
 
 # صفحة الأقسام - النسخة المحمولة
 @mobile_bp.route('/departments')
