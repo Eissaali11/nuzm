@@ -447,15 +447,15 @@ body {
 
 <!-- أزرار الإجراءات -->
 <div class="action-buttons-bar">
-    <a href="{{ url_for('vehicles.add') }}" class="action-btn-modern btn-add">
+    <a href="{{ url_for('mobile.add_vehicle') }}" class="action-btn-modern btn-add">
         <i class="fas fa-plus"></i>
         <span>إضافة سيارة</span>
     </a>
-    <a href="{{ url_for('vehicle_operations.index') }}" class="action-btn-modern btn-operations">
+    <a href="{{ url_for('mobile.operations_dashboard') }}" class="action-btn-modern btn-operations">
         <i class="fas fa-tasks"></i>
         <span>العمليات</span>
     </a>
-    <a href="{{ url_for('vehicles.reports') }}" class="action-btn-modern btn-reports">
+    <a href="{{ url_for('mobile.report_vehicles') }}" class="action-btn-modern btn-reports">
         <i class="fas fa-chart-bar"></i>
         <span>التقارير</span>
     </a>
@@ -542,7 +542,7 @@ body {
     
     {% if vehicles %}
         {% for vehicle in vehicles %}
-        <a href="{{ url_for('vehicles.view', id=vehicle.id) }}" class="vehicle-card-modern">
+        <a href="{{ url_for('mobile.vehicle_details', vehicle_id=vehicle.id) }}" class="vehicle-card-modern">
             <div class="vehicle-header">
                 <div class="vehicle-icon-wrapper">
                     <i class="fas fa-car vehicle-icon"></i>
@@ -590,7 +590,7 @@ body {
             </div>
             <div class="empty-title">لا توجد مركبات</div>
             <div class="empty-text">ابدأ بإضافة مركبات لأسطولك</div>
-            <a href="{{ url_for('vehicles.add') }}" class="add-btn">
+            <a href="{{ url_for('mobile.add_vehicle') }}" class="add-btn">
                 <i class="fas fa-plus"></i>
                 <span>إضافة مركبة جديدة</span>
             </a>
