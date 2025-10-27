@@ -1327,7 +1327,9 @@ def documents_dashboard():
     department_stats = db.session.query(
         Department.name,
         func.count(Document.id).label('count')
-    ).join(Employee).join(Document)\
+    ).select_from(Department)\
+     .join(Employee, Employee.department_id == Department.id)\
+     .join(Document, Document.employee_id == Employee.id)\
      .group_by(Department.name)\
      .order_by(func.count(Document.id).desc())\
      .limit(5).all()
