@@ -24,6 +24,90 @@ body {
     min-height: 100vh;
 }
 
+/* بانر الداش بورد */
+.dashboard-banner {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 20px;
+    padding: 20px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 8px 32px rgba(102, 126, 234, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.dashboard-banner::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -20%;
+    width: 200px;
+    height: 200px;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.2) 0%, transparent 70%);
+    animation: float 6s ease-in-out infinite;
+}
+
+.dashboard-banner:active {
+    transform: scale(0.98);
+}
+
+.banner-content {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    position: relative;
+    z-index: 1;
+}
+
+.banner-icon {
+    width: 54px;
+    height: 54px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    font-size: 24px;
+    color: white;
+}
+
+.banner-text {
+    flex: 1;
+}
+
+.banner-title {
+    color: white;
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 4px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.banner-subtitle {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 13px;
+}
+
+.banner-arrow {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    font-size: 14px;
+    position: relative;
+    z-index: 1;
+}
+
 /* بطاقة الترحيب */
 .welcome-card {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -348,6 +432,24 @@ body {
 </style>
 
 <div class="documents-container">
+    <!-- بانر الداش بورد -->
+    <a href="{{ url_for('mobile.documents_dashboard') }}" style="text-decoration: none;">
+        <div class="dashboard-banner">
+            <div class="banner-content">
+                <div class="banner-icon">
+                    <i class="fas fa-chart-pie"></i>
+                </div>
+                <div class="banner-text">
+                    <div class="banner-title">داش بورد الوثائق</div>
+                    <div class="banner-subtitle">عرض الإحصائيات والتحليلات الشاملة</div>
+                </div>
+            </div>
+            <div class="banner-arrow">
+                <i class="fas fa-chevron-left"></i>
+            </div>
+        </div>
+    </a>
+
     <!-- بطاقة الترحيب -->
     <div class="welcome-card">
         <div class="welcome-title">
