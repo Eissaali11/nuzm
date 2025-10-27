@@ -372,6 +372,56 @@ def employees():
 @login_required
 def add_employee():
     """صفحة إضافة موظف جديد للنسخة المحمولة"""
+    
+    # معالجة الـ POST request لحفظ الموظف الجديد
+    if request.method == 'POST':
+        try:
+            # إنشاء موظف جديد
+            employee = Employee(
+                name=request.form.get('name'),
+                employee_id=request.form.get('employee_id'),
+                national_id=request.form.get('national_id'),
+                mobile=request.form.get('mobile'),
+                email=request.form.get('email'),
+                job_title=request.form.get('job_title'),
+                nationality_id=int(request.form.get('nationality_id')) if request.form.get('nationality_id') else None,
+                department_id=int(request.form.get('department_id')) if request.form.get('department_id') else None,
+                contract_status=request.form.get('contract_status'),
+                license_status=request.form.get('license_status'),
+                employee_type=request.form.get('employee_type'),
+                status=request.form.get('status', 'active'),
+                has_mobile_custody=request.form.get('has_mobile_custody') == 'yes',
+                sponsorship_status=request.form.get('sponsorship_status'),
+                residence_details=request.form.get('residence_details'),
+                pants_size=request.form.get('pants_size'),
+                shirt_size=request.form.get('shirt_size'),
+                location=request.form.get('location'),
+                project=request.form.get('project'),
+                join_date=datetime.strptime(request.form.get('join_date'), '%Y-%m-%d').date() if request.form.get('join_date') else None,
+                birth_date=datetime.strptime(request.form.get('birth_date'), '%Y-%m-%d').date() if request.form.get('birth_date') else None,
+                basic_salary=float(request.form.get('basic_salary')) if request.form.get('basic_salary') else 0,
+                attendance_bonus=float(request.form.get('attendance_bonus')) if request.form.get('attendance_bonus') else 0
+            )
+            
+            db.session.add(employee)
+            db.session.flush()  # للحصول على ID الموظف
+            
+            # تعيين الجهاز المحمول إذا تم اختياره
+            if request.form.get('mobile_device_id'):
+                mobile_device = MobileDevice.query.get(int(request.form.get('mobile_device_id')))
+                if mobile_device:
+                    mobile_device.employee_id = employee.id
+                    mobile_device.assigned_date = datetime.now()
+                    mobile_device.is_assigned = True
+            
+            db.session.commit()
+            flash('تم إضافة الموظف بنجاح', 'success')
+            return redirect(url_for('mobile.employees'))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f'حدث خطأ أثناء إضافة الموظف: {str(e)}', 'danger')
+    
     # جلب البيانات المطلوبة
     departments = Department.query.order_by(Department.name).all()
     nationalities = Nationality.query.order_by(Nationality.name_ar).all()
