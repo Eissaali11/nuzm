@@ -686,7 +686,7 @@
         <div class="checkbox-group">
             {% for department in departments %}
             <div class="checkbox-item">
-                <input type="checkbox" name="department_ids" value="{{ department.id }}" id="dept-{{ department.id }}">
+                <input type="checkbox" name="department_ids" value="{{ department.id }}" id="dept-{{ department.id }}" {% if department in employee.departments %}checked{% endif %}>
                 <label for="dept-{{ department.id }}">{{ department.name }}</label>
             </div>
             {% endfor %}

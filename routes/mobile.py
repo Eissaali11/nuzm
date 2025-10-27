@@ -422,6 +422,11 @@ def add_employee():
             db.session.add(employee)
             db.session.flush()  # للحصول على ID الموظف
             
+            # تعيين الأقسام
+            department_ids = request.form.getlist('department_ids')
+            if department_ids:
+                employee.departments = Department.query.filter(Department.id.in_(department_ids)).all()
+            
             # تعيين الجهاز المحمول إذا تم اختياره
             if request.form.get('mobile_device_id'):
                 mobile_device = MobileDevice.query.get(int(request.form.get('mobile_device_id')))
@@ -541,6 +546,13 @@ def edit_employee(employee_id):
             employee.residence_location_url = request.form.get('residence_location_url')
             employee.housing_drive_links = request.form.get('housing_drive_links')
             employee.current_sponsor_name = request.form.get('current_sponsor_name')
+            
+            # تحديث الأقسام
+            department_ids = request.form.getlist('department_ids')
+            if department_ids:
+                employee.departments = Department.query.filter(Department.id.in_(department_ids)).all()
+            else:
+                employee.departments = []
             
             # تحديث تعيين الجهاز المحمول
             old_device = MobileDevice.query.filter_by(employee_id=employee.id).first()
