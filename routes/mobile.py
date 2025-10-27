@@ -476,11 +476,20 @@ def attendance():
     # الأقسام
     departments = Department.query.order_by(Department.name).all()
 
-    # إحصائيات اليوم
+    # إحصائيات للتاريخ المحدد
     today_stats = {
-        'present': Attendance.query.filter_by(date=current_date, status='حاضر').count(),
-        'absent': Attendance.query.filter_by(date=current_date, status='غائب').count(),
-        'leave': Attendance.query.filter_by(date=current_date, status='إجازة').count(),
+        'present': Attendance.query.filter(
+            Attendance.date == selected_date,
+            db.or_(Attendance.status == 'حاضر', Attendance.status == 'present')
+        ).count(),
+        'absent': Attendance.query.filter(
+            Attendance.date == selected_date,
+            db.or_(Attendance.status == 'غائب', Attendance.status == 'absent')
+        ).count(),
+        'leave': Attendance.query.filter(
+            Attendance.date == selected_date,
+            db.or_(Attendance.status == 'إجازة', Attendance.status == 'leave')
+        ).count(),
         'total': len(employees)
     }
 
