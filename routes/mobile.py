@@ -379,7 +379,7 @@ def add_employee():
     # جلب الأجهزة المحمولة المتاحة (غير المخصصة لموظف)
     available_mobile_devices = MobileDevice.query.filter(
         (MobileDevice.employee_id == None) | (MobileDevice.employee_id == '')
-    ).order_by(MobileDevice.brand, MobileDevice.model).all()
+    ).order_by(MobileDevice.device_brand, MobileDevice.device_model).all()
     
     return render_template('mobile/add_employee.html',
                          departments=departments,

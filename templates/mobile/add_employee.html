@@ -556,7 +556,7 @@
                 <option value="">اختر جهاز محمول</option>
                 {% for device in available_mobile_devices %}
                 <option value="{{ device.id }}">
-                    {{ device.brand }} {{ device.model }} 
+                    {{ device.device_brand }} {{ device.device_model }} 
                     {% if device.phone_number %}- {{ device.phone_number }}{% endif %}
                     {% if device.imei %}- IMEI: {{ device.imei }}{% endif %}
                 </option>
