@@ -725,13 +725,11 @@
             <i class="fas fa-share-alt me-1"></i> المشاركة الخارجية
         </div>
         
-        {% if operation.operation_type == 'handover' and operation.related_record_id %}
-        <button onclick="shareWithOutlook({{ operation.id }})" 
-           class="btn-export" style="background: linear-gradient(135deg, #0078d4, #0063b1); color: white;">
-            <i class="fab fa-microsoft"></i>
-            <span>مشاركة شاملة (Excel + PDF)</span>
+        <button onclick="sharePackage({{ operation.id }})" 
+           class="btn-export" style="background: linear-gradient(135deg, #10b981, #059669); color: white;">
+            <i class="fas fa-share-alt"></i>
+            <span>مشاركة خارجية شاملة</span>
         </button>
-        {% endif %}
         
         <button class="btn-export" style="background: linear-gradient(135deg, #6610f2, #e83e8c); color: white;" onclick="showEmailForm()">
             <i class="fas fa-envelope" style="font-size: 1.1rem;"></i>
@@ -1087,8 +1085,8 @@ function sendEmail() {
     });
 }
 
-// دالة المشاركة الشاملة مع Outlook
-async function shareWithOutlook(operationId) {
+// دالة المشاركة الخارجية الشاملة
+async function sharePackage(operationId) {
     try {
         // عرض مؤشر التحميل
         const loadingToast = document.createElement('div');
@@ -1103,15 +1101,15 @@ async function shareWithOutlook(operationId) {
         const toast = new bootstrap.Toast(loadingToast);
         toast.show();
         
-        // تنزيل الملف
-        const response = await fetch(`/operations/${operationId}/share-outlook`);
+        // تنزيل الحزمة
+        const response = await fetch(`/operations/${operationId}/share-package`);
         
         if (!response.ok) {
             throw new Error('فشل في تحميل الملف');
         }
         
         const blob = await response.blob();
-        const fileName = 'عملية_تسليم_استلام.eml';
+        const fileName = `عملية_${operationId}_شاملة.zip`;
         
         // إخفاء مؤشر التحميل
         toast.hide();
@@ -1119,21 +1117,36 @@ async function shareWithOutlook(operationId) {
         
         // محاولة استخدام Web Share API
         if (navigator.share && navigator.canShare) {
-            const file = new File([blob], fileName, { type: 'message/rfc822' });
+            const file = new File([blob], fileName, { type: 'application/zip' });
             
             if (navigator.canShare({ files: [file] })) {
                 try {
                     await navigator.share({
-                        title: 'مشاركة عملية تسليم/استلام',
-                        text: 'ملف يحتوي على تفاصيل العملية (Excel + PDF + رسالة تفصيلية)',
+                        title: 'مشاركة تفاصيل العملية',
+                        text: 'حزمة شاملة تحتوي على: ملف نصي تفصيلي + Excel + PDF + الصور المرفقة',
                         files: [file]
                     });
+                    
+                    // نجحت المشاركة
+                    const successToast = document.createElement('div');
+                    successToast.className = 'toast position-fixed bottom-0 end-0 m-3';
+                    successToast.innerHTML = `
+                        <div class="toast-body bg-success text-white rounded-3">
+                            <i class="fas fa-check-circle me-2"></i>
+                            تمت المشاركة بنجاح!
+                        </div>
+                    `;
+                    document.body.appendChild(successToast);
+                    const toast2 = new bootstrap.Toast(successToast);
+                    toast2.show();
+                    setTimeout(() => successToast.remove(), 3000);
                     return;
                 } catch (shareError) {
                     // إذا ألغى المستخدم المشاركة
                     if (shareError.name === 'AbortError') {
                         return;
                     }
+                    // في حالة فشل المشاركة، نكمل للتنزيل المباشر
                 }
             }
         }
@@ -1154,10 +1167,10 @@ async function shareWithOutlook(operationId) {
                 <div class="modal fade" id="outlookInstructions" tabindex="-1">
                     <div class="modal-dialog modal-dialog-centered">
                         <div class="modal-content">
-                            <div class="modal-header bg-primary text-white">
+                            <div class="modal-header bg-success text-white">
                                 <h5 class="modal-title">
-                                    <i class="fab fa-microsoft me-2"></i>
-                                    تم تنزيل الملف بنجاح
+                                    <i class="fas fa-download me-2"></i>
+                                    تم تنزيل الحزمة بنجاح
                                 </h5>
                                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                             </div>
@@ -1165,29 +1178,24 @@ async function shareWithOutlook(operationId) {
                                 <div class="mb-4">
                                     <i class="fas fa-check-circle text-success" style="font-size: 3rem;"></i>
                                 </div>
-                                <h6 class="mb-3">الخطوات التالية:</h6>
+                                <h6 class="mb-3">محتويات الحزمة:</h6>
                                 <div class="text-end" style="background: #f8f9fa; padding: 20px; border-radius: 10px;">
-                                    <ol class="mb-0">
-                                        <li class="mb-2">افتح الملف المُنزَّل <strong>"${fileName}"</strong></li>
-                                        <li class="mb-2">سيفتح Outlook تلقائياً مع رسالة جاهزة</li>
-                                        <li class="mb-2">المرفقات تتضمن:
-                                            <ul class="mt-2">
-                                                <li>ملف Excel بالتفاصيل الكاملة</li>
-                                                <li>ملف PDF للطباعة</li>
-                                            </ul>
-                                        </li>
-                                        <li>أضف عنوان المستلم واضغط إرسال</li>
-                                    </ol>
+                                    <ul class="mb-0">
+                                        <li class="mb-2"><i class="fas fa-file-alt text-primary me-2"></i><strong>ملف نصي:</strong> تفاصيل العملية الكاملة</li>
+                                        <li class="mb-2"><i class="fas fa-file-excel text-success me-2"></i><strong>ملف Excel:</strong> بيانات منظمة قابلة للتحرير</li>
+                                        <li class="mb-2"><i class="fas fa-file-pdf text-danger me-2"></i><strong>ملف PDF:</strong> تقرير احترافي للطباعة</li>
+                                        <li class="mb-2"><i class="fas fa-images text-info me-2"></i><strong>الصور:</strong> جميع الصور المرفقة بالعملية</li>
+                                    </ul>
                                 </div>
-                                <div class="alert alert-info mt-3 mb-0" style="font-size: 0.85rem;">
-                                    <i class="fas fa-info-circle me-1"></i>
-                                    <strong>ملاحظة:</strong> تأكد من تثبيت Microsoft Outlook على جهازك
+                                <div class="alert alert-success mt-3 mb-0" style="font-size: 0.85rem;">
+                                    <i class="fas fa-share-alt me-1"></i>
+                                    <strong>يمكنك الآن:</strong> فك ضغط الملف ومشاركة المحتويات عبر أي تطبيق (WhatsApp, Email, إلخ)
                                 </div>
                             </div>
                             <div class="modal-footer">
-                                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">
+                                <button type="button" class="btn btn-success" data-bs-dismiss="modal">
                                     <i class="fas fa-check me-1"></i>
-                                    فهمت
+                                    حسناً
                                 </button>
                             </div>
                         </div>

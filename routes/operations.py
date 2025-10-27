@@ -24,6 +24,8 @@ import pandas as pd
 from fpdf import FPDF
 import base64
 import uuid
+import zipfile
+import shutil
 
 from app import db
 from models import (
@@ -1733,6 +1735,209 @@ def share_with_outlook(operation_id):
                 os.remove(pdf_file_path)
             except:
                 pass
+
+
+@operations_bp.route('/<int:operation_id>/share-package', methods=['GET'])
+@login_required
+def share_package(operation_id):
+    """إنشاء حزمة ZIP شاملة للمشاركة الخارجية"""
+    
+    operation = OperationRequest.query.get_or_404(operation_id)
+    
+    # مسار مجلد مؤقت لتجميع الملفات
+    temp_dir = f'/tmp/operation_{operation_id}_{datetime.now().strftime("%Y%m%d_%H%M%S")}'
+    zip_path = None
+    
+    try:
+        os.makedirs(temp_dir, exist_ok=True)
+        
+        # 1. إنشاء ملف نصي بالتفاصيل
+        details_path = os.path.join(temp_dir, 'تفاصيل_العملية.txt')
+        with open(details_path, 'w', encoding='utf-8') as f:
+            f.write('═' * 50 + '\n')
+            f.write(f'          تفاصيل العملية #{operation.id}\n')
+            f.write('═' * 50 + '\n\n')
+            
+            # نوع العملية
+            operation_types = {
+                'handover': 'تسليم/استلام مركبة',
+                'workshop': 'ورشة صيانة',
+                'external_authorization': 'تفويض خارجي',
+                'safety_inspection': 'فحص سلامة'
+            }
+            f.write(f'نوع العملية: {operation_types.get(operation.operation_type, operation.operation_type)}\n')
+            f.write(f'الحالة: {operation.status}\n')
+            f.write(f'التاريخ: {operation.created_at.strftime("%Y/%m/%d %H:%M")}\n\n')
+            
+            # معلومات المركبة
+            if operation.vehicle:
+                f.write('─' * 50 + '\n')
+                f.write('معلومات المركبة:\n')
+                f.write('─' * 50 + '\n')
+                f.write(f'رقم اللوحة: {operation.vehicle.plate_number}\n')
+                f.write(f'النوع: {operation.vehicle.make} {operation.vehicle.model}\n')
+                if operation.vehicle.current_driver:
+                    f.write(f'السائق: {operation.vehicle.current_driver}\n')
+                f.write('\n')
+            
+            # تفاصيل خاصة بنوع العملية
+            if operation.operation_type == 'handover' and operation.related_record_id:
+                handover = VehicleHandover.query.get(operation.related_record_id)
+                if handover:
+                    f.write('─' * 50 + '\n')
+                    f.write('تفاصيل التسليم/الاستلام:\n')
+                    f.write('─' * 50 + '\n')
+                    f.write(f'النوع: {"تسليم" if handover.handover_type == "delivery" else "استلام"}\n')
+                    f.write(f'اسم المستلم: {handover.person_name}\n')
+                    f.write(f'المسافة المقطوعة: {handover.mileage} كم\n')
+                    if handover.city:
+                        f.write(f'المدينة: {handover.city}\n')
+                    if handover.project_name:
+                        f.write(f'المشروع: {handover.project_name}\n')
+                    if handover.notes:
+                        f.write(f'\nملاحظات:\n{handover.notes}\n')
+                    f.write('\n')
+            
+            elif operation.operation_type == 'workshop' and operation.related_record_id:
+                workshop = VehicleWorkshop.query.get(operation.related_record_id)
+                if workshop:
+                    f.write('─' * 50 + '\n')
+                    f.write('تفاصيل الورشة:\n')
+                    f.write('─' * 50 + '\n')
+                    f.write(f'السبب: {workshop.reason}\n')
+                    f.write(f'تاريخ الدخول: {workshop.entry_date.strftime("%Y/%m/%d")}\n')
+                    if workshop.exit_date:
+                        f.write(f'تاريخ الخروج: {workshop.exit_date.strftime("%Y/%m/%d")}\n')
+                    if workshop.notes:
+                        f.write(f'\nملاحظات:\n{workshop.notes}\n')
+                    f.write('\n')
+            
+            # معلومات إضافية
+            if operation.description:
+                f.write('─' * 50 + '\n')
+                f.write('الوصف:\n')
+                f.write('─' * 50 + '\n')
+                f.write(f'{operation.description}\n\n')
+            
+            f.write('═' * 50 + '\n')
+            f.write('تم إنشاء هذا الملف من نظام نُظم لإدارة المركبات\n')
+            f.write('═' * 50 + '\n')
+        
+        # 2. إنشاء ملف Excel
+        try:
+            excel_path = os.path.join(temp_dir, f'بيانات_العملية_{operation_id}.xlsx')
+            from openpyxl import Workbook
+            from openpyxl.styles import Font, PatternFill, Alignment
+            
+            wb = Workbook()
+            ws = wb.active
+            ws.title = 'تفاصيل العملية'
+            
+            # إضافة البيانات
+            ws['A1'] = 'البيان'
+            ws['B1'] = 'القيمة'
+            ws['A1'].font = Font(bold=True)
+            ws['B1'].font = Font(bold=True)
+            
+            row = 2
+            ws[f'A{row}'] = 'رقم العملية'
+            ws[f'B{row}'] = f'#{operation.id}'
+            row += 1
+            
+            ws[f'A{row}'] = 'نوع العملية'
+            ws[f'B{row}'] = operation_types.get(operation.operation_type, operation.operation_type)
+            row += 1
+            
+            if operation.vehicle:
+                ws[f'A{row}'] = 'رقم اللوحة'
+                ws[f'B{row}'] = operation.vehicle.plate_number
+                row += 1
+            
+            wb.save(excel_path)
+        except Exception as e:
+            current_app.logger.warning(f'فشل في إنشاء Excel: {str(e)}')
+            excel_path = None
+        
+        # 3. إنشاء ملف PDF
+        pdf_path = None
+        if operation.operation_type == 'handover' and operation.related_record_id:
+            try:
+                from utils.simple_pdf_generator import create_vehicle_handover_pdf
+                pdf_content = create_vehicle_handover_pdf(operation.related_record_id)
+                pdf_path = os.path.join(temp_dir, f'تقرير_العملية_{operation_id}.pdf')
+                with open(pdf_path, 'wb') as f:
+                    f.write(pdf_content)
+            except Exception as e:
+                current_app.logger.warning(f'فشل في إنشاء PDF: {str(e)}')
+                pdf_path = None
+        
+        # 4. نسخ الصور المرفقة
+        images_copied = 0
+        if operation.operation_type == 'handover' and operation.related_record_id:
+            handover_images = VehicleHandoverImage.query.filter_by(handover_record_id=operation.related_record_id).all()
+            for img in handover_images:
+                try:
+                    src_path = os.path.join('static/uploads/handover_images', img.get_path())
+                    if os.path.exists(src_path):
+                        dst_path = os.path.join(temp_dir, f'صورة_{images_copied + 1}_{os.path.basename(img.get_path())}')
+                        shutil.copy2(src_path, dst_path)
+                        images_copied += 1
+                except Exception as e:
+                    current_app.logger.warning(f'فشل في نسخ الصورة: {str(e)}')
+        
+        elif operation.operation_type == 'workshop' and operation.related_record_id:
+            workshop_images = VehicleWorkshopImage.query.filter_by(workshop_record_id=operation.related_record_id).all()
+            for img in workshop_images:
+                try:
+                    src_path = os.path.join('static/uploads/workshop_images', img.image_path)
+                    if os.path.exists(src_path):
+                        dst_path = os.path.join(temp_dir, f'صورة_{images_copied + 1}_{os.path.basename(img.image_path)}')
+                        shutil.copy2(src_path, dst_path)
+                        images_copied += 1
+                except Exception as e:
+                    current_app.logger.warning(f'فشل في نسخ الصورة: {str(e)}')
+        
+        # 5. إنشاء ملف ZIP
+        zip_path = f'/tmp/operation_{operation_id}_package.zip'
+        with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            for root, dirs, files in os.walk(temp_dir):
+                for file in files:
+                    file_path = os.path.join(root, file)
+                    arcname = os.path.relpath(file_path, temp_dir)
+                    zipf.write(file_path, arcname)
+        
+        # تسجيل العملية
+        log_audit(
+            user_id=current_user.id,
+            action='share_package',
+            entity_type='operation_request',
+            entity_id=operation.id,
+            details=f'إنشاء حزمة مشاركة شاملة للعملية {operation_id}'
+        )
+        
+        # إرسال الملف
+        return send_file(
+            zip_path,
+            mimetype='application/zip',
+            as_attachment=True,
+            download_name=f'عملية_{operation_id}_شاملة.zip'
+        )
+    
+    except Exception as e:
+        current_app.logger.error(f"خطأ في إنشاء حزمة المشاركة للعملية {operation_id}: {str(e)}")
+        flash(f'حدث خطأ: {str(e)}', 'danger')
+        return redirect(url_for('operations.view_operation', operation_id=operation_id))
+    
+    finally:
+        # حذف المجلد المؤقت
+        if os.path.exists(temp_dir):
+            try:
+                shutil.rmtree(temp_dir)
+            except:
+                pass
+        
+        # حذف ملف ZIP بعد الإرسال (يتم في background)
+        # سيتم حذفه تلقائياً بعد فترة
 
 
 def get_operation_type_name(operation_type):
