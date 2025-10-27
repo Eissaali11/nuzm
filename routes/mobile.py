@@ -1281,6 +1281,69 @@ def edit_salary(salary_id):
                           salary=salary,
                           month_name=month_name)
 
+# داش بورد الوثائق - النسخة المحمولة
+@mobile_bp.route('/documents/dashboard')
+@login_required
+def documents_dashboard():
+    """داش بورد لعرض إحصائيات الوثائق"""
+    current_date = datetime.now().date()
+    
+    # حساب تواريخ الفترات
+    expiring_date = current_date + timedelta(days=60)
+    warning_date = current_date + timedelta(days=30)
+    
+    # إحصائيات الوثائق
+    total_documents = Document.query.count()
+    expired_documents = Document.query.filter(Document.expiry_date < current_date).count()
+    expiring_soon = Document.query.filter(
+        Document.expiry_date >= current_date,
+        Document.expiry_date <= warning_date
+    ).count()
+    expiring_later = Document.query.filter(
+        Document.expiry_date > warning_date,
+        Document.expiry_date <= expiring_date
+    ).count()
+    valid_documents = Document.query.filter(Document.expiry_date > expiring_date).count()
+    
+    # الوثائق المنتهية (آخر 10)
+    expired_docs = Document.query.join(Employee)\
+        .filter(Document.expiry_date < current_date)\
+        .order_by(Document.expiry_date.desc())\
+        .limit(10).all()
+    
+    # الوثائق القريبة من الانتهاء (30 يوم)
+    expiring_docs = Document.query.join(Employee)\
+        .filter(Document.expiry_date >= current_date, Document.expiry_date <= warning_date)\
+        .order_by(Document.expiry_date)\
+        .limit(10).all()
+    
+    # إحصائيات حسب نوع الوثيقة
+    document_types_stats = db.session.query(
+        Document.document_type,
+        func.count(Document.id).label('count')
+    ).group_by(Document.document_type).all()
+    
+    # إحصائيات حسب القسم
+    department_stats = db.session.query(
+        Department.name,
+        func.count(Document.id).label('count')
+    ).join(Employee).join(Document)\
+     .group_by(Department.name)\
+     .order_by(func.count(Document.id).desc())\
+     .limit(5).all()
+    
+    return render_template('mobile/documents_dashboard.html',
+                         total_documents=total_documents,
+                         expired_documents=expired_documents,
+                         expiring_soon=expiring_soon,
+                         expiring_later=expiring_later,
+                         valid_documents=valid_documents,
+                         expired_docs=expired_docs,
+                         expiring_docs=expiring_docs,
+                         document_types_stats=document_types_stats,
+                         department_stats=department_stats,
+                         current_date=current_date)
+
 # صفحة الوثائق - النسخة المحمولة
 @mobile_bp.route('/documents')
 @login_required

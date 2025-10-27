@@ -1,0 +1,479 @@
+{% extends "mobile/layout.html" %}
+
+{% block title %}داش بورد الوثائق - نُظم{% endblock %}
+
+{% block styles %}
+<style>
+    .dashboard-container {
+        padding: 20px 16px;
+        padding-bottom: 100px;
+    }
+
+    /* Stats Cards */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+        margin-bottom: 24px;
+    }
+
+    .stat-card {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.85) 100%);
+        backdrop-filter: blur(20px);
+        border-radius: 20px;
+        padding: 20px 16px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
+        animation: float 6s ease-in-out infinite;
+    }
+
+    .stat-card:active {
+        transform: scale(0.97);
+    }
+
+    .stat-card.expired {
+        background: linear-gradient(135deg, rgba(245, 87, 108, 0.15) 0%, rgba(220, 53, 69, 0.15) 100%);
+    }
+
+    .stat-card.warning {
+        background: linear-gradient(135deg, rgba(255, 193, 7, 0.15) 0%, rgba(255, 152, 0, 0.15) 100%);
+    }
+
+    .stat-card.valid {
+        background: linear-gradient(135deg, rgba(40, 199, 111, 0.15) 0%, rgba(34, 139, 34, 0.15) 100%);
+    }
+
+    .stat-card.total {
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%);
+    }
+
+    .stat-icon {
+        width: 52px;
+        height: 52px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        margin-bottom: 12px;
+        position: relative;
+        z-index: 1;
+        background: linear-gradient(145deg, #ffffff, #e6e6e6);
+        box-shadow: 8px 8px 16px rgba(163, 177, 198, 0.4),
+                    -8px -8px 16px rgba(255, 255, 255, 0.8);
+    }
+
+    .stat-icon i {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        filter: drop-shadow(0 2px 4px rgba(102, 126, 234, 0.3));
+    }
+
+    .stat-card.expired .stat-icon i {
+        background: linear-gradient(135deg, #f5576c 0%, #dc3545 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .stat-card.warning .stat-icon i {
+        background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .stat-card.valid .stat-icon i {
+        background: linear-gradient(135deg, #28c76f 0%, #228b22 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .stat-value {
+        font-size: 32px;
+        font-weight: 800;
+        color: #1a1a2e;
+        margin-bottom: 4px;
+        position: relative;
+        z-index: 1;
+    }
+
+    .stat-label {
+        font-size: 13px;
+        color: #6c757d;
+        font-weight: 600;
+        position: relative;
+        z-index: 1;
+    }
+
+    /* Section Headers */
+    .section-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin: 32px 0 16px;
+    }
+
+    .section-title {
+        font-size: 20px;
+        font-weight: 700;
+        color: #1a1a2e;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .section-title i {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        font-size: 16px;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+
+    .view-all-btn {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        padding: 8px 16px;
+        font-size: 13px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        transition: all 0.3s ease;
+    }
+
+    .view-all-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+        color: white;
+    }
+
+    /* Document List Card */
+    .document-card {
+        background: white;
+        border-radius: 16px;
+        padding: 16px;
+        margin-bottom: 12px;
+        border: 1px solid #e9ecef;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .document-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: 4px;
+        background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .document-card.expired::before {
+        background: linear-gradient(180deg, #f5576c 0%, #dc3545 100%);
+    }
+
+    .document-card.warning::before {
+        background: linear-gradient(180deg, #ffc107 0%, #ff9800 100%);
+    }
+
+    .document-card:active {
+        transform: scale(0.98);
+    }
+
+    .document-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 10px;
+    }
+
+    .doc-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+        color: #667eea;
+        font-size: 18px;
+    }
+
+    .document-card.expired .doc-icon {
+        background: linear-gradient(135deg, rgba(245, 87, 108, 0.1) 0%, rgba(220, 53, 69, 0.1) 100%);
+        color: #dc3545;
+    }
+
+    .document-card.warning .doc-icon {
+        background: linear-gradient(135deg, rgba(255, 193, 7, 0.1) 0%, rgba(255, 152, 0, 0.1) 100%);
+        color: #ff9800;
+    }
+
+    .doc-info {
+        flex: 1;
+    }
+
+    .doc-employee {
+        font-size: 15px;
+        font-weight: 700;
+        color: #1a1a2e;
+        margin-bottom: 4px;
+    }
+
+    .doc-type {
+        font-size: 13px;
+        color: #6c757d;
+    }
+
+    .doc-expiry {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        margin-top: 8px;
+        padding: 6px 12px;
+        background: rgba(108, 117, 125, 0.1);
+        border-radius: 8px;
+        color: #6c757d;
+    }
+
+    .document-card.expired .doc-expiry {
+        background: rgba(220, 53, 69, 0.1);
+        color: #dc3545;
+    }
+
+    .document-card.warning .doc-expiry {
+        background: rgba(255, 152, 0, 0.1);
+        color: #ff9800;
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 40px 20px;
+        color: #6c757d;
+    }
+
+    .empty-state i {
+        font-size: 48px;
+        margin-bottom: 16px;
+        opacity: 0.5;
+    }
+
+    /* Chart Container */
+    .chart-container {
+        background: white;
+        border-radius: 20px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    }
+
+    .chart-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: #1a1a2e;
+        margin-bottom: 16px;
+    }
+
+    @keyframes float {
+        0%, 100% {
+            transform: translate(0, 0);
+        }
+        50% {
+            transform: translate(-10px, -10px);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <!-- الإحصائيات الرئيسية -->
+    <div class="stats-grid">
+        <div class="stat-card total">
+            <div class="stat-icon">
+                <i class="fas fa-file-alt"></i>
+            </div>
+            <div class="stat-value">{{ total_documents }}</div>
+            <div class="stat-label">إجمالي الوثائق</div>
+        </div>
+
+        <div class="stat-card expired">
+            <div class="stat-icon">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div class="stat-value">{{ expired_documents }}</div>
+            <div class="stat-label">وثائق منتهية</div>
+        </div>
+
+        <div class="stat-card warning">
+            <div class="stat-icon">
+                <i class="fas fa-clock"></i>
+            </div>
+            <div class="stat-value">{{ expiring_soon + expiring_later }}</div>
+            <div class="stat-label">قريبة من الانتهاء</div>
+        </div>
+
+        <div class="stat-card valid">
+            <div class="stat-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="stat-value">{{ valid_documents }}</div>
+            <div class="stat-label">وثائق سارية</div>
+        </div>
+    </div>
+
+    <!-- الرسوم البيانية -->
+    <div class="chart-container">
+        <div class="chart-title">توزيع الوثائق حسب الحالة</div>
+        <canvas id="statusChart" height="200"></canvas>
+    </div>
+
+    <!-- الوثائق المنتهية -->
+    {% if expired_docs %}
+    <div class="section-header">
+        <div class="section-title">
+            <i class="fas fa-times-circle"></i>
+            وثائق منتهية
+        </div>
+        <a href="{{ url_for('mobile.documents', status='expired') }}" class="view-all-btn">
+            عرض الكل
+            <i class="fas fa-arrow-left"></i>
+        </a>
+    </div>
+
+    {% for doc in expired_docs %}
+    <a href="{{ url_for('mobile.document_details', document_id=doc.id) }}" style="text-decoration: none;">
+        <div class="document-card expired">
+            <div class="document-header">
+                <div class="doc-icon">
+                    <i class="fas fa-file-alt"></i>
+                </div>
+                <div class="doc-info">
+                    <div class="doc-employee">{{ doc.employee.name }}</div>
+                    <div class="doc-type">{{ doc.document_type }}</div>
+                </div>
+            </div>
+            <div class="doc-expiry">
+                <i class="fas fa-calendar-times"></i>
+                انتهت منذ {{ (current_date - doc.expiry_date).days }} يوم
+            </div>
+        </div>
+    </a>
+    {% endfor %}
+    {% endif %}
+
+    <!-- الوثائق القريبة من الانتهاء -->
+    {% if expiring_docs %}
+    <div class="section-header">
+        <div class="section-title">
+            <i class="fas fa-exclamation-triangle"></i>
+            قريبة من الانتهاء
+        </div>
+        <a href="{{ url_for('mobile.documents', status='expiring') }}" class="view-all-btn">
+            عرض الكل
+            <i class="fas fa-arrow-left"></i>
+        </a>
+    </div>
+
+    {% for doc in expiring_docs %}
+    <a href="{{ url_for('mobile.document_details', document_id=doc.id) }}" style="text-decoration: none;">
+        <div class="document-card warning">
+            <div class="document-header">
+                <div class="doc-icon">
+                    <i class="fas fa-file-alt"></i>
+                </div>
+                <div class="doc-info">
+                    <div class="doc-employee">{{ doc.employee.name }}</div>
+                    <div class="doc-type">{{ doc.document_type }}</div>
+                </div>
+            </div>
+            <div class="doc-expiry">
+                <i class="fas fa-hourglass-half"></i>
+                متبقي {{ (doc.expiry_date - current_date).days }} يوم
+            </div>
+        </div>
+    </a>
+    {% endfor %}
+    {% endif %}
+
+    {% if not expired_docs and not expiring_docs %}
+    <div class="empty-state">
+        <i class="fas fa-clipboard-check"></i>
+        <p>جميع الوثائق سارية المفعول!</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+<script>
+    // رسم بياني لحالة الوثائق
+    const ctx = document.getElementById('statusChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['سارية', 'قريبة من الانتهاء', 'منتهية'],
+            datasets: [{
+                data: [{{ valid_documents }}, {{ expiring_soon + expiring_later }}, {{ expired_documents }}],
+                backgroundColor: [
+                    'rgba(40, 199, 111, 0.8)',
+                    'rgba(255, 193, 7, 0.8)',
+                    'rgba(245, 87, 108, 0.8)'
+                ],
+                borderColor: [
+                    'rgba(40, 199, 111, 1)',
+                    'rgba(255, 193, 7, 1)',
+                    'rgba(245, 87, 108, 1)'
+                ],
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        font: {
+                            family: 'Tajawal',
+                            size: 13
+                        },
+                        padding: 15,
+                        usePointStyle: true
+                    }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}
