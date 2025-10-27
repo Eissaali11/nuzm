@@ -555,7 +555,7 @@
             <select class="form-select" id="mobile_device_id" name="mobile_device_id">
                 <option value="">اختر جهاز محمول</option>
                 {% for device in available_mobile_devices %}
-                <option value="{{ device.id }}" {% if employee.mobile_device and employee.mobile_device.id == device.id %}selected{% endif %}>
+                <option value="{{ device.id }}" {% if employee.assigned_mobile_devices and employee.assigned_mobile_devices|length > 0 and employee.assigned_mobile_devices[0].id == device.id %}selected{% endif %}>
                     {{ device.device_brand }} {{ device.device_model }} 
                     {% if device.phone_number %}- {{ device.phone_number }}{% endif %}
                     {% if device.imei %}- IMEI: {{ device.imei }}{% endif %}
