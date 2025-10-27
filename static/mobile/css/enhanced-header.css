@@ -1,0 +1,220 @@
+/* Enhanced Modern App Bar Design */
+.mobile-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 70px;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.95) 0%, rgba(118, 75, 162, 0.95) 100%);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    z-index: 1000;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1),
+                0 1px 0 rgba(255, 255, 255, 0.1) inset;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Animated gradient background */
+.mobile-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, 
+        rgba(102, 126, 234, 0.3) 0%, 
+        rgba(118, 75, 162, 0.3) 25%,
+        rgba(255, 107, 107, 0.3) 50%,
+        rgba(118, 75, 162, 0.3) 75%,
+        rgba(102, 126, 234, 0.3) 100%);
+    background-size: 200% 200%;
+    animation: gradientShift 8s ease infinite;
+    opacity: 0.3;
+    z-index: -1;
+}
+
+@keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+.mobile-header.collapsed {
+    height: 60px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+.mobile-header-left, 
+.mobile-header-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    z-index: 1;
+}
+
+.mobile-header-title {
+    font-size: 20px;
+    font-weight: 700;
+    text-align: center;
+    flex: 1;
+    letter-spacing: 0.3px;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    z-index: 1;
+    position: relative;
+}
+
+.mobile-header-title::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent);
+    border-radius: 2px;
+}
+
+.mobile-header.collapsed .mobile-header-title {
+    font-size: 18px;
+}
+
+/* Enhanced Header Buttons */
+.mobile-header-button {
+    position: relative;
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    font-size: 18px;
+    overflow: hidden;
+}
+
+.mobile-header-button::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 14px;
+    transition: transform 0.3s ease;
+}
+
+.mobile-header-button:hover::before {
+    transform: translate(-50%, -50%) scale(1);
+}
+
+.mobile-header-button:active {
+    transform: scale(0.92);
+    background: rgba(255, 255, 255, 0.25);
+}
+
+.mobile-header-button i {
+    position: relative;
+    z-index: 1;
+    font-size: 20px;
+}
+
+/* Notification Badge */
+.notification-badge {
+    position: absolute;
+    top: -4px;
+    left: -4px;
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+    border-radius: 12px;
+    padding: 2px 6px;
+    min-width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 700;
+    box-shadow: 0 2px 8px rgba(245, 87, 108, 0.5),
+                0 0 0 2px rgba(255, 255, 255, 0.3);
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 2px 8px rgba(245, 87, 108, 0.5),
+                    0 0 0 2px rgba(255, 255, 255, 0.3);
+    }
+    50% {
+        transform: scale(1.1);
+        box-shadow: 0 4px 12px rgba(245, 87, 108, 0.7),
+                    0 0 0 3px rgba(255, 255, 255, 0.5);
+    }
+}
+
+/* Ripple Effect on Button Click */
+.mobile-header-button::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.4);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.mobile-header-button:active::after {
+    width: 100px;
+    height: 100px;
+}
+
+/* Logo/Icon Style */
+.mobile-header-logo {
+    width: 36px;
+    height: 36px;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Smooth transitions for scroll */
+@media (prefers-reduced-motion: reduce) {
+    .mobile-header,
+    .mobile-header-button,
+    .mobile-header-title {
+        transition: none;
+    }
+}
+
+/* Adjust body padding for new header height */
+body {
+    padding-top: 86px !important;
+}
