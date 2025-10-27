@@ -426,18 +426,38 @@ def attendance():
     """صفحة الحضور والغياب للنسخة المحمولة"""
     page = request.args.get('page', 1, type=int)
     per_page = 20  # عدد العناصر في الصفحة الواحدة
+    search_query = request.args.get('search', '').strip()
+    status_filter = request.args.get('status', '').strip()
     
     # التاريخ الحالي
     current_date = datetime.now().date()
     
-    # جلب سجلات الحضور من قاعدة البيانات
-    attendance_query = Attendance.query.filter_by(date=current_date).order_by(Attendance.created_at.desc())
+    # بناء الاستعلام الأساسي
+    attendance_query = Attendance.query.filter_by(date=current_date)
+    
+    # البحث الذكي
+    if search_query:
+        # البحث في اسم الموظف، الرقم الوظيفي، أو رقم الهوية
+        attendance_query = attendance_query.join(Employee).filter(
+            db.or_(
+                Employee.name.ilike(f'%{search_query}%'),
+                Employee.employee_id.ilike(f'%{search_query}%'),
+                Employee.national_id.ilike(f'%{search_query}%')
+            )
+        )
+    
+    # فلتر الحالة
+    if status_filter:
+        attendance_query = attendance_query.filter_by(status=status_filter)
+    
+    # الترتيب
+    attendance_query = attendance_query.order_by(Attendance.created_at.desc())
     
     # التصفح مع Pagination
     pagination = attendance_query.paginate(page=page, per_page=per_page, error_out=False)
     attendance_records = pagination.items
     
-    # الموظفين
+    # الموظفين النشطين
     employees = Employee.query.filter_by(status='active').order_by(Employee.name).all()
 
     # إحصائيات اليوم

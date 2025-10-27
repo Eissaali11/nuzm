@@ -1,6 +1,6 @@
 {% extends 'mobile/layout.html' %}
 
-{% block title %}الحضور والغياب - نظام إدارة الموظفين{% endblock %}
+{% block title %}الحضور والغياب - نُظم{% endblock %}
 
 {% block header_title %}الحضور والغياب{% endblock %}
 
@@ -14,335 +14,628 @@
 {% endblock %}
 
 {% block content %}
-<!-- فلاتر البحث -->
-<div class="mobile-card">
-    <div class="mobile-card-title">
-        <i class="fas fa-filter"></i> البحث والفلترة
-    </div>
-    
-    <div class="mobile-card-content">
-        <form action="{{ url_for('mobile.attendance') }}" method="GET" class="mobile-form">
-            <div class="mobile-form-group">
-                <label>التاريخ</label>
-                <input type="date" name="date" class="mobile-form-control" value="{{ request.args.get('date', '') }}">
-            </div>
-            
-            <div class="mobile-form-group">
-                <label>الموظف</label>
-                <select name="employee_id" class="mobile-form-select">
-                    <option value="">جميع الموظفين</option>
-                    {% for employee in employees %}
-                    <option value="{{ employee.id }}" {% if request.args.get('employee_id')|int == employee.id %}selected{% endif %}>{{ employee.name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            
-            <div class="mobile-form-group">
-                <label>الحالة</label>
-                <select name="status" class="mobile-form-select">
-                    <option value="">جميع الحالات</option>
-                    <option value="حاضر" {% if request.args.get('status') == 'حاضر' %}selected{% endif %}>حاضر</option>
-                    <option value="غائب" {% if request.args.get('status') == 'غائب' %}selected{% endif %}>غائب</option>
-                    <option value="إجازة" {% if request.args.get('status') == 'إجازة' %}selected{% endif %}>إجازة</option>
-                </select>
-            </div>
-            
-            <div class="d-flex gap-2">
-                <button type="submit" class="mobile-btn mobile-btn-primary" style="flex: 3">
-                    <i class="fas fa-search"></i> بحث
-                </button>
-                <a href="{{ url_for('mobile.attendance') }}" class="mobile-btn mobile-btn-secondary" style="flex: 1">
-                    <i class="fas fa-redo"></i>
-                </a>
-            </div>
-        </form>
-    </div>
-</div>
-
-<!-- بيانات اليوم الحالي -->
-<div class="mobile-card">
-    <div class="mobile-card-title">
-        <i class="fas fa-calendar-day"></i> حضور اليوم
-        <div class="mobile-card-subtitle">{{ current_date.strftime('%Y-%m-%d') }}</div>
-    </div>
-    
-    <div class="mobile-card-content">
-        <div class="attendance-summary-compact">
-            <div class="attendance-stat-mini present">
-                <div class="stat-count">{{ today_stats.present or 0 }}</div>
-                <div class="stat-label">حاضر</div>
-            </div>
-            <div class="attendance-stat-mini absent">
-                <div class="stat-count">{{ today_stats.absent or 0 }}</div>
-                <div class="stat-label">غائب</div>
-            </div>
-            <div class="attendance-stat-mini leave">
-                <div class="stat-count">{{ today_stats.leave or 0 }}</div>
-                <div class="stat-label">إجازة</div>
-            </div>
-            <div class="attendance-stat-mini total">
-                <div class="stat-count">{{ today_stats.total or 0 }}</div>
-                <div class="stat-label">الإجمالي</div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- قائمة سجلات الحضور -->
-{% if attendance_records %}
-<div class="mobile-card">
-    <div class="mobile-card-title">
-        <i class="fas fa-list-alt"></i> سجلات الحضور
-    </div>
-    
-    <div class="mobile-card-content p-0">
-        <div class="mobile-list">
-            {% for record in attendance_records %}
-            <div class="mobile-attendance-card">
-                <div class="mobile-attendance-status-icon">
-                    {% if record.status == 'حاضر' %}
-                    <i class="fas fa-check-circle" style="color: #34C759;"></i>
-                    {% elif record.status == 'غائب' %}
-                    <i class="fas fa-times-circle" style="color: #FF3B30;"></i>
-                    {% elif record.status == 'إجازة' %}
-                    <i class="fas fa-calendar-minus" style="color: #007AFF;"></i>
-                    {% else %}
-                    <i class="fas fa-question-circle" style="color: #8E8E93;"></i>
-                    {% endif %}
-                </div>
-                <div class="mobile-attendance-main-info">
-                    <div class="mobile-attendance-name">{{ record.employee.name }}</div>
-                    <div class="mobile-attendance-details">
-                        <span class="attendance-date-mini">{{ record.date.strftime('%m/%d') }}</span>
-                        {% if record.check_in %}
-                        <span class="time-badge check-in">{{ record.check_in.strftime('%H:%M') }}</span>
-                        {% endif %}
-                        {% if record.check_out %}
-                        <span class="time-badge check-out">{{ record.check_out.strftime('%H:%M') }}</span>
-                        {% endif %}
-                    </div>
-                </div>
-                <div class="mobile-attendance-action">
-                    <a href="{{ url_for('mobile.edit_attendance', record_id=record.id) }}">
-                        <i class="fas fa-edit"></i>
-                    </a>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-        
-        <!-- ترقيم الصفحات -->
-        {% if pagination and pagination.pages > 1 %}
-        <div class="mobile-pagination">
-            {% if pagination.has_prev %}
-            <a href="{{ url_for('mobile.attendance', page=pagination.prev_num) }}" class="mobile-pagination-item">
-                <i class="fas fa-chevron-right"></i>
-            </a>
-            {% endif %}
-            
-            {% for page_num in pagination.iter_pages() %}
-                {% if page_num %}
-                    {% if page_num != pagination.page %}
-                    <a href="{{ url_for('mobile.attendance', page=page_num) }}" class="mobile-pagination-item">{{ page_num }}</a>
-                    {% else %}
-                    <span class="mobile-pagination-item active">{{ page_num }}</span>
-                    {% endif %}
-                {% else %}
-                    <span class="mobile-pagination-item">...</span>
-                {% endif %}
-            {% endfor %}
-            
-            {% if pagination.has_next %}
-            <a href="{{ url_for('mobile.attendance', page=pagination.next_num) }}" class="mobile-pagination-item">
-                <i class="fas fa-chevron-left"></i>
-            </a>
-            {% endif %}
-        </div>
-        {% endif %}
-    </div>
-</div>
-{% else %}
-<div class="mobile-card">
-    <div class="mobile-card-content text-center py-5">
-        <i class="fas fa-calendar-check fa-3x text-secondary mb-3"></i>
-        <h5>لا توجد سجلات حضور</h5>
-        <p class="text-secondary">لا توجد بيانات حضور متطابقة مع معايير البحث</p>
-        <a href="{{ url_for('mobile.add_attendance') }}" class="mobile-btn mobile-btn-primary mt-3">
-            <i class="fas fa-plus"></i> تسجيل حضور جديد
-        </a>
-    </div>
-</div>
-{% endif %}
-
 <style>
-/* التصميم المضغوط لبطاقات الحضور */
-.mobile-list {
-    padding: 0;
+/* تصميم مستقبلي بألوان واضحة */
+:root {
+    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --success-gradient: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    --danger-gradient: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+    --warning-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    --info-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
 }
 
-.mobile-attendance-card {
-    background: white;
-    border-radius: 12px;
-    padding: 12px;
-    margin-bottom: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    border: 1px solid #e9ecef;
+/* البحث الذكي */
+.smart-search-container {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 20px;
+    padding: 24px;
+    margin: 0 20px 20px;
+    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+}
+
+.search-title {
+    color: white;
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 16px;
     display: flex;
     align-items: center;
+    gap: 10px;
+}
+
+.search-title i {
+    font-size: 22px;
+}
+
+.search-input-wrapper {
+    position: relative;
+    margin-bottom: 16px;
+}
+
+.search-input {
+    width: 100%;
+    padding: 14px 50px 14px 16px;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    background: rgba(255, 255, 255, 0.95);
+    color: #1a1a1a;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.search-input::placeholder {
+    color: #8e8e93;
+}
+
+.search-input:focus {
+    outline: none;
+    background: white;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.search-icon {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #667eea;
+    font-size: 18px;
+}
+
+.filter-chips {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.filter-chip {
+    background: rgba(255, 255, 255, 0.25);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.filter-chip:hover, .filter-chip.active {
+    background: white;
+    color: #667eea;
+    border-color: white;
+}
+
+/* الإحصائيات */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
     gap: 12px;
-    transition: all 0.3s ease;
+    padding: 0 20px 20px;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 16px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
     position: relative;
     overflow: hidden;
 }
 
-.mobile-attendance-card::before {
+.stat-card::before {
     content: '';
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, #007AFF, #0051D0);
+    height: 4px;
 }
 
-.mobile-attendance-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+.stat-card.present::before {
+    background: var(--success-gradient);
 }
 
-.mobile-attendance-status-icon {
-    width: 32px;
-    height: 32px;
+.stat-card.absent::before {
+    background: var(--danger-gradient);
+}
+
+.stat-card.leave::before {
+    background: var(--info-gradient);
+}
+
+.stat-card.total::before {
+    background: var(--primary-gradient);
+}
+
+.stat-icon {
+    font-size: 32px;
+    margin-bottom: 12px;
+}
+
+.stat-card.present .stat-icon {
+    background: var(--success-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.stat-card.absent .stat-icon {
+    background: var(--danger-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.stat-card.leave .stat-icon {
+    background: var(--info-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.stat-card.total .stat-icon {
+    background: var(--primary-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.stat-number {
+    font-size: 28px;
+    font-weight: 800;
+    color: #1a1a1a;
+    margin-bottom: 4px;
+}
+
+.stat-label {
+    font-size: 13px;
+    color: #8e8e93;
+    font-weight: 600;
+}
+
+/* قائمة السجلات */
+.records-container {
+    padding: 0 20px 80px;
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.section-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1a1a1a;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.records-count {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.record-card {
+    background: white;
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 12px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    border: 1px solid #f0f0f5;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.record-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    width: 4px;
+}
+
+.record-card.status-present::before {
+    background: var(--success-gradient);
+}
+
+.record-card.status-absent::before {
+    background: var(--danger-gradient);
+}
+
+.record-card.status-leave::before {
+    background: var(--info-gradient);
+}
+
+.record-card.status-sick::before {
+    background: var(--warning-gradient);
+}
+
+.record-card:active {
+    transform: scale(0.98);
+}
+
+.record-status-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 18px;
+    font-size: 22px;
     flex-shrink: 0;
 }
 
-.mobile-attendance-main-info {
+.record-card.status-present .record-status-icon {
+    background: linear-gradient(135deg, rgba(17, 153, 142, 0.1) 0%, rgba(56, 239, 125, 0.1) 100%);
+    color: #11998e;
+}
+
+.record-card.status-absent .record-status-icon {
+    background: linear-gradient(135deg, rgba(235, 51, 73, 0.1) 0%, rgba(244, 92, 67, 0.1) 100%);
+    color: #eb3349;
+}
+
+.record-card.status-leave .record-status-icon {
+    background: linear-gradient(135deg, rgba(79, 172, 254, 0.1) 0%, rgba(0, 242, 254, 0.1) 100%);
+    color: #4facfe;
+}
+
+.record-card.status-sick .record-status-icon {
+    background: linear-gradient(135deg, rgba(240, 147, 251, 0.1) 0%, rgba(245, 87, 108, 0.1) 100%);
+    color: #f093fb;
+}
+
+.record-info {
     flex: 1;
     min-width: 0;
 }
 
-.mobile-attendance-name {
-    font-size: 14px;
+.record-name {
+    font-size: 16px;
     font-weight: 600;
     color: #1a1a1a;
-    margin-bottom: 4px;
-    line-height: 1.2;
+    margin-bottom: 6px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
-.mobile-attendance-details {
+.record-details {
     display: flex;
     align-items: center;
-    gap: 6px;
-    font-size: 11px;
-    line-height: 1.2;
-}
-
-.attendance-date-mini {
-    background: #f8f9fa;
-    color: #495057;
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-weight: 600;
-    border: 1px solid #e9ecef;
-}
-
-.time-badge {
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-size: 10px;
-    font-weight: 600;
-}
-
-.check-in {
-    background: rgba(52, 199, 89, 0.1);
-    color: #34C759;
-    border: 1px solid rgba(52, 199, 89, 0.2);
-}
-
-.check-out {
-    background: rgba(0, 122, 255, 0.1);
-    color: #007AFF;
-    border: 1px solid rgba(0, 122, 255, 0.2);
-}
-
-.mobile-attendance-action {
-    color: #8e8e93;
-    font-size: 14px;
-}
-
-.mobile-attendance-action a {
-    color: inherit;
-    text-decoration: none;
-    padding: 6px;
-}
-
-/* الإحصائيات المضغوطة */
-.attendance-summary-compact {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
     gap: 8px;
-    padding: 0;
+    flex-wrap: wrap;
 }
 
-.attendance-stat-mini {
-    text-align: center;
-    padding: 12px 8px;
-    border-radius: 10px;
-    position: relative;
-    overflow: hidden;
-    border: 1px solid #e9ecef;
-}
-
-.attendance-stat-mini.present {
-    background: linear-gradient(135deg, rgba(52, 199, 89, 0.1), rgba(52, 199, 89, 0.05));
-    border-color: rgba(52, 199, 89, 0.2);
-}
-
-.attendance-stat-mini.absent {
-    background: linear-gradient(135deg, rgba(255, 59, 48, 0.1), rgba(255, 59, 48, 0.05));
-    border-color: rgba(255, 59, 48, 0.2);
-}
-
-.attendance-stat-mini.leave {
-    background: linear-gradient(135deg, rgba(0, 122, 255, 0.1), rgba(0, 122, 255, 0.05));
-    border-color: rgba(0, 122, 255, 0.2);
-}
-
-.attendance-stat-mini.total {
-    background: linear-gradient(135deg, rgba(142, 142, 147, 0.1), rgba(142, 142, 147, 0.05));
-    border-color: rgba(142, 142, 147, 0.2);
-}
-
-.stat-count {
-    font-size: 18px;
-    font-weight: 700;
-    margin-bottom: 4px;
-    color: #1a1a1a;
-}
-
-.stat-label {
+.detail-badge {
     font-size: 11px;
-    color: #6c757d;
-    font-weight: 500;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-weight: 600;
 }
 
-.mobile-card-subtitle {
-    font-size: 0.8rem;
-    color: #757575;
-    font-weight: normal;
-    margin-top: 5px;
+.detail-badge.date {
+    background: rgba(102, 126, 234, 0.1);
+    color: #667eea;
+}
+
+.detail-badge.time-in {
+    background: rgba(17, 153, 142, 0.1);
+    color: #11998e;
+}
+
+.detail-badge.time-out {
+    background: rgba(235, 51, 73, 0.1);
+    color: #eb3349;
+}
+
+.detail-badge.employee-id {
+    background: rgba(79, 172, 254, 0.1);
+    color: #4facfe;
+}
+
+.record-action {
+    flex-shrink: 0;
+}
+
+.edit-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    border: none;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.edit-btn:active {
+    transform: scale(0.95);
+}
+
+/* حالة فارغة */
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+}
+
+.empty-icon {
+    font-size: 80px;
+    background: var(--primary-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 20px;
+}
+
+.empty-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 8px;
+}
+
+.empty-text {
+    font-size: 14px;
+    color: #8e8e93;
+    margin-bottom: 24px;
+}
+
+.add-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 28px;
+    background: var(--primary-gradient);
+    color: white;
+    border-radius: 12px;
+    font-weight: 600;
+    text-decoration: none;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+/* Pagination */
+.pagination-container {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    padding: 20px;
+}
+
+.page-btn {
+    min-width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: white;
+    color: #667eea;
+    border: 2px solid #f0f0f5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.page-btn.active {
+    background: var(--primary-gradient);
+    color: white;
+    border-color: transparent;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.page-btn:active {
+    transform: scale(0.95);
 }
 </style>
+
+<!-- البحث الذكي -->
+<div class="smart-search-container">
+    <div class="search-title">
+        <i class="fas fa-search"></i>
+        <span>البحث الذكي</span>
+    </div>
+    
+    <form action="{{ url_for('mobile.attendance') }}" method="GET" id="searchForm">
+        <div class="search-input-wrapper">
+            <input type="text" name="search" class="search-input" 
+                   placeholder="ابحث بالاسم، الرقم الوظيفي، أو رقم الهوية..." 
+                   value="{{ request.args.get('search', '') }}"
+                   autocomplete="off">
+            <i class="fas fa-search search-icon"></i>
+        </div>
+        
+        <div class="filter-chips">
+            <button type="button" class="filter-chip {% if not request.args.get('status') %}active{% endif %}" 
+                    onclick="setFilter('status', '')">
+                الكل
+            </button>
+            <button type="button" class="filter-chip {% if request.args.get('status') == 'حاضر' %}active{% endif %}" 
+                    onclick="setFilter('status', 'حاضر')">
+                <i class="fas fa-check-circle"></i> حاضر
+            </button>
+            <button type="button" class="filter-chip {% if request.args.get('status') == 'غائب' %}active{% endif %}" 
+                    onclick="setFilter('status', 'غائب')">
+                <i class="fas fa-times-circle"></i> غائب
+            </button>
+            <button type="button" class="filter-chip {% if request.args.get('status') == 'إجازة' %}active{% endif %}" 
+                    onclick="setFilter('status', 'إجازة')">
+                <i class="fas fa-umbrella-beach"></i> إجازة
+            </button>
+        </div>
+        <input type="hidden" name="status" id="statusInput" value="{{ request.args.get('status', '') }}">
+    </form>
+</div>
+
+<!-- الإحصائيات -->
+<div class="stats-grid">
+    <div class="stat-card present">
+        <div class="stat-icon">
+            <i class="fas fa-user-check"></i>
+        </div>
+        <div class="stat-number">{{ today_stats.present or 0 }}</div>
+        <div class="stat-label">حاضر</div>
+    </div>
+    
+    <div class="stat-card absent">
+        <div class="stat-icon">
+            <i class="fas fa-user-times"></i>
+        </div>
+        <div class="stat-number">{{ today_stats.absent or 0 }}</div>
+        <div class="stat-label">غائب</div>
+    </div>
+    
+    <div class="stat-card leave">
+        <div class="stat-icon">
+            <i class="fas fa-calendar-minus"></i>
+        </div>
+        <div class="stat-number">{{ today_stats.leave or 0 }}</div>
+        <div class="stat-label">إجازة</div>
+    </div>
+    
+    <div class="stat-card total">
+        <div class="stat-icon">
+            <i class="fas fa-users"></i>
+        </div>
+        <div class="stat-number">{{ today_stats.total or 0 }}</div>
+        <div class="stat-label">الإجمالي</div>
+    </div>
+</div>
+
+<!-- قائمة السجلات -->
+{% if attendance_records %}
+<div class="records-container">
+    <div class="section-header">
+        <div class="section-title">
+            <i class="fas fa-clipboard-list"></i>
+            <span>السجلات</span>
+        </div>
+        <div class="records-count">{{ attendance_records|length }}</div>
+    </div>
+    
+    {% for record in attendance_records %}
+    <div class="record-card status-{{ 'present' if record.status == 'حاضر' else 'absent' if record.status == 'غائب' else 'leave' if record.status == 'إجازة' else 'sick' }}">
+        <div class="record-status-icon">
+            {% if record.status == 'حاضر' %}
+            <i class="fas fa-check-circle"></i>
+            {% elif record.status == 'غائب' %}
+            <i class="fas fa-times-circle"></i>
+            {% elif record.status == 'إجازة' %}
+            <i class="fas fa-umbrella-beach"></i>
+            {% else %}
+            <i class="fas fa-notes-medical"></i>
+            {% endif %}
+        </div>
+        
+        <div class="record-info">
+            <div class="record-name">{{ record.employee.name }}</div>
+            <div class="record-details">
+                <span class="detail-badge date">
+                    <i class="fas fa-calendar-alt"></i> {{ record.date.strftime('%Y/%m/%d') }}
+                </span>
+                {% if record.employee.employee_id %}
+                <span class="detail-badge employee-id">
+                    <i class="fas fa-id-badge"></i> {{ record.employee.employee_id }}
+                </span>
+                {% endif %}
+                {% if record.check_in %}
+                <span class="detail-badge time-in">
+                    <i class="fas fa-sign-in-alt"></i> {{ record.check_in.strftime('%H:%M') }}
+                </span>
+                {% endif %}
+                {% if record.check_out %}
+                <span class="detail-badge time-out">
+                    <i class="fas fa-sign-out-alt"></i> {{ record.check_out.strftime('%H:%M') }}
+                </span>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="record-action">
+            <a href="{{ url_for('mobile.edit_attendance', record_id=record.id) }}" class="edit-btn">
+                <i class="fas fa-edit"></i>
+            </a>
+        </div>
+    </div>
+    {% endfor %}
+    
+    <!-- Pagination -->
+    {% if pagination and pagination.pages > 1 %}
+    <div class="pagination-container">
+        {% if pagination.has_prev %}
+        <a href="{{ url_for('mobile.attendance', page=pagination.prev_num, search=request.args.get('search', ''), status=request.args.get('status', '')) }}" class="page-btn">
+            <i class="fas fa-chevron-right"></i>
+        </a>
+        {% endif %}
+        
+        {% for page_num in pagination.iter_pages() %}
+            {% if page_num %}
+                <a href="{{ url_for('mobile.attendance', page=page_num, search=request.args.get('search', ''), status=request.args.get('status', '')) }}" 
+                   class="page-btn {% if page_num == pagination.page %}active{% endif %}">
+                    {{ page_num }}
+                </a>
+            {% else %}
+                <span class="page-btn">…</span>
+            {% endif %}
+        {% endfor %}
+        
+        {% if pagination.has_next %}
+        <a href="{{ url_for('mobile.attendance', page=pagination.next_num, search=request.args.get('search', ''), status=request.args.get('status', '')) }}" class="page-btn">
+            <i class="fas fa-chevron-left"></i>
+        </a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% else %}
+<div class="empty-state">
+    <div class="empty-icon">
+        <i class="fas fa-clipboard-check"></i>
+    </div>
+    <div class="empty-title">لا توجد سجلات حضور</div>
+    <div class="empty-text">ابدأ بتسجيل حضور الموظفين اليوم</div>
+    <a href="{{ url_for('mobile.add_attendance') }}" class="add-btn">
+        <i class="fas fa-plus"></i>
+        <span>تسجيل حضور جديد</span>
+    </a>
+</div>
+{% endif %}
+
 {% endblock %}
 
 {% block scripts %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('تم تحميل صفحة الحضور والغياب');
+// البحث التلقائي عند الكتابة
+let searchTimeout;
+const searchInput = document.querySelector('.search-input');
+const searchForm = document.getElementById('searchForm');
+
+searchInput.addEventListener('input', function() {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+        searchForm.submit();
+    }, 800);
 });
+
+// تغيير الفلتر
+function setFilter(name, value) {
+    document.getElementById('statusInput').value = value;
+    searchForm.submit();
+}
 </script>
 {% endblock %}
