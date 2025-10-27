@@ -277,7 +277,7 @@ def index():
     today_str = today.strftime('%Y-%m-%d')
     absences = Attendance.query.filter_by(date=today_str, status='غائب').all()
 
-    return render_template('mobile/dashboard.html', 
+    return render_template('mobile/dashboard_new.html', 
                             stats=stats,
                             expiring_documents=expiring_documents,
                             absences=absences,
