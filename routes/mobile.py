@@ -376,10 +376,26 @@ def add_employee():
     # معالجة الـ POST request لحفظ الموظف الجديد
     if request.method == 'POST':
         try:
+            # التحقق من عدم تكرار رقم الموظف
+            employee_id_value = request.form.get('employee_id')
+            if employee_id_value:
+                existing_employee = Employee.query.filter_by(employee_id=employee_id_value).first()
+                if existing_employee:
+                    flash('رقم الموظف موجود بالفعل، يرجى استخدام رقم آخر', 'danger')
+                    departments = Department.query.order_by(Department.name).all()
+                    nationalities = Nationality.query.order_by(Nationality.name_ar).all()
+                    available_mobile_devices = MobileDevice.query.filter(
+                        MobileDevice.employee_id == None
+                    ).order_by(MobileDevice.device_brand, MobileDevice.device_model).all()
+                    return render_template('mobile/add_employee.html',
+                                         departments=departments,
+                                         nationalities=nationalities,
+                                         available_mobile_devices=available_mobile_devices)
+            
             # إنشاء موظف جديد
             employee = Employee(
                 name=request.form.get('name'),
-                employee_id=request.form.get('employee_id'),
+                employee_id=employee_id_value,
                 national_id=request.form.get('national_id'),
                 mobile=request.form.get('mobile'),
                 email=request.form.get('email'),
