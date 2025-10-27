@@ -696,36 +696,50 @@
 </div>
 {% endif %}
 
-<!-- أزرار الإجراءات -->
+<!-- أزرار الإجراءات المحسّنة -->
 <div class="action-buttons">
     <div class="btn-group-custom">
-        <!-- أزرار التصدير -->
+        <!-- قسم التصدير -->
+        <div class="section-title mb-2" style="color: #667eea; font-weight: 600; font-size: 0.9rem; text-align: center;">
+            <i class="fas fa-download me-1"></i> تصدير الملفات
+        </div>
+        
         <a href="{{ url_for('operations.export_operation_excel', operation_id=operation.id) }}" 
            class="btn-export btn-excel">
             <i class="fas fa-file-excel"></i>
-            <span>تصدير Excel</span>
+            <span>ملف Excel</span>
         </a>
         
         {% if operation.operation_type == 'handover' and operation.related_record_id %}
         <a href="{{ url_for('vehicles.handover_pdf_public', id=operation.related_record_id) }}" 
            class="btn-export btn-pdf">
             <i class="fas fa-file-pdf"></i>
-            <span>تصدير PDF</span>
+            <span>ملف PDF</span>
+        </a>
+        {% endif %}
+        
+        <hr class="divider">
+        
+        <!-- قسم المشاركة الخارجية -->
+        <div class="section-title mb-2" style="color: #667eea; font-weight: 600; font-size: 0.9rem; text-align: center;">
+            <i class="fas fa-share-alt me-1"></i> المشاركة الخارجية
+        </div>
+        
+        {% if operation.operation_type == 'handover' and operation.related_record_id %}
+        <a href="{{ url_for('operations.share_with_outlook', operation_id=operation.id) }}" 
+           class="btn-export" style="background: linear-gradient(135deg, #0078d4, #0063b1); color: white; position: relative; overflow: visible;">
+            <i class="fab fa-microsoft" style="font-size: 1.2rem;"></i>
+            <span style="display: flex; flex-direction: column; align-items: flex-start; gap: 2px;">
+                <strong style="font-size: 1rem;">مشاركة شاملة مع Outlook</strong>
+                <small style="opacity: 0.9; font-size: 0.75rem;">يتضمن Excel + PDF + رسالة تفصيلية</small>
+            </span>
         </a>
         {% endif %}
         
         <button class="btn-export" style="background: linear-gradient(135deg, #6610f2, #e83e8c); color: white;" onclick="showEmailForm()">
-            <i class="fas fa-envelope"></i>
-            <span>مشاركة عبر الإيميل</span>
+            <i class="fas fa-envelope" style="font-size: 1.1rem;"></i>
+            <span>إرسال عبر البريد الإلكتروني</span>
         </button>
-        
-        {% if operation.operation_type == 'handover' and operation.related_record_id %}
-        <a href="{{ url_for('operations.share_with_outlook', operation_id=operation.id) }}" 
-           class="btn-export" style="background: linear-gradient(135deg, #0078d4, #0063b1); color: white;">
-            <i class="fab fa-microsoft"></i>
-            <span>مشاركة مع Outlook</span>
-        </a>
-        {% endif %}
         
         {% if operation.status == 'pending' %}
         <hr class="divider">
