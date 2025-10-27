@@ -425,7 +425,41 @@
         </div>
     </div>
 
-    {% include "documents/dashboard_stats.html" %}
+    <!-- Enhanced Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-4">
+            <div class="stats-card card bg-primary text-white">
+                <div class="card-body">
+                    <h3 class="counter-value">{{ total_docs }}</h3>
+                    <p class="mb-0">إجمالي الوثائق</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-4">
+            <div class="stats-card card bg-danger text-white">
+                <div class="card-body">
+                    <h3 class="counter-value">{{ expired_docs }}</h3>
+                    <p class="mb-0">وثائق منتهية</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-4">
+            <div class="stats-card card bg-warning text-white">
+                <div class="card-body">
+                    <h3 class="counter-value">{{ expiring_soon }}</h3>
+                    <p class="mb-0">تنتهي قريباً</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-4">
+            <div class="stats-card card bg-success text-white">
+                <div class="card-body">
+                    <h3 class="counter-value">{{ valid_docs }}</h3>
+                    <p class="mb-0">وثائق سارية</p>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- فلاتر البحث -->
     <div class="card mb-4">
