@@ -104,7 +104,7 @@
                name="date" 
                class="search-input" 
                value="{{ selected_date.strftime('%Y-%m-%d') }}"
-               onchange="document.getElementById('dateFilterForm').submit()"
+               onchange="this.form.submit()"
                style="text-align: right;">
         <input type="hidden" name="search" value="{{ request.args.get('search', '') }}">
         <input type="hidden" name="status" value="{{ request.args.get('status', '') }}">
@@ -589,6 +589,7 @@
             </button>
         </div>
         <input type="hidden" name="status" id="statusInput" value="{{ request.args.get('status', '') }}">
+        <input type="hidden" name="date" id="dateInput" value="{{ request.args.get('date', '') }}">
     </form>
 </div>
 
