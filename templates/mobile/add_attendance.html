@@ -536,12 +536,12 @@
                 <div class="department-card" id="deptCard{{ department.id }}" onclick="toggleDepartment({{ department.id }})">
                     <input type="checkbox" name="department_ids" value="{{ department.id }}" 
                            id="dept{{ department.id }}" onclick="event.stopPropagation()" 
-                           data-employees="{{ department.employees|selectattr('active', 'equalto', True)|list|length }}">
+                           data-employees="{{ department.employees|selectattr('status', 'equalto', 'active')|list|length }}">
                     <div class="department-info">
                         <div class="department-name">{{ department.name }}</div>
                         <div class="employee-count">
                             <i class="fas fa-users"></i>
-                            <span class="employee-count-number">{{ department.employees|selectattr('active', 'equalto', True)|list|length }}</span>
+                            <span class="employee-count-number">{{ department.employees|selectattr('status', 'equalto', 'active')|list|length }}</span>
                             <span>موظف</span>
                         </div>
                     </div>
