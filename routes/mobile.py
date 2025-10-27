@@ -20,7 +20,7 @@ from wtforms import StringField, PasswordField, BooleanField, SubmitField, Selec
 from wtforms.validators import DataRequired, Email, Length, ValidationError, Optional
 from markupsafe import Markup
 import base64
-from models import VehicleProject, VehicleWorkshop, VehicleWorkshopImage, db, User, Employee, Department, Document, Vehicle, Attendance, Salary, FeesCost as Fee, VehicleChecklist, VehicleChecklistItem, VehicleMaintenance, VehicleMaintenanceImage, VehicleFuelConsumption, UserPermission, Module, Permission, SystemAudit, UserRole, VehiclePeriodicInspection, VehicleSafetyCheck, VehicleHandover, VehicleHandoverImage, VehicleChecklistImage, VehicleDamageMarker, ExternalAuthorization, Project, OperationRequest, OperationNotification,VehicleAccident,VehicleRental
+from models import VehicleProject, VehicleWorkshop, VehicleWorkshopImage, db, User, Employee, Department, Document, Vehicle, Attendance, Salary, FeesCost as Fee, VehicleChecklist, VehicleChecklistItem, VehicleMaintenance, VehicleMaintenanceImage, VehicleFuelConsumption, UserPermission, Module, Permission, SystemAudit, UserRole, VehiclePeriodicInspection, VehicleSafetyCheck, VehicleHandover, VehicleHandoverImage, VehicleChecklistImage, VehicleDamageMarker, ExternalAuthorization, Project, OperationRequest, OperationNotification,VehicleAccident,VehicleRental, Nationality, MobileDevice
 # from app import app
 from flask import current_app
 from routes.vehicles import update_vehicle_state, update_vehicle_driver
