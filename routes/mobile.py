@@ -346,6 +346,7 @@ def employees():
         query = query.filter(
             (Employee.name.like(search_term)) |
             (Employee.employee_id.like(search_term)) |
+            (Employee.national_id.like(search_term)) |
             (Employee.job_title.like(search_term))
         )
 
