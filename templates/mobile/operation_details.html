@@ -352,7 +352,124 @@
 }
 
 .mobile-content {
-    padding-bottom: 120px !important;
+    padding-bottom: 30px !important;
+}
+
+/* قائمة الأزرار الجانبية العائمة */
+.actions-sidebar {
+    position: fixed;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 1000;
+    transition: all 0.3s ease;
+}
+
+.sidebar-toggle {
+    position: absolute;
+    right: -45px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    width: 45px;
+    height: 45px;
+    border-radius: 0 50% 50% 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 2px 0 15px rgba(102, 126, 234, 0.4);
+    transition: all 0.3s ease;
+}
+
+.sidebar-toggle:hover {
+    box-shadow: 3px 0 20px rgba(102, 126, 234, 0.6);
+}
+
+.sidebar-toggle i {
+    transition: transform 0.3s ease;
+}
+
+.actions-sidebar.collapsed .sidebar-toggle i {
+    transform: rotate(180deg);
+}
+
+.actions-menu {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 0 20px 20px 0;
+    box-shadow: 5px 0 30px rgba(0, 0, 0, 0.3);
+    padding: 15px 10px;
+    min-width: 200px;
+    transition: all 0.3s ease;
+}
+
+.actions-sidebar.collapsed .actions-menu {
+    transform: translateX(-100%);
+    opacity: 0;
+    pointer-events: none;
+}
+
+.sidebar-title {
+    color: white;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-align: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.sidebar-action-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 15px;
+    margin-bottom: 8px;
+    background: rgba(255, 255, 255, 0.15);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    width: 100%;
+    text-align: right;
+    backdrop-filter: blur(10px);
+}
+
+.sidebar-action-btn:hover {
+    background: rgba(255, 255, 255, 0.25);
+    color: white;
+    transform: translateX(5px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.sidebar-action-btn i {
+    font-size: 1rem;
+}
+
+.sidebar-divider {
+    height: 2px;
+    background: rgba(255, 255, 255, 0.2);
+    margin: 10px 0;
+    border: none;
+}
+
+/* للأجهزة الصغيرة */
+@media (max-width: 576px) {
+    .actions-menu {
+        min-width: 180px;
+        padding: 12px 8px;
+    }
+    
+    .sidebar-action-btn {
+        padding: 10px 12px;
+        font-size: 0.8rem;
+    }
 }
 
 .vehicle-plate {
@@ -696,62 +813,63 @@
 </div>
 {% endif %}
 
-<!-- أزرار الإجراءات المحسّنة -->
-<div class="action-buttons">
-    <div class="btn-group-custom">
-        <!-- قسم التصدير -->
-        <div class="section-title mb-2" style="color: #667eea; font-weight: 600; font-size: 0.9rem; text-align: center;">
-            <i class="fas fa-download me-1"></i> تصدير الملفات
+<!-- القائمة الجانبية للأزرار -->
+<div class="actions-sidebar" id="actionsSidebar">
+    <button class="sidebar-toggle" onclick="toggleSidebar()">
+        <i class="fas fa-chevron-left"></i>
+    </button>
+    
+    <div class="actions-menu">
+        <div class="sidebar-title">
+            <i class="fas fa-bars me-2"></i>
+            الإجراءات
         </div>
         
+        <!-- تصدير الملفات -->
         <a href="{{ url_for('operations.export_operation_excel', operation_id=operation.id) }}" 
-           class="btn-export btn-excel">
+           class="sidebar-action-btn">
             <i class="fas fa-file-excel"></i>
-            <span>ملف Excel</span>
+            <span>تصدير Excel</span>
         </a>
         
         {% if operation.operation_type == 'handover' and operation.related_record_id %}
         <a href="{{ url_for('vehicles.handover_pdf_public', id=operation.related_record_id) }}" 
-           class="btn-export btn-pdf">
+           class="sidebar-action-btn">
             <i class="fas fa-file-pdf"></i>
-            <span>ملف PDF</span>
+            <span>تصدير PDF</span>
         </a>
         {% endif %}
         
-        <hr class="divider">
+        <hr class="sidebar-divider">
         
-        <!-- قسم المشاركة الخارجية -->
-        <div class="section-title mb-2" style="color: #667eea; font-weight: 600; font-size: 0.9rem; text-align: center;">
-            <i class="fas fa-share-alt me-1"></i> المشاركة الخارجية
-        </div>
-        
-        <button onclick="sharePackage({{ operation.id }})" 
-           class="btn-export" style="background: linear-gradient(135deg, #10b981, #059669); color: white;">
+        <!-- المشاركة -->
+        <button onclick="sharePackage({{ operation.id }})" class="sidebar-action-btn">
             <i class="fas fa-share-alt"></i>
-            <span>مشاركة خارجية شاملة</span>
+            <span>مشاركة خارجية</span>
         </button>
         
-        <button class="btn-export" style="background: linear-gradient(135deg, #6610f2, #e83e8c); color: white;" onclick="showEmailForm()">
-            <i class="fas fa-envelope" style="font-size: 1.1rem;"></i>
-            <span>إرسال عبر البريد الإلكتروني</span>
+        <button onclick="showEmailForm()" class="sidebar-action-btn">
+            <i class="fas fa-envelope"></i>
+            <span>إرسال بالإيميل</span>
         </button>
         
         {% if operation.status == 'pending' %}
-        <hr class="divider">
-        <!-- أزرار الإجراءات -->
-        <button class="btn-action btn-success" onclick="showApprovalForm()">
+        <hr class="sidebar-divider">
+        
+        <!-- إجراءات الموافقة -->
+        <button onclick="showApprovalForm()" class="sidebar-action-btn">
             <i class="fas fa-check"></i>
-            <span>الموافقة على العملية</span>
+            <span>موافقة</span>
         </button>
         
-        <button class="btn-action btn-danger" onclick="showRejectionForm()">
+        <button onclick="showRejectionForm()" class="sidebar-action-btn">
             <i class="fas fa-times"></i>
-            <span>رفض العملية</span>
+            <span>رفض</span>
         </button>
         
-        <button class="btn-action btn-info" onclick="setUnderReview()">
+        <button onclick="setUnderReview()" class="sidebar-action-btn">
             <i class="fas fa-eye"></i>
-            <span>وضع تحت المراجعة</span>
+            <span>قيد المراجعة</span>
         </button>
         {% endif %}
     </div>
@@ -1242,8 +1360,21 @@ function copyShareMessage() {
     }, 2000);
 }
 
-// إضافة مستمع للتحقق من صحة الإيميل فورياً
+// دالة إظهار/إخفاء القائمة الجانبية
+function toggleSidebar() {
+    const sidebar = document.getElementById('actionsSidebar');
+    sidebar.classList.toggle('collapsed');
+}
+
+// إخفاء القائمة الجانبية عند التحميل (اختياري)
 document.addEventListener('DOMContentLoaded', function() {
+    // إخفاء القائمة الجانبية بشكل افتراضي
+    const sidebar = document.getElementById('actionsSidebar');
+    if (sidebar) {
+        sidebar.classList.add('collapsed');
+    }
+    
+    // التحقق من صحة الإيميل
     const emailInput = document.getElementById('recipientEmail');
     if (emailInput) {
         emailInput.addEventListener('input', function() {
