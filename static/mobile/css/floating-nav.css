@@ -103,11 +103,6 @@
     box-shadow: 0 2px 8px rgba(245, 87, 108, 0.4);
 }
 
-/* Hide old footer */
-.mobile-footer {
-    display: none !important;
-}
-
 /* Add padding to body to accommodate floating nav */
 body {
     padding-bottom: 120px !important;

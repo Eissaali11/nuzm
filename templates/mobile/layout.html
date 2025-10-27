@@ -340,39 +340,6 @@
       </main>
     </div>
     
-    <!-- القائمة السفلية -->
-    <footer class="mobile-footer">
-      <a href="{{ url_for('mobile.index') }}" class="mobile-footer-item {{ 'active' if request.endpoint == 'mobile.index' }}">
-        <div class="mobile-footer-icon">
-          <i class="fas fa-home"></i>
-        </div>
-        <div class="mobile-footer-text">الرئيسية</div>
-      </a>
-      <a href="{{ url_for('mobile.employees') }}" class="mobile-footer-item {{ 'active' if 'employees' in request.endpoint }}">
-        <div class="mobile-footer-icon">
-          <i class="fas fa-users"></i>
-        </div>
-        <div class="mobile-footer-text">الموظفين</div>
-      </a>
-      <a href="{{ url_for('mobile.vehicles') }}" class="mobile-footer-item {{ 'active' if 'vehicles' in request.endpoint }}">
-        <div class="mobile-footer-icon">
-          <i class="fas fa-car"></i>
-        </div>
-        <div class="mobile-footer-text">السيارات</div>
-      </a>
-      <a href="{{ url_for('mobile.users_new') }}" class="mobile-footer-item {{ 'active' if 'users_new' in request.endpoint }}">
-        <div class="mobile-footer-icon">
-          <i class="fas fa-user-cog"></i>
-        </div>
-        <div class="mobile-footer-text">المستخدمين</div>
-      </a>
-      <a href="{{ url_for('mobile.notifications_new') }}" class="mobile-footer-item {{ 'active' if 'notifications_new' in request.endpoint }}">
-        <div class="mobile-footer-icon">
-          <i class="fas fa-bell"></i>
-        </div>
-        <div class="mobile-footer-text">الإشعارات</div>
-      </a>
-
     <!-- Floating Island Bottom Navigation -->
     <div class="bottom-nav-island">
       <a href="{{ url_for('mobile.index') }}" class="nav-btn {{ 'active' if request.endpoint == 'mobile.index' }}">
@@ -396,7 +363,6 @@
         <span>المزيد</span>
       </a>
     </div>
-    </footer>
   </div>
   
   <!-- مؤشر التحميل -->
