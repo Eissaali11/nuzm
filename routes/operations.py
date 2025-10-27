@@ -1645,7 +1645,7 @@ def share_with_outlook(operation_id):
             ('السائق', driver_name),
             ('اسم المستلم', handover_record.person_name),
             ('تاريخ العملية', handover_record.handover_date.strftime('%Y/%m/%d') if handover_record.handover_date else 'غير محدد'),
-            ('الموقع', handover_record.location or 'غير محدد'),
+            ('المدينة', handover_record.city or 'غير محدد'),
         ]
         
         if handover_record.notes:
