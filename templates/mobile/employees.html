@@ -1,610 +1,521 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>الموظفون - نظام إدارة الموظفين</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+{% extends 'mobile/layout.html' %}
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding-top: 70px;
-            padding-bottom: 30px;
-        }
+{% block title %}الموظفون - نظام إدارة الموظفين{% endblock %}
 
-        /* Fixed Header */
-        .mobile-header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            background: rgba(255, 255, 255, 0.98);
-            backdrop-filter: blur(20px);
-            padding: 15px 20px;
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-            z-index: 1000;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
+{% block header_title %}الموظفون{% endblock %}
 
-        .header-content {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            flex: 1;
-        }
+{% block header_actions %}
+<button class="mobile-menu-button" aria-label="إضافة" onclick="location.href='{{ url_for('mobile.add_employee') }}'">
+    <i class="fas fa-plus"></i>
+</button>
+{% endblock %}
 
-        .header-title {
-            font-size: 20px;
-            font-weight: 700;
-            color: #1a1a2e;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
+{% block content %}
+<style>
+    /* Search Card */
+    .search-card {
+        background: rgba(255, 255, 255, 0.98);
+        backdrop-filter: blur(30px);
+        border-radius: 24px;
+        padding: 24px;
+        margin-bottom: 20px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+    }
 
-        .header-title i {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            font-size: 24px;
-        }
+    .search-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 18px;
+        padding-bottom: 12px;
+        border-bottom: 2px solid #f0f0f0;
+    }
 
-        .add-btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            width: 45px;
-            height: 45px;
-            border-radius: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            cursor: pointer;
-        }
+    .search-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 18px;
+        box-shadow: 0 4px 15px rgba(79, 172, 254, 0.3);
+    }
 
-        .add-btn:active {
-            transform: scale(0.95);
-        }
+    .search-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: #2d3748;
+    }
 
-        /* Container */
-        .container-fluid {
-            padding: 20px;
-            max-width: 600px;
-            margin: 0 auto;
-        }
+    .form-group {
+        margin-bottom: 15px;
+    }
 
-        /* Search Card */
-        .search-card {
-            background: rgba(255, 255, 255, 0.98);
-            backdrop-filter: blur(30px);
-            border-radius: 24px;
-            padding: 24px;
-            margin-bottom: 20px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.5);
-        }
+    .search-card .form-control,
+    .search-card .form-select {
+        background: #f8f9fa;
+        border: 2px solid #e9ecef;
+        border-radius: 16px;
+        padding: 14px 16px;
+        font-size: 15px;
+        color: #2d3748;
+        transition: all 0.3s ease;
+        width: 100%;
+    }
 
-        .search-header {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 18px;
-            padding-bottom: 12px;
-            border-bottom: 2px solid #f0f0f0;
-        }
+    .search-card .form-control:focus,
+    .search-card .form-select:focus {
+        background: white;
+        border-color: #667eea;
+        box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        outline: none;
+    }
 
-        .search-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 12px;
-            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 18px;
-            box-shadow: 0 4px 15px rgba(79, 172, 254, 0.3);
-        }
+    .search-buttons {
+        display: flex;
+        gap: 10px;
+        margin-top: 15px;
+    }
 
-        .search-title {
-            font-size: 16px;
-            font-weight: 700;
-            color: #2d3748;
-        }
+    .btn-search {
+        flex: 3;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 14px;
+        border-radius: 14px;
+        font-size: 15px;
+        font-weight: 600;
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
 
-        .form-group {
-            margin-bottom: 15px;
-        }
+    .btn-search:active {
+        transform: translateY(2px);
+    }
 
-        .form-control, .form-select {
-            background: #f8f9fa;
-            border: 2px solid #e9ecef;
-            border-radius: 16px;
-            padding: 14px 16px;
-            font-size: 15px;
-            color: #2d3748;
-            transition: all 0.3s ease;
-            width: 100%;
-        }
+    .btn-reset {
+        flex: 1;
+        background: white;
+        color: #64748b;
+        border: 2px solid #e9ecef;
+        padding: 14px;
+        border-radius: 14px;
+        font-size: 15px;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+    }
 
-        .form-control:focus, .form-select:focus {
-            background: white;
-            border-color: #667eea;
-            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
-            outline: none;
-        }
+    .btn-reset:active {
+        background: #f8f9fa;
+    }
 
-        .search-buttons {
-            display: flex;
-            gap: 10px;
-            margin-top: 15px;
-        }
+    /* Employees List Card */
+    .employees-card {
+        background: rgba(255, 255, 255, 0.98);
+        backdrop-filter: blur(30px);
+        border-radius: 24px;
+        padding: 24px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+    }
 
-        .btn-search {
-            flex: 3;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 14px;
-            border-radius: 14px;
-            font-size: 15px;
-            font-weight: 600;
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
+    .employees-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 18px;
+        padding-bottom: 12px;
+        border-bottom: 2px solid #f0f0f0;
+    }
 
-        .btn-search:active {
-            transform: translateY(2px);
-        }
+    .employees-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 18px;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
 
-        .btn-reset {
-            flex: 1;
-            background: white;
-            color: #64748b;
-            border: 2px solid #e9ecef;
-            padding: 14px;
-            border-radius: 14px;
-            font-size: 15px;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+    .employees-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: #2d3748;
+    }
 
-        .btn-reset:active {
-            background: #f8f9fa;
-        }
+    .employee-count {
+        margin-right: auto;
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 600;
+        box-shadow: 0 4px 12px rgba(240, 147, 251, 0.3);
+    }
 
-        /* Employees List Card */
-        .employees-card {
-            background: rgba(255, 255, 255, 0.98);
-            backdrop-filter: blur(30px);
-            border-radius: 24px;
-            padding: 24px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.5);
-        }
+    /* Employee Card */
+    .employee-card {
+        background: #f8f9fa;
+        border-radius: 18px;
+        padding: 16px;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        cursor: pointer;
+        border: 2px solid transparent;
+        position: relative;
+        overflow: hidden;
+    }
 
-        .employees-header {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 18px;
-            padding-bottom: 12px;
-            border-bottom: 2px solid #f0f0f0;
-        }
+    .employee-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #667eea, #764ba2);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
 
-        .employees-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 12px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 18px;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-        }
+    .employee-card:hover::before,
+    .employee-card:active::before {
+        opacity: 1;
+    }
 
-        .employees-title {
-            font-size: 16px;
-            font-weight: 700;
-            color: #2d3748;
-        }
+    .employee-card:active {
+        transform: scale(0.98);
+        border-color: #667eea;
+        background: white;
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.15);
+    }
 
-        .employee-count {
-            margin-right: auto;
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            color: white;
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-size: 13px;
-            font-weight: 600;
-            box-shadow: 0 4px 12px rgba(240, 147, 251, 0.3);
-        }
+    .employee-avatar {
+        width: 52px;
+        height: 52px;
+        border-radius: 16px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 20px;
+        flex-shrink: 0;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
 
-        /* Employee Card */
-        .employee-card {
-            background: #f8f9fa;
-            border-radius: 18px;
-            padding: 16px;
-            margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            cursor: pointer;
-            border: 2px solid transparent;
-            position: relative;
-            overflow: hidden;
-        }
+    .employee-info {
+        flex: 1;
+        min-width: 0;
+    }
 
-        .employee-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: linear-gradient(90deg, #667eea, #764ba2);
+    .employee-name {
+        font-size: 15px;
+        font-weight: 700;
+        color: #1a1a2e;
+        margin-bottom: 6px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .employee-details {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .employee-badge {
+        background: white;
+        color: #667eea;
+        padding: 4px 10px;
+        border-radius: 8px;
+        font-size: 11px;
+        font-weight: 600;
+        border: 1px solid #e9ecef;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .employee-text {
+        color: #64748b;
+        font-size: 13px;
+    }
+
+    .employee-arrow {
+        color: #cbd5e0;
+        font-size: 16px;
+        transition: all 0.3s ease;
+    }
+
+    .employee-card:active .employee-arrow {
+        color: #667eea;
+        transform: translateX(-4px);
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 50px 20px;
+    }
+
+    .empty-icon {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 20px;
+        border-radius: 24px;
+        background: linear-gradient(135deg, #e9ecef 0%, #cbd5e0 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 36px;
+        color: #64748b;
+    }
+
+    .empty-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: #2d3748;
+        margin-bottom: 8px;
+    }
+
+    .empty-text {
+        font-size: 14px;
+        color: #64748b;
+        margin-bottom: 20px;
+    }
+
+    .btn-add-employee {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 14px 28px;
+        border-radius: 14px;
+        font-size: 15px;
+        font-weight: 600;
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+
+    .btn-add-employee:active {
+        transform: translateY(2px);
+        color: white;
+    }
+
+    /* Pagination */
+    .pagination-container {
+        margin-top: 20px;
+        padding-top: 16px;
+        border-top: 2px solid #f0f0f0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .page-item {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f8f9fa;
+        border: 2px solid #e9ecef;
+        color: #64748b;
+        font-weight: 600;
+        font-size: 14px;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+    .page-item:active,
+    .page-item.active {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-color: transparent;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+
+    /* Animations */
+    @keyframes fadeIn {
+        from {
             opacity: 0;
-            transition: opacity 0.3s ease;
+            transform: translateY(10px);
         }
-
-        .employee-card:hover::before,
-        .employee-card:active::before {
+        to {
             opacity: 1;
+            transform: translateY(0);
         }
+    }
 
-        .employee-card:active {
-            transform: scale(0.98);
-            border-color: #667eea;
-            background: white;
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.15);
-        }
+    .employee-card {
+        animation: fadeIn 0.3s ease forwards;
+    }
 
-        .employee-avatar {
-            width: 52px;
-            height: 52px;
-            border-radius: 16px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 20px;
-            flex-shrink: 0;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-        }
+    .employee-card:nth-child(1) { animation-delay: 0.05s; }
+    .employee-card:nth-child(2) { animation-delay: 0.1s; }
+    .employee-card:nth-child(3) { animation-delay: 0.15s; }
+    .employee-card:nth-child(4) { animation-delay: 0.2s; }
+    .employee-card:nth-child(5) { animation-delay: 0.25s; }
+</style>
 
-        .employee-info {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .employee-name {
-            font-size: 15px;
-            font-weight: 700;
-            color: #1a1a2e;
-            margin-bottom: 6px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .employee-details {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-
-        .employee-badge {
-            background: white;
-            color: #667eea;
-            padding: 4px 10px;
-            border-radius: 8px;
-            font-size: 11px;
-            font-weight: 600;
-            border: 1px solid #e9ecef;
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .employee-text {
-            color: #64748b;
-            font-size: 13px;
-        }
-
-        .employee-arrow {
-            color: #cbd5e0;
-            font-size: 16px;
-            transition: all 0.3s ease;
-        }
-
-        .employee-card:active .employee-arrow {
-            color: #667eea;
-            transform: translateX(-4px);
-        }
-
-        /* Empty State */
-        .empty-state {
-            text-align: center;
-            padding: 50px 20px;
-        }
-
-        .empty-icon {
-            width: 80px;
-            height: 80px;
-            margin: 0 auto 20px;
-            border-radius: 24px;
-            background: linear-gradient(135deg, #e9ecef 0%, #cbd5e0 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 36px;
-            color: #64748b;
-        }
-
-        .empty-title {
-            font-size: 18px;
-            font-weight: 700;
-            color: #2d3748;
-            margin-bottom: 8px;
-        }
-
-        .empty-text {
-            font-size: 14px;
-            color: #64748b;
-            margin-bottom: 20px;
-        }
-
-        .btn-add-employee {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 14px 28px;
-            border-radius: 14px;
-            font-size: 15px;
-            font-weight: 600;
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            text-decoration: none;
-            transition: all 0.3s ease;
-        }
-
-        .btn-add-employee:active {
-            transform: translateY(2px);
-            color: white;
-        }
-
-        /* Pagination */
-        .pagination-container {
-            margin-top: 20px;
-            padding-top: 16px;
-            border-top: 2px solid #f0f0f0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .page-item {
-            width: 40px;
-            height: 40px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #f8f9fa;
-            border: 2px solid #e9ecef;
-            color: #64748b;
-            font-weight: 600;
-            font-size: 14px;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            cursor: pointer;
-        }
-
-        .page-item:active,
-        .page-item.active {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-color: transparent;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-        }
-
-        /* Animations */
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .employee-card {
-            animation: fadeIn 0.3s ease forwards;
-        }
-
-        .employee-card:nth-child(1) { animation-delay: 0.05s; }
-        .employee-card:nth-child(2) { animation-delay: 0.1s; }
-        .employee-card:nth-child(3) { animation-delay: 0.15s; }
-        .employee-card:nth-child(4) { animation-delay: 0.2s; }
-        .employee-card:nth-child(5) { animation-delay: 0.25s; }
-    </style>
-</head>
-<body>
-    <!-- Fixed Header -->
-    <div class="mobile-header">
-        <div class="header-content">
-            <div class="header-title">
-                <i class="fas fa-users"></i>
-                <span>الموظفون</span>
-            </div>
+<!-- Search Card -->
+<div class="search-card">
+    <div class="search-header">
+        <div class="search-icon">
+            <i class="fas fa-filter"></i>
         </div>
-        <button class="add-btn" onclick="window.location.href='{{ url_for('mobile.add_employee') }}'">
-            <i class="fas fa-plus fa-lg"></i>
-        </button>
+        <div class="search-title">البحث والفلترة</div>
     </div>
-
-    <!-- Main Content -->
-    <div class="container-fluid">
-        <!-- Search Card -->
-        <div class="search-card">
-            <div class="search-header">
-                <div class="search-icon">
-                    <i class="fas fa-filter"></i>
-                </div>
-                <div class="search-title">البحث والفلترة</div>
-            </div>
-            
-            <form action="{{ url_for('mobile.employees') }}" method="GET">
-                <div class="form-group">
-                    <input type="text" 
-                           name="search" 
-                           class="form-control" 
-                           placeholder="🔍 البحث عن اسم، رقم موظف، وظيفة..." 
-                           value="{{ request.args.get('search', '') }}">
-                </div>
-                
-                <div class="form-group">
-                    <select name="department_id" class="form-select">
-                        <option value="">جميع الأقسام</option>
-                        {% for department in departments %}
-                        <option value="{{ department.id }}" {% if request.args.get('department_id')|int == department.id %}selected{% endif %}>
-                            {{ department.name }}
-                        </option>
-                        {% endfor %}
-                    </select>
-                </div>
-                
-                <div class="search-buttons">
-                    <button type="submit" class="btn-search">
-                        <i class="fas fa-search"></i>
-                        <span>بحث</span>
-                    </button>
-                    <a href="{{ url_for('mobile.employees') }}" class="btn-reset">
-                        <i class="fas fa-redo"></i>
-                    </a>
-                </div>
-            </form>
+    
+    <form action="{{ url_for('mobile.employees') }}" method="GET">
+        <div class="form-group">
+            <input type="text" 
+                   name="search" 
+                   class="form-control" 
+                   placeholder="🔍 البحث عن اسم، رقم موظف، وظيفة..." 
+                   value="{{ request.args.get('search', '') }}">
         </div>
-
-        <!-- Employees List -->
-        {% if employees %}
-        <div class="employees-card">
-            <div class="employees-header">
-                <div class="employees-icon">
-                    <i class="fas fa-users"></i>
-                </div>
-                <div class="employees-title">قائمة الموظفين</div>
-                <div class="employee-count">{{ employees|length }}</div>
-            </div>
-            
-            <div class="employees-list">
-                {% for employee in employees %}
-                <div class="employee-card" onclick="window.location.href='{{ url_for('mobile.employee_details', employee_id=employee.id) }}'">
-                    <div class="employee-avatar">
-                        <i class="fas fa-user"></i>
-                    </div>
-                    <div class="employee-info">
-                        <div class="employee-name">{{ employee.name }}</div>
-                        <div class="employee-details">
-                            {% if employee.employee_id %}
-                            <span class="employee-badge">
-                                <i class="fas fa-id-badge"></i>
-                                {{ employee.employee_id }}
-                            </span>
-                            {% endif %}
-                            {% if employee.job_title %}
-                            <span class="employee-text">{{ employee.job_title }}</span>
-                            {% endif %}
-                            {% if employee.department %}
-                            <span class="employee-text">• {{ employee.department.name }}</span>
-                            {% endif %}
-                        </div>
-                    </div>
-                    <div class="employee-arrow">
-                        <i class="fas fa-chevron-left"></i>
-                    </div>
-                </div>
+        
+        <div class="form-group">
+            <select name="department_id" class="form-select">
+                <option value="">جميع الأقسام</option>
+                {% for department in departments %}
+                <option value="{{ department.id }}" {% if request.args.get('department_id')|int == department.id %}selected{% endif %}>
+                    {{ department.name }}
+                </option>
                 {% endfor %}
+            </select>
+        </div>
+        
+        <div class="search-buttons">
+            <button type="submit" class="btn-search">
+                <i class="fas fa-search"></i>
+                <span>بحث</span>
+            </button>
+            <a href="{{ url_for('mobile.employees') }}" class="btn-reset">
+                <i class="fas fa-redo"></i>
+            </a>
+        </div>
+    </form>
+</div>
+
+<!-- Employees List -->
+{% if employees %}
+<div class="employees-card">
+    <div class="employees-header">
+        <div class="employees-icon">
+            <i class="fas fa-users"></i>
+        </div>
+        <div class="employees-title">قائمة الموظفين</div>
+        <div class="employee-count">{{ employees|length }}</div>
+    </div>
+    
+    <div class="employees-list">
+        {% for employee in employees %}
+        <div class="employee-card" onclick="window.location.href='{{ url_for('mobile.employee_details', employee_id=employee.id) }}'">
+            <div class="employee-avatar">
+                <i class="fas fa-user"></i>
             </div>
-            
-            <!-- Pagination -->
-            {% if pagination and pagination.pages > 1 %}
-            <div class="pagination-container">
-                {% if pagination.has_prev %}
-                {% set args = request.args.copy() %}
-                {% if args.get('page') %}{% set _ = args.pop('page') %}{% endif %}
-                <a href="{{ url_for('mobile.employees', page=pagination.prev_num, **args) }}" class="page-item">
-                    <i class="fas fa-chevron-right"></i>
-                </a>
-                {% endif %}
-                
-                {% for page_num in range(1, pagination.pages + 1) %}
-                    {% if page_num == pagination.page %}
-                        <span class="page-item active">{{ page_num }}</span>
-                    {% else %}
-                        {% set args = request.args.copy() %}
-                        {% if args.get('page') %}{% set _ = args.pop('page') %}{% endif %}
-                        <a href="{{ url_for('mobile.employees', page=page_num, **args) }}" class="page-item">{{ page_num }}</a>
+            <div class="employee-info">
+                <div class="employee-name">{{ employee.name }}</div>
+                <div class="employee-details">
+                    {% if employee.employee_id %}
+                    <span class="employee-badge">
+                        <i class="fas fa-id-badge"></i>
+                        {{ employee.employee_id }}
+                    </span>
                     {% endif %}
-                {% endfor %}
-                
-                {% if pagination.has_next %}
+                    {% if employee.job_title %}
+                    <span class="employee-text">{{ employee.job_title }}</span>
+                    {% endif %}
+                    {% if employee.department %}
+                    <span class="employee-text">• {{ employee.department.name }}</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="employee-arrow">
+                <i class="fas fa-chevron-left"></i>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Pagination -->
+    {% if pagination and pagination.pages > 1 %}
+    <div class="pagination-container">
+        {% if pagination.has_prev %}
+        {% set args = request.args.copy() %}
+        {% if args.get('page') %}{% set _ = args.pop('page') %}{% endif %}
+        <a href="{{ url_for('mobile.employees', page=pagination.prev_num, **args) }}" class="page-item">
+            <i class="fas fa-chevron-right"></i>
+        </a>
+        {% endif %}
+        
+        {% for page_num in range(1, pagination.pages + 1) %}
+            {% if page_num == pagination.page %}
+                <span class="page-item active">{{ page_num }}</span>
+            {% else %}
                 {% set args = request.args.copy() %}
                 {% if args.get('page') %}{% set _ = args.pop('page') %}{% endif %}
-                <a href="{{ url_for('mobile.employees', page=pagination.next_num, **args) }}" class="page-item">
-                    <i class="fas fa-chevron-left"></i>
-                </a>
-                {% endif %}
-            </div>
+                <a href="{{ url_for('mobile.employees', page=page_num, **args) }}" class="page-item">{{ page_num }}</a>
             {% endif %}
-        </div>
-        {% else %}
-        <!-- Empty State -->
-        <div class="employees-card">
-            <div class="empty-state">
-                <div class="empty-icon">
-                    <i class="fas fa-users"></i>
-                </div>
-                <h5 class="empty-title">لا يوجد موظفين</h5>
-                <p class="empty-text">لا توجد بيانات موظفين متطابقة مع معايير البحث</p>
-                <a href="{{ url_for('mobile.add_employee') }}" class="btn-add-employee">
-                    <i class="fas fa-plus"></i>
-                    إضافة موظف جديد
-                </a>
-            </div>
-        </div>
+        {% endfor %}
+        
+        {% if pagination.has_next %}
+        {% set args = request.args.copy() %}
+        {% if args.get('page') %}{% set _ = args.pop('page') %}{% endif %}
+        <a href="{{ url_for('mobile.employees', page=pagination.next_num, **args) }}" class="page-item">
+            <i class="fas fa-chevron-left"></i>
+        </a>
         {% endif %}
     </div>
+    {% endif %}
+</div>
+{% else %}
+<!-- Empty State -->
+<div class="employees-card">
+    <div class="empty-state">
+        <div class="empty-icon">
+            <i class="fas fa-users"></i>
+        </div>
+        <h5 class="empty-title">لا يوجد موظفين</h5>
+        <p class="empty-text">لا توجد بيانات موظفين متطابقة مع معايير البحث</p>
+        <a href="{{ url_for('mobile.add_employee') }}" class="btn-add-employee">
+            <i class="fas fa-plus"></i>
+            إضافة موظف جديد
+        </a>
+    </div>
+</div>
+{% endif %}
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+{% endblock %}
