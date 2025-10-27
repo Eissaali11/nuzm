@@ -429,9 +429,18 @@ def attendance():
     search_query = request.args.get('search', '').strip()
     status_filter = request.args.get('status', '').strip()
     department_id = request.args.get('department_id', '').strip()
+    date_str = request.args.get('date', '').strip()
     
-    # التاريخ الحالي
-    current_date = datetime.now().date()
+    # التاريخ المحدد أو اليوم الحالي
+    if date_str:
+        try:
+            selected_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+        except ValueError:
+            selected_date = datetime.now().date()
+    else:
+        selected_date = datetime.now().date()
+    
+    current_date = selected_date
     
     # بناء الاستعلام الأساسي
     attendance_query = Attendance.query.filter_by(date=current_date)
@@ -480,6 +489,7 @@ def attendance():
                           departments=departments,
                           attendance_records=attendance_records,
                           current_date=current_date,
+                          selected_date=selected_date,
                           today_stats=today_stats,
                           pagination=pagination)
 

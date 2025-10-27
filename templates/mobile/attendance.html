@@ -75,6 +75,25 @@
 </div>
 
 <div class="content-with-actions">
+
+<!-- فلتر التاريخ -->
+<div class="smart-search-container" style="margin-top: 20px;">
+    <div class="search-title">
+        <i class="fas fa-calendar-alt"></i>
+        <span>اختر التاريخ</span>
+    </div>
+    <form action="{{ url_for('mobile.attendance') }}" method="GET" id="dateFilterForm">
+        <input type="date" 
+               name="date" 
+               class="search-input" 
+               value="{{ selected_date.strftime('%Y-%m-%d') }}"
+               onchange="document.getElementById('dateFilterForm').submit()"
+               style="text-align: right;">
+        <input type="hidden" name="search" value="{{ request.args.get('search', '') }}">
+        <input type="hidden" name="status" value="{{ request.args.get('status', '') }}">
+        <input type="hidden" name="department_id" value="{{ request.args.get('department_id', '') }}">
+    </form>
+</div>
 <style>
 /* تصميم مستقبلي بألوان واضحة */
 :root {
@@ -652,14 +671,14 @@
     {% if pagination and pagination.pages > 1 %}
     <div class="pagination-container">
         {% if pagination.has_prev %}
-        <a href="{{ url_for('mobile.attendance', page=pagination.prev_num, search=request.args.get('search', ''), status=request.args.get('status', ''), department_id=request.args.get('department_id', '')) }}" class="page-btn">
+        <a href="{{ url_for('mobile.attendance', page=pagination.prev_num, search=request.args.get('search', ''), status=request.args.get('status', ''), department_id=request.args.get('department_id', ''), date=request.args.get('date', '')) }}" class="page-btn">
             <i class="fas fa-chevron-right"></i>
         </a>
         {% endif %}
         
         {% for page_num in pagination.iter_pages() %}
             {% if page_num %}
-                <a href="{{ url_for('mobile.attendance', page=page_num, search=request.args.get('search', ''), status=request.args.get('status', ''), department_id=request.args.get('department_id', '')) }}" 
+                <a href="{{ url_for('mobile.attendance', page=page_num, search=request.args.get('search', ''), status=request.args.get('status', ''), department_id=request.args.get('department_id', ''), date=request.args.get('date', '')) }}" 
                    class="page-btn {% if page_num == pagination.page %}active{% endif %}">
                     {{ page_num }}
                 </a>
@@ -669,7 +688,7 @@
         {% endfor %}
         
         {% if pagination.has_next %}
-        <a href="{{ url_for('mobile.attendance', page=pagination.next_num, search=request.args.get('search', ''), status=request.args.get('status', ''), department_id=request.args.get('department_id', '')) }}" class="page-btn">
+        <a href="{{ url_for('mobile.attendance', page=pagination.next_num, search=request.args.get('search', ''), status=request.args.get('status', ''), department_id=request.args.get('department_id', ''), date=request.args.get('date', '')) }}" class="page-btn">
             <i class="fas fa-chevron-left"></i>
         </a>
         {% endif %}
