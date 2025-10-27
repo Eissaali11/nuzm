@@ -440,10 +440,8 @@ def attendance():
     else:
         selected_date = datetime.now().date()
     
-    current_date = selected_date
-    
-    # بناء الاستعلام الأساسي
-    attendance_query = Attendance.query.filter_by(date=current_date)
+    # بناء الاستعلام الأساسي للتاريخ المحدد
+    attendance_query = Attendance.query.filter_by(date=selected_date)
     
     # البحث الذكي
     if search_query:
@@ -497,7 +495,6 @@ def attendance():
                           employees=employees,
                           departments=departments,
                           attendance_records=attendance_records,
-                          current_date=current_date,
                           selected_date=selected_date,
                           today_stats=today_stats,
                           pagination=pagination)
