@@ -1,368 +1,627 @@
-{% extends 'mobile/layout.html' %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إضافة مركبة جديدة</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-{% block title %}إضافة سيارة جديدة{% endblock %}
-{% block header_title %}إضافة سيارة جديدة{% endblock %}
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 0;
+            padding-top: 70px;
+            padding-bottom: 30px;
+        }
 
-{% block head %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/mobile-add-vehicle-premium.css') }}">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-{% endblock %}
+        /* Fixed Header */
+        .mobile-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(20px);
+            padding: 15px 20px;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
 
-{% block content %}
-<!-- نموذج إضافة سيارة بتصميم مميز -->
-<div class="mobile-card">
-  <div class="mobile-card-header">
-    <h1 class="mobile-card-title">
-      <i class="fas fa-plus-circle" style="margin-left: 8px;"></i>
-      إضافة سيارة جديدة
-    </h1>
-    <p class="mobile-card-subtitle">املأ البيانات أدناه لإضافة سيارة جديدة إلى النظام</p>
-  </div>
-  
-  <div class="mobile-card-body">
-      <form method="post" action="{{ url_for('mobile.add_vehicle') }}" enctype="multipart/form-data" id="vehicleForm">
-        {{ form.csrf_token if form and form.csrf_token }}
-        
-        <!-- بيانات السيارة الأساسية -->
-        <div class="mobile-form-section">
-          <h3 class="mobile-form-section-title">
-            <i class="fas fa-car" style="margin-left: 8px; color: #667eea;"></i>
-            بيانات السيارة الأساسية
-          </h3>
-          
-          <div class="mobile-form-group">
-            <label class="mobile-form-label required">رقم اللوحة</label>
-            <input type="text" class="mobile-form-input" name="plate_number" required placeholder="أدخل رقم لوحة السيارة بالكامل">
-          </div>
-          
-          <div class="mobile-form-group">
-            <label class="mobile-form-label required">الشركة المصنعة</label>
-            <input type="text" class="mobile-form-input" name="make" required placeholder="مثال: تويوتا، هيونداي، نيسان">
-          </div>
-          
-          <div class="mobile-form-row">
-            <div class="mobile-form-group">
-              <label class="mobile-form-label required">الموديل</label>
-              <input type="text" class="mobile-form-input" name="model" required placeholder="مثال: كامري، كورولا، إلنترا">
-            </div>
-            
-            <div class="mobile-form-group">
-              <label class="mobile-form-label required">نوع السيارة</label>
-              <select class="mobile-form-select" name="type_of_car" required>
-                <option value="" disabled selected>اختر نوع السيارة</option>
-                <option value="سيدان">سيدان</option>
-                <option value="قاطرة">قاطرة</option>
-                <option value="باص">باص</option>
-                <option value="نقل خفيف">نقل خفيف</option>
-                <option value="نقل ثقيل">نقل ثقيل</option>
-                <option value="شاحنة صغيرة">شاحنة صغيرة</option>
-                <option value="شاحنة كبيرة">شاحنة كبيرة</option>
-                <option value="معدات ثقيلة">معدات ثقيلة</option>
-                <option value="مقطورة">مقطورة</option>
-                <option value="دباب">دباب</option>
-                <option value="كرين">كرين</option>
-                <option value="حفار">حفار</option>
-              </select>
-            </div>
-          </div>
-          
-          <div class="mobile-form-row">
-            <div class="mobile-form-group">
-              <label class="mobile-form-label required">سنة الصنع</label>
-              <input type="number" class="mobile-form-input" name="year" min="1990" max="2030" required placeholder="مثال: 2025">
-            </div>
-            
-            <div class="mobile-form-group">
-              <label class="mobile-form-label required">اللون</label>
-              <input type="text" class="mobile-form-input" name="color" required placeholder="مثال: أبيض، أسود، فضي">
-            </div>
-          </div>
-          
-          <div class="mobile-form-group">
-            <label class="mobile-form-label">اسم السائق</label>
-            <input type="text" class="mobile-form-input" name="driver_name" placeholder="اختياري - اسم السائق المعين لهذه السيارة">
-          </div>
-        </div>
-        
-        <!-- حالة السيارة والمشروع -->
-        <div class="mobile-form-section">
-          <h3 class="mobile-form-section-title">
-            <i class="fas fa-cogs" style="margin-left: 8px; color: #764ba2;"></i>
-            حالة السيارة والمشروع
-          </h3>
-          
-          <div class="mobile-form-row">
-            <div class="mobile-form-group">
-              <label class="mobile-form-label required">الحالة</label>
-              <select class="mobile-form-select" name="status" required>
-                <option value="available">متاحة</option>
-                <option value="rented">مؤجرة</option>
-                <option value="in_project">في المشروع</option>
-                <option value="in_workshop">في الورشة</option>
-                <option value="accident">حادث</option>
-                <option value="out_of_service">خارج الخدمة</option>
-              </select>
-            </div>
-            
-            <div class="mobile-form-group">
-              <label class="mobile-form-label">المشروع</label>
-              <select class="mobile-form-select" name="project">
-                <option value="">اختر المشروع</option>
-                {% for department in departments %}
-                <option value="{{ department.name }}">{{ department.name }}</option>
-                {% endfor %}
-              </select>
-            </div>
-          </div>
-        </div>
-        
-        <!-- ملاحظات -->
-        <div class="mobile-form-section">
-          <h3 class="mobile-form-section-title">
-            <i class="fas fa-sticky-note" style="margin-left: 8px; color: #f093fb;"></i>
-            ملاحظات
-          </h3>
-          
-          <div class="mobile-form-group">
-            <label class="mobile-form-label">ملاحظات</label>
-            <textarea class="mobile-form-textarea" name="notes" rows="3" placeholder="أدخل أي ملاحظات إضافية عن السيارة"></textarea>
-          </div>
-        </div>
-        
-        <div class="mobile-form-actions">
-          <button type="submit" class="mobile-btn mobile-btn-primary">
-            <i class="fas fa-save"></i>
-            حفظ السيارة
-          </button>
-          <a href="{{ url_for('mobile.vehicles') }}" class="mobile-btn mobile-btn-secondary">
-            <i class="fas fa-arrow-right"></i>
-            العودة للقائمة
-          </a>
-        </div>
-      </form>
-    </div>
-  </div>
-</div>
-{% endblock %}
+        .header-content {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex: 1;
+        }
 
-{% block styles %}
-<style>
-  .mobile-form-file {
-    position: relative;
-    margin-bottom: 16px;
-  }
-  
-  .mobile-form-file-input {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    border: 0;
-  }
-  
-  .mobile-form-file-label {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    padding: 10px 16px;
-    background-color: var(--card-bg);
-    border: 1px dashed var(--border-color);
-    border-radius: var(--border-radius);
-    cursor: pointer;
-    transition: all var(--transition-normal);
-  }
-  
-  .mobile-form-file-label:hover {
-    border-color: var(--primary-color);
-    color: var(--primary-color);
-  }
-  
-  .mobile-form-file-preview {
-    margin-top: 8px;
-    width: 100%;
-    height: 150px;
-    background-color: var(--card-bg);
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius);
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--text-muted);
-  }
-  
-  .mobile-form-file-preview img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-  
-  .mobile-form-section {
-    margin-bottom: 24px;
-    padding-bottom: 16px;
-    border-bottom: 1px solid var(--border-light);
-  }
-  
-  .mobile-form-section:last-child {
-    border-bottom: none;
-    margin-bottom: 0;
-  }
-  
-  .mobile-form-section-title {
-    font-size: var(--font-size-md);
-    font-weight: var(--font-weight-medium);
-    margin-bottom: 16px;
-    color: var(--text-primary);
-  }
-  
-  .mobile-form-row {
-    display: flex;
-    gap: 16px;
-  }
-  
-  .mobile-form-row .mobile-form-group {
-    flex: 1;
-  }
-  
-  /* Required field styling */
-  .mobile-form-label.required::after {
-    content: '*';
-    color: #dc3545;
-    margin-left: 0.25rem;
-    font-weight: bold;
-  }
-</style>
-{% endblock %}
+        .back-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            width: 45px;
+            height: 45px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+        }
 
-{% block scripts %}
-<script src="{{ url_for('static', filename='js/image-compression.js') }}"></script>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // تطبيق ضغط الصور على جميع حقول رفع الملفات
-    applyImageCompression('input[type="file"]', {
-        maxWidth: 1024,
-        maxHeight: 1024,
-        quality: 0.8,
-        maxFileSize: 2 * 1024 * 1024, // 2MB
-        outputFormat: 'image/jpeg'
-    });
-    
-    // معاينة الصورة قبل الرفع (للعناصر الموجودة)
-    const vehicleImageInput = document.getElementById('vehicleImage');
-    const imagePreview = document.getElementById('imagePreview');
-    
-    if (vehicleImageInput && imagePreview) {
-        vehicleImageInput.addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            
-            if (file) {
-                const reader = new FileReader();
-                
-                reader.onload = function(e) {
-                    imagePreview.innerHTML = `<img src="${e.target.result}" alt="معاينة الصورة" style="max-width: 100%; border-radius: 8px;">`;
-                };
-                
-                reader.readAsDataURL(file);
-            } else {
-                imagePreview.innerHTML = '';
+        .back-btn:active {
+            transform: scale(0.95);
+        }
+
+        .header-title {
+            font-size: 19px;
+            font-weight: 700;
+            color: #1a1a2e;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header-title i {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 22px;
+        }
+
+        /* Main Container */
+        .container-fluid {
+            padding: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Form Card */
+        .form-card {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(30px);
+            border-radius: 28px;
+            padding: 30px 24px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+
+        /* Section Headers */
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 25px 0 18px 0;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .section-header:first-child {
+            margin-top: 0;
+        }
+
+        .section-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: white;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .section-icon.info {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .section-icon.settings {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .section-icon.notes {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .section-title {
+            font-size: 17px;
+            font-weight: 700;
+            color: #2d3748;
+            margin: 0;
+        }
+
+        /* Form Groups */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-label.required::after {
+            content: '*';
+            color: #ef4444;
+            font-size: 18px;
+            line-height: 1;
+        }
+
+        .form-label i {
+            font-size: 14px;
+            color: #667eea;
+            opacity: 0.8;
+        }
+
+        /* Enhanced Inputs */
+        .form-control, .form-select {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 16px;
+            padding: 15px 18px;
+            font-size: 15px;
+            color: #2d3748;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+            width: 100%;
+        }
+
+        .form-control:focus, .form-select:focus {
+            background: white;
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1),
+                        0 6px 20px rgba(102, 126, 234, 0.15);
+            outline: none;
+        }
+
+        textarea.form-control {
+            resize: vertical;
+            min-height: 110px;
+            font-family: inherit;
+        }
+
+        .form-text {
+            font-size: 12px;
+            color: #64748b;
+            margin-top: 6px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .form-text i {
+            font-size: 11px;
+            opacity: 0.7;
+        }
+
+        /* Two Column Layout */
+        .row {
+            margin-left: -8px;
+            margin-right: -8px;
+        }
+
+        .row > [class*="col-"] {
+            padding-left: 8px;
+            padding-right: 8px;
+        }
+
+        /* Submit Section */
+        .submit-section {
+            margin-top: 35px;
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn-submit {
+            flex: 1;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 17px;
+            border-radius: 18px;
+            font-size: 16px;
+            font-weight: 700;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            cursor: pointer;
+        }
+
+        .btn-submit:active {
+            transform: translateY(2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-cancel {
+            flex: 1;
+            background: white;
+            color: #64748b;
+            border: 2px solid #e9ecef;
+            padding: 17px;
+            border-radius: 18px;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            text-decoration: none;
+        }
+
+        .btn-cancel:active {
+            background: #f8f9fa;
+        }
+
+        /* Flash Messages */
+        .alert {
+            border-radius: 18px;
+            border: none;
+            padding: 16px 20px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+            animation: slideInDown 0.4s ease;
+        }
+
+        .alert-success {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+
+        .alert-error, .alert-danger {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+        }
+
+        .alert i {
+            font-size: 22px;
+        }
+
+        /* Animations */
+        @keyframes slideInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
             }
-        });
-    }
-    
-    // تحسين تجربة إرسال النموذج
-    const form = document.getElementById('vehicleForm');
-    if (form) {
-        form.addEventListener('submit', function(e) {
-            const submitButtons = document.querySelectorAll('button[type="submit"], input[type="submit"]');
-            submitButtons.forEach(button => {
-                button.disabled = true;
-                if (button.innerHTML) {
-                    button.innerHTML = `
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            <div style="
-                                width: 16px;
-                                height: 16px;
-                                border: 2px solid transparent;
-                                border-top: 2px solid white;
-                                border-radius: 50%;
-                                animation: spin 1s linear infinite;
-                            "></div>
-                            جاري الحفظ...
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.6;
+            }
+        }
+
+        .form-control:disabled, .form-select:disabled {
+            background: #f1f5f9;
+            cursor: not-allowed;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        /* Glow Effect */
+        @keyframes glow {
+            0%, 100% {
+                box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+            }
+            50% {
+                box-shadow: 0 8px 35px rgba(102, 126, 234, 0.6);
+            }
+        }
+
+        .btn-submit {
+            animation: glow 2.5s ease-in-out infinite;
+        }
+
+        /* Responsive */
+        @media (max-width: 576px) {
+            .submit-section {
+                flex-direction: column;
+            }
+
+            .btn-submit, .btn-cancel {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Fixed Header -->
+    <div class="mobile-header">
+        <div class="header-content">
+            <button class="back-btn" onclick="window.location.href='{{ url_for('mobile.vehicles') }}'">
+                <i class="fas fa-arrow-right fa-lg"></i>
+            </button>
+            <div class="header-title">
+                <i class="fas fa-car"></i>
+                <span>إضافة مركبة جديدة</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container-fluid">
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">
+                        <i class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-circle' }}"></i>
+                        <span>{{ message }}</span>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Form Card -->
+        <div class="form-card">
+            <form method="POST" action="{{ url_for('mobile.add_vehicle') }}" id="vehicleForm">
+                <!-- المعلومات الأساسية -->
+                <div class="section-header">
+                    <div class="section-icon info">
+                        <i class="fas fa-info-circle"></i>
+                    </div>
+                    <h3 class="section-title">المعلومات الأساسية</h3>
+                </div>
+
+                <div class="form-group">
+                    <label for="plate_number" class="form-label required">
+                        <i class="fas fa-hashtag"></i>
+                        رقم اللوحة
+                    </label>
+                    <input type="text" 
+                           class="form-control" 
+                           id="plate_number" 
+                           name="plate_number" 
+                           placeholder="مثال: أ ب ج 1234"
+                           required>
+                    <div class="form-text">
+                        <i class="fas fa-info-circle"></i>
+                        أدخل رقم لوحة السيارة بالكامل
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-6">
+                        <div class="form-group">
+                            <label for="make" class="form-label required">
+                                <i class="fas fa-industry"></i>
+                                الشركة المصنعة
+                            </label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="make" 
+                                   name="make" 
+                                   placeholder="تويوتا"
+                                   required>
                         </div>
-                    `;
-                }
+                    </div>
+                    <div class="col-6">
+                        <div class="form-group">
+                            <label for="model" class="form-label required">
+                                <i class="fas fa-car-side"></i>
+                                الموديل
+                            </label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="model" 
+                                   name="model" 
+                                   placeholder="كامري"
+                                   required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="type_of_car" class="form-label required">
+                        <i class="fas fa-tags"></i>
+                        نوع السيارة
+                    </label>
+                    <select class="form-select" id="type_of_car" name="type_of_car" required>
+                        <option value="" disabled selected>اختر نوع السيارة</option>
+                        <option value="سيدان">🚗 سيدان</option>
+                        <option value="قاطرة">🚛 قاطرة</option>
+                        <option value="باص">🚌 باص</option>
+                        <option value="نقل خفيف">🚐 نقل خفيف</option>
+                        <option value="نقل ثقيل">🚚 نقل ثقيل</option>
+                        <option value="شاحنة صغيرة">📦 شاحنة صغيرة</option>
+                        <option value="شاحنة كبيرة">🚛 شاحنة كبيرة</option>
+                        <option value="معدات ثقيلة">🏗️ معدات ثقيلة</option>
+                        <option value="مقطورة">🚜 مقطورة</option>
+                        <option value="دباب">🏍️ دباب</option>
+                        <option value="كرين">🏗️ كرين</option>
+                        <option value="حفار">🚜 حفار</option>
+                    </select>
+                </div>
+
+                <div class="row">
+                    <div class="col-6">
+                        <div class="form-group">
+                            <label for="year" class="form-label required">
+                                <i class="fas fa-calendar-alt"></i>
+                                سنة الصنع
+                            </label>
+                            <input type="number" 
+                                   class="form-control" 
+                                   id="year" 
+                                   name="year" 
+                                   min="1990" 
+                                   max="2030" 
+                                   placeholder="2024"
+                                   required>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="form-group">
+                            <label for="color" class="form-label required">
+                                <i class="fas fa-palette"></i>
+                                اللون
+                            </label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="color" 
+                                   name="color" 
+                                   placeholder="أبيض"
+                                   required>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- معلومات التشغيل -->
+                <div class="section-header">
+                    <div class="section-icon settings">
+                        <i class="fas fa-cog"></i>
+                    </div>
+                    <h3 class="section-title">معلومات التشغيل</h3>
+                </div>
+
+                <div class="form-group">
+                    <label for="status" class="form-label required">
+                        <i class="fas fa-signal"></i>
+                        الحالة
+                    </label>
+                    <select class="form-select" id="status" name="status" required>
+                        <option value="available">✅ متاحة</option>
+                        <option value="rented">💵 مؤجرة</option>
+                        <option value="in_project">🏗️ في المشروع</option>
+                        <option value="in_workshop">🔧 في الورشة</option>
+                        <option value="accident">⚠️ حادث</option>
+                        <option value="out_of_service">🚫 خارج الخدمة</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="driver_name" class="form-label">
+                        <i class="fas fa-user"></i>
+                        اسم السائق
+                    </label>
+                    <input type="text" 
+                           class="form-control" 
+                           id="driver_name" 
+                           name="driver_name" 
+                           placeholder="اختياري - اسم السائق المعين">
+                    <div class="form-text">
+                        <i class="fas fa-info-circle"></i>
+                        اختياري - اسم السائق المعين لهذه السيارة
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="project" class="form-label">
+                        <i class="fas fa-project-diagram"></i>
+                        المشروع
+                    </label>
+                    <select class="form-select" id="project" name="project">
+                        <option value="">اختر المشروع</option>
+                        {% for department in departments %}
+                        <option value="{{ department.name }}">{{ department.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <div class="form-text">
+                        <i class="fas fa-info-circle"></i>
+                        اختياري - المشروع المرتبط بهذه السيارة
+                    </div>
+                </div>
+
+                <!-- ملاحظات -->
+                <div class="section-header">
+                    <div class="section-icon notes">
+                        <i class="fas fa-sticky-note"></i>
+                    </div>
+                    <h3 class="section-title">ملاحظات إضافية</h3>
+                </div>
+
+                <div class="form-group">
+                    <label for="notes" class="form-label">
+                        <i class="fas fa-comment-alt"></i>
+                        ملاحظات
+                    </label>
+                    <textarea class="form-control" 
+                              id="notes" 
+                              name="notes" 
+                              rows="4" 
+                              placeholder="أدخل أي ملاحظات أو تفاصيل إضافية عن السيارة"></textarea>
+                    <div class="form-text">
+                        <i class="fas fa-info-circle"></i>
+                        اختياري - أي ملاحظات أو تفاصيل إضافية
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="submit-section">
+                    <a href="{{ url_for('mobile.vehicles') }}" class="btn-cancel">
+                        <i class="fas fa-times"></i>
+                        إلغاء
+                    </a>
+                    <button type="submit" class="btn-submit">
+                        <i class="fas fa-check"></i>
+                        حفظ المركبة
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Auto-dismiss alerts after 5 seconds
+        setTimeout(() => {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(alert => {
+                alert.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                alert.style.opacity = '0';
+                alert.style.transform = 'translateY(-20px)';
+                setTimeout(() => alert.remove(), 500);
+            });
+        }, 5000);
+
+        // Form submission with loading state
+        const form = document.getElementById('vehicleForm');
+        form.addEventListener('submit', function(e) {
+            const submitBtn = this.querySelector('.btn-submit');
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...';
+            submitBtn.disabled = true;
+            submitBtn.style.animation = 'none';
+        });
+
+        // Input focus animation
+        const inputs = document.querySelectorAll('.form-control, .form-select');
+        inputs.forEach(input => {
+            input.addEventListener('focus', function() {
+                this.parentElement.querySelector('.form-label')?.style.color = '#667eea';
+            });
+            input.addEventListener('blur', function() {
+                this.parentElement.querySelector('.form-label')?.style.color = '#2d3748';
             });
         });
-    }
-    
-    // إضافة تحذيرات للملفات الكبيرة
-    const fileInputs = document.querySelectorAll('input[type="file"]');
-    fileInputs.forEach(input => {
-        input.addEventListener('change', function() {
-            const files = Array.from(this.files);
-            const largeFiles = files.filter(file => file.size > 5 * 1024 * 1024); // أكبر من 5MB
-            
-            if (largeFiles.length > 0) {
-                showCompressionNotice('الملفات المحددة كبيرة الحجم وسيتم ضغطها تلقائياً لتحسين الأداء.');
-            }
-        });
-    });
-});
-
-// دالة عرض إشعار الضغط
-function showCompressionNotice(message) {
-    const notification = document.createElement('div');
-    notification.style.cssText = `
-        position: fixed;
-        top: 20px;
-        left: 20px;
-        right: 20px;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 16px;
-        border-radius: 12px;
-        box-shadow: 0 8px 32px rgba(0,0,0,0.2);
-        z-index: 10001;
-        font-size: 0.9rem;
-        text-align: center;
-        backdrop-filter: blur(10px);
-        animation: slideDown 0.3s ease-out;
-    `;
-    notification.innerHTML = `
-        <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
-            <i class="fas fa-compress-alt"></i>
-            <span>${message}</span>
-        </div>
-    `;
-    
-    document.body.appendChild(notification);
-    
-    setTimeout(() => {
-        notification.style.animation = 'slideUp 0.3s ease-in';
-        setTimeout(() => notification.remove(), 300);
-    }, 4000);
-}
-
-// إضافة CSS للرسوم المتحركة
-const style = document.createElement('style');
-style.textContent = `
-    @keyframes slideDown {
-        from { opacity: 0; transform: translateY(-20px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes slideUp {
-        from { opacity: 1; transform: translateY(0); }
-        to { opacity: 0; transform: translateY(-20px); }
-    }
-    @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
-`;
-document.head.appendChild(style);
-</script>
-{% endblock %}
+    </script>
+</body>
+</html>
