@@ -426,21 +426,34 @@ def attendance():
     """صفحة الحضور والغياب للنسخة المحمولة"""
     page = request.args.get('page', 1, type=int)
     per_page = 20  # عدد العناصر في الصفحة الواحدة
-
-    # بيانات مؤقتة - يمكن استبدالها بالبيانات الفعلية من قاعدة البيانات
-    employees = Employee.query.order_by(Employee.name).all()
-    attendance_records = []
+    
+    # التاريخ الحالي
+    current_date = datetime.now().date()
+    
+    # جلب سجلات الحضور من قاعدة البيانات
+    attendance_query = Attendance.query.filter_by(date=current_date).order_by(Attendance.created_at.desc())
+    
+    # التصفح مع Pagination
+    pagination = attendance_query.paginate(page=page, per_page=per_page, error_out=False)
+    attendance_records = pagination.items
+    
+    # الموظفين
+    employees = Employee.query.filter_by(status='active').order_by(Employee.name).all()
 
     # إحصائيات اليوم
-    current_date = datetime.now().date()
-    today_stats = {'present': 0, 'absent': 0, 'leave': 0, 'total': len(employees)}
+    today_stats = {
+        'present': Attendance.query.filter_by(date=current_date, status='حاضر').count(),
+        'absent': Attendance.query.filter_by(date=current_date, status='غائب').count(),
+        'leave': Attendance.query.filter_by(date=current_date, status='إجازة').count(),
+        'total': len(employees)
+    }
 
     return render_template('mobile/attendance.html',
                           employees=employees,
                           attendance_records=attendance_records,
                           current_date=current_date,
                           today_stats=today_stats,
-                          pagination=None)
+                          pagination=pagination)
 
 # صفحة تصدير بيانات الحضور - النسخة المحمولة
 @mobile_bp.route('/attendance/export', methods=['GET', 'POST'])
