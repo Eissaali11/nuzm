@@ -374,7 +374,7 @@ def add_employee():
     """صفحة إضافة موظف جديد للنسخة المحمولة"""
     # جلب البيانات المطلوبة
     departments = Department.query.order_by(Department.name).all()
-    nationalities = Nationality.query.order_by(Nationality.name).all()
+    nationalities = Nationality.query.order_by(Nationality.name_ar).all()
     
     # جلب الأجهزة المحمولة المتاحة (غير المخصصة لموظف)
     available_mobile_devices = MobileDevice.query.filter(
