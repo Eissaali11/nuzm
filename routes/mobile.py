@@ -428,6 +428,7 @@ def attendance():
     per_page = 20  # عدد العناصر في الصفحة الواحدة
     search_query = request.args.get('search', '').strip()
     status_filter = request.args.get('status', '').strip()
+    department_id = request.args.get('department_id', '').strip()
     
     # التاريخ الحالي
     current_date = datetime.now().date()
@@ -445,6 +446,9 @@ def attendance():
                 Employee.national_id.ilike(f'%{search_query}%')
             )
         )
+    elif department_id:
+        # فلتر حسب القسم (فقط إذا لم يكن هناك بحث)
+        attendance_query = attendance_query.join(Employee).filter(Employee.department_id == int(department_id))
     
     # فلتر الحالة
     if status_filter:
@@ -459,6 +463,9 @@ def attendance():
     
     # الموظفين النشطين
     employees = Employee.query.filter_by(status='active').order_by(Employee.name).all()
+    
+    # الأقسام
+    departments = Department.query.order_by(Department.name).all()
 
     # إحصائيات اليوم
     today_stats = {
@@ -470,6 +477,7 @@ def attendance():
 
     return render_template('mobile/attendance.html',
                           employees=employees,
+                          departments=departments,
                           attendance_records=attendance_records,
                           current_date=current_date,
                           today_stats=today_stats,
