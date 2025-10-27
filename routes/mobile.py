@@ -372,8 +372,19 @@ def employees():
 @login_required
 def add_employee():
     """صفحة إضافة موظف جديد للنسخة المحمولة"""
-    # يمكن تنفيذ هذه الوظيفة لاحقًا
-    return render_template('mobile/add_employee.html')
+    # جلب البيانات المطلوبة
+    departments = Department.query.order_by(Department.name).all()
+    nationalities = Nationality.query.order_by(Nationality.name).all()
+    
+    # جلب الأجهزة المحمولة المتاحة (غير المخصصة لموظف)
+    available_mobile_devices = MobileDevice.query.filter(
+        (MobileDevice.employee_id == None) | (MobileDevice.employee_id == '')
+    ).order_by(MobileDevice.brand, MobileDevice.model).all()
+    
+    return render_template('mobile/add_employee.html',
+                         departments=departments,
+                         nationalities=nationalities,
+                         available_mobile_devices=available_mobile_devices)
 
 # صفحة تفاصيل الموظف - النسخة المحمولة
 @mobile_bp.route('/employees/<int:employee_id>')
