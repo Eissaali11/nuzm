@@ -1815,7 +1815,7 @@ def share_data(operation_id):
         # URL لملف PDF (نحتاج related_record_id)
         pdf_url = None
         if operation.operation_type == 'handover' and operation.related_record_id:
-            pdf_url = url_for('vehicles.handover_pdf_public', handover_id=operation.related_record_id, _external=True)
+            pdf_url = url_for('vehicles.handover_pdf_public', id=operation.related_record_id, _external=True)
         
         return jsonify({
             'success': True,
