@@ -6,6 +6,9 @@
     <title>تسجيل الدخول - نُظم</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -14,8 +17,80 @@
         }
 
         body {
-            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Tajawal', sans-serif;
+            min-height: 100vh;
+            overflow: hidden;
+            position: relative;
+            background: #0f0c29;
+        }
+
+        /* خلفية متحركة متدرجة */
+        .animated-gradient {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #4facfe 75%, #00f2fe 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+            z-index: 0;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* دوائر عائمة في الخلفية */
+        .floating-shapes {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        .shape {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            animation: float 20s infinite ease-in-out;
+        }
+
+        .shape:nth-child(1) {
+            width: 300px;
+            height: 300px;
+            top: -150px;
+            left: -100px;
+            animation-delay: 0s;
+        }
+
+        .shape:nth-child(2) {
+            width: 200px;
+            height: 200px;
+            bottom: -100px;
+            right: -50px;
+            animation-delay: 7s;
+        }
+
+        .shape:nth-child(3) {
+            width: 150px;
+            height: 150px;
+            top: 50%;
+            left: 10%;
+            animation-delay: 3s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-50px) rotate(180deg); }
+        }
+
+        /* المحتوى الرئيسي */
+        .login-wrapper {
+            position: relative;
+            z-index: 10;
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -23,362 +98,420 @@
             padding: 20px;
         }
 
-        .phone-container {
-            width: 375px;
-            height: 667px;
-            background: #000;
-            border-radius: 40px;
-            padding: 8px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            position: relative;
-        }
-
-        .phone-screen {
+        .login-card {
             width: 100%;
-            height: 100%;
-            background: #f8f9fa;
-            border-radius: 32px;
-            overflow: hidden;
-            position: relative;
+            max-width: 420px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 30px;
+            padding: 50px 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3),
+                        0 0 100px rgba(102, 126, 234, 0.2);
+            animation: slideInUp 0.8s ease-out;
+            border: 1px solid rgba(255, 255, 255, 0.3);
         }
 
-        .status-bar {
-            background: #007AFF;
-            height: 44px;
-            display: flex;
-            justify-content: between;
-            align-items: center;
-            padding: 0 20px;
-            color: white;
-            font-size: 14px;
-            font-weight: 600;
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
-        .status-left {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .status-right {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            margin-left: auto;
-        }
-
-        .carrier {
-            background: white;
-            color: #007AFF;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 700;
-        }
-
-        .login-container {
-            padding: 60px 40px 40px;
+        /* الشعار */
+        .logo-container {
             text-align: center;
-            height: calc(100% - 44px);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
+            margin-bottom: 40px;
         }
 
         .app-logo {
-            width: 80px;
-            height: 80px;
-            background: linear-gradient(135deg, #4A90E2 0%, #357ABD 50%, #2E5A87 100%);
-            border-radius: 50%;
-            margin: 0 auto 30px;
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 25px;
+            margin: 0 auto 20px;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            font-size: 20px;
-            font-weight: 700;
-            box-shadow: 0 8px 24px rgba(74, 144, 226, 0.4);
-            font-family: 'Arial', sans-serif;
-            letter-spacing: 1px;
+            font-size: 36px;
+            font-weight: 900;
+            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.4),
+                        0 0 0 15px rgba(102, 126, 234, 0.05);
+            animation: logoFloat 3s ease-in-out infinite;
+            transform-style: preserve-3d;
         }
 
-        .login-title {
-            font-size: 24px;
-            font-weight: 700;
-            color: #1a1a1a;
+        @keyframes logoFloat {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .app-name {
+            font-size: 32px;
+            font-weight: 900;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
             margin-bottom: 8px;
         }
 
-        .login-subtitle {
+        .app-tagline {
             font-size: 16px;
-            color: #8e8e93;
-            margin-bottom: 40px;
-            line-height: 1.4;
+            color: #6c757d;
+            font-weight: 500;
         }
 
+        /* العنوان */
+        .login-header {
+            text-align: center;
+            margin-bottom: 35px;
+        }
+
+        .login-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 10px;
+        }
+
+        .login-subtitle {
+            font-size: 15px;
+            color: #718096;
+            font-weight: 500;
+        }
+
+        /* النموذج */
         .form-group {
-            margin-bottom: 20px;
-            text-align: right;
+            margin-bottom: 25px;
+            position: relative;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-icon {
+            position: absolute;
+            right: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #a0aec0;
+            font-size: 18px;
+            z-index: 2;
         }
 
         .form-control {
             width: 100%;
-            padding: 16px 20px;
-            border: 2px solid #e5e5ea;
-            border-radius: 12px;
+            padding: 18px 55px 18px 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 15px;
             font-size: 16px;
             background: white;
             transition: all 0.3s ease;
             direction: rtl;
+            font-family: 'Tajawal', sans-serif;
+            color: #2d3748;
         }
 
         .form-control:focus {
             outline: none;
-            border-color: #007AFF;
-            box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.1);
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+            background: #f7fafc;
         }
 
         .form-control::placeholder {
-            color: #c7c7cc;
+            color: #cbd5e0;
             font-weight: 400;
-        }
-
-        .password-container {
-            position: relative;
         }
 
         .password-toggle {
             position: absolute;
-            left: 20px;
+            left: 18px;
             top: 50%;
             transform: translateY(-50%);
             background: none;
             border: none;
-            color: #c7c7cc;
-            font-size: 16px;
+            color: #a0aec0;
+            font-size: 18px;
             cursor: pointer;
-            padding: 0;
-            width: 20px;
-            height: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            padding: 5px;
+            transition: color 0.3s ease;
+            z-index: 2;
         }
 
+        .password-toggle:hover {
+            color: #667eea;
+        }
+
+        /* زر تسجيل الدخول */
         .login-btn {
             width: 100%;
-            padding: 16px;
-            background: linear-gradient(135deg, #007AFF 0%, #0051D5 100%);
+            padding: 18px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
-            border-radius: 12px;
+            border-radius: 15px;
             font-size: 18px;
-            font-weight: 600;
+            font-weight: 700;
             cursor: pointer;
             transition: all 0.3s ease;
             margin-top: 10px;
-            box-shadow: 0 4px 16px rgba(0, 122, 255, 0.3);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .login-btn:hover::before {
+            left: 100%;
         }
 
         .login-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0, 122, 255, 0.4);
+            box-shadow: 0 15px 35px rgba(102, 126, 234, 0.4);
         }
 
         .login-btn:active {
             transform: translateY(0);
         }
 
-        .forgot-password {
-            margin-top: 24px;
+        .login-btn-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
         }
 
-        .forgot-password a {
-            color: #007AFF;
-            text-decoration: none;
-            font-size: 16px;
-            font-weight: 500;
-        }
-
-        .forgot-password a:hover {
-            text-decoration: underline;
-        }
-
-        .loading-spinner {
+        .spinner {
             display: none;
             width: 20px;
             height: 20px;
-            border: 2px solid transparent;
-            border-top: 2px solid white;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
             border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-left: 10px;
+            animation: spin 0.8s linear infinite;
         }
 
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            to { transform: rotate(360deg); }
         }
 
-        .error-message {
-            background: #fff2f2;
-            border: 1px solid #fecaca;
+        /* رابط نسيت كلمة المرور */
+        .forgot-password {
+            text-align: center;
+            margin-top: 25px;
+        }
+
+        .forgot-password a {
+            color: #667eea;
+            text-decoration: none;
+            font-size: 15px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .forgot-password a:hover {
+            color: #764ba2;
+            text-decoration: underline;
+        }
+
+        /* رسائل التنبيه */
+        .alert-box {
+            padding: 15px 20px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            font-size: 14px;
+            font-weight: 500;
+            display: none;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .alert-error {
+            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+            border: 2px solid #fca5a5;
             color: #dc2626;
-            padding: 12px 16px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            font-size: 14px;
-            display: none;
         }
 
-        .success-message {
-            background: #f0fdf4;
-            border: 1px solid #bbf7d0;
+        .alert-success {
+            background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+            border: 2px solid #86efac;
             color: #16a34a;
-            padding: 12px 16px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            font-size: 14px;
-            display: none;
         }
 
         /* تحسينات الاستجابة */
-        @media (max-width: 414px) {
-            .phone-container {
-                width: 100%;
-                height: 100vh;
-                border-radius: 0;
-                padding: 0;
-            }
-
-            .phone-screen {
-                border-radius: 0;
-            }
-
-            .login-container {
+        @media (max-width: 480px) {
+            .login-card {
                 padding: 40px 30px;
+                border-radius: 25px;
+            }
+
+            .app-logo {
+                width: 80px;
+                height: 80px;
+                font-size: 30px;
+                border-radius: 20px;
+            }
+
+            .app-name {
+                font-size: 28px;
+            }
+
+            .login-title {
+                font-size: 24px;
+            }
+
+            .form-control {
+                padding: 16px 50px 16px 18px;
+                font-size: 15px;
+            }
+
+            .login-btn {
+                padding: 16px;
+                font-size: 16px;
             }
         }
 
-        /* تأثيرات الحركة */
-        .fade-in {
-            animation: fadeIn 0.6s ease-out;
+        /* Decorative elements */
+        .decorative-line {
+            width: 60px;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            margin: 0 auto 30px;
+            border-radius: 2px;
         }
 
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        /* Loading state */
+        .login-btn.loading {
+            pointer-events: none;
+            opacity: 0.8;
         }
 
-        .slide-up {
-            animation: slideUp 0.4s ease-out;
-        }
-
-        @keyframes slideUp {
-            from {
-                transform: translateY(30px);
-                opacity: 0;
-            }
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-
-        /* تحسين التركيز للوصولية */
-        .form-control:focus,
-        .login-btn:focus,
-        .forgot-password a:focus {
-            outline: 2px solid #007AFF;
-            outline-offset: 2px;
+        .login-btn.loading .spinner {
+            display: inline-block;
         }
     </style>
 </head>
 <body>
-    <div class="phone-container fade-in">
-        <div class="phone-screen">
-            <!-- شريط الحالة -->
-            <div class="status-bar">
-                <div class="status-left">
-                    <span class="carrier">Zain</span>
-                    <span>نُظم</span>
-                </div>
-                <div class="status-right">
-                    <i class="fas fa-signal"></i>
-                    <i class="fas fa-wifi"></i>
-                    <i class="fas fa-battery-full"></i>
-                </div>
+    <!-- الخلفية المتحركة -->
+    <div class="animated-gradient"></div>
+    
+    <!-- الأشكال العائمة -->
+    <div class="floating-shapes">
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
+    </div>
+
+    <!-- صفحة تسجيل الدخول -->
+    <div class="login-wrapper">
+        <div class="login-card">
+            <!-- الشعار -->
+            <div class="logo-container">
+                <div class="app-logo">نُظم</div>
+                <h1 class="app-name">نُظم</h1>
+                <p class="app-tagline">نظام إدارة شامل ومتكامل</p>
             </div>
 
-            <!-- محتوى تسجيل الدخول -->
-            <div class="login-container">
-                <div class="app-logo slide-up">
-                    نُظم
-                </div>
+            <div class="decorative-line"></div>
 
-                <h1 class="login-title slide-up">تسجيل الدخول</h1>
-                <p class="login-subtitle slide-up">مرحباً بك! أدخل حسابك للمتابعة</p>
+            <!-- عنوان تسجيل الدخول -->
+            <div class="login-header">
+                <h2 class="login-title">مرحباً بعودتك</h2>
+                <p class="login-subtitle">سجّل دخولك للوصول إلى حسابك</p>
+            </div>
 
-                <!-- رسائل التنبيه -->
-                <div id="error-message" class="error-message"></div>
-                <div id="success-message" class="success-message"></div>
+            <!-- رسائل التنبيه -->
+            <div id="error-alert" class="alert-box alert-error"></div>
+            <div id="success-alert" class="alert-box alert-success"></div>
 
-                <!-- عرض رسائل Flask -->
-                {% with messages = get_flashed_messages(with_categories=true) %}
-                    {% if messages %}
-                        {% for category, message in messages %}
-                            <div class="error-message" style="display: block;">
-                                {{ message }}
-                            </div>
-                        {% endfor %}
-                    {% endif %}
-                {% endwith %}
-
-                <form method="POST" action="{{ url_for('mobile.login') }}" id="loginForm" class="slide-up">
-                    {{ form.hidden_tag() }}
-                    
-                    <div class="form-group">
-                        {{ form.username(class="form-control", id="username", placeholder="اسم المستخدم") }}
-                        {% if form.username.errors %}
-                            <div class="error-message" style="display: block;">
-                                {% for error in form.username.errors %}
-                                    {{ error }}
-                                {% endfor %}
-                            </div>
-                        {% endif %}
-                    </div>
-
-                    <div class="form-group">
-                        <div class="password-container">
-                            {{ form.password(class="form-control", id="password", placeholder="كلمة المرور") }}
-                            <button type="button" class="password-toggle" onclick="togglePassword()">
-                                <i class="fas fa-eye" id="passwordIcon"></i>
-                            </button>
+            <!-- رسائل Flask -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert-box alert-{{ 'error' if category == 'danger' else category }}" style="display: block;">
+                            <i class="fas fa-{{ 'exclamation-circle' if category == 'danger' else 'check-circle' }} me-2"></i>
+                            {{ message }}
                         </div>
-                        {% if form.password.errors %}
-                            <div class="error-message" style="display: block;">
-                                {% for error in form.password.errors %}
-                                    {{ error }}
-                                {% endfor %}
-                            </div>
-                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <!-- نموذج تسجيل الدخول -->
+            <form method="POST" action="{{ url_for('mobile.login') }}" id="loginForm">
+                {{ form.hidden_tag() }}
+                
+                <div class="form-group">
+                    <div class="input-wrapper">
+                        <i class="fas fa-user input-icon"></i>
+                        {{ form.username(class="form-control", id="username", placeholder="اسم المستخدم", autocomplete="username") }}
                     </div>
-
-                    <button type="submit" class="login-btn">
-                        <span id="loginText">تسجيل الدخول</span>
-                        <div class="loading-spinner" id="loadingSpinner"></div>
-                    </button>
-                </form>
-
-                <div class="forgot-password">
-                    <a href="{{ url_for('mobile.forgot_password') if 'mobile.forgot_password' in url_map else '#' }}">نسيت كلمة المرور؟</a>
+                    {% if form.username.errors %}
+                        <div class="alert-box alert-error" style="display: block; margin-top: 10px;">
+                            {% for error in form.username.errors %}
+                                <i class="fas fa-exclamation-circle me-2"></i>{{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
                 </div>
+
+                <div class="form-group">
+                    <div class="input-wrapper">
+                        <i class="fas fa-lock input-icon"></i>
+                        {{ form.password(class="form-control", type="password", id="password", placeholder="كلمة المرور", autocomplete="current-password") }}
+                        <button type="button" class="password-toggle" onclick="togglePassword()">
+                            <i class="fas fa-eye" id="passwordIcon"></i>
+                        </button>
+                    </div>
+                    {% if form.password.errors %}
+                        <div class="alert-box alert-error" style="display: block; margin-top: 10px;">
+                            {% for error in form.password.errors %}
+                                <i class="fas fa-exclamation-circle me-2"></i>{{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <button type="submit" class="login-btn" id="loginBtn">
+                    <div class="login-btn-content">
+                        <span id="loginText">تسجيل الدخول</span>
+                        <div class="spinner"></div>
+                    </div>
+                </button>
+            </form>
+
+            <div class="forgot-password">
+                <a href="{{ url_for('mobile.forgot_password') if 'mobile.forgot_password' in url_map else '#' }}">
+                    <i class="fas fa-key me-1"></i>
+                    نسيت كلمة المرور؟
+                </a>
             </div>
         </div>
     </div>
@@ -399,43 +532,74 @@
             }
         }
 
-        // عرض رسالة خطأ
-        function showError(message) {
-            const errorDiv = document.getElementById('error-message');
-            errorDiv.textContent = message;
-            errorDiv.style.display = 'block';
-            document.getElementById('success-message').style.display = 'none';
-        }
-
-        // عرض رسالة نجاح
-        function showSuccess(message) {
-            const successDiv = document.getElementById('success-message');
-            successDiv.textContent = message;
-            successDiv.style.display = 'block';
-            document.getElementById('error-message').style.display = 'none';
+        // عرض رسائل التنبيه
+        function showAlert(message, type) {
+            const alertId = type === 'error' ? 'error-alert' : 'success-alert';
+            const alertBox = document.getElementById(alertId);
+            const icon = type === 'error' ? 'exclamation-circle' : 'check-circle';
+            
+            alertBox.innerHTML = `<i class="fas fa-${icon} me-2"></i>${message}`;
+            alertBox.style.display = 'block';
+            
+            // إخفاء الرسالة الأخرى
+            const otherAlert = type === 'error' ? 'success-alert' : 'error-alert';
+            document.getElementById(otherAlert).style.display = 'none';
         }
 
         // إخفاء الرسائل
-        function hideMessages() {
-            document.getElementById('error-message').style.display = 'none';
-            document.getElementById('success-message').style.display = 'none';
+        function hideAlerts() {
+            document.getElementById('error-alert').style.display = 'none';
+            document.getElementById('success-alert').style.display = 'none';
         }
 
-        // تحسين تجربة المستخدم - التركيز التلقائي
+        // معالجة إرسال النموذج
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
+            
+            if (!username || !password) {
+                e.preventDefault();
+                showAlert('يرجى إدخال اسم المستخدم وكلمة المرور', 'error');
+                return;
+            }
+            
+            // إظهار حالة التحميل
+            const loginBtn = document.getElementById('loginBtn');
+            loginBtn.classList.add('loading');
+        });
+
+        // التركيز التلقائي على حقل اسم المستخدم
         window.addEventListener('load', function() {
             document.getElementById('username').focus();
         });
 
-        // معالجة الضغط على Enter للانتقال بين الحقول
+        // الانتقال بين الحقول بالضغط على Enter
         document.getElementById('username').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
+                e.preventDefault();
                 document.getElementById('password').focus();
             }
         });
 
-        // إخفاء الرسائل عند الكتابة في الحقول
-        document.getElementById('username').addEventListener('input', hideMessages);
-        document.getElementById('password').addEventListener('input', hideMessages);
+        // إخفاء الرسائل عند الكتابة
+        document.getElementById('username').addEventListener('input', hideAlerts);
+        document.getElementById('password').addEventListener('input', hideAlerts);
+
+        // إخفاء رسائل Flask التلقائية بعد 5 ثوانٍ
+        window.addEventListener('load', function() {
+            const flashMessages = document.querySelectorAll('.alert-box[style*="display: block"]');
+            flashMessages.forEach(function(msg) {
+                if (!msg.id) {
+                    setTimeout(function() {
+                        msg.style.transition = 'opacity 0.5s ease';
+                        msg.style.opacity = '0';
+                        setTimeout(function() {
+                            msg.style.display = 'none';
+                        }, 500);
+                    }, 5000);
+                }
+            });
+        });
     </script>
 </body>
 </html>
