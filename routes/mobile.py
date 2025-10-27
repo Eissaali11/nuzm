@@ -493,8 +493,88 @@ def employee_details(employee_id):
 def edit_employee(employee_id):
     """صفحة تعديل موظف للنسخة المحمولة"""
     employee = Employee.query.get_or_404(employee_id)
-    # يمكن تنفيذ هذه الوظيفة لاحقًا
-    return render_template('mobile/edit_employee.html', employee=employee)
+    
+    # معالجة الـ POST request لحفظ التعديلات
+    if request.method == 'POST':
+        try:
+            # التحقق من عدم تكرار رقم الموظف (إذا تم تغييره)
+            employee_id_value = request.form.get('employee_id')
+            if employee_id_value and employee_id_value != employee.employee_id:
+                existing_employee = Employee.query.filter_by(employee_id=employee_id_value).first()
+                if existing_employee:
+                    flash('رقم الموظف موجود بالفعل، يرجى استخدام رقم آخر', 'danger')
+                    departments = Department.query.order_by(Department.name).all()
+                    nationalities = Nationality.query.order_by(Nationality.name_ar).all()
+                    available_mobile_devices = MobileDevice.query.filter(
+                        (MobileDevice.employee_id == None) | (MobileDevice.employee_id == employee.id)
+                    ).order_by(MobileDevice.device_brand, MobileDevice.device_model).all()
+                    return render_template('mobile/edit_employee.html',
+                                         employee=employee,
+                                         departments=departments,
+                                         nationalities=nationalities,
+                                         available_mobile_devices=available_mobile_devices)
+            
+            # تحديث بيانات الموظف
+            employee.name = request.form.get('name')
+            employee.employee_id = employee_id_value
+            employee.national_id = request.form.get('national_id')
+            employee.mobile = request.form.get('mobile')
+            employee.email = request.form.get('email')
+            employee.job_title = request.form.get('job_title')
+            employee.nationality_id = int(request.form.get('nationality_id')) if request.form.get('nationality_id') else None
+            employee.department_id = int(request.form.get('department_id')) if request.form.get('department_id') else None
+            employee.contract_status = request.form.get('contract_status')
+            employee.license_status = request.form.get('license_status')
+            employee.employee_type = request.form.get('employee_type')
+            employee.status = request.form.get('status', 'active')
+            employee.has_mobile_custody = request.form.get('has_mobile_custody') == 'yes'
+            employee.sponsorship_status = request.form.get('sponsorship_status')
+            employee.residence_details = request.form.get('residence_details')
+            employee.pants_size = request.form.get('pants_size')
+            employee.shirt_size = request.form.get('shirt_size')
+            employee.location = request.form.get('location')
+            employee.project = request.form.get('project')
+            employee.join_date = datetime.strptime(request.form.get('join_date'), '%Y-%m-%d').date() if request.form.get('join_date') else None
+            employee.birth_date = datetime.strptime(request.form.get('birth_date'), '%Y-%m-%d').date() if request.form.get('birth_date') else None
+            employee.basic_salary = float(request.form.get('basic_salary')) if request.form.get('basic_salary') else 0
+            employee.attendance_bonus = float(request.form.get('attendance_bonus')) if request.form.get('attendance_bonus') else 0
+            
+            # تحديث تعيين الجهاز المحمول
+            old_device = MobileDevice.query.filter_by(employee_id=employee.id).first()
+            if old_device:
+                old_device.employee_id = None
+                old_device.assigned_date = None
+                old_device.is_assigned = False
+            
+            if request.form.get('mobile_device_id'):
+                mobile_device = MobileDevice.query.get(int(request.form.get('mobile_device_id')))
+                if mobile_device:
+                    mobile_device.employee_id = employee.id
+                    mobile_device.assigned_date = datetime.now()
+                    mobile_device.is_assigned = True
+            
+            db.session.commit()
+            flash('تم تحديث بيانات الموظف بنجاح', 'success')
+            return redirect(url_for('mobile.employee_details', employee_id=employee.id))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f'حدث خطأ أثناء تحديث الموظف: {str(e)}', 'danger')
+    
+    # جلب البيانات المطلوبة
+    departments = Department.query.order_by(Department.name).all()
+    nationalities = Nationality.query.order_by(Nationality.name_ar).all()
+    
+    # جلب الأجهزة المحمولة المتاحة (غير المخصصة لموظف أو المخصصة للموظف الحالي)
+    available_mobile_devices = MobileDevice.query.filter(
+        (MobileDevice.employee_id == None) | (MobileDevice.employee_id == employee.id)
+    ).order_by(MobileDevice.device_brand, MobileDevice.device_model).all()
+    
+    return render_template('mobile/edit_employee.html',
+                         employee=employee,
+                         departments=departments,
+                         nationalities=nationalities,
+                         available_mobile_devices=available_mobile_devices)
 
 # صفحة الحضور والغياب - النسخة المحمولة
 @mobile_bp.route('/attendance')

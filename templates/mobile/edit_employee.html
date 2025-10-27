@@ -1,0 +1,779 @@
+{% extends 'mobile/layout.html' %}
+
+{% block title %}تعديل بيانات الموظف{% endblock %}
+
+{% block header_title %}تعديل بيانات الموظف{% endblock %}
+
+{% block content %}
+<style>
+    .form-container {
+        padding-bottom: 30px;
+    }
+
+    /* Form Card */
+    .form-card {
+        background: rgba(255, 255, 255, 0.98);
+        backdrop-filter: blur(30px);
+        border-radius: 24px;
+        padding: 24px;
+        margin-bottom: 20px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+    }
+
+    /* Section Headers */
+    .section-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 20px;
+        padding-bottom: 12px;
+        border-bottom: 2px solid #f0f0f0;
+    }
+
+    .section-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        color: white;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .section-icon.primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .section-icon.info {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+
+    .section-icon.work {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+
+    .section-icon.custody {
+        background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+    }
+
+    .section-icon.residence {
+        background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+    }
+
+    .section-icon.sizes {
+        background: linear-gradient(135deg, #30cfd0 0%, #330867 100%);
+    }
+
+    .section-icon.departments {
+        background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+    }
+
+    .section-icon.money {
+        background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+    }
+
+    .section-title {
+        font-size: 17px;
+        font-weight: 700;
+        color: #2d3748;
+        margin: 0;
+    }
+
+    /* Form Groups */
+    .form-group {
+        margin-bottom: 18px;
+    }
+
+    .form-label {
+        font-size: 14px;
+        font-weight: 600;
+        color: #2d3748;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .form-label.required::after {
+        content: '*';
+        color: #ef4444;
+        font-size: 16px;
+    }
+
+    .form-label i {
+        font-size: 13px;
+        color: #667eea;
+        opacity: 0.8;
+    }
+
+    /* Enhanced Inputs */
+    .form-control, .form-select {
+        background: #f8f9fa;
+        border: 2px solid #e9ecef;
+        border-radius: 14px;
+        padding: 13px 16px;
+        font-size: 15px;
+        color: #2d3748;
+        transition: all 0.3s ease;
+        width: 100%;
+    }
+
+    .form-control:focus, .form-select:focus {
+        background: white;
+        border-color: #667eea;
+        box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        outline: none;
+    }
+
+    textarea.form-control {
+        resize: vertical;
+        min-height: 90px;
+    }
+
+    .form-text {
+        font-size: 12px;
+        color: #64748b;
+        margin-top: 6px;
+    }
+
+    /* Two Column Layout */
+    .row {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 18px;
+    }
+
+    .col-6 {
+        flex: 1;
+    }
+
+    /* Checkbox Group */
+    .checkbox-group {
+        background: #f8f9fa;
+        border: 2px solid #e9ecef;
+        border-radius: 14px;
+        padding: 16px;
+        max-height: 200px;
+        overflow-y: auto;
+    }
+
+    .checkbox-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px;
+        margin-bottom: 8px;
+        background: white;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .checkbox-item:hover {
+        background: #f0f4ff;
+    }
+
+    .checkbox-item input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+        accent-color: #667eea;
+    }
+
+    .checkbox-item label {
+        flex: 1;
+        cursor: pointer;
+        margin: 0;
+        font-size: 14px;
+        color: #2d3748;
+    }
+
+    /* Toggle Switch */
+    .toggle-container {
+        background: #f8f9fa;
+        border: 2px solid #e9ecef;
+        border-radius: 14px;
+        padding: 14px 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .toggle-container:hover {
+        background: #f0f4ff;
+        border-color: #667eea;
+    }
+
+    .toggle-label {
+        font-size: 14px;
+        font-weight: 600;
+        color: #2d3748;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .toggle-switch {
+        position: relative;
+        width: 50px;
+        height: 26px;
+        background: #cbd5e0;
+        border-radius: 20px;
+        transition: all 0.3s ease;
+    }
+
+    .toggle-switch::after {
+        content: '';
+        position: absolute;
+        top: 3px;
+        left: 3px;
+        width: 20px;
+        height: 20px;
+        background: white;
+        border-radius: 50%;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    input[type="checkbox"]:checked + .toggle-switch {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    input[type="checkbox"]:checked + .toggle-switch::after {
+        left: 27px;
+    }
+
+    .toggle-checkbox {
+        display: none;
+    }
+
+    /* Hidden Fields */
+    .hidden-field {
+        display: none;
+    }
+
+    .hidden-field.show {
+        display: block;
+        animation: slideDown 0.3s ease;
+    }
+
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Submit Button */
+    .btn-submit {
+        width: 100%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 16px;
+        border-radius: 16px;
+        font-size: 16px;
+        font-weight: 700;
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        margin-top: 30px;
+    }
+
+    .btn-submit:active {
+        transform: translateY(2px);
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+
+    @keyframes glow {
+        0%, 100% {
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+        50% {
+            box-shadow: 0 8px 35px rgba(102, 126, 234, 0.6);
+        }
+    }
+
+    .btn-submit {
+        animation: glow 2.5s ease-in-out infinite;
+    }
+</style>
+
+<form method="POST" enctype="multipart/form-data" action="{{ url_for('mobile.edit_employee', employee_id=employee.id) }}" class="form-container">
+    <!-- المعلومات الأساسية -->
+    <div class="form-card">
+        <div class="section-header">
+            <div class="section-icon primary">
+                <i class="fas fa-user"></i>
+            </div>
+            <h3 class="section-title">المعلومات الأساسية</h3>
+        </div>
+
+        <div class="form-group">
+            <label for="name" class="form-label required">
+                <i class="fas fa-signature"></i>
+                الاسم الكامل
+            </label>
+            <input type="text" class="form-control" id="name" name="name" placeholder="أدخل الاسم الكامل" value="{{ employee.name or '' }}" required>
+        </div>
+
+        <div class="row">
+            <div class="col-6">
+                <div class="form-group">
+                    <label for="employee_id" class="form-label required">
+                        <i class="fas fa-id-card"></i>
+                        رقم الموظف
+                    </label>
+                    <input type="text" class="form-control" id="employee_id" name="employee_id" placeholder="رقم الموظف" value="{{ employee.employee_id or '' }}" required>
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="form-group">
+                    <label for="national_id" class="form-label required">
+                        <i class="fas fa-address-card"></i>
+                        رقم الهوية
+                    </label>
+                    <input type="text" class="form-control" id="national_id" name="national_id" placeholder="رقم الهوية الوطنية" value="{{ employee.national_id or '' }}" required>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- معلومات الاتصال -->
+    <div class="form-card">
+        <div class="section-header">
+            <div class="section-icon info">
+                <i class="fas fa-phone"></i>
+            </div>
+            <h3 class="section-title">معلومات الاتصال</h3>
+        </div>
+
+        <div class="form-group">
+            <label for="mobile" class="form-label required">
+                <i class="fas fa-mobile-alt"></i>
+                رقم الجوال (رئيسي)
+            </label>
+            <input type="tel" class="form-control" id="mobile" name="mobile" placeholder="05xxxxxxxx" value="{{ employee.mobile or '' }}" dir="ltr" required>
+        </div>
+
+        <div class="row">
+            <div class="col-6">
+                <div class="form-group">
+                    <label for="mobilePersonal" class="form-label">
+                        <i class="fas fa-mobile"></i>
+                        جوال شخصي
+                    </label>
+                    <input type="tel" class="form-control" id="mobilePersonal" name="mobilePersonal" placeholder="05xxxxxxxx" value="{{ employee.mobilePersonal or '' }}" dir="ltr">
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="form-group">
+                    <label for="email" class="form-label">
+                        <i class="fas fa-envelope"></i>
+                        البريد الإلكتروني
+                    </label>
+                    <input type="email" class="form-control" id="email" name="email" placeholder="email@example.com" value="{{ employee.email or '' }}" dir="ltr">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- معلومات الوظيفة -->
+    <div class="form-card">
+        <div class="section-header">
+            <div class="section-icon work">
+                <i class="fas fa-briefcase"></i>
+            </div>
+            <h3 class="section-title">معلومات الوظيفة</h3>
+        </div>
+
+        <div class="form-group">
+            <label for="job_title" class="form-label required">
+                <i class="fas fa-user-tie"></i>
+                المسمى الوظيفي
+            </label>
+            <input type="text" class="form-control" id="job_title" name="job_title" placeholder="المسمى الوظيفي" value="{{ employee.job_title or '' }}" required>
+        </div>
+
+        <div class="form-group">
+            <label for="department_id" class="form-label required">
+                <i class="fas fa-building"></i>
+                القسم الرئيسي
+            </label>
+            <select class="form-select" id="department_id" name="department_id" required>
+                <option value="">اختر القسم الرئيسي</option>
+                {% for department in departments %}
+                <option value="{{ department.id }}" {% if employee.department_id == department.id %}selected{% endif %}>{{ department.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="row">
+            <div class="col-6">
+                <div class="form-group">
+                    <label for="nationality_id" class="form-label">
+                        <i class="fas fa-flag"></i>
+                        الجنسية
+                    </label>
+                    <select class="form-select" id="nationality_id" name="nationality_id">
+                        <option value="">اختر الجنسية</option>
+                        {% for nationality in nationalities %}
+                        <option value="{{ nationality.id }}" {% if employee.nationality_id == nationality.id %}selected{% endif %}>{{ nationality.name_ar }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="form-group">
+                    <label for="contract_status" class="form-label">
+                        <i class="fas fa-file-contract"></i>
+                        حالة العقد
+                    </label>
+                    <select class="form-select" id="contract_status" name="contract_status">
+                        <option value="">اختر حالة العقد</option>
+                        <option value="فترة تجريب" {% if employee.contract_status == 'فترة تجريب' %}selected{% endif %}>فترة تجريب</option>
+                        <option value="عقد ساري" {% if employee.contract_status == 'عقد ساري' %}selected{% endif %}>عقد ساري</option>
+                        <option value="عقد منتهي" {% if employee.contract_status == 'عقد منتهي' %}selected{% endif %}>عقد منتهي</option>
+                        <option value="مفصول" {% if employee.contract_status == 'مفصول' %}selected{% endif %}>مفصول</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-6">
+                <div class="form-group">
+                    <label for="license_status" class="form-label">
+                        <i class="fas fa-id-card-alt"></i>
+                        حالة الرخصة
+                    </label>
+                    <select class="form-select" id="license_status" name="license_status">
+                        <option value="">اختر حالة الرخصة</option>
+                        <option value="يمتلك رخصة سارية" {% if employee.license_status == 'يمتلك رخصة سارية' %}selected{% endif %}>يمتلك رخصة سارية</option>
+                        <option value="لا يمتلك رخصة" {% if employee.license_status == 'لا يمتلك رخصة' %}selected{% endif %}>لا يمتلك رخصة</option>
+                        <option value="رخصة منتهية" {% if employee.license_status == 'رخصة منتهية' %}selected{% endif %}>رخصة منتهية</option>
+                    </select>
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="form-group">
+                    <label for="employee_type" class="form-label required">
+                        <i class="fas fa-user-tag"></i>
+                        نوع الموظف
+                    </label>
+                    <select class="form-select" id="employee_type" name="employee_type" required>
+                        <option value="بدون عهدة" {% if employee.employee_type == 'بدون عهدة' %}selected{% endif %}>بدون عهدة</option>
+                        <option value="عهدة موبايل" {% if employee.employee_type == 'عهدة موبايل' %}selected{% endif %}>عهدة موبايل</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="status" class="form-label required">
+                <i class="fas fa-info-circle"></i>
+                الحالة
+            </label>
+            <select class="form-select" id="status" name="status" required>
+                <option value="يعمل" {% if employee.status == 'يعمل' %}selected{% endif %}>✅ يعمل</option>
+                <option value="إجازة" {% if employee.status == 'إجازة' %}selected{% endif %}>🏖️ إجازة</option>
+                <option value="مفصول" {% if employee.status == 'مفصول' %}selected{% endif %}>❌ مفصول</option>
+                <option value="استقالة" {% if employee.status == 'استقالة' %}selected{% endif %}>📤 استقالة</option>
+                <option value="إيقاف" {% if employee.status == 'إيقاف' %}selected{% endif %}>⏸️ إيقاف</option>
+            </select>
+        </div>
+
+        <div class="row">
+            <div class="col-6">
+                <div class="form-group">
+                    <label for="join_date" class="form-label">
+                        <i class="fas fa-calendar-plus"></i>
+                        تاريخ الالتحاق
+                    </label>
+                    <input type="date" class="form-control" id="join_date" name="join_date" value="{{ employee.join_date.strftime('%Y-%m-%d') if employee.join_date else '' }}">
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="form-group">
+                    <label for="birth_date" class="form-label">
+                        <i class="fas fa-birthday-cake"></i>
+                        تاريخ الميلاد
+                    </label>
+                    <input type="date" class="form-control" id="birth_date" name="birth_date" value="{{ employee.birth_date.strftime('%Y-%m-%d') if employee.birth_date else '' }}">
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-6">
+                <div class="form-group">
+                    <label for="location" class="form-label required">
+                        <i class="fas fa-map-marker-alt"></i>
+                        الموقع
+                    </label>
+                    <input type="text" class="form-control" id="location" name="location" placeholder="الموقع" value="{{ employee.location or '' }}" required>
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="form-group">
+                    <label for="project" class="form-label required">
+                        <i class="fas fa-project-diagram"></i>
+                        المشروع
+                    </label>
+                    <input type="text" class="form-control" id="project" name="project" placeholder="المشروع" value="{{ employee.project or '' }}" required>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- عهدة الجوال -->
+    <div class="form-card" id="mobile-custody-section" style="display: none;">
+        <div class="section-header">
+            <div class="section-icon custody">
+                <i class="fas fa-mobile-alt"></i>
+            </div>
+            <h3 class="section-title">عهدة الجوال</h3>
+        </div>
+
+        <div class="form-group">
+            <label for="mobile_device_id" class="form-label">
+                <i class="fas fa-mobile-alt"></i>
+                اختر جهاز محمول من الأجهزة المتاحة
+            </label>
+            <select class="form-select" id="mobile_device_id" name="mobile_device_id">
+                <option value="">اختر جهاز محمول</option>
+                {% for device in available_mobile_devices %}
+                <option value="{{ device.id }}" {% if employee.mobile_device and employee.mobile_device.id == device.id %}selected{% endif %}>
+                    {{ device.device_brand }} {{ device.device_model }} 
+                    {% if device.phone_number %}- {{ device.phone_number }}{% endif %}
+                    {% if device.imei %}- IMEI: {{ device.imei }}{% endif %}
+                </option>
+                {% endfor %}
+            </select>
+            <div class="form-text">
+                <i class="fas fa-info-circle"></i>
+                يتم عرض الأجهزة المتاحة فقط (غير المخصصة لموظفين آخرين)
+            </div>
+        </div>
+    </div>
+
+    <!-- الكفالة والإقامة -->
+    <div class="form-card">
+        <div class="section-header">
+            <div class="section-icon residence">
+                <i class="fas fa-home"></i>
+            </div>
+            <h3 class="section-title">الكفالة والإقامة</h3>
+        </div>
+
+        <div class="form-group">
+            <label for="sponsorship_status" class="form-label">
+                <i class="fas fa-user-shield"></i>
+                حالة الكفالة
+            </label>
+            <select class="form-select" id="sponsorship_status" name="sponsorship_status">
+                <option value="">اختر حالة الكفالة</option>
+                <option value="مكفول من الشركة" {% if employee.sponsorship_status == 'مكفول من الشركة' %}selected{% endif %}>مكفول من الشركة</option>
+                <option value="مكفول من كفيل آخر" {% if employee.sponsorship_status == 'مكفول من كفيل آخر' %}selected{% endif %}>مكفول من كفيل آخر</option>
+                <option value="نقل كفالة" {% if employee.sponsorship_status == 'نقل كفالة' %}selected{% endif %}>نقل كفالة</option>
+            </select>
+        </div>
+
+        <div class="form-group" id="sponsor-name-field" style="display: none;">
+            <label for="current_sponsor_name" class="form-label">
+                <i class="fas fa-user"></i>
+                اسم الكفيل
+            </label>
+            <input type="text" class="form-control" id="current_sponsor_name" name="current_sponsor_name" placeholder="اسم الكفيل أو الشركة">
+        </div>
+
+        <div class="form-group">
+            <label for="residence_details" class="form-label">
+                <i class="fas fa-map-marked-alt"></i>
+                تفاصيل السكن
+            </label>
+            <textarea class="form-control" id="residence_details" name="residence_details" placeholder="العنوان أو وصف موقع السكن">{{ employee.residence_details or '' }}</textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="residence_location_url" class="form-label">
+                <i class="fas fa-map-pin"></i>
+                موقع السكن (Google Maps)
+            </label>
+            <input type="url" class="form-control" id="residence_location_url" name="residence_location_url" placeholder="https://maps.google.com/..." dir="ltr">
+        </div>
+
+        <div class="form-group">
+            <label for="housing_images" class="form-label">
+                <i class="fas fa-images"></i>
+                صور السكن
+            </label>
+            <input type="file" class="form-control" id="housing_images" name="housing_images" accept="image/*,.heic" multiple>
+            <div class="form-text">يمكنك رفع عدة صور (HEIC مدعوم)</div>
+        </div>
+
+        <div class="form-group">
+            <label for="housing_drive_links" class="form-label">
+                <i class="fas fa-link"></i>
+                روابط Google Drive
+            </label>
+            <textarea class="form-control" id="housing_drive_links" name="housing_drive_links" placeholder="https://drive.google.com/...&#10;https://drive.google.com/..."></textarea>
+            <div class="form-text">ضع كل رابط في سطر منفصل</div>
+        </div>
+    </div>
+
+    <!-- مقاسات الملابس -->
+    <div class="form-card">
+        <div class="section-header">
+            <div class="section-icon sizes">
+                <i class="fas fa-tshirt"></i>
+            </div>
+            <h3 class="section-title">مقاسات الملابس</h3>
+        </div>
+
+        <div class="row">
+            <div class="col-6">
+                <div class="form-group">
+                    <label for="pants_size" class="form-label">
+                        <i class="fas fa-ruler"></i>
+                        مقاس البنطال
+                    </label>
+                    <input type="number" class="form-control" id="pants_size" name="pants_size" placeholder="32" value="{{ employee.pants_size or '' }}" min="20" max="60">
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="form-group">
+                    <label for="shirt_size" class="form-label">
+                        <i class="fas fa-tshirt"></i>
+                        مقاس القميص
+                    </label>
+                    <select class="form-select" id="shirt_size" name="shirt_size">
+                        <option value="">اختر المقاس</option>
+                        <option value="XS" {% if employee.shirt_size == 'XS' %}selected{% endif %}>XS</option>
+                        <option value="S" {% if employee.shirt_size == 'S' %}selected{% endif %}>S</option>
+                        <option value="M" {% if employee.shirt_size == 'M' %}selected{% endif %}>M</option>
+                        <option value="L" {% if employee.shirt_size == 'L' %}selected{% endif %}>L</option>
+                        <option value="XL" {% if employee.shirt_size == 'XL' %}selected{% endif %}>XL</option>
+                        <option value="XXL" {% if employee.shirt_size == 'XXL' %}selected{% endif %}>XXL</option>
+                        <option value="XXXL" {% if employee.shirt_size == 'XXXL' %}selected{% endif %}>XXXL</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- الأقسام -->
+    <div class="form-card">
+        <div class="section-header">
+            <div class="section-icon departments">
+                <i class="fas fa-building"></i>
+            </div>
+            <h3 class="section-title">الأقسام</h3>
+        </div>
+
+        <div class="checkbox-group">
+            {% for department in departments %}
+            <div class="checkbox-item">
+                <input type="checkbox" name="department_ids" value="{{ department.id }}" id="dept-{{ department.id }}">
+                <label for="dept-{{ department.id }}">{{ department.name }}</label>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- المعلومات المالية -->
+    <div class="form-card">
+        <div class="section-header">
+            <div class="section-icon money">
+                <i class="fas fa-money-bill-wave"></i>
+            </div>
+            <h3 class="section-title">المعلومات المالية</h3>
+        </div>
+
+        <div class="row">
+            <div class="col-6">
+                <div class="form-group">
+                    <label for="basic_salary" class="form-label required">
+                        <i class="fas fa-dollar-sign"></i>
+                        الراتب الأساسي
+                    </label>
+                    <input type="number" step="0.01" class="form-control" id="basic_salary" name="basic_salary" placeholder="0.00" value="{{ employee.basic_salary or 0 }}" required>
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="form-group">
+                    <label for="attendance_bonus" class="form-label">
+                        <i class="fas fa-gift"></i>
+                        بدل الحضور
+                    </label>
+                    <input type="number" step="0.01" class="form-control" id="attendance_bonus" name="attendance_bonus" placeholder="0.00" value="{{ employee.attendance_bonus or 0 }}">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Submit Button -->
+    <button type="submit" class="btn-submit">
+        <i class="fas fa-save"></i>
+        <span>حفظ التعديلات</span>
+    </button>
+</form>
+
+<script>
+    // Toggle mobile custody section
+    document.getElementById('employee_type').addEventListener('change', function() {
+        const custodySection = document.getElementById('mobile-custody-section');
+        if (this.value === 'عهدة موبايل') {
+            custodySection.style.display = 'block';
+        } else {
+            custodySection.style.display = 'none';
+        }
+    });
+
+    // Toggle sponsor name field
+    document.getElementById('sponsorship_status').addEventListener('change', function() {
+        const sponsorField = document.getElementById('sponsor-name-field');
+        if (this.value === 'مكفول من كفيل آخر') {
+            sponsorField.style.display = 'block';
+        } else {
+            sponsorField.style.display = 'none';
+        }
+    });
+
+    // Form submission
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const submitBtn = document.querySelector('.btn-submit');
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>جاري الحفظ...</span>';
+        submitBtn.disabled = true;
+        submitBtn.style.animation = 'none';
+    });
+
+    // Show mobile custody section if employee type is already set
+    window.addEventListener('DOMContentLoaded', function() {
+        const employeeType = document.getElementById('employee_type').value;
+        const custodySection = document.getElementById('mobile-custody-section');
+        if (employeeType === 'عهدة موبايل') {
+            custodySection.style.display = 'block';
+        }
+        
+        const sponsorshipStatus = document.getElementById('sponsorship_status').value;
+        const sponsorField = document.getElementById('sponsor-name-field');
+        if (sponsorshipStatus === 'مكفول من كفيل آخر') {
+            sponsorField.style.display = 'block';
+        }
+    });
+</script>
+
+{% endblock %}
