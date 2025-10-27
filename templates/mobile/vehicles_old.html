@@ -1,0 +1,771 @@
+{% extends 'mobile/layout.html' %}
+
+{% block title %}إدارة السيارات - نظام نُظم{% endblock %}
+
+{% block header_title %}أسطول السيارات{% endblock %}
+
+{% block content %}
+<style>
+/* شبكة الإحصائيات */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    padding: 0 20px;
+    margin-bottom: 20px;
+}
+
+.stat-card {
+    background: white;
+    padding: 18px 12px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    border: 1px solid #f0f0f5;
+    text-align: center;
+}
+
+.stat-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 10px;
+    font-size: 16px;
+}
+
+.stat-icon.total {
+    background: rgba(74, 144, 226, 0.1);
+    color: #4A90E2;
+}
+
+.stat-icon.active {
+    background: rgba(52, 199, 89, 0.1);
+    color: #34C759;
+}
+
+.stat-icon.maintenance {
+    background: rgba(255, 149, 0, 0.1);
+    color: #FF9500;
+}
+
+.stat-number {
+    font-size: 22px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 4px;
+}
+
+.stat-label {
+    font-size: 12px;
+    color: #8e8e93;
+    font-weight: 500;
+}
+
+/* قسم الإجراءات السريعة */
+.quick-actions-section {
+    padding: 0 20px;
+    margin-bottom: 20px;
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.section-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin: 0;
+}
+
+.section-icon {
+    color: #8e8e93;
+    font-size: 16px;
+}
+
+.actions-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+}
+
+.action-card {
+    background: white;
+    padding: 16px 10px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    border: 1px solid #f0f0f5;
+    text-decoration: none;
+    text-align: center;
+    transition: all 0.2s ease;
+}
+
+.action-card:active {
+    transform: scale(0.95);
+    background: #f8f9fa;
+}
+
+.action-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 8px;
+    font-size: 18px;
+}
+
+.action-icon.documents {
+    background: rgba(74, 144, 226, 0.1);
+    color: #4A90E2;
+}
+
+.action-icon.reports {
+    background: rgba(52, 199, 89, 0.1);
+    color: #34C759;
+}
+
+.action-icon.operations {
+    background: rgba(255, 149, 0, 0.1);
+    color: #FF9500;
+}
+
+.action-label {
+    font-size: 12px;
+    color: #1a1a1a;
+    font-weight: 500;
+    line-height: 1.3;
+}
+
+/* قسم البحث والفلترة */
+.search-section {
+    padding: 0 20px;
+    margin-bottom: 20px;
+}
+
+.search-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    border: 1px solid #f0f0f5;
+    padding: 16px;
+}
+
+.search-input-wrapper {
+    position: relative;
+    margin-bottom: 12px;
+}
+
+.search-input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid #e5e5ea;
+    border-radius: 10px;
+    font-size: 15px;
+    background: white;
+    transition: border-color 0.2s ease;
+    color: #1a1a1a;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: #4A90E2;
+}
+
+.search-input::placeholder {
+    color: #c7c7cc;
+}
+
+.filters-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.filter-select {
+    padding: 10px 12px;
+    border: 1px solid #e5e5ea;
+    border-radius: 10px;
+    font-size: 14px;
+    background: white;
+    color: #1a1a1a;
+    transition: border-color 0.2s ease;
+}
+
+.filter-select:focus {
+    outline: none;
+    border-color: #4A90E2;
+}
+
+.buttons-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.btn-search {
+    background: linear-gradient(135deg, #4A90E2 0%, #357ABD 100%);
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.btn-search:active {
+    transform: scale(0.95);
+}
+
+.btn-reset {
+    background: #f0f0f5;
+    color: #1a1a1a;
+    border: none;
+    padding: 10px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    text-align: center;
+    transition: all 0.2s ease;
+}
+
+.btn-reset:active {
+    transform: scale(0.95);
+    background: #e5e5ea;
+}
+
+/* قائمة المركبات */
+.vehicles-section {
+    padding: 0 20px;
+    margin-bottom: 80px;
+}
+
+.vehicles-list {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    border: 1px solid #f0f0f5;
+    overflow: hidden;
+}
+
+.list-header {
+    padding: 16px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #f0f0f5;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.list-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.list-count {
+    background: #4A90E2;
+    color: white;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.vehicle-item {
+    display: flex;
+    align-items: center;
+    padding: 16px;
+    border-bottom: 1px solid #f0f0f5;
+    text-decoration: none;
+    transition: background 0.2s ease;
+}
+
+.vehicle-item:last-child {
+    border-bottom: none;
+}
+
+.vehicle-item:active {
+    background: #f8f9fa;
+}
+
+.vehicle-icon-wrapper {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: rgba(74, 144, 226, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 12px;
+    flex-shrink: 0;
+}
+
+.vehicle-icon {
+    color: #4A90E2;
+    font-size: 20px;
+}
+
+.vehicle-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.vehicle-plate {
+    font-size: 15px;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-bottom: 4px;
+}
+
+.vehicle-details {
+    font-size: 13px;
+    color: #8e8e93;
+    margin-bottom: 6px;
+}
+
+.vehicle-status-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.vehicle-status {
+    padding: 3px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.vehicle-status.available {
+    background: rgba(52, 199, 89, 0.1);
+    color: #34C759;
+}
+
+.vehicle-status.workshop {
+    background: rgba(255, 149, 0, 0.1);
+    color: #FF9500;
+}
+
+.vehicle-status.inactive {
+    background: rgba(255, 59, 48, 0.1);
+    color: #FF3B30;
+}
+
+.vehicle-driver-info {
+    font-size: 11px;
+    color: #8e8e93;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.vehicle-chevron {
+    color: #c7c7cc;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+/* حالة فارغة */
+.empty-state {
+    background: white;
+    border-radius: 12px;
+    padding: 40px 20px;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    border: 1px solid #f0f0f5;
+}
+
+.empty-icon-wrapper {
+    width: 80px;
+    height: 80px;
+    border-radius: 20px;
+    background: rgba(142, 142, 147, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+}
+
+.empty-icon {
+    color: #8e8e93;
+    font-size: 32px;
+}
+
+.empty-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-bottom: 8px;
+}
+
+.empty-subtitle {
+    font-size: 14px;
+    color: #8e8e93;
+    margin-bottom: 20px;
+    line-height: 1.4;
+}
+
+.btn-add-first {
+    background: linear-gradient(135deg, #4A90E2 0%, #357ABD 100%);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 2px 8px rgba(74, 144, 226, 0.2);
+}
+
+.btn-add-first:active {
+    transform: scale(0.95);
+}
+
+/* زر الإضافة العائم */
+.floating-add-btn {
+    position: fixed;
+    bottom: 90px;
+    left: 20px;
+    width: 56px;
+    height: 56px;
+    background: linear-gradient(135deg, #4A90E2 0%, #357ABD 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 24px;
+    text-decoration: none;
+    box-shadow: 0 4px 16px rgba(74, 144, 226, 0.3);
+    z-index: 1000;
+    transition: all 0.2s ease;
+}
+
+.floating-add-btn:active {
+    transform: scale(0.9);
+}
+
+/* نظام الترقيم */
+.pagination-wrapper {
+    display: flex;
+    justify-content: center;
+    margin: 20px 0;
+}
+
+.pagination-container {
+    display: flex;
+    gap: 6px;
+    background: white;
+    padding: 8px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    border: 1px solid #f0f0f5;
+}
+
+.pagination-item {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    text-decoration: none;
+    color: #1a1a1a;
+    font-size: 14px;
+    font-weight: 500;
+    transition: background 0.2s ease;
+}
+
+.pagination-item:active {
+    background: #f0f0f5;
+}
+
+.pagination-item.active {
+    background: #4A90E2;
+    color: white;
+}
+
+/* تحسينات للشاشات الصغيرة */
+@media (max-width: 375px) {
+    .stats-grid {
+        padding: 0 15px;
+    }
+    
+    .quick-actions-section,
+    .search-section,
+    .vehicles-section {
+        padding: 0 15px;
+    }
+    
+    .stat-number {
+        font-size: 20px;
+    }
+    
+    .stat-label {
+        font-size: 11px;
+    }
+    
+    .action-label {
+        font-size: 11px;
+    }
+}
+</style>
+
+<!-- شبكة الإحصائيات -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon total">
+            <i class="fas fa-car"></i>
+        </div>
+        <div class="stat-number">{{ stats.total or 0 }}</div>
+        <div class="stat-label">إجمالي المركبات</div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon active">
+            <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="stat-number">{{ stats.active or 0 }}</div>
+        <div class="stat-label">متاحة للعمل</div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon maintenance">
+            <i class="fas fa-tools"></i>
+        </div>
+        <div class="stat-number">{{ stats.maintenance or 0 }}</div>
+        <div class="stat-label">قيد الصيانة</div>
+    </div>
+</div>
+
+<!-- قسم الإجراءات السريعة -->
+<div class="quick-actions-section">
+    <div class="section-header">
+        <i class="fas fa-bolt section-icon"></i>
+        <h2 class="section-title">الإجراءات السريعة</h2>
+    </div>
+    
+    <div class="actions-grid">
+        <a href="{{ url_for('mobile.vehicle_documents') }}" class="action-card">
+            <div class="action-icon documents">
+                <i class="fas fa-file-invoice"></i>
+            </div>
+            <div class="action-label">وثائق المركبات</div>
+        </a>
+        
+        <a href="{{ url_for('mobile.report_vehicles') }}" class="action-card">
+            <div class="action-icon reports">
+                <i class="fas fa-chart-bar"></i>
+            </div>
+            <div class="action-label">التقارير</div>
+        </a>
+        
+        {% if current_user.is_authenticated and current_user.role.value == 'admin' %}
+        <a href="{{ url_for('mobile.operations_dashboard') }}" class="action-card">
+            <div class="action-icon operations">
+                <i class="fas fa-cogs"></i>
+            </div>
+            <div class="action-label">إدارة العمليات</div>
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- قسم البحث والفلترة -->
+<div class="search-section">
+    <div class="section-header">
+        <i class="fas fa-search section-icon"></i>
+        <h2 class="section-title">البحث والفلترة</h2>
+    </div>
+    
+    <div class="search-card">
+        <form action="{{ url_for('mobile.vehicles') }}" method="GET">
+            <div class="search-input-wrapper">
+                <input 
+                    type="text" 
+                    name="search" 
+                    class="search-input" 
+                    placeholder="ابحث عن سيارة..." 
+                    value="{{ request.args.get('search', '') }}"
+                >
+            </div>
+            
+            <div class="filters-row">
+                <select name="status" class="filter-select">
+                    <option value="">جميع الحالات</option>
+                    <option value="available" {% if request.args.get('status') == 'available' %}selected{% endif %}>متاحة للعمل</option>
+                    <option value="in_workshop" {% if request.args.get('status') == 'in_workshop' %}selected{% endif %}>في الورشة</option>
+                    <option value="in_project" {% if request.args.get('status') == 'in_project' %}selected{% endif %}>في المشروع</option>
+                    <option value="rented" {% if request.args.get('status') == 'rented' %}selected{% endif %}>مؤجرة</option>
+                    <option value="accident" {% if request.args.get('status') == 'accident' %}selected{% endif %}>حادث</option>
+                </select>
+                
+                <select name="make" class="filter-select">
+                    <option value="">جميع الشركات</option>
+                    {% for make in makes %}
+                    <option value="{{ make }}" {% if request.args.get('make') == make %}selected{% endif %}>{{ make }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="buttons-row">
+                <button type="submit" class="btn-search">
+                    <i class="fas fa-search"></i> بحث
+                </button>
+                
+                {% if request.args.get('search') or request.args.get('status') or request.args.get('make') %}
+                <a href="{{ url_for('mobile.vehicles') }}" class="btn-reset">
+                    <i class="fas fa-redo"></i> إعادة ضبط
+                </a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- قائمة المركبات -->
+<div class="vehicles-section">
+    {% if vehicles %}
+    <div class="section-header">
+        <i class="fas fa-list section-icon"></i>
+        <h2 class="section-title">قائمة المركبات</h2>
+    </div>
+    
+    <div class="vehicles-list">
+        <div class="list-header">
+            <h3 class="list-title">
+                <i class="fas fa-car-side"></i>
+                المركبات
+            </h3>
+            <span class="list-count">{{ vehicles|length }}</span>
+        </div>
+        
+        {% for vehicle in vehicles %}
+        <a href="{{ url_for('mobile.vehicle_details', vehicle_id=vehicle.id) }}" class="vehicle-item">
+            <div class="vehicle-icon-wrapper">
+                {% if vehicle.type == 'car' %}
+                <i class="fas fa-car vehicle-icon"></i>
+                {% elif vehicle.type == 'truck' %}
+                <i class="fas fa-truck vehicle-icon"></i>
+                {% elif vehicle.type == 'bus' %}
+                <i class="fas fa-bus vehicle-icon"></i>
+                {% elif vehicle.type == 'van' %}
+                <i class="fas fa-shuttle-van vehicle-icon"></i>
+                {% else %}
+                <i class="fas fa-car-side vehicle-icon"></i>
+                {% endif %}
+            </div>
+            
+            <div class="vehicle-info">
+                <div class="vehicle-plate">{{ vehicle.plate_number }}</div>
+                <div class="vehicle-details">{{ vehicle.make }} {{ vehicle.model }} {{ vehicle.year }}</div>
+                <div class="vehicle-status-row">
+                    <span class="vehicle-status 
+                        {% if vehicle.status == 'available' %}available
+                        {% elif vehicle.status == 'in_workshop' %}workshop
+                        {% else %}inactive{% endif %}">
+                        {% if vehicle.status == 'available' %}متاحة للعمل
+                        {% elif vehicle.status == 'in_workshop' %}في الورشة
+                        {% elif vehicle.status == 'in_project' %}في المشروع
+                        {% elif vehicle.status == 'rented' %}مؤجرة
+                        {% elif vehicle.status == 'accident' %}حادث
+                        {% else %}{{ vehicle.status }}{% endif %}
+                    </span>
+                    
+                    {% if vehicle.driver %}
+                    <div class="vehicle-driver-info">
+                        <i class="fas fa-user"></i> {{ vehicle.driver }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <i class="fas fa-chevron-left vehicle-chevron"></i>
+        </a>
+        {% endfor %}
+    </div>
+    
+    <!-- ترقيم الصفحات -->
+    {% if pagination and pagination.pages > 1 %}
+    <div class="pagination-wrapper">
+        <div class="pagination-container">
+            {% if pagination.has_prev %}
+            {% set args = {} %}
+            {% for key, value in request.args.items() if key != 'page' %}
+                {% set _ = args.update({key: value}) %}
+            {% endfor %}
+            <a href="{{ url_for('mobile.vehicles', page=pagination.prev_num, **args) }}" class="pagination-item">
+                <i class="fas fa-chevron-right"></i>
+            </a>
+            {% endif %}
+            
+            {% for page in pagination.iter_pages() %}
+                {% if page %}
+                    {% if page != pagination.page %}
+                    {% set args = {} %}
+                    {% for key, value in request.args.items() if key != 'page' %}
+                        {% set _ = args.update({key: value}) %}
+                    {% endfor %}
+                    <a href="{{ url_for('mobile.vehicles', page=page, **args) }}" class="pagination-item">{{ page }}</a>
+                    {% else %}
+                    <span class="pagination-item active">{{ page }}</span>
+                    {% endif %}
+                {% else %}
+                    <span class="pagination-item">...</span>
+                {% endif %}
+            {% endfor %}
+            
+            {% if pagination.has_next %}
+            {% set args = {} %}
+            {% for key, value in request.args.items() if key != 'page' %}
+                {% set _ = args.update({key: value}) %}
+            {% endfor %}
+            <a href="{{ url_for('mobile.vehicles', page=pagination.next_num, **args) }}" class="pagination-item">
+                <i class="fas fa-chevron-left"></i>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+    
+    {% else %}
+    <!-- حالة عدم وجود مركبات -->
+    <div class="empty-state">
+        <div class="empty-icon-wrapper">
+            <i class="fas fa-car empty-icon"></i>
+        </div>
+        <div class="empty-title">لا توجد مركبات</div>
+        <div class="empty-subtitle">لم يتم العثور على أي مركبات في النظام.<br>ابدأ بإضافة أول مركبة لإدارة الأسطول.</div>
+        <a href="{{ url_for('mobile.add_vehicle') }}" class="btn-add-first">
+            <i class="fas fa-plus"></i> إضافة مركبة جديدة
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<!-- زر الإضافة العائم -->
+{% if vehicles %}
+<a href="{{ url_for('mobile.add_vehicle') }}" class="floating-add-btn" title="إضافة مركبة جديدة">
+    <i class="fas fa-plus"></i>
+</a>
+{% endif %}
+
+{% endblock %}
