@@ -719,6 +719,14 @@
             <span>مشاركة عبر الإيميل</span>
         </button>
         
+        {% if operation.operation_type == 'handover' and operation.related_record_id %}
+        <a href="{{ url_for('operations.share_with_outlook', operation_id=operation.id) }}" 
+           class="btn-export" style="background: linear-gradient(135deg, #0078d4, #0063b1); color: white;">
+            <i class="fab fa-microsoft"></i>
+            <span>مشاركة مع Outlook</span>
+        </a>
+        {% endif %}
+        
         {% if operation.status == 'pending' %}
         <hr class="divider">
         <!-- أزرار الإجراءات -->

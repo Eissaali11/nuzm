@@ -735,20 +735,29 @@ class EmailService:
             msg.attach(part1)
             msg.attach(part2)
             
-            # إضافة المرفقات
+            # إضافة المرفقات (فقط إذا كانت موجودة)
+            attachments_added = False
             if excel_file_path and os.path.exists(excel_file_path):
-                with open(excel_file_path, 'rb') as f:
-                    attachment = MIMEApplication(f.read(), _subtype='xlsx')
-                    attachment.add_header('Content-Disposition', 'attachment', 
-                                        filename=f'{operation_type_text}_{vehicle_plate}_details.xlsx')
-                    msg.attach(attachment)
+                try:
+                    with open(excel_file_path, 'rb') as f:
+                        attachment = MIMEApplication(f.read(), _subtype='xlsx')
+                        attachment.add_header('Content-Disposition', 'attachment', 
+                                            filename=f'{operation_type_text}_{vehicle_plate}_details.xlsx')
+                        msg.attach(attachment)
+                        attachments_added = True
+                except Exception as e:
+                    current_app.logger.warning(f"فشل في إرفاق ملف Excel: {str(e)}")
             
             if pdf_file_path and os.path.exists(pdf_file_path):
-                with open(pdf_file_path, 'rb') as f:
-                    attachment = MIMEApplication(f.read(), _subtype='pdf')
-                    attachment.add_header('Content-Disposition', 'attachment',
-                                        filename=f'{operation_type_text}_{vehicle_plate}_document.pdf')
-                    msg.attach(attachment)
+                try:
+                    with open(pdf_file_path, 'rb') as f:
+                        attachment = MIMEApplication(f.read(), _subtype='pdf')
+                        attachment.add_header('Content-Disposition', 'attachment',
+                                            filename=f'{operation_type_text}_{vehicle_plate}_document.pdf')
+                        msg.attach(attachment)
+                        attachments_added = True
+                except Exception as e:
+                    current_app.logger.warning(f"فشل في إرفاق ملف PDF: {str(e)}")
             
             # تحويل الرسالة إلى BytesIO
             eml_bytes = io.BytesIO()
