@@ -4,12 +4,6 @@
 
 {% block header_title %}الموظفون{% endblock %}
 
-{% block header_actions %}
-<button class="mobile-menu-button" aria-label="إضافة" onclick="location.href='{{ url_for('mobile.add_employee') }}'">
-    <i class="fas fa-plus"></i>
-</button>
-{% endblock %}
-
 {% block content %}
 <style>
     /* Search Card */
@@ -386,6 +380,45 @@
     .employee-card:nth-child(3) { animation-delay: 0.15s; }
     .employee-card:nth-child(4) { animation-delay: 0.2s; }
     .employee-card:nth-child(5) { animation-delay: 0.25s; }
+
+    /* Floating Action Button */
+    .fab-add {
+        position: fixed;
+        bottom: 90px;
+        left: 20px;
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        box-shadow: 0 8px 32px rgba(102, 126, 234, 0.5);
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 999;
+    }
+
+    .fab-add:active {
+        transform: scale(0.9);
+        box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    @keyframes fab-pulse {
+        0%, 100% {
+            box-shadow: 0 8px 32px rgba(102, 126, 234, 0.5);
+        }
+        50% {
+            box-shadow: 0 8px 40px rgba(102, 126, 234, 0.7);
+        }
+    }
+
+    .fab-add {
+        animation: fab-pulse 2s ease-in-out infinite;
+    }
 </style>
 
 <!-- Search Card -->
@@ -517,5 +550,10 @@
     </div>
 </div>
 {% endif %}
+
+<!-- Floating Action Button -->
+<button class="fab-add" onclick="window.location.href='{{ url_for('mobile.add_employee') }}'" aria-label="إضافة موظف جديد">
+    <i class="fas fa-plus"></i>
+</button>
 
 {% endblock %}
