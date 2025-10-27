@@ -570,11 +570,11 @@
         </div>
         <div class="card-content">
             <div style="padding: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                <a href="{{ url_for('documents.export_employee_documents_pdf', employee_id=employee.id) }}" style="background: linear-gradient(135deg, #FF3B30 0%, #dc2626 100%); color: white; padding: 14px; border-radius: 12px; text-decoration: none; text-align: center; font-weight: 600; font-size: 14px; box-shadow: 0 2px 8px rgba(255, 59, 48, 0.2); display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <a href="{{ url_for('employees.basic_report', id=employee.id) }}" style="background: linear-gradient(135deg, #FF3B30 0%, #dc2626 100%); color: white; padding: 14px; border-radius: 12px; text-decoration: none; text-align: center; font-weight: 600; font-size: 14px; box-shadow: 0 2px 8px rgba(255, 59, 48, 0.2); display: flex; align-items: center; justify-content: center; gap: 8px;">
                     <i class="fas fa-file-pdf"></i>
                     <span>تصدير PDF</span>
                 </a>
-                <a href="{{ url_for('documents.export_employee_documents_excel', employee_id=employee.id) }}" style="background: linear-gradient(135deg, #34C759 0%, #28a745 100%); color: white; padding: 14px; border-radius: 12px; text-decoration: none; text-align: center; font-weight: 600; font-size: 14px; box-shadow: 0 2px 8px rgba(52, 199, 89, 0.2); display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <a href="{{ url_for('employees.comprehensive_report_excel', id=employee.id) }}" style="background: linear-gradient(135deg, #34C759 0%, #28a745 100%); color: white; padding: 14px; border-radius: 12px; text-decoration: none; text-align: center; font-weight: 600; font-size: 14px; box-shadow: 0 2px 8px rgba(52, 199, 89, 0.2); display: flex; align-items: center; justify-content: center; gap: 8px;">
                     <i class="fas fa-file-excel"></i>
                     <span>تصدير Excel</span>
                 </a>
@@ -850,7 +850,7 @@
         </div>
     </a>
     
-    <a href="{{ url_for('documents.export_employee_documents_pdf', employee_id=employee.id) }}" class="action-menu-item">
+    <a href="{{ url_for('employees.basic_report', id=employee.id) }}" class="action-menu-item">
         <div class="action-menu-icon pdf">
             <i class="fas fa-file-pdf"></i>
         </div>
@@ -860,7 +860,7 @@
         </div>
     </a>
     
-    <a href="{{ url_for('documents.export_employee_documents_excel', employee_id=employee.id) }}" class="action-menu-item">
+    <a href="{{ url_for('employees.comprehensive_report_excel', id=employee.id) }}" class="action-menu-item">
         <div class="action-menu-icon excel">
             <i class="fas fa-file-excel"></i>
         </div>
