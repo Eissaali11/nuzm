@@ -7,6 +7,12 @@ import mimetypes
 from flask import current_app
 import requests
 import json
+from email.message import EmailMessage
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.application import MIMEApplication
+from email.utils import formataddr
+import io
 
 class EmailService:
     def __init__(self):
@@ -586,3 +592,176 @@ class EmailService:
                 "success": False,
                 "message": f"فشل في إرسال الإيميل: {str(e)}"
             }
+    
+    def build_handover_eml(self, to_email, to_name, handover_record, vehicle_plate, driver_name, excel_file_path=None, pdf_file_path=None, sender_email=None):
+        """
+        إنشاء ملف .eml لعملية تسليم/استلام يمكن فتحه في Outlook
+        يتضمن الموضوع، المحتوى، والمرفقات
+        
+        Returns:
+            tuple: (bytes_io, filename) أو (None, None) في حالة الخطأ
+        """
+        try:
+            # استخدام البريد الإلكتروني من الاتصال إذا لم يتم تحديد واحد
+            if sender_email is None:
+                sender_email = self.from_email or "noreply@nuzum.local"
+            
+            # تحديد نوع العملية
+            operation_type_text = "تسليم" if handover_record.is_driver_receiving else "استلام"
+            
+            # إنشاء الموضوع
+            subject = f"عملية {operation_type_text}"
+            
+            # إنشاء محتوى HTML
+            html_content = f"""
+            <!DOCTYPE html>
+            <html dir="rtl" lang="ar">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>عملية {operation_type_text}</title>
+                <style>
+                    body {{
+                        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                        direction: rtl;
+                        text-align: right;
+                        background-color: #f8f9fa;
+                        margin: 0;
+                        padding: 20px;
+                    }}
+                    .container {{
+                        max-width: 500px;
+                        margin: 0 auto;
+                        background: white;
+                        border-radius: 12px;
+                        overflow: hidden;
+                        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+                    }}
+                    .header {{
+                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                        color: white;
+                        padding: 25px;
+                        text-align: center;
+                    }}
+                    .header h1 {{
+                        margin: 0;
+                        font-size: 24px;
+                    }}
+                    .content {{
+                        padding: 30px;
+                    }}
+                    .message {{
+                        background: #d4edda;
+                        border: 2px solid #28a745;
+                        border-radius: 8px;
+                        padding: 25px;
+                        text-align: center;
+                        margin-bottom: 20px;
+                    }}
+                    .icon {{
+                        font-size: 48px;
+                        margin-bottom: 15px;
+                    }}
+                    .message p {{
+                        color: #155724;
+                        margin: 0;
+                        font-size: 18px;
+                        line-height: 1.8;
+                        font-weight: 500;
+                    }}
+                    .vehicle-plate {{
+                        background: linear-gradient(135deg, #667eea, #764ba2);
+                        color: white;
+                        padding: 6px 14px;
+                        border-radius: 5px;
+                        font-weight: bold;
+                        display: inline-block;
+                        margin: 0 5px;
+                    }}
+                    .footer {{
+                        background: #f8f9fa;
+                        padding: 15px;
+                        text-align: center;
+                        color: #6c757d;
+                        font-size: 13px;
+                        border-top: 1px solid #e9ecef;
+                    }}
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="header">
+                        <h1>نظام نُظم</h1>
+                    </div>
+                    
+                    <div class="content">
+                        <div class="message">
+                            <div class="icon">✓</div>
+                            <p>تمت عملية {operation_type_text} <span class="vehicle-plate">{vehicle_plate}</span> - {driver_name or 'غير محدد'} بنجاح.<br><br>
+                            يرجى مراجعة التفاصيل في المرفقات.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="footer">
+                        <p>نظام نُظم لإدارة الموظفين والمركبات</p>
+                    </div>
+                </div>
+            </body>
+            </html>
+            """
+            
+            # النص البديل
+            text_content = f"""
+نظام نُظم
+
+تمت عملية {operation_type_text} {vehicle_plate} - {driver_name or 'غير محدد'} بنجاح.
+
+يرجى مراجعة التفاصيل في المرفقات.
+
+---
+نظام نُظم لإدارة الموظفين والمركبات
+            """
+            
+            # إنشاء رسالة البريد الإلكتروني
+            msg = MIMEMultipart('alternative')
+            msg['Subject'] = subject
+            msg['From'] = formataddr(("نظام نُظم", sender_email))
+            msg['To'] = formataddr((to_name, to_email))
+            
+            # إضافة المحتوى النصي والـ HTML
+            part1 = MIMEText(text_content, 'plain', 'utf-8')
+            part2 = MIMEText(html_content, 'html', 'utf-8')
+            
+            msg.attach(part1)
+            msg.attach(part2)
+            
+            # إضافة المرفقات
+            if excel_file_path and os.path.exists(excel_file_path):
+                with open(excel_file_path, 'rb') as f:
+                    attachment = MIMEApplication(f.read(), _subtype='xlsx')
+                    attachment.add_header('Content-Disposition', 'attachment', 
+                                        filename=f'{operation_type_text}_{vehicle_plate}_details.xlsx')
+                    msg.attach(attachment)
+            
+            if pdf_file_path and os.path.exists(pdf_file_path):
+                with open(pdf_file_path, 'rb') as f:
+                    attachment = MIMEApplication(f.read(), _subtype='pdf')
+                    attachment.add_header('Content-Disposition', 'attachment',
+                                        filename=f'{operation_type_text}_{vehicle_plate}_document.pdf')
+                    msg.attach(attachment)
+            
+            # تحويل الرسالة إلى BytesIO
+            eml_bytes = io.BytesIO()
+            eml_bytes.write(msg.as_bytes())
+            eml_bytes.seek(0)
+            
+            # اسم الملف
+            filename = f'{operation_type_text}_{vehicle_plate}.eml'
+            
+            current_app.logger.info(f"تم إنشاء ملف .eml لعملية {operation_type_text} - {vehicle_plate}")
+            
+            return eml_bytes, filename
+            
+        except Exception as e:
+            current_app.logger.error(f"خطأ في إنشاء ملف .eml: {str(e)}")
+            return None, None
