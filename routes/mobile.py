@@ -538,6 +538,9 @@ def edit_employee(employee_id):
             employee.birth_date = datetime.strptime(request.form.get('birth_date'), '%Y-%m-%d').date() if request.form.get('birth_date') else None
             employee.basic_salary = float(request.form.get('basic_salary')) if request.form.get('basic_salary') else 0
             employee.attendance_bonus = float(request.form.get('attendance_bonus')) if request.form.get('attendance_bonus') else 0
+            employee.residence_location_url = request.form.get('residence_location_url')
+            employee.housing_drive_links = request.form.get('housing_drive_links')
+            employee.current_sponsor_name = request.form.get('current_sponsor_name')
             
             # تحديث تعيين الجهاز المحمول
             old_device = MobileDevice.query.filter_by(employee_id=employee.id).first()
