@@ -1840,6 +1840,7 @@ def vehicles():
     # استخدام نفس البيانات الموجودة في قاعدة البيانات
     status_filter = request.args.get('status', '')
     make_filter = request.args.get('make', '')
+    type_filter = request.args.get('type', '')
     search_filter = request.args.get('search', '')
     page = request.args.get('page', 1, type=int)
     per_page = 10  # عدد السيارات في الصفحة الواحدة
@@ -1854,6 +1855,10 @@ def vehicles():
     # إضافة التصفية حسب الشركة المصنعة إذا تم تحديدها
     if make_filter:
         query = query.filter(Vehicle.make == make_filter)
+    
+    # إضافة التصفية حسب النوع إذا تم تحديده
+    if type_filter:
+        query = query.filter(Vehicle.type_of_car == type_filter)
 
     # إضافة التصفية حسب البحث
     if search_filter:

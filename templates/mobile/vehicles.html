@@ -506,9 +506,12 @@ body {
         <div class="filters-grid">
             <select name="status" class="filter-select-modern">
                 <option value="">جميع الحالات</option>
-                <option value="active" {% if request.args.get('status') == 'active' %}selected{% endif %}>نشط</option>
-                <option value="maintenance" {% if request.args.get('status') == 'maintenance' %}selected{% endif %}>صيانة</option>
-                <option value="inactive" {% if request.args.get('status') == 'inactive' %}selected{% endif %}>غير نشط</option>
+                <option value="available" {% if request.args.get('status') == 'available' %}selected{% endif %}>متاح</option>
+                <option value="in_use" {% if request.args.get('status') == 'in_use' %}selected{% endif %}>قيد الاستخدام</option>
+                <option value="in_workshop" {% if request.args.get('status') == 'in_workshop' %}selected{% endif %}>في الورشة</option>
+                <option value="in_project" {% if request.args.get('status') == 'in_project' %}selected{% endif %}>في مشروع</option>
+                <option value="accident" {% if request.args.get('status') == 'accident' %}selected{% endif %}>حادث</option>
+                <option value="rented" {% if request.args.get('status') == 'rented' %}selected{% endif %}>مؤجر</option>
             </select>
             
             <select name="type" class="filter-select-modern">
@@ -566,13 +569,24 @@ body {
             </div>
             
             <div class="vehicle-status-row">
-                <span class="status-badge {{ vehicle.status }}">
-                    {% if vehicle.status == 'active' %}
-                    <i class="fas fa-check-circle"></i> نشط
-                    {% elif vehicle.status == 'maintenance' %}
-                    <i class="fas fa-tools"></i> صيانة
+                <span class="status-badge 
+                    {% if vehicle.status == 'available' or vehicle.status == 'in_use' %}active
+                    {% elif vehicle.status == 'in_workshop' %}maintenance
+                    {% else %}inactive{% endif %}">
+                    {% if vehicle.status == 'available' %}
+                    <i class="fas fa-check-circle"></i> متاح
+                    {% elif vehicle.status == 'in_use' %}
+                    <i class="fas fa-car"></i> قيد الاستخدام
+                    {% elif vehicle.status == 'in_workshop' %}
+                    <i class="fas fa-tools"></i> في الورشة
+                    {% elif vehicle.status == 'in_project' %}
+                    <i class="fas fa-project-diagram"></i> في مشروع
+                    {% elif vehicle.status == 'accident' %}
+                    <i class="fas fa-exclamation-triangle"></i> حادث
+                    {% elif vehicle.status == 'rented' %}
+                    <i class="fas fa-handshake"></i> مؤجر
                     {% else %}
-                    <i class="fas fa-times-circle"></i> غير نشط
+                    <i class="fas fa-times-circle"></i> {{ vehicle.status }}
                     {% endif %}
                 </span>
                 
