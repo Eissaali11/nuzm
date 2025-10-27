@@ -9,21 +9,15 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "/static/mobile/img/app-icon.svg",
-      "sizes": "120x120",
-      "type": "image/svg+xml",
+      "src": "/static/mobile/images/app-icon.png",
+      "sizes": "192x192",
+      "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/static/mobile/img/app-icon-192.svg",
-      "sizes": "192x192",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/static/mobile/img/app-icon-512.svg",
+      "src": "/static/mobile/images/app-icon.png",
       "sizes": "512x512",
-      "type": "image/svg+xml",
+      "type": "image/png",
       "purpose": "any maskable"
     }
   ],
