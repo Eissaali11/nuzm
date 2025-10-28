@@ -592,4 +592,42 @@
     <i class="fas fa-plus"></i>
 </button>
 
+<script>
+// البحث الحي - Live Search
+(function() {
+    const searchInput = document.querySelector('input[name="search"]');
+    const departmentSelect = document.querySelector('select[name="department_id"]');
+    const searchForm = document.querySelector('.search-card form');
+    let searchTimeout;
+    
+    // دالة لإرسال النموذج
+    function submitSearch() {
+        searchForm.submit();
+    }
+    
+    // مستمع للكتابة في حقل البحث مع تأخير (debouncing)
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(submitSearch, 500); // الانتظار 500ms بعد توقف الكتابة
+        });
+    }
+    
+    // إرسال فوري عند تغيير القسم
+    if (departmentSelect) {
+        departmentSelect.addEventListener('change', function() {
+            clearTimeout(searchTimeout); // إلغاء أي بحث معلق
+            submitSearch();
+        });
+    }
+    
+    // منع إرسال النموذج مرتين عند الضغط على زر البحث
+    if (searchForm) {
+        searchForm.addEventListener('submit', function() {
+            clearTimeout(searchTimeout);
+        });
+    }
+})();
+</script>
+
 {% endblock %}
