@@ -705,8 +705,9 @@
                     {% set housing_images_list = employee.housing_images.split(',') %}
                     {% for image in housing_images_list %}
                     {% if image.strip() %}
-                    <div style="position: relative; border-radius: 12px; overflow: hidden; aspect-ratio: 1; cursor: pointer; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);" onclick="openImageModal('{{ url_for('static', filename=image.strip()) }}')">
-                        <img src="{{ url_for('static', filename=image.strip()) }}" 
+                    {% set image_path = '/' + image.strip() %}
+                    <div style="position: relative; border-radius: 12px; overflow: hidden; aspect-ratio: 1; cursor: pointer; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);" onclick="openImageModal('{{ image_path }}')">
+                        <img src="{{ image_path }}" 
                              alt="صورة السكن" 
                              style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease;">
                         <div style="position: absolute; top: 8px; right: 8px; background: rgba(0, 0, 0, 0.6); color: white; padding: 4px 8px; border-radius: 8px; font-size: 11px;">
