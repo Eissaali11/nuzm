@@ -1,0 +1,1160 @@
+{% extends 'mobile/layout.html' %}
+
+{% block title %}{{ employee.name }} - نظام إدارة الموظفين{% endblock %}
+
+{% block header_title %}تفاصيل الموظف{% endblock %}
+
+{% block header_actions %}
+<button class="mobile-menu-button" aria-label="قائمة" onclick="toggleActionMenu()">
+    <i class="fas fa-ellipsis-v"></i>
+</button>
+{% endblock %}
+
+{% block content %}
+<style>
+/* بطاقة الملف الشخصي */
+.profile-banner {
+    background: linear-gradient(135deg, #4A90E2 0%, #357ABD 100%);
+    border-radius: 0 0 24px 24px;
+    padding: 30px 20px 40px;
+    margin: -20px -20px 20px -20px;
+    position: relative;
+    text-align: center;
+}
+
+.profile-avatar-wrapper {
+    width: 100px;
+    height: 100px;
+    margin: 0 auto 15px;
+    position: relative;
+}
+
+.profile-avatar {
+    width: 100%;
+    height: 100%;
+    background: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    border: 4px solid white;
+}
+
+.profile-avatar i {
+    font-size: 40px;
+    color: #8e8e93;
+}
+
+.profile-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.profile-name {
+    font-size: 24px;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 5px;
+}
+
+.profile-job-title {
+    font-size: 15px;
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 0;
+}
+
+/* البطاقات */
+.info-cards-wrapper {
+    padding: 0 20px;
+    margin-bottom: 80px;
+}
+
+.info-card {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    border: 1px solid #f0f0f5;
+    margin-bottom: 16px;
+    overflow: hidden;
+}
+
+.card-header {
+    padding: 16px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    border-bottom: 1px solid #f0f0f5;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.card-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+}
+
+.card-icon.primary {
+    background: rgba(74, 144, 226, 0.1);
+    color: #4A90E2;
+}
+
+.card-icon.success {
+    background: rgba(52, 199, 89, 0.1);
+    color: #34C759;
+}
+
+.card-icon.warning {
+    background: rgba(255, 149, 0, 0.1);
+    color: #FF9500;
+}
+
+.card-icon.danger {
+    background: rgba(255, 59, 48, 0.1);
+    color: #FF3B30;
+}
+
+.card-icon.info {
+    background: rgba(0, 122, 255, 0.1);
+    color: #007AFF;
+}
+
+.card-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin: 0;
+    flex: 1;
+}
+
+.card-content {
+    padding: 0;
+}
+
+.info-item {
+    display: flex;
+    align-items: flex-start;
+    padding: 14px 16px;
+    border-bottom: 1px solid #f0f0f5;
+}
+
+.info-item:last-child {
+    border-bottom: none;
+}
+
+.info-label {
+    font-size: 13px;
+    color: #8e8e93;
+    font-weight: 500;
+    flex: 0 0 110px;
+}
+
+.info-value {
+    font-size: 14px;
+    color: #1a1a1a;
+    font-weight: 500;
+    flex: 1;
+    word-break: break-word;
+}
+
+.info-value a {
+    color: #4A90E2;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.info-value a:active {
+    opacity: 0.7;
+}
+
+.status-badge {
+    padding: 4px 10px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 500;
+    display: inline-block;
+}
+
+.status-badge.active {
+    background: rgba(52, 199, 89, 0.1);
+    color: #34C759;
+}
+
+.status-badge.inactive {
+    background: rgba(255, 59, 48, 0.1);
+    color: #FF3B30;
+}
+
+/* صورة الهوية */
+.id-image-container {
+    padding: 16px;
+}
+
+.id-image {
+    width: 100%;
+    border-radius: 12px;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease;
+}
+
+.id-image:active {
+    transform: scale(0.98);
+}
+
+/* سجلات الحضور */
+.attendance-record {
+    padding: 14px 16px;
+    border-bottom: 1px solid #f0f0f5;
+}
+
+.attendance-record:last-child {
+    border-bottom: none;
+}
+
+.record-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.record-date {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1a1a1a;
+}
+
+.attendance-status {
+    padding: 3px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.attendance-status.present {
+    background: rgba(52, 199, 89, 0.1);
+    color: #34C759;
+}
+
+.attendance-status.absent {
+    background: rgba(255, 59, 48, 0.1);
+    color: #FF3B30;
+}
+
+.attendance-status.leave {
+    background: rgba(74, 144, 226, 0.1);
+    color: #4A90E2;
+}
+
+.record-times {
+    display: flex;
+    gap: 16px;
+    font-size: 12px;
+    color: #8e8e93;
+}
+
+.record-time {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* معلومات الراتب */
+.salary-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 16px;
+    border-bottom: 1px solid #f0f0f5;
+}
+
+.salary-item:last-child {
+    border-bottom: none;
+}
+
+.salary-item.total {
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    font-weight: 700;
+}
+
+.salary-label {
+    font-size: 14px;
+    color: #8e8e93;
+    font-weight: 500;
+}
+
+.salary-item.total .salary-label {
+    color: #1a1a1a;
+    font-size: 15px;
+}
+
+.salary-value {
+    font-size: 15px;
+    font-weight: 600;
+    color: #1a1a1a;
+}
+
+.salary-item.total .salary-value {
+    font-size: 18px;
+    color: #4A90E2;
+}
+
+/* الوثائق */
+.document-item {
+    padding: 14px 16px;
+    border-bottom: 1px solid #f0f0f5;
+}
+
+.document-item:last-child {
+    border-bottom: none;
+}
+
+.document-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-bottom: 6px;
+}
+
+.document-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    font-size: 12px;
+    color: #8e8e93;
+    align-items: center;
+}
+
+.document-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.doc-status {
+    padding: 3px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.doc-status.valid {
+    background: rgba(52, 199, 89, 0.1);
+    color: #34C759;
+}
+
+.doc-status.expired {
+    background: rgba(255, 59, 48, 0.1);
+    color: #FF3B30;
+}
+
+.doc-status.expiring {
+    background: rgba(255, 149, 0, 0.1);
+    color: #FF9500;
+}
+
+.doc-status.undefined {
+    background: rgba(142, 142, 147, 0.1);
+    color: #8e8e93;
+}
+
+/* حالة فارغة */
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.empty-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: rgba(142, 142, 147, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 12px;
+}
+
+.empty-icon i {
+    font-size: 24px;
+    color: #8e8e93;
+}
+
+.empty-text {
+    font-size: 14px;
+    color: #8e8e93;
+}
+
+/* قائمة الإجراءات العائمة */
+.action-menu-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 9998;
+}
+
+.action-menu-overlay.active {
+    display: block;
+}
+
+.action-menu {
+    position: fixed;
+    bottom: -400px;
+    left: 0;
+    right: 0;
+    background: white;
+    border-radius: 24px 24px 0 0;
+    padding: 20px;
+    z-index: 9999;
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.1);
+    transition: bottom 0.3s ease;
+}
+
+.action-menu.active {
+    bottom: 0;
+}
+
+.action-menu-header {
+    text-align: center;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #f0f0f5;
+    margin-bottom: 16px;
+}
+
+.action-menu-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin: 0;
+}
+
+.action-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px;
+    border-radius: 12px;
+    margin-bottom: 8px;
+    text-decoration: none;
+    transition: background 0.2s ease;
+}
+
+.action-menu-item:active {
+    background: #f0f0f5;
+}
+
+.action-menu-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+}
+
+.action-menu-icon.edit {
+    background: rgba(74, 144, 226, 0.1);
+    color: #4A90E2;
+}
+
+.action-menu-icon.pdf {
+    background: rgba(255, 59, 48, 0.1);
+    color: #FF3B30;
+}
+
+.action-menu-icon.excel {
+    background: rgba(52, 199, 89, 0.1);
+    color: #34C759;
+}
+
+.action-menu-icon.back {
+    background: rgba(142, 142, 147, 0.1);
+    color: #8e8e93;
+}
+
+.action-menu-text {
+    flex: 1;
+}
+
+.action-menu-label {
+    font-size: 15px;
+    font-weight: 500;
+    color: #1a1a1a;
+    display: block;
+    margin-bottom: 2px;
+}
+
+.action-menu-desc {
+    font-size: 12px;
+    color: #8e8e93;
+}
+
+/* Modal الصورة */
+.image-modal {
+    display: none;
+    position: fixed;
+    z-index: 10000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.95);
+}
+
+.modal-close {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    z-index: 10001;
+}
+
+.modal-image {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    max-width: 90%;
+    max-height: 90%;
+    border-radius: 8px;
+}
+
+/* نظام التابات */
+.tabs-container {
+    background: white;
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+    position: sticky;
+    top: 60px;
+    z-index: 100;
+    margin: 0 -20px;
+    padding: 12px 20px 0;
+}
+
+.tabs-wrapper {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 12px;
+    scrollbar-width: none;
+}
+
+.tabs-wrapper::-webkit-scrollbar {
+    display: none;
+}
+
+.tab-button {
+    flex: 0 0 auto;
+    padding: 10px 20px;
+    background: #f5f5f7;
+    color: #8e8e93;
+    border: none;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.tab-button.active {
+    background: linear-gradient(135deg, #4A90E2 0%, #357ABD 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(74, 144, 226, 0.3);
+}
+
+.tab-button i {
+    font-size: 12px;
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+</style>
+
+<!-- بطاقة الملف الشخصي -->
+<div class="profile-banner">
+    <div class="profile-avatar-wrapper">
+        <div class="profile-avatar">
+            {% if employee.profile_image %}
+            <img src="{{ url_for('static', filename=employee.profile_image) }}" alt="{{ employee.name }}" class="profile-img">
+            {% else %}
+            <i class="fas fa-user"></i>
+            {% endif %}
+        </div>
+    </div>
+    <div class="info-card">
+        <div class="card-header">
+            <div class="card-icon info">
+                <i class="fas fa-download"></i>
+            </div>
+            <h2 class="card-title">تصدير البيانات</h2>
+        </div>
+        <div class="card-content">
+            <div style="padding: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <a href="{{ url_for('employees.basic_report', id=employee.id) }}" style="background: linear-gradient(135deg, #FF3B30 0%, #dc2626 100%); color: white; padding: 14px; border-radius: 12px; text-decoration: none; text-align: center; font-weight: 600; font-size: 14px; box-shadow: 0 2px 8px rgba(255, 59, 48, 0.2); display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <i class="fas fa-file-pdf"></i>
+                    <span>تصدير PDF</span>
+                </a>
+                <a href="{{ url_for('employees.comprehensive_report_excel', id=employee.id) }}" style="background: linear-gradient(135deg, #34C759 0%, #28a745 100%); color: white; padding: 14px; border-radius: 12px; text-decoration: none; text-align: center; font-weight: 600; font-size: 14px; box-shadow: 0 2px 8px rgba(52, 199, 89, 0.2); display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <i class="fas fa-file-excel"></i>
+                    <span>تصدير Excel</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- بطاقة المعلومات الأساسية -->
+    <div class="info-card">
+        <div class="card-header">
+            <div class="card-icon primary">
+                <i class="fas fa-id-card"></i>
+            </div>
+            <h2 class="card-title">المعلومات الأساسية</h2>
+        </div>
+        <div class="card-content">
+            <div class="info-item">
+                <div class="info-label">الرقم الوظيفي</div>
+                <div class="info-value">{{ employee.employee_id }}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">القسم</div>
+                <div class="info-value">{{ employee.department.name if employee.department else 'غير محدد' }}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">المسمى الوظيفي</div>
+                <div class="info-value">{{ employee.job_title }}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">تاريخ التعيين</div>
+                <div class="info-value">
+                    {% if employee.hire_date %}
+                    {{ employee.hire_date.strftime('%Y-%m-%d') }}
+                    {% else %}
+                    <span style="color: #c7c7cc;">غير متوفر</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">الحالة</div>
+                <div class="info-value">
+                    {% if employee.active %}
+                    <span class="status-badge active">نشط</span>
+                    {% else %}
+                    <span class="status-badge inactive">غير نشط</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- بطاقة معلومات الاتصال -->
+    <div class="info-card">
+        <div class="card-header">
+            <div class="card-icon success">
+                <i class="fas fa-phone"></i>
+            </div>
+            <h2 class="card-title">معلومات الاتصال</h2>
+        </div>
+        <div class="card-content">
+            <div class="info-item">
+                <div class="info-label">رقم الجوال</div>
+                <div class="info-value">
+                    {% if employee.mobile %}
+                    <a href="tel:{{ employee.mobile }}">
+                        <i class="fas fa-phone"></i> {{ employee.mobile }}
+                    </a>
+                    {% else %}
+                    <span style="color: #c7c7cc;">غير متوفر</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% if employee.mobilePersonal %}
+            <div class="info-item">
+                <div class="info-label">الجوال الشخصي</div>
+                <div class="info-value">
+                    <a href="tel:{{ employee.mobilePersonal }}">
+                        <i class="fas fa-mobile-alt"></i> {{ employee.mobilePersonal }}
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+            <div class="info-item">
+                <div class="info-label">البريد الإلكتروني</div>
+                <div class="info-value">
+                    {% if employee.email %}
+                    <a href="mailto:{{ employee.email }}">{{ employee.email }}</a>
+                    {% else %}
+                    <span style="color: #c7c7cc;">غير متوفر</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- بطاقة معلومات السكن -->
+    {% if employee.residence_details or employee.residence_location_url or employee.housing_images %}
+    <div class="info-card">
+        <div class="card-header">
+            <div class="card-icon" style="background: rgba(255, 149, 0, 0.1); color: #FF9500;">
+                <i class="fas fa-home"></i>
+            </div>
+            <h2 class="card-title">معلومات السكن</h2>
+        </div>
+        <div class="card-content">
+            {% if employee.residence_details %}
+            <div class="info-item">
+                <div class="info-label">العنوان</div>
+                <div class="info-value">{{ employee.residence_details }}</div>
+            </div>
+            {% endif %}
+            {% if employee.residence_location_url %}
+            <div class="info-item">
+                <div class="info-label">الموقع</div>
+                <div class="info-value">
+                    <a href="{{ employee.residence_location_url }}" target="_blank" style="color: #4A90E2; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; background: rgba(74, 144, 226, 0.1); border-radius: 12px; font-weight: 600; transition: all 0.3s ease;">
+                        <i class="fas fa-map-marker-alt" style="font-size: 18px;"></i>
+                        <span>فتح الموقع على خرائط جوجل</span>
+                        <i class="fas fa-external-link-alt" style="font-size: 12px; opacity: 0.7;"></i>
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+            {% if employee.housing_images %}
+            <div class="info-item" style="display: block;">
+                <div class="info-label" style="margin-bottom: 12px;">صور السكن</div>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 0;">
+                    {% set housing_images_list = employee.housing_images.split(',') %}
+                    {% for image in housing_images_list %}
+                    {% if image.strip() %}
+                    {% set image_path = '/' + image.strip() %}
+                    <div style="position: relative; border-radius: 12px; overflow: hidden; aspect-ratio: 1; cursor: pointer; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);" onclick="openImageModal('{{ image_path }}')">
+                        <img src="{{ image_path }}" 
+                             alt="صورة السكن" 
+                             style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease;">
+                        <div style="position: absolute; top: 8px; right: 8px; background: rgba(0, 0, 0, 0.6); color: white; padding: 4px 8px; border-radius: 8px; font-size: 11px;">
+                            <i class="fas fa-expand"></i>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- بطاقة المعلومات الشخصية -->
+    <div class="info-card">
+        <div class="card-header">
+            <div class="card-icon warning">
+                <i class="fas fa-user-circle"></i>
+            </div>
+            <h2 class="card-title">المعلومات الشخصية</h2>
+        </div>
+        <div class="card-content">
+            <div class="info-item">
+                <div class="info-label">الجنسية</div>
+                <div class="info-value">{{ employee.nationality or 'غير محدد' }}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">رقم الهوية</div>
+                <div class="info-value">{{ employee.national_id or 'غير متوفر' }}</div>
+            </div>
+            {% if employee.passport_number %}
+            <div class="info-item">
+                <div class="info-label">رقم الجواز</div>
+                <div class="info-value">{{ employee.passport_number }}</div>
+            </div>
+            {% endif %}
+            {% if employee.date_of_birth %}
+            <div class="info-item">
+                <div class="info-label">تاريخ الميلاد</div>
+                <div class="info-value">{{ employee.date_of_birth.strftime('%Y-%m-%d') }}</div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- بطاقة الوثائق المصورة -->
+    {% if employee.national_id_image or employee.license_image %}
+    <div class="info-card">
+        <div class="card-header">
+            <div class="card-icon info">
+                <i class="fas fa-id-card"></i>
+            </div>
+            <h2 class="card-title">الوثائق المصورة</h2>
+        </div>
+        <div style="padding: 16px; overflow-x: auto; -webkit-overflow-scrolling: touch;">
+            <div style="display: flex; gap: 16px; min-width: min-content;">
+                {% if employee.national_id_image %}
+                <div style="flex: 0 0 280px; max-width: 280px;">
+                    <div style="background: #f8f9fa; border-radius: 12px; padding: 12px; margin-bottom: 8px;">
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                            <i class="fas fa-id-card" style="color: #4A90E2; font-size: 16px;"></i>
+                            <span style="font-size: 13px; font-weight: 600; color: #2d3748;">الهوية الوطنية</span>
+                        </div>
+                        <img src="{{ url_for('static', filename=employee.national_id_image) }}" 
+                             alt="الهوية الوطنية" 
+                             style="width: 100%; border-radius: 8px; cursor: pointer; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);"
+                             onclick="openImageModal(this.src)">
+                    </div>
+                </div>
+                {% endif %}
+                {% if employee.license_image %}
+                <div style="flex: 0 0 280px; max-width: 280px;">
+                    <div style="background: #f8f9fa; border-radius: 12px; padding: 12px; margin-bottom: 8px;">
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                            <i class="fas fa-car" style="color: #34C759; font-size: 16px;"></i>
+                            <span style="font-size: 13px; font-weight: 600; color: #2d3748;">رخصة القيادة</span>
+                        </div>
+                        <img src="{{ url_for('static', filename=employee.license_image) }}" 
+                             alt="رخصة القيادة" 
+                             style="width: 100%; border-radius: 8px; cursor: pointer; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);"
+                             onclick="openImageModal(this.src)">
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- بطاقة السيارات المرتبطة -->
+    {% if active_handovers %}
+    <div class="info-card">
+        <div class="card-header">
+            <div class="card-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <i class="fas fa-car"></i>
+            </div>
+            <h2 class="card-title">السيارات المرتبطة</h2>
+        </div>
+        <div class="card-content" style="padding: 0;">
+            {% for handover in active_handovers %}
+            <div style="padding: 16px; border-bottom: 1px solid #e2e8f0;">
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                    <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-car" style="color: white; font-size: 20px;"></i>
+                    </div>
+                    <div style="flex: 1;">
+                        <div style="font-size: 15px; font-weight: 600; color: #2d3748; margin-bottom: 4px;">
+                            {{ handover.vehicle.make }} {{ handover.vehicle.model }}
+                        </div>
+                        <div style="font-size: 13px; color: #718096;">
+                            <i class="fas fa-hashtag" style="font-size: 11px;"></i>
+                            {{ handover.vehicle.plate_number }}
+                        </div>
+                    </div>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; font-size: 12px;">
+                    <div style="background: #f7fafc; padding: 8px; border-radius: 8px;">
+                        <div style="color: #718096; margin-bottom: 4px;">الدور</div>
+                        <div style="color: #2d3748; font-weight: 600;">
+                            {% if handover.employee_id == employee.id %}
+                            <i class="fas fa-user" style="color: #4A90E2;"></i> سائق
+                            {% else %}
+                            <i class="fas fa-user-tie" style="color: #34C759;"></i> مشرف
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div style="background: #f7fafc; padding: 8px; border-radius: 8px;">
+                        <div style="color: #718096; margin-bottom: 4px;">تاريخ التسليم</div>
+                        <div style="color: #2d3748; font-weight: 600;">
+                            <i class="fas fa-calendar" style="color: #667eea; font-size: 11px;"></i>
+                            {{ handover.handover_date.strftime('%Y-%m-%d') if handover.handover_date else 'غير محدد' }}
+                        </div>
+                    </div>
+                    {% if handover.vehicle.status %}
+                    <div style="background: #f7fafc; padding: 8px; border-radius: 8px;">
+                        <div style="color: #718096; margin-bottom: 4px;">حالة السيارة</div>
+                        <div style="color: #2d3748; font-weight: 600;">
+                            {% if handover.vehicle.status == 'نشط' %}
+                            <i class="fas fa-check-circle" style="color: #34C759;"></i>
+                            {% elif handover.vehicle.status == 'ورشة' %}
+                            <i class="fas fa-tools" style="color: #FF9500;"></i>
+                            {% else %}
+                            <i class="fas fa-circle" style="color: #718096;"></i>
+                            {% endif %}
+                            {{ handover.vehicle.status }}
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% if handover.vehicle.year %}
+                    <div style="background: #f7fafc; padding: 8px; border-radius: 8px;">
+                        <div style="color: #718096; margin-bottom: 4px;">سنة الصنع</div>
+                        <div style="color: #2d3748; font-weight: 600;">
+                            <i class="fas fa-calendar-alt" style="color: #667eea; font-size: 11px;"></i>
+                            {{ handover.vehicle.year }}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                {% if handover.notes %}
+                <div style="margin-top: 12px; padding: 8px; background: #fef3c7; border-radius: 8px; font-size: 12px; color: #92400e;">
+                    <i class="fas fa-sticky-note" style="margin-left: 6px;"></i>
+                    {{ handover.notes }}
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- بطاقة الحضور الأخير -->
+    {% if attendance_records %}
+    <div class="info-card">
+        <div class="card-header">
+            <div class="card-icon success">
+                <i class="fas fa-calendar-check"></i>
+            </div>
+            <h2 class="card-title">سجل الحضور الأخير</h2>
+        </div>
+        <div class="card-content">
+            {% for record in attendance_records[:5] %}
+            <div class="attendance-record">
+                <div class="record-header">
+                    <span class="record-date">{{ record.date }}</span>
+                    <span class="attendance-status 
+                        {% if record.status == 'حاضر' %}present
+                        {% elif record.status == 'غائب' %}absent
+                        {% elif record.status == 'إجازة' %}leave
+                        {% endif %}">
+                        {{ record.status }}
+                    </span>
+                </div>
+                <div class="record-times">
+                    <div class="record-time">
+                        <i class="fas fa-sign-in-alt"></i>
+                        <span>{{ record.check_in }}</span>
+                    </div>
+                    <div class="record-time">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>{{ record.check_out }}</span>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- بطاقة معلومات الراتب -->
+    {% if salary %}
+    <div class="info-card">
+        <div class="card-header">
+            <div class="card-icon success">
+                <i class="fas fa-money-bill-wave"></i>
+            </div>
+            <h2 class="card-title">معلومات الراتب</h2>
+        </div>
+        <div class="card-content">
+            <div class="salary-item">
+                <span class="salary-label">الراتب الأساسي</span>
+                <span class="salary-value">{{ '{:,.2f}'.format(salary.basic_salary) }} ريال</span>
+            </div>
+            <div class="salary-item">
+                <span class="salary-label">البدلات</span>
+                <span class="salary-value">{{ '{:,.2f}'.format(salary.allowances) }} ريال</span>
+            </div>
+            <div class="salary-item">
+                <span class="salary-label">المكافآت</span>
+                <span class="salary-value">{{ '{:,.2f}'.format(salary.bonus) }} ريال</span>
+            </div>
+            <div class="salary-item">
+                <span class="salary-label">الخصومات</span>
+                <span class="salary-value">{{ '{:,.2f}'.format(salary.deductions) }} ريال</span>
+            </div>
+            <div class="salary-item total">
+                <span class="salary-label">صافي الراتب</span>
+                <span class="salary-value">{{ '{:,.2f}'.format(salary.net_salary) }} ريال</span>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- بطاقة الوثائق -->
+    {% if documents %}
+    <div class="info-card">
+        <div class="card-header">
+            <div class="card-icon danger">
+                <i class="fas fa-file-alt"></i>
+            </div>
+            <h2 class="card-title">الوثائق</h2>
+        </div>
+        <div class="card-content">
+            {% for doc in documents %}
+            <div class="document-item">
+                <div class="document-name">{{ doc.name }}</div>
+                <div class="document-meta">
+                    <div class="document-meta-item">
+                        <i class="fas fa-hashtag"></i>
+                        <span>{{ doc.document_number }}</span>
+                    </div>
+                    <div class="document-meta-item">
+                        <i class="fas fa-calendar"></i>
+                        <span>{{ doc.issue_date.strftime('%Y-%m-%d') }}</span>
+                    </div>
+                    {% if doc.expiry_date %}
+                        {% if doc.expiry_date < current_date %}
+                        <span class="doc-status expired">منتهية</span>
+                        {% elif (doc.expiry_date - current_date).days <= 30 %}
+                        <span class="doc-status expiring">تنتهي قريباً</span>
+                        {% else %}
+                        <span class="doc-status valid">سارية</span>
+                        {% endif %}
+                    {% else %}
+                    <span class="doc-status undefined">غير محدد</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- قائمة الإجراءات -->
+<div class="action-menu-overlay" id="actionMenuOverlay" onclick="toggleActionMenu()"></div>
+<div class="action-menu" id="actionMenu">
+    <div class="action-menu-header">
+        <h3 class="action-menu-title">الإجراءات</h3>
+    </div>
+    
+    <a href="{{ url_for('mobile.edit_employee', employee_id=employee.id) }}" class="action-menu-item">
+        <div class="action-menu-icon edit">
+            <i class="fas fa-edit"></i>
+        </div>
+        <div class="action-menu-text">
+            <span class="action-menu-label">تعديل البيانات</span>
+            <span class="action-menu-desc">تحديث معلومات الموظف</span>
+        </div>
+    </a>
+    
+    <a href="{{ url_for('employees.basic_report', id=employee.id) }}" class="action-menu-item">
+        <div class="action-menu-icon pdf">
+            <i class="fas fa-file-pdf"></i>
+        </div>
+        <div class="action-menu-text">
+            <span class="action-menu-label">تصدير PDF</span>
+            <span class="action-menu-desc">تنزيل تقرير شامل بصيغة PDF</span>
+        </div>
+    </a>
+    
+    <a href="{{ url_for('employees.comprehensive_report_excel', id=employee.id) }}" class="action-menu-item">
+        <div class="action-menu-icon excel">
+            <i class="fas fa-file-excel"></i>
+        </div>
+        <div class="action-menu-text">
+            <span class="action-menu-label">تصدير Excel</span>
+            <span class="action-menu-desc">تنزيل تقرير شامل بصيغة Excel</span>
+        </div>
+    </a>
+    
+    <a href="{{ url_for('mobile.employees') }}" class="action-menu-item">
+        <div class="action-menu-icon back">
+            <i class="fas fa-arrow-right"></i>
+        </div>
+        <div class="action-menu-text">
+            <span class="action-menu-label">العودة للقائمة</span>
+            <span class="action-menu-desc">الرجوع إلى قائمة الموظفين</span>
+        </div>
+    </a>
+</div>
+
+<!-- Modal الصورة -->
+<div id="imageModal" class="image-modal" onclick="closeImageModal()">
+    <div class="modal-close" onclick="closeImageModal()">
+        <i class="fas fa-times"></i>
+    </div>
+    <img id="modalImage" class="modal-image">
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// فتح/إغلاق قائمة الإجراءات
+function toggleActionMenu() {
+    const menu = document.getElementById('actionMenu');
+    const overlay = document.getElementById('actionMenuOverlay');
+    
+    menu.classList.toggle('active');
+    overlay.classList.toggle('active');
+    
+    if (menu.classList.contains('active')) {
+        document.body.style.overflow = 'hidden';
+    } else {
+        document.body.style.overflow = 'auto';
+    }
+}
+
+
+// فتح وإغلاق modal الصورة
+function openImageModal(imageSrc) {
+    const modal = document.getElementById('imageModal');
+    const modalImg = document.getElementById('modalImage');
+    
+    modal.style.display = 'block';
+    modalImg.src = imageSrc;
+    document.body.style.overflow = 'hidden';
+}
+
+function closeImageModal() {
+    const modal = document.getElementById('imageModal');
+    modal.style.display = 'none';
+    document.body.style.overflow = 'auto';
+}
+
+// إغلاق modal بالضغط على Escape
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        closeImageModal();
+        
+        const menu = document.getElementById('actionMenu');
+        if (menu.classList.contains('active')) {
+            toggleActionMenu();
+        }
+    }
+});
+</script>
+{% endblock %}
