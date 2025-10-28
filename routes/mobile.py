@@ -351,7 +351,8 @@ def employees():
         )
 
     if request.args.get('department_id'):
-        query = query.filter_by(department_id=request.args.get('department_id'))
+        dept_id = int(request.args.get('department_id'))
+        query = query.join(Employee.departments).filter(Department.id == dept_id)
 
     # ترتيب النتائج حسب الاسم
     query = query.order_by(Employee.name)
