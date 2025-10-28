@@ -495,23 +495,26 @@ def employee_details(employee_id):
     # استعلام السيارات المرتبطة بالموظف (كسائق أو مشرف)
     from models import VehicleHandover, Vehicle
     from sqlalchemy import or_
-    # جلب آخر عملية تسليم نشطة لكل سيارة (من نوع delivery)
-    active_handovers = VehicleHandover.query.join(Vehicle).filter(
-        or_(VehicleHandover.employee_id == employee_id, VehicleHandover.supervisor_employee_id == employee_id),
-        VehicleHandover.handover_type == 'delivery'  # عمليات التسليم فقط (السيارات النشطة)
-    ).order_by(VehicleHandover.handover_date.desc()).all()
     
-    # Debug log
-    print(f"DEBUG: Employee ID {employee_id} has {len(active_handovers)} active handovers")
-    for h in active_handovers:
-        print(f"  - Handover {h.id}: Vehicle {h.vehicle_id} ({h.vehicle.plate_number if h.vehicle else 'N/A'}), employee_id={h.employee_id}, supervisor={h.supervisor_employee_id}")
+    # جلب السيارة النشطة الحالية في المشروع
+    current_vehicle = VehicleHandover.query.join(Vehicle).filter(
+        or_(VehicleHandover.employee_id == employee_id, VehicleHandover.supervisor_employee_id == employee_id),
+        VehicleHandover.handover_type == 'delivery',
+        Vehicle.status == 'in_project'  # السيارات في المشاريع فقط
+    ).order_by(VehicleHandover.handover_date.desc()).first()
+    
+    # جلب جميع السيارات التي تم ربطها بالموظف (تاريخ كامل)
+    all_vehicle_handovers = VehicleHandover.query.join(Vehicle).filter(
+        or_(VehicleHandover.employee_id == employee_id, VehicleHandover.supervisor_employee_id == employee_id)
+    ).order_by(VehicleHandover.handover_date.desc()).all()
 
     return render_template('mobile/employee_details.html', 
                           employee=employee,
                           attendance_records=attendance_records,
                           salary=salary,
                           documents=documents,
-                          active_handovers=active_handovers,
+                          current_vehicle=current_vehicle,
+                          all_vehicle_handovers=all_vehicle_handovers,
                           current_date=current_date)
 
 # صفحة تعديل موظف - النسخة المحمولة
