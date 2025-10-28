@@ -670,6 +670,38 @@
         </div>
     </div>
 
+    <!-- بطاقة معلومات السكن -->
+    {% if employee.residence_details or employee.residence_location_url %}
+    <div class="info-card">
+        <div class="card-header">
+            <div class="card-icon" style="background: rgba(255, 149, 0, 0.1); color: #FF9500;">
+                <i class="fas fa-home"></i>
+            </div>
+            <h2 class="card-title">معلومات السكن</h2>
+        </div>
+        <div class="card-content">
+            {% if employee.residence_details %}
+            <div class="info-item">
+                <div class="info-label">العنوان</div>
+                <div class="info-value">{{ employee.residence_details }}</div>
+            </div>
+            {% endif %}
+            {% if employee.residence_location_url %}
+            <div class="info-item">
+                <div class="info-label">الموقع</div>
+                <div class="info-value">
+                    <a href="{{ employee.residence_location_url }}" target="_blank" style="color: #4A90E2; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; background: rgba(74, 144, 226, 0.1); border-radius: 12px; font-weight: 600; transition: all 0.3s ease;">
+                        <i class="fas fa-map-marker-alt" style="font-size: 18px;"></i>
+                        <span>فتح الموقع على خرائط جوجل</span>
+                        <i class="fas fa-external-link-alt" style="font-size: 12px; opacity: 0.7;"></i>
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
     <!-- بطاقة المعلومات الشخصية -->
     <div class="info-card">
         <div class="card-header">
