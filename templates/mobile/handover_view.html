@@ -280,7 +280,7 @@ function confirmDelete() {
 }
 
 function shareHandover() {
-    const url = window.location.origin + '{{ url_for("vehicles.handover_pdf", id=handover.id) }}';
+    const url = window.location.origin + '{{ url_for("mobile.view_handover", handover_id=handover.id) }}';
     const typeText = '{{ handover_type_name }}';
     const personName = '{{ handover.person_name }}';
     const plateNumber = '{{ vehicle.plate_number }}';
