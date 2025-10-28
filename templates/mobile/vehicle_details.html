@@ -90,15 +90,23 @@ body {
             <div class="info-label">الحالة:</div>
             <div class="info-value">
                 {% if vehicle.status == 'available' %}
-                    <span class="badge bg-success">متاحة</span>
-                {% elif vehicle.status == 'rented' %}
-                    <span class="badge bg-primary">مؤجرة</span>
-                {% elif vehicle.status == 'in_project' %}
-                    <span class="badge bg-info">في المشروع</span>
-                {% elif vehicle.status == 'in_workshop' %}
-                    <span class="badge bg-warning text-dark">في الورشة</span>
-                {% elif vehicle.status == 'accident' %}
-                    <span class="badge bg-danger">حادث</span>
+                    <span class="badge bg-success">✅ متاحة</span>
+                {% elif vehicle.status == 'active_with_driver' %}
+                    <span class="badge bg-info">🚗 نشطة مع سائق</span>
+                {% elif vehicle.status == 'in_workshop_maintenance' %}
+                    <span class="badge bg-warning text-dark">🔧 في الورشة صيانة</span>
+                {% elif vehicle.status == 'in_workshop_accident' %}
+                    <span class="badge bg-danger">⚠️ في الورشة حادث</span>
+                {% elif vehicle.status == 'out_of_service' %}
+                    <span class="badge bg-dark">🚫 خارج الخدمة</span>
+                {% elif vehicle.status == 'out_of_region_management' %}
+                    <span class="badge bg-secondary">📍 خارج إدارة المنطقة</span>
+                {% elif vehicle.status == 'stopped_inspection_expired' %}
+                    <span class="badge bg-danger">⏸️ متوقفة انتهاء الفحص</span>
+                {% elif vehicle.status == 'stopped_contract_expired' %}
+                    <span class="badge bg-danger">⏸️ متوقفة انتهاء العقد</span>
+                {% elif vehicle.status == 'stopped_registration_expired' %}
+                    <span class="badge bg-danger">⏸️ متوقفة انتهاء الاستمارة</span>
                 {% else %}
                     <span class="badge bg-secondary">{{ vehicle.status }}</span>
                 {% endif %}
