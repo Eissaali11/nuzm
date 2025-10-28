@@ -8,12 +8,47 @@
 <style>
 /* بطاقة رأس السيارة */
 .vehicle-header-card {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     border-radius: 0 0 24px 24px;
     padding: 24px 20px;
     margin: -20px -15px 20px -15px;
-    box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+}
+
+/* ألوان حسب حالة السيارة */
+.vehicle-header-card.status-available {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+}
+
+.vehicle-header-card.status-active_with_driver {
+    background: linear-gradient(135deg, #17a2b8 0%, #007bff 100%);
+}
+
+.vehicle-header-card.status-in_workshop_maintenance {
+    background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+}
+
+.vehicle-header-card.status-in_workshop_accident {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+}
+
+.vehicle-header-card.status-out_of_service {
+    background: linear-gradient(135deg, #343a40 0%, #23272b 100%);
+}
+
+.vehicle-header-card.status-out_of_region_management {
+    background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+}
+
+.vehicle-header-card.status-stopped_inspection_expired,
+.vehicle-header-card.status-stopped_contract_expired,
+.vehicle-header-card.status-stopped_registration_expired {
+    background: linear-gradient(135deg, #bd2130 0%, #8b1a24 100%);
+}
+
+/* الحالة الافتراضية */
+.vehicle-header-card.status-default {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
 .vehicle-plate-number {
@@ -350,7 +385,7 @@
 {% else %}
 
 <!-- بطاقة رأس السيارة -->
-<div class="vehicle-header-card">
+<div class="vehicle-header-card status-{{ vehicle.status if vehicle.status else 'default' }}">
     <div class="d-flex justify-content-between align-items-start mb-3">
         <div class="vehicle-plate-number">
             <i class="fas fa-car me-2"></i>
@@ -374,6 +409,32 @@
             <i class="fas fa-calendar"></i>
             <span>{{ vehicle.year }}</span>
         </div>
+    </div>
+    
+    <div class="mt-3">
+        <span class="badge bg-white text-dark px-3 py-2" style="font-size: 14px; font-weight: 600;">
+            {% if vehicle.status == 'available' %}
+                ✅ متاحة
+            {% elif vehicle.status == 'active_with_driver' %}
+                🚗 نشطة مع سائق
+            {% elif vehicle.status == 'in_workshop_maintenance' %}
+                🔧 في الورشة صيانة
+            {% elif vehicle.status == 'in_workshop_accident' %}
+                ⚠️ في الورشة حادث
+            {% elif vehicle.status == 'out_of_service' %}
+                🚫 خارج الخدمة
+            {% elif vehicle.status == 'out_of_region_management' %}
+                📍 خارج إدارة المنطقة
+            {% elif vehicle.status == 'stopped_inspection_expired' %}
+                ⏸️ متوقفة انتهاء الفحص
+            {% elif vehicle.status == 'stopped_contract_expired' %}
+                ⏸️ متوقفة انتهاء العقد
+            {% elif vehicle.status == 'stopped_registration_expired' %}
+                ⏸️ متوقفة انتهاء الاستمارة
+            {% else %}
+                {{ vehicle.status }}
+            {% endif %}
+        </span>
     </div>
 </div>
 
