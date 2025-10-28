@@ -546,6 +546,11 @@
 
     <!-- تاب الورشة -->
     <div id="workshop" class="tab-content">
+        <a href="{{ url_for('mobile.add_workshop_record', vehicle_id=vehicle.id) }}" class="btn btn-success w-100 mb-3">
+            <i class="fas fa-plus me-2"></i>
+            إضافة سجل ورشة
+        </a>
+        
         {% if workshop_records %}
             {% for record in workshop_records|sort(attribute='entry_date', reverse=true) %}
             <div class="record-item">
@@ -575,9 +580,6 @@
             <i class="fas fa-wrench"></i>
             <h6>لا توجد سجلات ورشة</h6>
             <p>لم يتم تسجيل أي عمليات ورشة لهذه السيارة بعد</p>
-            <a href="{{ url_for('mobile.add_workshop_record', vehicle_id=vehicle.id) }}" class="btn btn-primary">
-                <i class="fas fa-plus me-1"></i> إضافة سجل ورشة
-            </a>
         </div>
         {% endif %}
     </div>
@@ -686,11 +688,61 @@
 
     <!-- تاب التسليم والاستلام -->
     <div id="handover" class="tab-content">
+        <a href="{{ url_for('mobile.create_handover_mobile', vehicle_id=vehicle.id) }}" class="btn btn-warning w-100 mb-3">
+            <i class="fas fa-plus me-2"></i>
+            إضافة تسليم/استلام
+        </a>
+        
+        {% if handover_records %}
+            {% for record in handover_records|sort(attribute='handover_date', reverse=true) %}
+            <div class="record-item">
+                <div class="record-header">
+                    <div>
+                        <div class="record-title">
+                            {% if record.handover_type == 'delivery' %}
+                                تسليم السيارة
+                            {% else %}
+                                استلام السيارة
+                            {% endif %}
+                        </div>
+                        <div class="record-date">{{ record.handover_date.strftime('%d/%m/%Y') if record.handover_date else 'غير محدد' }}</div>
+                    </div>
+                    <span class="badge record-badge {% if record.handover_type == 'delivery' %}bg-success{% else %}bg-info{% endif %}">
+                        {% if record.handover_type == 'delivery' %}تسليم{% else %}استلام{% endif %}
+                    </span>
+                </div>
+                <div class="record-details mt-2">
+                    <div class="record-detail-item">
+                        <i class="fas fa-user text-primary"></i>
+                        <span>{{ record.person_name or 'غير محدد' }}</span>
+                    </div>
+                    {% if record.phone %}
+                    <div class="record-detail-item">
+                        <i class="fas fa-phone text-success"></i>
+                        <span>{{ record.phone }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="mt-3 d-flex gap-2">
+                    <a href="{{ url_for('mobile.view_handover', handover_id=record.id) }}" class="btn btn-sm btn-outline-primary flex-fill">
+                        <i class="fas fa-eye me-1"></i> عرض
+                    </a>
+                    <a href="{{ url_for('mobile.edit_handover_mobile', handover_id=record.id) }}" class="btn btn-sm btn-outline-warning flex-fill">
+                        <i class="fas fa-edit me-1"></i> تعديل
+                    </a>
+                    <a href="{{ url_for('vehicles.handover_pdf', id=record.id) }}" target="_blank" class="btn btn-sm btn-outline-danger flex-fill">
+                        <i class="fas fa-file-pdf me-1"></i> PDF
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
         <div class="empty-state">
             <i class="fas fa-exchange-alt"></i>
-            <h6>سجل التسليم والاستلام</h6>
-            <p>هذه الميزة قيد التطوير</p>
+            <h6>لا توجد سجلات تسليم/استلام</h6>
+            <p>لم يتم تسجيل أي عمليات تسليم أو استلام لهذه السيارة بعد</p>
         </div>
+        {% endif %}
     </div>
 </div>
 
