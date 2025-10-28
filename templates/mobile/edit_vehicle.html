@@ -63,11 +63,12 @@
                         <div class="col-12">
                             <label class="form-label">الحالة</label>
                             <select name="status" class="form-select">
-                                <option value="available" {{ 'selected' if vehicle.status == 'available' else '' }}>متاحة</option>
-                                <option value="rented" {{ 'selected' if vehicle.status == 'rented' else '' }}>مؤجرة</option>
-                                <option value="in_project" {{ 'selected' if vehicle.status == 'in_project' else '' }}>في المشروع</option>
-                                <option value="in_workshop" {{ 'selected' if vehicle.status == 'in_workshop' else '' }}>في الورشة</option>
-                                <option value="accident" {{ 'selected' if vehicle.status == 'accident' else '' }}>حادث</option>
+                                <option value="available" {{ 'selected' if vehicle.status == 'available' else '' }}>✅ متاحة</option>
+                                <option value="rented" {{ 'selected' if vehicle.status == 'rented' else '' }}>💵 مؤجرة</option>
+                                <option value="in_project" {{ 'selected' if vehicle.status == 'in_project' else '' }}>🏗️ في المشروع</option>
+                                <option value="in_workshop" {{ 'selected' if vehicle.status == 'in_workshop' else '' }}>🔧 في الورشة</option>
+                                <option value="accident" {{ 'selected' if vehicle.status == 'accident' else '' }}>⚠️ حادث</option>
+                                <option value="out_of_service" {{ 'selected' if vehicle.status == 'out_of_service' else '' }}>🚫 خارج الخدمة</option>
                             </select>
                         </div>
                     </div>
