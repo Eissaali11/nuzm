@@ -64,11 +64,14 @@
                             <label class="form-label">الحالة</label>
                             <select name="status" class="form-select">
                                 <option value="available" {{ 'selected' if vehicle.status == 'available' else '' }}>✅ متاحة</option>
-                                <option value="rented" {{ 'selected' if vehicle.status == 'rented' else '' }}>💵 مؤجرة</option>
-                                <option value="in_project" {{ 'selected' if vehicle.status == 'in_project' else '' }}>🏗️ في المشروع</option>
-                                <option value="in_workshop" {{ 'selected' if vehicle.status == 'in_workshop' else '' }}>🔧 في الورشة</option>
-                                <option value="accident" {{ 'selected' if vehicle.status == 'accident' else '' }}>⚠️ حادث</option>
+                                <option value="active_with_driver" {{ 'selected' if vehicle.status == 'active_with_driver' else '' }}>🚗 نشطة مع سائق</option>
+                                <option value="in_workshop_maintenance" {{ 'selected' if vehicle.status == 'in_workshop_maintenance' else '' }}>🔧 في الورشة صيانة</option>
+                                <option value="in_workshop_accident" {{ 'selected' if vehicle.status == 'in_workshop_accident' else '' }}>⚠️ في الورشة حادث</option>
                                 <option value="out_of_service" {{ 'selected' if vehicle.status == 'out_of_service' else '' }}>🚫 خارج الخدمة</option>
+                                <option value="out_of_region_management" {{ 'selected' if vehicle.status == 'out_of_region_management' else '' }}>📍 خارج إدارة المنطقة</option>
+                                <option value="stopped_inspection_expired" {{ 'selected' if vehicle.status == 'stopped_inspection_expired' else '' }}>⏸️ متوقفة انتهاء الفحص</option>
+                                <option value="stopped_contract_expired" {{ 'selected' if vehicle.status == 'stopped_contract_expired' else '' }}>⏸️ متوقفة انتهاء العقد</option>
+                                <option value="stopped_registration_expired" {{ 'selected' if vehicle.status == 'stopped_registration_expired' else '' }}>⏸️ متوقفة انتهاء الاستمارة</option>
                             </select>
                         </div>
                     </div>
