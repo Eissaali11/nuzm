@@ -135,6 +135,10 @@ body {
     background: var(--gradient-6);
 }
 
+.stat-card-modern.out-region::before {
+    background: linear-gradient(135deg, #fa8bff 0%, #2bd2ff 90%, #2bff88 100%);
+}
+
 .stat-icon-large {
     font-size: 28px;
     margin-bottom: 8px;
@@ -178,6 +182,12 @@ body {
 
 .stat-card-modern.project .stat-icon-large {
     background: var(--gradient-6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.stat-card-modern.out-region .stat-icon-large {
+    background: linear-gradient(135deg, #fa8bff 0%, #2bd2ff 90%, #2bff88 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
@@ -564,6 +574,22 @@ body {
         </div>
         <div class="stat-number">{{ stats.out_of_service }}</div>
         <div class="stat-label">خارج الخدمة</div>
+    </a>
+    
+    <a href="{{ url_for('mobile.vehicles', status='out_of_region_management') }}" class="stat-card-modern out-region">
+        <div class="stat-icon-large">
+            <i class="fas fa-map-marker-alt"></i>
+        </div>
+        <div class="stat-number">{{ stats.out_of_region_management }}</div>
+        <div class="stat-label">خارج إدارة المنطقة</div>
+    </a>
+    
+    <a href="{{ url_for('mobile.vehicles', status='in_project') }}" class="stat-card-modern project">
+        <div class="stat-icon-large">
+            <i class="fas fa-project-diagram"></i>
+        </div>
+        <div class="stat-number">{{ stats.in_project }}</div>
+        <div class="stat-label">في مشروع</div>
     </a>
 </div>
 

@@ -2195,6 +2195,7 @@ def vehicles():
         'in_workshop_maintenance': Vehicle.query.filter_by(status='in_workshop_maintenance').count(),
         'in_workshop_accident': Vehicle.query.filter_by(status='in_workshop_accident').count(),
         'out_of_service': Vehicle.query.filter_by(status='out_of_service').count(),
+        'out_of_region_management': Vehicle.query.filter_by(status='out_of_region_management').count(),
         'in_project': Vehicle.query.filter_by(status='in_project').count(),
         'in_workshop': Vehicle.query.filter_by(status='in_workshop').count()
     }
