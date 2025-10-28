@@ -570,23 +570,40 @@ body {
             
             <div class="vehicle-status-row">
                 <span class="status-badge 
-                    {% if vehicle.status == 'available' or vehicle.status == 'in_use' %}active
-                    {% elif vehicle.status == 'in_workshop' %}maintenance
+                    {% if vehicle.status == 'available' %}active
+                    {% elif vehicle.status == 'active_with_driver' %}active
+                    {% elif vehicle.status == 'in_workshop_maintenance' or vehicle.status == 'in_workshop_accident' %}maintenance
                     {% else %}inactive{% endif %}">
                     {% if vehicle.status == 'available' %}
-                    <i class="fas fa-check-circle"></i> متاح
+                        <i class="fas fa-check-circle"></i> متاحة
+                    {% elif vehicle.status == 'active_with_driver' %}
+                        <i class="fas fa-car"></i> نشطة مع سائق
+                    {% elif vehicle.status == 'in_workshop_maintenance' %}
+                        <i class="fas fa-tools"></i> في الورشة صيانة
+                    {% elif vehicle.status == 'in_workshop_accident' %}
+                        <i class="fas fa-exclamation-triangle"></i> في الورشة حادث
+                    {% elif vehicle.status == 'out_of_service' %}
+                        <i class="fas fa-ban"></i> خارج الخدمة
+                    {% elif vehicle.status == 'out_of_region_management' %}
+                        <i class="fas fa-map-marker-alt"></i> خارج إدارة المنطقة
+                    {% elif vehicle.status == 'stopped_inspection_expired' %}
+                        <i class="fas fa-pause-circle"></i> متوقفة انتهاء الفحص
+                    {% elif vehicle.status == 'stopped_contract_expired' %}
+                        <i class="fas fa-pause-circle"></i> متوقفة انتهاء العقد
+                    {% elif vehicle.status == 'stopped_registration_expired' %}
+                        <i class="fas fa-pause-circle"></i> متوقفة انتهاء الاستمارة
                     {% elif vehicle.status == 'in_use' %}
-                    <i class="fas fa-car"></i> قيد الاستخدام
+                        <i class="fas fa-car"></i> قيد الاستخدام
                     {% elif vehicle.status == 'in_workshop' %}
-                    <i class="fas fa-tools"></i> في الورشة
+                        <i class="fas fa-tools"></i> في الورشة
                     {% elif vehicle.status == 'in_project' %}
-                    <i class="fas fa-project-diagram"></i> في مشروع
+                        <i class="fas fa-project-diagram"></i> في مشروع
                     {% elif vehicle.status == 'accident' %}
-                    <i class="fas fa-exclamation-triangle"></i> حادث
+                        <i class="fas fa-exclamation-triangle"></i> حادث
                     {% elif vehicle.status == 'rented' %}
-                    <i class="fas fa-handshake"></i> مؤجر
+                        <i class="fas fa-handshake"></i> مؤجر
                     {% else %}
-                    <i class="fas fa-times-circle"></i> {{ vehicle.status }}
+                        <i class="fas fa-info-circle"></i> {{ vehicle.status }}
                     {% endif %}
                 </span>
                 
