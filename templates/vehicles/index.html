@@ -662,21 +662,23 @@
                                 </td>
                                 <td>
                                     {% if vehicle.status == 'available' %}
-                                        <span class="status-badge bg-success">متاحة</span>
-                                    {% elif vehicle.status == 'rented' %}
-                                        <span class="status-badge bg-primary">مؤجرة</span>
-                                    {% elif vehicle.status == 'in_project' %}
-                                        <span class="status-badge bg-info">في المشروع</span>
-                                    {% elif vehicle.status == 'in_workshop' %}
-                                        <span class="status-badge bg-warning text-dark">في الورشة</span>
-                                    {% elif vehicle.status == 'accident' %}
-                                        <span class="status-badge bg-danger">حادث</span>
+                                        <span class="status-badge bg-success">✅ متاحة</span>
+                                    {% elif vehicle.status == 'active_with_driver' %}
+                                        <span class="status-badge bg-info">🚗 نشطة مع سائق</span>
+                                    {% elif vehicle.status == 'in_workshop_maintenance' %}
+                                        <span class="status-badge bg-warning text-dark">🔧 في الورشة صيانة</span>
+                                    {% elif vehicle.status == 'in_workshop_accident' %}
+                                        <span class="status-badge bg-danger">⚠️ في الورشة حادث</span>
+                                    {% elif vehicle.status == 'out_of_region_management' %}
+                                        <span class="status-badge" style="background-color: #6c757d; color: white;">📍 خارج إدارة المنطقة</span>
                                     {% elif vehicle.status == 'out_of_service' %}
-                                        <span class="status-badge bg-dark text-white">خارج الخدمة</span>
-                                    {% elif vehicle.status == 'out_of_work_area' %}
-                                        <span class="status-badge" style="background-color: #6c757d; color: white;">خارج منطقة العمل</span>
-                                    {% elif vehicle.status == 'out_of_qassim_management' %}
-                                        <span class="status-badge" style="background-color: #495057; color: white;">خارج إدارة القصيم</span>
+                                        <span class="status-badge bg-dark text-white">🚫 خارج الخدمة</span>
+                                    {% elif vehicle.status == 'stopped_inspection_expired' %}
+                                        <span class="status-badge bg-danger">⏸️ متوقفة انتهاء الفحص</span>
+                                    {% elif vehicle.status == 'stopped_contract_expired' %}
+                                        <span class="status-badge bg-danger">⏸️ متوقفة انتهاء العقد</span>
+                                    {% elif vehicle.status == 'stopped_registration_expired' %}
+                                        <span class="status-badge bg-danger">⏸️ متوقفة انتهاء الاستمارة</span>
                                     {% else %}
                                         <span class="status-badge bg-secondary">{{ vehicle.status }}</span>
                                     {% endif %}

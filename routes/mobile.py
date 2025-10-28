@@ -2353,10 +2353,10 @@ def edit_vehicle(vehicle_id):
 
             # تسجيل العملية في سجل النشاط
             log_activity(
-                user_id=current_user.id,
-                action="vehicle_updated",
-                details=f"تم تحديث بيانات السيارة {vehicle.plate_number}",
-                ip_address=request.remote_addr
+                action="update",
+                entity_type="vehicle",
+                entity_id=vehicle.id,
+                details=f"تم تحديث بيانات السيارة {vehicle.plate_number}"
             )
 
             flash('تم تحديث بيانات السيارة بنجاح', 'success')
