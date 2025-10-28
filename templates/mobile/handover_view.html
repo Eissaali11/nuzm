@@ -10,6 +10,10 @@
             تفاصيل {{ handover_type_name }}
         </h1>
         <div>
+            <button type="button" class="btn btn-outline-success me-1" onclick="shareHandover()">
+                <i class="fas fa-share-alt"></i>
+                مشاركة
+            </button>
             <a href="{{ url_for('mobile.handover_pdf', handover_id=handover.id) }}" class="btn btn-outline-danger me-1">
                 <i class="fas fa-file-pdf"></i>
                 PDF
@@ -273,6 +277,30 @@
 function confirmDelete() {
     var deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
     deleteModal.show();
+}
+
+function shareHandover() {
+    const url = window.location.origin + '{{ url_for("vehicles.handover_pdf", id=handover.id) }}';
+    const typeText = '{{ handover_type_name }}';
+    const personName = '{{ handover.person_name }}';
+    const plateNumber = '{{ vehicle.plate_number }}';
+    const text = `${typeText} السيارة ${plateNumber} - ${personName}`;
+    const title = `${typeText}`;
+    
+    if (navigator.share) {
+        navigator.share({
+            title: title,
+            text: text,
+            url: url
+        }).catch(err => console.log('Error sharing:', err));
+    } else {
+        navigator.clipboard.writeText(url).then(() => {
+            alert('تم نسخ الرابط');
+        }).catch(err => {
+            console.log('Error copying:', err);
+            alert('حدث خطأ في النسخ');
+        });
+    }
 }
 </script>
 
