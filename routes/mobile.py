@@ -2151,6 +2151,7 @@ def vehicles():
     status_filter = request.args.get('status', '')
     make_filter = request.args.get('make', '')
     type_filter = request.args.get('type', '')
+    department_filter = request.args.get('department', '')
     search_filter = request.args.get('search', '')
     page = request.args.get('page', 1, type=int)
     per_page = 10  # عدد السيارات في الصفحة الواحدة
@@ -2169,6 +2170,21 @@ def vehicles():
     # إضافة التصفية حسب النوع إذا تم تحديده
     if type_filter:
         query = query.filter(Vehicle.type_of_car == type_filter)
+    
+    # إضافة التصفية حسب القسم (من خلال السائق الحالي)
+    if department_filter:
+        # الحصول على معرفات الموظفين في القسم المحدد
+        from models import Employee, employee_departments
+        employees_in_dept = db.session.query(Employee.name).join(
+            employee_departments, Employee.id == employee_departments.c.employee_id
+        ).filter(employee_departments.c.department_id == department_filter).all()
+        employee_names = [emp[0] for emp in employees_in_dept]
+        
+        if employee_names:
+            query = query.filter(Vehicle.driver_name.in_(employee_names))
+        else:
+            # إذا لم يكن هناك موظفين في القسم، لا تعرض أي نتائج
+            query = query.filter(Vehicle.id == -1)
 
     # إضافة التصفية حسب البحث
     if search_filter:
@@ -2182,6 +2198,10 @@ def vehicles():
     # الحصول على قائمة الشركات المصنعة المتوفرة
     makes = db.session.query(Vehicle.make).distinct().order_by(Vehicle.make).all()
     makes = [make[0] for make in makes if make[0]]  # استخراج أسماء الشركات وتجاهل القيم الفارغة
+    
+    # الحصول على قائمة الأقسام
+    from models import Department
+    departments = Department.query.order_by(Department.name).all()
 
     # تنفيذ الاستعلام مع الترقيم
     pagination = query.order_by(Vehicle.status, Vehicle.plate_number).paginate(page=page, per_page=per_page, error_out=False)
@@ -2204,6 +2224,7 @@ def vehicles():
                           vehicles=vehicles, 
                           stats=stats,
                           makes=makes,
+                          departments=departments,
                           pagination=pagination)
 
 # تفاصيل السيارة - النسخة المحمولة

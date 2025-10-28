@@ -629,6 +629,13 @@ body {
             </select>
         </div>
         
+        <select name="department" class="filter-select-modern" style="margin-bottom: 10px;">
+            <option value="">جميع الأقسام</option>
+            {% for department in departments %}
+                <option value="{{ department.id }}" {% if request.args.get('department') == department.id|string %}selected{% endif %}>{{ department.name }}</option>
+            {% endfor %}
+        </select>
+        
         <div class="buttons-row">
             <button type="submit" class="btn-search-modern">
                 <i class="fas fa-search"></i> بحث
