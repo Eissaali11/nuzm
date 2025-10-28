@@ -10,11 +10,15 @@
 .vehicle-header-card {
     color: white;
     border-radius: 0 0 32px 32px;
-    padding: 28px 24px 24px 24px;
+    padding: 28px 24px 32px 24px;
     margin: 0 -15px 24px -15px;
-    box-shadow: 0 12px 40px rgba(0,0,0,0.25);
+    box-shadow: 
+        0 20px 60px rgba(0,0,0,0.3),
+        0 8px 16px rgba(0,0,0,0.2),
+        inset 0 1px 0 rgba(255,255,255,0.2);
     position: relative;
     overflow: hidden;
+    transform-style: preserve-3d;
 }
 
 .vehicle-header-card::before {
@@ -24,7 +28,9 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: radial-gradient(circle at top right, rgba(255,255,255,0.15), transparent 60%);
+    background: 
+        radial-gradient(circle at 20% 30%, rgba(255,255,255,0.2), transparent 50%),
+        radial-gradient(circle at 80% 70%, rgba(255,255,255,0.1), transparent 50%);
     pointer-events: none;
 }
 
@@ -34,8 +40,12 @@
     bottom: 0;
     left: 0;
     right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, rgba(255,255,255,0.3), rgba(255,255,255,0.1));
+    height: 6px;
+    background: linear-gradient(90deg, 
+        rgba(255,255,255,0.4) 0%, 
+        rgba(255,255,255,0.2) 50%, 
+        rgba(255,255,255,0.4) 100%);
+    border-radius: 0 0 32px 32px;
 }
 
 /* إصلاح المسافة من الأعلى */
@@ -45,56 +55,91 @@
 
 /* ألوان حسب حالة السيارة */
 .vehicle-header-card.status-available {
-    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    background: linear-gradient(145deg, #11998e 0%, #38ef7d 100%);
 }
 
 .vehicle-header-card.status-active_with_driver {
-    background: linear-gradient(135deg, #17a2b8 0%, #007bff 100%);
+    background: linear-gradient(145deg, #4568dc 0%, #b06ab3 100%);
 }
 
 .vehicle-header-card.status-in_workshop_maintenance {
-    background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+    background: linear-gradient(145deg, #f09819 0%, #edde5d 100%);
 }
 
 .vehicle-header-card.status-in_workshop_accident {
-    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    background: linear-gradient(145deg, #eb3349 0%, #f45c43 100%);
 }
 
 .vehicle-header-card.status-out_of_service {
-    background: linear-gradient(135deg, #343a40 0%, #23272b 100%);
+    background: linear-gradient(145deg, #2c3e50 0%, #4ca1af 100%);
 }
 
 .vehicle-header-card.status-out_of_region_management {
-    background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+    background: linear-gradient(145deg, #757f9a 0%, #d7dde8 100%);
 }
 
 .vehicle-header-card.status-stopped_inspection_expired,
 .vehicle-header-card.status-stopped_contract_expired,
 .vehicle-header-card.status-stopped_registration_expired {
-    background: linear-gradient(135deg, #bd2130 0%, #8b1a24 100%);
+    background: linear-gradient(145deg, #c31432 0%, #240b36 100%);
 }
 
 /* الحالة الافتراضية */
 .vehicle-header-card.status-default {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(145deg, #667eea 0%, #764ba2 100%);
 }
 
-.vehicle-plate-number {
-    font-size: 36px;
-    font-weight: 900;
-    margin-bottom: 16px;
-    text-shadow: 0 4px 12px rgba(0,0,0,0.3);
-    letter-spacing: 2px;
+/* لوحة السيارة السعودية */
+.saudi-plate {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border: 4px solid #000;
+    border-radius: 12px;
+    padding: 16px 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.4), inset 0 2px 4px rgba(255,255,255,0.8);
     position: relative;
     z-index: 1;
-    display: flex;
-    align-items: center;
-    gap: 12px;
+    margin-bottom: 20px;
+    transform: perspective(800px) rotateX(5deg);
+    transition: transform 0.3s ease;
 }
 
-.vehicle-plate-number i {
-    font-size: 42px;
-    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+.saudi-plate:active {
+    transform: perspective(800px) rotateX(0deg) scale(0.98);
+}
+
+.plate-flag {
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, #006c35 0%, #009345 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.plate-number {
+    font-size: 38px;
+    font-weight: 900;
+    color: #000;
+    letter-spacing: 4px;
+    font-family: 'Arial Black', sans-serif;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+}
+
+.plate-ksa {
+    position: absolute;
+    top: 4px;
+    right: 12px;
+    font-size: 10px;
+    color: #666;
+    font-weight: 700;
+    letter-spacing: 1px;
 }
 
 .vehicle-info-brief {
@@ -456,11 +501,12 @@
 <!-- بطاقة رأس السيارة -->
 <div class="vehicle-header-card status-{{ vehicle.status if vehicle.status else 'default' }}">
     <div class="d-flex justify-content-between align-items-start mb-3">
-        <div class="vehicle-plate-number">
-            <i class="fas fa-car me-2"></i>
-            {{ vehicle.plate_number }}
+        <div class="saudi-plate">
+            <span class="plate-ksa">KSA</span>
+            <div class="plate-flag">🇸🇦</div>
+            <div class="plate-number">{{ vehicle.plate_number }}</div>
         </div>
-        <a href="{{ url_for('mobile.vehicles') }}" class="btn btn-light btn-sm">
+        <a href="{{ url_for('mobile.vehicles') }}" class="btn btn-light btn-sm" style="box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
             <i class="fas fa-arrow-right"></i>
         </a>
     </div>
