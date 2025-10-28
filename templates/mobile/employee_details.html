@@ -799,6 +799,87 @@
     </div>
     {% endif %}
 
+    <!-- بطاقة السيارات المرتبطة -->
+    {% if active_handovers %}
+    <div class="info-card">
+        <div class="card-header">
+            <div class="card-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <i class="fas fa-car"></i>
+            </div>
+            <h2 class="card-title">السيارات المرتبطة</h2>
+        </div>
+        <div class="card-content" style="padding: 0;">
+            {% for handover in active_handovers %}
+            <div style="padding: 16px; border-bottom: 1px solid #e2e8f0;">
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                    <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-car" style="color: white; font-size: 20px;"></i>
+                    </div>
+                    <div style="flex: 1;">
+                        <div style="font-size: 15px; font-weight: 600; color: #2d3748; margin-bottom: 4px;">
+                            {{ handover.vehicle.make }} {{ handover.vehicle.model }}
+                        </div>
+                        <div style="font-size: 13px; color: #718096;">
+                            <i class="fas fa-hashtag" style="font-size: 11px;"></i>
+                            {{ handover.vehicle.plate_number }}
+                        </div>
+                    </div>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; font-size: 12px;">
+                    <div style="background: #f7fafc; padding: 8px; border-radius: 8px;">
+                        <div style="color: #718096; margin-bottom: 4px;">الدور</div>
+                        <div style="color: #2d3748; font-weight: 600;">
+                            {% if handover.employee_id == employee.id %}
+                            <i class="fas fa-user" style="color: #4A90E2;"></i> سائق
+                            {% else %}
+                            <i class="fas fa-user-tie" style="color: #34C759;"></i> مشرف
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div style="background: #f7fafc; padding: 8px; border-radius: 8px;">
+                        <div style="color: #718096; margin-bottom: 4px;">تاريخ التسليم</div>
+                        <div style="color: #2d3748; font-weight: 600;">
+                            <i class="fas fa-calendar" style="color: #667eea; font-size: 11px;"></i>
+                            {{ handover.handover_date.strftime('%Y-%m-%d') if handover.handover_date else 'غير محدد' }}
+                        </div>
+                    </div>
+                    {% if handover.vehicle.status %}
+                    <div style="background: #f7fafc; padding: 8px; border-radius: 8px;">
+                        <div style="color: #718096; margin-bottom: 4px;">حالة السيارة</div>
+                        <div style="color: #2d3748; font-weight: 600;">
+                            {% if handover.vehicle.status == 'نشط' %}
+                            <i class="fas fa-check-circle" style="color: #34C759;"></i>
+                            {% elif handover.vehicle.status == 'ورشة' %}
+                            <i class="fas fa-tools" style="color: #FF9500;"></i>
+                            {% else %}
+                            <i class="fas fa-circle" style="color: #718096;"></i>
+                            {% endif %}
+                            {{ handover.vehicle.status }}
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% if handover.vehicle.model_year %}
+                    <div style="background: #f7fafc; padding: 8px; border-radius: 8px;">
+                        <div style="color: #718096; margin-bottom: 4px;">سنة الصنع</div>
+                        <div style="color: #2d3748; font-weight: 600;">
+                            <i class="fas fa-calendar-alt" style="color: #667eea; font-size: 11px;"></i>
+                            {{ handover.vehicle.model_year }}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                {% if handover.notes %}
+                <div style="margin-top: 12px; padding: 8px; background: #fef3c7; border-radius: 8px; font-size: 12px; color: #92400e;">
+                    <i class="fas fa-sticky-note" style="margin-left: 6px;"></i>
+                    {{ handover.notes }}
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
     <!-- بطاقة الحضور الأخير -->
     {% if attendance_records %}
     <div class="info-card">

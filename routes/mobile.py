@@ -492,11 +492,20 @@ def employee_details(employee_id):
     # استعلام الوثائق الخاصة بالموظف
     documents = Document.query.filter_by(employee_id=employee_id).all()
 
+    # استعلام السيارات المرتبطة بالموظف (كسائق أو مشرف)
+    from models import VehicleHandover, Vehicle
+    # جلب آخر عملية تسليم نشطة لكل سيارة
+    active_handovers = VehicleHandover.query.filter(
+        (VehicleHandover.employee_id == employee_id) | (VehicleHandover.supervisor_employee_id == employee_id),
+        VehicleHandover.return_date == None  # السيارات التي لم يتم إرجاعها بعد
+    ).all()
+
     return render_template('mobile/employee_details.html', 
                           employee=employee,
                           attendance_records=attendance_records,
                           salary=salary,
                           documents=documents,
+                          active_handovers=active_handovers,
                           current_date=current_date)
 
 # صفحة تعديل موظف - النسخة المحمولة
