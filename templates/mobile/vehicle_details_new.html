@@ -1,0 +1,763 @@
+{% extends 'mobile/layout.html' %}
+
+{% block title %}تفاصيل السيارة: {{ vehicle.plate_number if vehicle.plate_number else '' }}{% endblock %}
+
+{% block header_title %}تفاصيل السيارة{% endblock %}
+
+{% block content %}
+<style>
+/* بطاقة رأس السيارة */
+.vehicle-header-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 0 0 24px 24px;
+    padding: 24px 20px;
+    margin: -20px -15px 20px -15px;
+    box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3);
+}
+
+.vehicle-plate-number {
+    font-size: 28px;
+    font-weight: 800;
+    margin-bottom: 8px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+}
+
+.vehicle-info-brief {
+    font-size: 14px;
+    opacity: 0.95;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.vehicle-info-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* نظام التابات */
+.tabs-container {
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    margin-bottom: 80px;
+}
+
+.tabs-header {
+    display: flex;
+    background: #f8f9fa;
+    border-bottom: 2px solid #e9ecef;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.tabs-header::-webkit-scrollbar {
+    display: none;
+}
+
+.tab-btn {
+    flex: 1;
+    min-width: 80px;
+    padding: 16px 12px;
+    border: none;
+    background: transparent;
+    color: #6c757d;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    white-space: nowrap;
+}
+
+.tab-btn.active {
+    color: #667eea;
+    background: white;
+}
+
+.tab-btn.active::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #667eea, #764ba2);
+    border-radius: 3px 3px 0 0;
+}
+
+.tab-btn i {
+    display: block;
+    font-size: 20px;
+    margin-bottom: 4px;
+}
+
+.tab-content {
+    display: none;
+    padding: 20px;
+    animation: fadeIn 0.3s ease;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* بطاقات المعلومات */
+.info-card {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+.info-card-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #495057;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.info-row:last-child {
+    border-bottom: none;
+}
+
+.info-label {
+    font-size: 13px;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.info-value {
+    font-size: 14px;
+    color: #212529;
+    font-weight: 600;
+    text-align: left;
+}
+
+/* حالات فارغة */
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #6c757d;
+}
+
+.empty-state i {
+    font-size: 48px;
+    color: #dee2e6;
+    margin-bottom: 16px;
+}
+
+.empty-state h6 {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.empty-state p {
+    font-size: 14px;
+    margin-bottom: 20px;
+}
+
+/* قائمة السجلات */
+.record-item {
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+    transition: all 0.2s ease;
+}
+
+.record-item:active {
+    transform: scale(0.98);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.record-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    margin-bottom: 12px;
+}
+
+.record-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #212529;
+    margin-bottom: 4px;
+}
+
+.record-date {
+    font-size: 12px;
+    color: #6c757d;
+}
+
+.record-badge {
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 12px;
+}
+
+.record-details {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.record-detail-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: #495057;
+}
+
+/* بطاقات الوثائق */
+.document-item {
+    background: white;
+    border: 2px solid #e9ecef;
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+.document-item.has-file {
+    border-color: #28a745;
+    background: linear-gradient(135deg, rgba(40, 167, 69, 0.05), rgba(40, 167, 69, 0.02));
+}
+
+.document-item.expired {
+    border-color: #dc3545;
+    background: linear-gradient(135deg, rgba(220, 53, 69, 0.05), rgba(220, 53, 69, 0.02));
+}
+
+.document-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.document-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+}
+
+.document-info h6 {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 4px;
+    color: #212529;
+}
+
+.document-info p {
+    font-size: 12px;
+    color: #6c757d;
+    margin: 0;
+}
+
+.document-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.btn-doc {
+    padding: 10px;
+    border-radius: 10px;
+    border: none;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.btn-doc:active {
+    transform: scale(0.95);
+}
+
+/* زر العودة للأعلى */
+.back-to-top {
+    position: fixed;
+    bottom: 90px;
+    left: 20px;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    border: none;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.back-to-top.show {
+    display: flex;
+}
+
+.back-to-top:active {
+    transform: scale(0.9);
+}
+</style>
+
+{% if not vehicle %}
+<div class="alert alert-warning mx-3 mt-3">
+    <div class="text-center py-4">
+        <i class="fas fa-exclamation-triangle fa-3x mb-3"></i>
+        <h5>عفواً!</h5>
+        <p>لم يتم العثور على بيانات السيارة المطلوبة.</p>
+        <a href="{{ url_for('mobile.vehicles') }}" class="btn btn-primary mt-2">
+            <i class="fas fa-arrow-right ms-1"></i> العودة لقائمة السيارات
+        </a>
+    </div>
+</div>
+{% else %}
+
+<!-- بطاقة رأس السيارة -->
+<div class="vehicle-header-card">
+    <div class="d-flex justify-content-between align-items-start mb-3">
+        <div class="vehicle-plate-number">
+            <i class="fas fa-car me-2"></i>
+            {{ vehicle.plate_number }}
+        </div>
+        <a href="{{ url_for('mobile.vehicles') }}" class="btn btn-light btn-sm">
+            <i class="fas fa-arrow-right"></i>
+        </a>
+    </div>
+    
+    <div class="vehicle-info-brief">
+        <div class="vehicle-info-item">
+            <i class="fas fa-industry"></i>
+            <span>{{ vehicle.make }}</span>
+        </div>
+        <div class="vehicle-info-item">
+            <i class="fas fa-car-side"></i>
+            <span>{{ vehicle.model }}</span>
+        </div>
+        <div class="vehicle-info-item">
+            <i class="fas fa-calendar"></i>
+            <span>{{ vehicle.year }}</span>
+        </div>
+    </div>
+</div>
+
+<!-- نظام التابات -->
+<div class="tabs-container mx-3">
+    <div class="tabs-header">
+        <button class="tab-btn active" onclick="switchTab(event, 'info')">
+            <i class="fas fa-info-circle"></i>
+            <span>معلومات</span>
+        </button>
+        <button class="tab-btn" onclick="switchTab(event, 'maintenance')">
+            <i class="fas fa-tools"></i>
+            <span>صيانة</span>
+        </button>
+        <button class="tab-btn" onclick="switchTab(event, 'workshop')">
+            <i class="fas fa-wrench"></i>
+            <span>ورشة</span>
+        </button>
+        <button class="tab-btn" onclick="switchTab(event, 'documents')">
+            <i class="fas fa-file-alt"></i>
+            <span>وثائق</span>
+        </button>
+        <button class="tab-btn" onclick="switchTab(event, 'handover')">
+            <i class="fas fa-exchange-alt"></i>
+            <span>التسليم</span>
+        </button>
+    </div>
+
+    <!-- تاب المعلومات -->
+    <div id="info" class="tab-content active">
+        <div class="info-card">
+            <div class="info-card-title">
+                <i class="fas fa-car"></i>
+                معلومات السيارة الأساسية
+            </div>
+            
+            <div class="info-row">
+                <div class="info-label">رقم اللوحة</div>
+                <div class="info-value">{{ vehicle.plate_number }}</div>
+            </div>
+            
+            <div class="info-row">
+                <div class="info-label">الماركة</div>
+                <div class="info-value">{{ vehicle.make }}</div>
+            </div>
+            
+            <div class="info-row">
+                <div class="info-label">الموديل</div>
+                <div class="info-value">{{ vehicle.model }}</div>
+            </div>
+            
+            <div class="info-row">
+                <div class="info-label">سنة الصنع</div>
+                <div class="info-value">{{ vehicle.year }}</div>
+            </div>
+            
+            <div class="info-row">
+                <div class="info-label">اللون</div>
+                <div class="info-value">{{ vehicle.color }}</div>
+            </div>
+            
+            <div class="info-row">
+                <div class="info-label">الحالة</div>
+                <div class="info-value">
+                    {% if vehicle.status == 'available' %}
+                        <span class="badge bg-success">✅ متاحة</span>
+                    {% elif vehicle.status == 'active_with_driver' %}
+                        <span class="badge bg-info">🚗 نشطة مع سائق</span>
+                    {% elif vehicle.status == 'in_workshop_maintenance' %}
+                        <span class="badge bg-warning text-dark">🔧 في الورشة صيانة</span>
+                    {% elif vehicle.status == 'in_workshop_accident' %}
+                        <span class="badge bg-danger">⚠️ في الورشة حادث</span>
+                    {% elif vehicle.status == 'out_of_service' %}
+                        <span class="badge bg-dark">🚫 خارج الخدمة</span>
+                    {% elif vehicle.status == 'out_of_region_management' %}
+                        <span class="badge bg-secondary">📍 خارج إدارة المنطقة</span>
+                    {% elif vehicle.status == 'stopped_inspection_expired' %}
+                        <span class="badge bg-danger">⏸️ متوقفة انتهاء الفحص</span>
+                    {% elif vehicle.status == 'stopped_contract_expired' %}
+                        <span class="badge bg-danger">⏸️ متوقفة انتهاء العقد</span>
+                    {% elif vehicle.status == 'stopped_registration_expired' %}
+                        <span class="badge bg-danger">⏸️ متوقفة انتهاء الاستمارة</span>
+                    {% else %}
+                        <span class="badge bg-secondary">{{ vehicle.status }}</span>
+                    {% endif %}
+                </div>
+            </div>
+            
+            {% if vehicle.driver_name %}
+            <div class="info-row">
+                <div class="info-label">السائق الحالي</div>
+                <div class="info-value text-success">{{ vehicle.driver_name }}</div>
+            </div>
+            {% endif %}
+        </div>
+
+        {% if vehicle.chassis_number or vehicle.engine_number %}
+        <div class="info-card">
+            <div class="info-card-title">
+                <i class="fas fa-cogs"></i>
+                المعلومات الفنية
+            </div>
+            
+            {% if vehicle.chassis_number %}
+            <div class="info-row">
+                <div class="info-label">رقم الهيكل</div>
+                <div class="info-value">{{ vehicle.chassis_number }}</div>
+            </div>
+            {% endif %}
+            
+            {% if vehicle.engine_number %}
+            <div class="info-row">
+                <div class="info-label">رقم المحرك</div>
+                <div class="info-value">{{ vehicle.engine_number }}</div>
+            </div>
+            {% endif %}
+            
+            {% if vehicle.fuel_type %}
+            <div class="info-row">
+                <div class="info-label">نوع الوقود</div>
+                <div class="info-value">{{ vehicle.fuel_type }}</div>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        {% if vehicle.notes %}
+        <div class="alert alert-info">
+            <strong><i class="fas fa-sticky-note me-2"></i>ملاحظات:</strong>
+            <p class="mb-0 mt-2">{{ vehicle.notes }}</p>
+        </div>
+        {% endif %}
+
+        <a href="{{ url_for('mobile.edit_vehicle', vehicle_id=vehicle.id) }}" class="btn btn-warning w-100 mb-2">
+            <i class="fas fa-edit me-2"></i>
+            تعديل بيانات السيارة
+        </a>
+    </div>
+
+    <!-- تاب الصيانة -->
+    <div id="maintenance" class="tab-content">
+        {% if maintenance_records %}
+            {% for record in maintenance_records|sort(attribute='date', reverse=true) %}
+            <div class="record-item">
+                <div class="record-header">
+                    <div>
+                        <div class="record-title">{{ record.description[:40] }}{% if record.description|length > 40 %}...{% endif %}</div>
+                        <div class="record-date">{{ record.date.strftime('%d/%m/%Y') if record.date else 'غير محدد' }}</div>
+                    </div>
+                    <span class="badge record-badge {% if record.maintenance_type == 'دورية' %}bg-info{% elif record.maintenance_type == 'طارئة' %}bg-warning{% else %}bg-danger{% endif %}">
+                        {{ record.maintenance_type }}
+                    </span>
+                </div>
+                <div class="record-details">
+                    <div class="record-detail-item">
+                        <i class="fas fa-money-bill-wave text-success"></i>
+                        <span>{{ '{:,.0f}'.format(record.cost) }} ريال</span>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-tools"></i>
+            <h6>لا توجد سجلات صيانة</h6>
+            <p>لم يتم تسجيل أي عمليات صيانة لهذه السيارة بعد</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- تاب الورشة -->
+    <div id="workshop" class="tab-content">
+        {% if workshop_records %}
+            {% for record in workshop_records|sort(attribute='entry_date', reverse=true) %}
+            <div class="record-item">
+                <div class="record-header">
+                    <div>
+                        <div class="record-title">{{ record.description[:40] }}{% if record.description|length > 40 %}...{% endif %}</div>
+                        <div class="record-date">{{ record.entry_date.strftime('%d/%m/%Y') if record.entry_date else 'غير محدد' }}</div>
+                    </div>
+                    <span class="badge record-badge {% if record.repair_status == 'in_progress' %}bg-primary{% elif record.repair_status == 'completed' %}bg-success{% else %}bg-warning{% endif %}">
+                        {% if record.repair_status == 'in_progress' %}قيد التنفيذ
+                        {% elif record.repair_status == 'completed' %}مكتمل
+                        {% else %}في الانتظار{% endif %}
+                    </span>
+                </div>
+                <div class="mt-3 d-flex gap-2">
+                    <a href="{{ url_for('mobile.view_workshop_details', workshop_id=record.id) }}" class="btn btn-sm btn-outline-primary flex-fill">
+                        <i class="fas fa-eye me-1"></i> عرض
+                    </a>
+                    <a href="{{ url_for('mobile.edit_workshop_record', workshop_id=record.id) }}" class="btn btn-sm btn-outline-warning flex-fill">
+                        <i class="fas fa-edit me-1"></i> تعديل
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-wrench"></i>
+            <h6>لا توجد سجلات ورشة</h6>
+            <p>لم يتم تسجيل أي عمليات ورشة لهذه السيارة بعد</p>
+            <a href="{{ url_for('mobile.add_workshop_record', vehicle_id=vehicle.id) }}" class="btn btn-primary">
+                <i class="fas fa-plus me-1"></i> إضافة سجل ورشة
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- تاب الوثائق -->
+    <div id="documents" class="tab-content">
+        <!-- صورة الاستمارة -->
+        <div class="document-item {% if vehicle.registration_form_image %}has-file{% endif %}">
+            <div class="document-header">
+                <div class="document-icon bg-primary bg-opacity-10 text-primary">
+                    <i class="fas fa-file-alt"></i>
+                </div>
+                <div class="document-info flex-grow-1">
+                    <h6>صورة الاستمارة</h6>
+                    <p>استمارة تسجيل السيارة</p>
+                </div>
+                {% if vehicle.registration_form_image %}
+                <i class="fas fa-check-circle text-success fa-lg"></i>
+                {% else %}
+                <i class="fas fa-times-circle text-danger fa-lg"></i>
+                {% endif %}
+            </div>
+            
+            {% if vehicle.registration_form_image %}
+            <div class="document-actions">
+                <button class="btn-doc btn-primary" onclick="viewDocument('{{ '/' + vehicle.registration_form_image }}', 'صورة الاستمارة')">
+                    <i class="fas fa-eye me-1"></i> عرض
+                </button>
+                <button class="btn-doc btn-success" onclick="shareDocument('{{ '/' + vehicle.registration_form_image }}', 'صورة الاستمارة', '{{ vehicle.plate_number }}')">
+                    <i class="fas fa-share-alt me-1"></i> مشاركة
+                </button>
+            </div>
+            {% else %}
+            <button class="btn-doc btn-primary w-100 mt-2" onclick="alert('يرجى رفع الوثيقة من النظام الرئيسي')">
+                <i class="fas fa-upload me-1"></i> رفع الوثيقة
+            </button>
+            {% endif %}
+        </div>
+
+        <!-- صورة اللوحة -->
+        <div class="document-item {% if vehicle.plate_image %}has-file{% endif %}">
+            <div class="document-header">
+                <div class="document-icon bg-success bg-opacity-10 text-success">
+                    <i class="fas fa-id-card"></i>
+                </div>
+                <div class="document-info flex-grow-1">
+                    <h6>صورة اللوحة</h6>
+                    <p>صورة لوحة السيارة</p>
+                </div>
+                {% if vehicle.plate_image %}
+                <i class="fas fa-check-circle text-success fa-lg"></i>
+                {% else %}
+                <i class="fas fa-times-circle text-danger fa-lg"></i>
+                {% endif %}
+            </div>
+            
+            {% if vehicle.plate_image %}
+            <div class="document-actions">
+                <button class="btn-doc btn-primary" onclick="viewDocument('{{ '/' + vehicle.plate_image }}', 'صورة اللوحة')">
+                    <i class="fas fa-eye me-1"></i> عرض
+                </button>
+                <button class="btn-doc btn-success" onclick="shareDocument('{{ '/' + vehicle.plate_image }}', 'صورة اللوحة', '{{ vehicle.plate_number }}')">
+                    <i class="fas fa-share-alt me-1"></i> مشاركة
+                </button>
+            </div>
+            {% else %}
+            <button class="btn-doc btn-primary w-100 mt-2" onclick="alert('يرجى رفع الوثيقة من النظام الرئيسي')">
+                <i class="fas fa-upload me-1"></i> رفع الوثيقة
+            </button>
+            {% endif %}
+        </div>
+
+        <!-- ملف التأمين -->
+        <div class="document-item {% if vehicle.insurance_file %}has-file{% endif %}">
+            <div class="document-header">
+                <div class="document-icon bg-warning bg-opacity-10 text-warning">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <div class="document-info flex-grow-1">
+                    <h6>ملف التأمين</h6>
+                    <p>بوليصة التأمين</p>
+                </div>
+                {% if vehicle.insurance_file %}
+                <i class="fas fa-check-circle text-success fa-lg"></i>
+                {% else %}
+                <i class="fas fa-times-circle text-danger fa-lg"></i>
+                {% endif %}
+            </div>
+            
+            {% if vehicle.insurance_file %}
+            <div class="document-actions">
+                <button class="btn-doc btn-primary" onclick="viewDocument('{{ '/' + vehicle.insurance_file }}', 'ملف التأمين')">
+                    <i class="fas fa-eye me-1"></i> عرض
+                </button>
+                <button class="btn-doc btn-success" onclick="shareDocument('{{ '/' + vehicle.insurance_file }}', 'ملف التأمين', '{{ vehicle.plate_number }}')">
+                    <i class="fas fa-share-alt me-1"></i> مشاركة
+                </button>
+            </div>
+            {% else %}
+            <button class="btn-doc btn-primary w-100 mt-2" onclick="alert('يرجى رفع الوثيقة من النظام الرئيسي')">
+                <i class="fas fa-upload me-1"></i> رفع الوثيقة
+            </button>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- تاب التسليم والاستلام -->
+    <div id="handover" class="tab-content">
+        <div class="empty-state">
+            <i class="fas fa-exchange-alt"></i>
+            <h6>سجل التسليم والاستلام</h6>
+            <p>هذه الميزة قيد التطوير</p>
+        </div>
+    </div>
+</div>
+
+<!-- زر العودة للأعلى -->
+<button class="back-to-top" id="backToTop" onclick="scrollToTop()">
+    <i class="fas fa-arrow-up"></i>
+</button>
+
+<script>
+// نظام التابات
+function switchTab(event, tabId) {
+    // إخفاء كل التابات
+    document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    
+    // إزالة الـ active من كل الأزرار
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // تفعيل التاب المختار
+    document.getElementById(tabId).classList.add('active');
+    event.currentTarget.classList.add('active');
+    
+    // الرجوع للأعلى
+    document.querySelector('.tabs-container').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// عرض وثيقة
+function viewDocument(path, title) {
+    window.open(path, '_blank');
+}
+
+// مشاركة وثيقة
+function shareDocument(path, title, plateNumber) {
+    const url = window.location.origin + path;
+    const text = `${title} - السيارة: ${plateNumber}`;
+    
+    if (navigator.share) {
+        navigator.share({
+            title: title,
+            text: text,
+            url: url
+        }).catch(err => console.log('Error sharing:', err));
+    } else {
+        // نسخ الرابط
+        navigator.clipboard.writeText(url).then(() => {
+            alert('تم نسخ الرابط');
+        });
+    }
+}
+
+// زر العودة للأعلى
+window.addEventListener('scroll', function() {
+    const backToTop = document.getElementById('backToTop');
+    if (window.pageYOffset > 300) {
+        backToTop.classList.add('show');
+    } else {
+        backToTop.classList.remove('show');
+    }
+});
+
+function scrollToTop() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+</script>
+
+{% endif %}
+{% endblock %}

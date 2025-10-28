@@ -2295,7 +2295,7 @@ def vehicle_details(vehicle_id):
     fees = []
     # سيتم إضافة منطق لجلب الرسوم لاحقًا
 
-    return render_template('mobile/vehicle_details.html',
+    return render_template('mobile/vehicle_details_new.html',
                          vehicle=vehicle,
                          maintenance_records=maintenance_records,
                          workshop_records=workshop_records,
