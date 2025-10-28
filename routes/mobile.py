@@ -339,20 +339,25 @@ def employees():
 
     # إنشاء الاستعلام الأساسي
     query = Employee.query
-
-    # تطبيق الفلترة حسب الاستعلام
-    if request.args.get('search'):
-        search_term = f"%{request.args.get('search')}%"
+    
+    # التحقق من وجود فلتر القسم
+    department_id = request.args.get('department_id')
+    search_query = request.args.get('search', '').strip()
+    
+    # إذا كان هناك فلتر قسم، نطبق الـ join أولاً
+    if department_id:
+        dept_id = int(department_id)
+        query = query.join(Employee.departments).filter(Department.id == dept_id)
+    
+    # ثم نطبق البحث إذا كان موجوداً
+    if search_query:
+        search_term = f"%{search_query}%"
         query = query.filter(
             (Employee.name.like(search_term)) |
             (Employee.employee_id.like(search_term)) |
             (Employee.national_id.like(search_term)) |
             (Employee.job_title.like(search_term))
         )
-
-    if request.args.get('department_id'):
-        dept_id = int(request.args.get('department_id'))
-        query = query.join(Employee.departments).filter(Department.id == dept_id)
 
     # ترتيب النتائج حسب الاسم
     query = query.order_by(Employee.name)
