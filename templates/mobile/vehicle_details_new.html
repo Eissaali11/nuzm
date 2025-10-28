@@ -451,10 +451,6 @@
             <i class="fas fa-info-circle"></i>
             <span>معلومات</span>
         </button>
-        <button class="tab-btn" onclick="switchTab(event, 'maintenance')">
-            <i class="fas fa-tools"></i>
-            <span>صيانة</span>
-        </button>
         <button class="tab-btn" onclick="switchTab(event, 'workshop')">
             <i class="fas fa-wrench"></i>
             <span>ورشة</span>
@@ -578,37 +574,6 @@
             <i class="fas fa-edit me-2"></i>
             تعديل بيانات السيارة
         </a>
-    </div>
-
-    <!-- تاب الصيانة -->
-    <div id="maintenance" class="tab-content">
-        {% if maintenance_records %}
-            {% for record in maintenance_records|sort(attribute='date', reverse=true) %}
-            <div class="record-item">
-                <div class="record-header">
-                    <div>
-                        <div class="record-title">{{ record.description[:40] }}{% if record.description|length > 40 %}...{% endif %}</div>
-                        <div class="record-date">{{ record.date.strftime('%d/%m/%Y') if record.date else 'غير محدد' }}</div>
-                    </div>
-                    <span class="badge record-badge {% if record.maintenance_type == 'دورية' %}bg-info{% elif record.maintenance_type == 'طارئة' %}bg-warning{% else %}bg-danger{% endif %}">
-                        {{ record.maintenance_type }}
-                    </span>
-                </div>
-                <div class="record-details">
-                    <div class="record-detail-item">
-                        <i class="fas fa-money-bill-wave text-success"></i>
-                        <span>{{ '{:,.0f}'.format(record.cost) }} ريال</span>
-                    </div>
-                </div>
-            </div>
-            {% endfor %}
-        {% else %}
-        <div class="empty-state">
-            <i class="fas fa-tools"></i>
-            <h6>لا توجد سجلات صيانة</h6>
-            <p>لم يتم تسجيل أي عمليات صيانة لهذه السيارة بعد</p>
-        </div>
-        {% endif %}
     </div>
 
     <!-- تاب الورشة -->
