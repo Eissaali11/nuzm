@@ -2358,6 +2358,13 @@ def edit_vehicle(vehicle_id):
             vehicle.fuel_type = request.form.get('fuel_type', '').strip()
             vehicle.status = request.form.get('status', '').strip()
             vehicle.notes = request.form.get('notes', '').strip()
+            
+            # تحديث القسم
+            department_id = request.form.get('department_id')
+            if department_id:
+                vehicle.department_id = int(department_id) if department_id != '' else None
+            else:
+                vehicle.department_id = None
 
             # تحديث تواريخ انتهاء الوثائق
             registration_expiry = request.form.get('registration_expiry_date')
@@ -2392,7 +2399,10 @@ def edit_vehicle(vehicle_id):
             db.session.rollback()
             flash(f'حدث خطأ أثناء تحديث السيارة: {str(e)}', 'error')
 
-    return render_template('mobile/edit_vehicle.html', vehicle=vehicle)
+    # الحصول على قائمة الأقسام
+    departments = Department.query.order_by(Department.name).all()
+    
+    return render_template('mobile/edit_vehicle.html', vehicle=vehicle, departments=departments)
 
 # حذف السيارة - النسخة المحمولة
 @mobile_bp.route('/vehicles/<int:vehicle_id>/delete', methods=['POST'])

@@ -74,6 +74,16 @@
                                 <option value="stopped_registration_expired" {{ 'selected' if vehicle.status == 'stopped_registration_expired' else '' }}>⏸️ متوقفة انتهاء الاستمارة</option>
                             </select>
                         </div>
+                        
+                        <div class="col-12">
+                            <label class="form-label">القسم المسؤول</label>
+                            <select name="department_id" class="form-select">
+                                <option value="">-- اختر القسم --</option>
+                                {% for department in departments %}
+                                <option value="{{ department.id }}" {{ 'selected' if vehicle.department_id == department.id else '' }}>{{ department.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
                     </div>
                 </div>
 

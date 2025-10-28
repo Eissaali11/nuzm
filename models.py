@@ -580,6 +580,7 @@ class Vehicle(db.Model):
     status = db.Column(db.String(30), nullable=False, default='available')  # الحالة: متاحة، مؤجرة، في المشروع، في الورشة، حادث
     driver_name = db.Column(db.String(100), nullable=True)  # اسم السائق
     type_of_car = db.Column(db.String(100),nullable=False)
+    department_id = db.Column(db.Integer, db.ForeignKey('department.id'), nullable=True)  # القسم المسؤول عن السيارة
     
     # تواريخ انتهاء الوثائق الهامة
     authorization_expiry_date = db.Column(db.Date)  # تاريخ انتهاء التفويض
@@ -617,6 +618,9 @@ class Vehicle(db.Model):
     authorized_users = db.relationship('User',
                                       secondary=vehicle_user_access,
                                       back_populates='accessible_vehicles')
+    
+    # العلاقة مع القسم
+    department = db.relationship('Department', backref='vehicles')
 
     def __repr__(self):
         return f'<Vehicle {self.plate_number} {self.make} {self.model}>'
