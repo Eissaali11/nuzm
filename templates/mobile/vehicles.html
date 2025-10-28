@@ -506,20 +506,22 @@ body {
         <div class="filters-grid">
             <select name="status" class="filter-select-modern">
                 <option value="">جميع الحالات</option>
-                <option value="available" {% if request.args.get('status') == 'available' %}selected{% endif %}>متاح</option>
-                <option value="in_use" {% if request.args.get('status') == 'in_use' %}selected{% endif %}>قيد الاستخدام</option>
-                <option value="in_workshop" {% if request.args.get('status') == 'in_workshop' %}selected{% endif %}>في الورشة</option>
+                <option value="available" {% if request.args.get('status') == 'available' %}selected{% endif %}>متاحة</option>
+                <option value="active_with_driver" {% if request.args.get('status') == 'active_with_driver' %}selected{% endif %}>نشطة مع سائق</option>
+                <option value="in_workshop_maintenance" {% if request.args.get('status') == 'in_workshop_maintenance' %}selected{% endif %}>في الورشة صيانة</option>
+                <option value="in_workshop_accident" {% if request.args.get('status') == 'in_workshop_accident' %}selected{% endif %}>في الورشة حادث</option>
+                <option value="out_of_service" {% if request.args.get('status') == 'out_of_service' %}selected{% endif %}>خارج الخدمة</option>
+                <option value="out_of_region_management" {% if request.args.get('status') == 'out_of_region_management' %}selected{% endif %}>خارج إدارة المنطقة</option>
                 <option value="in_project" {% if request.args.get('status') == 'in_project' %}selected{% endif %}>في مشروع</option>
-                <option value="accident" {% if request.args.get('status') == 'accident' %}selected{% endif %}>حادث</option>
-                <option value="rented" {% if request.args.get('status') == 'rented' %}selected{% endif %}>مؤجر</option>
+                <option value="in_workshop" {% if request.args.get('status') == 'in_workshop' %}selected{% endif %}>في الورشة</option>
             </select>
             
             <select name="type" class="filter-select-modern">
                 <option value="">جميع الأنواع</option>
-                <option value="sedan" {% if request.args.get('type') == 'sedan' %}selected{% endif %}>سيدان</option>
-                <option value="suv" {% if request.args.get('type') == 'suv' %}selected{% endif %}>SUV</option>
-                <option value="truck" {% if request.args.get('type') == 'truck' %}selected{% endif %}>شاحنة</option>
-                <option value="van" {% if request.args.get('type') == 'van' %}selected{% endif %}>فان</option>
+                <option value="سيدان" {% if request.args.get('type') == 'سيدان' %}selected{% endif %}>سيدان</option>
+                <option value="سيارة ركوب" {% if request.args.get('type') == 'سيارة ركوب' %}selected{% endif %}>سيارة ركوب</option>
+                <option value="نقل خفيف" {% if request.args.get('type') == 'نقل خفيف' %}selected{% endif %}>نقل خفيف</option>
+                <option value="باص" {% if request.args.get('type') == 'باص' %}selected{% endif %}>باص</option>
             </select>
         </div>
         
@@ -553,7 +555,7 @@ body {
                 </div>
                 <div class="vehicle-info">
                     <div class="vehicle-plate">{{ vehicle.plate_number }}</div>
-                    <div class="vehicle-type">{{ vehicle.vehicle_type }} - {{ vehicle.model }}</div>
+                    <div class="vehicle-type">{{ vehicle.type_of_car }} - {{ vehicle.model }}</div>
                 </div>
             </div>
             
