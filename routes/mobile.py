@@ -2187,12 +2187,16 @@ def vehicles():
     pagination = query.order_by(Vehicle.status, Vehicle.plate_number).paginate(page=page, per_page=per_page, error_out=False)
     vehicles = pagination.items
 
-    # إحصائيات سريعة - نعدل المسميات لتتوافق مع النسخة المحمولة
+    # إحصائيات تفصيلية حسب الحالات
     stats = {
         'total': Vehicle.query.count(),
-        'active': Vehicle.query.filter_by(status='available').count(),
-        'maintenance': Vehicle.query.filter_by(status='in_workshop').count(),
-        'inactive': Vehicle.query.filter_by(status='accident').count() + Vehicle.query.filter_by(status='rented').count() + Vehicle.query.filter_by(status='in_project').count()
+        'available': Vehicle.query.filter_by(status='available').count(),
+        'active_with_driver': Vehicle.query.filter_by(status='active_with_driver').count(),
+        'in_workshop_maintenance': Vehicle.query.filter_by(status='in_workshop_maintenance').count(),
+        'in_workshop_accident': Vehicle.query.filter_by(status='in_workshop_accident').count(),
+        'out_of_service': Vehicle.query.filter_by(status='out_of_service').count(),
+        'in_project': Vehicle.query.filter_by(status='in_project').count(),
+        'in_workshop': Vehicle.query.filter_by(status='in_workshop').count()
     }
 
     return render_template('mobile/vehicles.html', 

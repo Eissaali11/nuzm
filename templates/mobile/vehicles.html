@@ -71,14 +71,14 @@ body {
 .stats-container {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
+    gap: 10px;
     padding: 0 20px 20px;
 }
 
 .stat-card-modern {
     background: white;
-    border-radius: 16px;
-    padding: 16px 12px;
+    border-radius: 14px;
+    padding: 14px 10px;
     text-align: center;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
     position: relative;
@@ -98,17 +98,33 @@ body {
     background: var(--gradient-1);
 }
 
-.stat-card-modern.active::before {
+.stat-card-modern.available::before {
     background: var(--gradient-2);
+}
+
+.stat-card-modern.active-driver::before {
+    background: var(--gradient-5);
 }
 
 .stat-card-modern.maintenance::before {
     background: var(--gradient-3);
 }
 
+.stat-card-modern.accident::before {
+    background: var(--gradient-4);
+}
+
+.stat-card-modern.out-service::before {
+    background: linear-gradient(135deg, #868f96 0%, #596164 100%);
+}
+
+.stat-card-modern.project::before {
+    background: var(--gradient-6);
+}
+
 .stat-icon-large {
-    font-size: 32px;
-    margin-bottom: 10px;
+    font-size: 28px;
+    margin-bottom: 8px;
 }
 
 .stat-card-modern.total .stat-icon-large {
@@ -117,8 +133,14 @@ body {
     -webkit-text-fill-color: transparent;
 }
 
-.stat-card-modern.active .stat-icon-large {
+.stat-card-modern.available .stat-icon-large {
     background: var(--gradient-2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.stat-card-modern.active-driver .stat-icon-large {
+    background: var(--gradient-5);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
@@ -129,17 +151,36 @@ body {
     -webkit-text-fill-color: transparent;
 }
 
+.stat-card-modern.accident .stat-icon-large {
+    background: var(--gradient-4);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.stat-card-modern.out-service .stat-icon-large {
+    background: linear-gradient(135deg, #868f96 0%, #596164 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.stat-card-modern.project .stat-icon-large {
+    background: var(--gradient-6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
 .stat-number {
-    font-size: 24px;
+    font-size: 22px;
     font-weight: 800;
     color: #1a1a1a;
-    margin-bottom: 4px;
+    margin-bottom: 3px;
 }
 
 .stat-label {
-    font-size: 12px;
+    font-size: 11px;
     color: #8e8e93;
     font-weight: 600;
+    line-height: 1.2;
 }
 
 /* قسم البحث */
@@ -472,20 +513,44 @@ body {
         <div class="stat-label">إجمالي</div>
     </div>
     
-    <div class="stat-card-modern active">
+    <div class="stat-card-modern available">
         <div class="stat-icon-large">
             <i class="fas fa-check-circle"></i>
         </div>
-        <div class="stat-number">{{ stats.active }}</div>
-        <div class="stat-label">نشط</div>
+        <div class="stat-number">{{ stats.available }}</div>
+        <div class="stat-label">متاحة</div>
+    </div>
+    
+    <div class="stat-card-modern active-driver">
+        <div class="stat-icon-large">
+            <i class="fas fa-user-check"></i>
+        </div>
+        <div class="stat-number">{{ stats.active_with_driver }}</div>
+        <div class="stat-label">نشطة مع سائق</div>
     </div>
     
     <div class="stat-card-modern maintenance">
         <div class="stat-icon-large">
             <i class="fas fa-tools"></i>
         </div>
-        <div class="stat-number">{{ stats.maintenance }}</div>
-        <div class="stat-label">صيانة</div>
+        <div class="stat-number">{{ stats.in_workshop_maintenance }}</div>
+        <div class="stat-label">في الورشة صيانة</div>
+    </div>
+    
+    <div class="stat-card-modern accident">
+        <div class="stat-icon-large">
+            <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        <div class="stat-number">{{ stats.in_workshop_accident }}</div>
+        <div class="stat-label">في الورشة حادث</div>
+    </div>
+    
+    <div class="stat-card-modern out-service">
+        <div class="stat-icon-large">
+            <i class="fas fa-ban"></i>
+        </div>
+        <div class="stat-number">{{ stats.out_of_service }}</div>
+        <div class="stat-label">خارج الخدمة</div>
     </div>
 </div>
 
