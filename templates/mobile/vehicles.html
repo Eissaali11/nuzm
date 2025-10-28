@@ -609,9 +609,9 @@ body {
                     {% endif %}
                 </span>
                 
-                {% if vehicle.current_driver %}
+                {% if vehicle.driver_name %}
                 <span class="status-badge active">
-                    <i class="fas fa-user"></i> {{ vehicle.current_driver.name }}
+                    <i class="fas fa-user"></i> {{ vehicle.driver_name }}
                 </span>
                 {% endif %}
             </div>
