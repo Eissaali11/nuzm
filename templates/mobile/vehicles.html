@@ -83,6 +83,19 @@ body {
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
     position: relative;
     overflow: hidden;
+    text-decoration: none;
+    display: block;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.stat-card-modern:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+}
+
+.stat-card-modern:active {
+    transform: translateY(-1px);
 }
 
 .stat-card-modern::before {
@@ -505,53 +518,53 @@ body {
 
 <!-- الإحصائيات -->
 <div class="stats-container">
-    <div class="stat-card-modern total">
+    <a href="{{ url_for('mobile.vehicles') }}" class="stat-card-modern total">
         <div class="stat-icon-large">
             <i class="fas fa-car"></i>
         </div>
         <div class="stat-number">{{ stats.total }}</div>
         <div class="stat-label">إجمالي</div>
-    </div>
+    </a>
     
-    <div class="stat-card-modern available">
+    <a href="{{ url_for('mobile.vehicles', status='available') }}" class="stat-card-modern available">
         <div class="stat-icon-large">
             <i class="fas fa-check-circle"></i>
         </div>
         <div class="stat-number">{{ stats.available }}</div>
         <div class="stat-label">متاحة</div>
-    </div>
+    </a>
     
-    <div class="stat-card-modern active-driver">
+    <a href="{{ url_for('mobile.vehicles', status='active_with_driver') }}" class="stat-card-modern active-driver">
         <div class="stat-icon-large">
             <i class="fas fa-user-check"></i>
         </div>
         <div class="stat-number">{{ stats.active_with_driver }}</div>
         <div class="stat-label">نشطة مع سائق</div>
-    </div>
+    </a>
     
-    <div class="stat-card-modern maintenance">
+    <a href="{{ url_for('mobile.vehicles', status='in_workshop_maintenance') }}" class="stat-card-modern maintenance">
         <div class="stat-icon-large">
             <i class="fas fa-tools"></i>
         </div>
         <div class="stat-number">{{ stats.in_workshop_maintenance }}</div>
         <div class="stat-label">في الورشة صيانة</div>
-    </div>
+    </a>
     
-    <div class="stat-card-modern accident">
+    <a href="{{ url_for('mobile.vehicles', status='in_workshop_accident') }}" class="stat-card-modern accident">
         <div class="stat-icon-large">
             <i class="fas fa-exclamation-triangle"></i>
         </div>
         <div class="stat-number">{{ stats.in_workshop_accident }}</div>
         <div class="stat-label">في الورشة حادث</div>
-    </div>
+    </a>
     
-    <div class="stat-card-modern out-service">
+    <a href="{{ url_for('mobile.vehicles', status='out_of_service') }}" class="stat-card-modern out-service">
         <div class="stat-icon-large">
             <i class="fas fa-ban"></i>
         </div>
         <div class="stat-number">{{ stats.out_of_service }}</div>
         <div class="stat-label">خارج الخدمة</div>
-    </div>
+    </a>
 </div>
 
 <!-- البحث والفلترة -->
