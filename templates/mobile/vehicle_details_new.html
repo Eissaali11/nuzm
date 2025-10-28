@@ -872,7 +872,7 @@ function shareDocument(path, title, plateNumber) {
 
 // مشاركة عملية تسليم/استلام
 function shareHandover(handoverId, handoverType, personName, plateNumber) {
-    const url = window.location.origin + '/mobile/handover/' + handoverId;
+    const url = window.location.origin + '/vehicles/handover/' + handoverId + '/pdf/public';
     const typeText = handoverType === 'delivery' ? 'تسليم' : 'استلام';
     const text = `عملية ${typeText} السيارة ${plateNumber} - ${personName}`;
     const title = `عملية ${typeText}`;
