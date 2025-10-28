@@ -844,11 +844,11 @@
                 {% if salary %}
                 <div class="info-item">
                     <div class="info-label">أيام الحضور</div>
-                    <div class="info-value">{{ salary.days_attended }} يوم</div>
+                    <div class="info-value">{{ salary.present_days }} يوم</div>
                 </div>
                 <div class="info-item">
-                    <div class="info-label">الراتب الإجمالي</div>
-                    <div class="info-value" style="color: #34C759; font-size: 16px;">{{ "%.2f"|format(salary.total_salary) }} ريال</div>
+                    <div class="info-label">الراتب الصافي</div>
+                    <div class="info-value" style="color: #34C759; font-size: 16px;">{{ "%.2f"|format(salary.net_salary) }} ريال</div>
                 </div>
                 {% endif %}
             </div>
