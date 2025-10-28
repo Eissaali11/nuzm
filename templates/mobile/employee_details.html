@@ -671,7 +671,7 @@
     </div>
 
     <!-- بطاقة معلومات السكن -->
-    {% if employee.residence_details or employee.residence_location_url %}
+    {% if employee.residence_details or employee.residence_location_url or employee.housing_images %}
     <div class="info-card">
         <div class="card-header">
             <div class="card-icon" style="background: rgba(255, 149, 0, 0.1); color: #FF9500;">
@@ -695,6 +695,26 @@
                         <span>فتح الموقع على خرائط جوجل</span>
                         <i class="fas fa-external-link-alt" style="font-size: 12px; opacity: 0.7;"></i>
                     </a>
+                </div>
+            </div>
+            {% endif %}
+            {% if employee.housing_images %}
+            <div class="info-item" style="display: block;">
+                <div class="info-label" style="margin-bottom: 12px;">صور السكن</div>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 0;">
+                    {% set housing_images_list = employee.housing_images.split(',') %}
+                    {% for image in housing_images_list %}
+                    {% if image.strip() %}
+                    <div style="position: relative; border-radius: 12px; overflow: hidden; aspect-ratio: 1; cursor: pointer; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);" onclick="openImageModal('{{ url_for('static', filename='uploads/housing/' + image.strip()) }}')">
+                        <img src="{{ url_for('static', filename='uploads/housing/' + image.strip()) }}" 
+                             alt="صورة السكن" 
+                             style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease;">
+                        <div style="position: absolute; top: 8px; right: 8px; background: rgba(0, 0, 0, 0.6); color: white; padding: 4px 8px; border-radius: 8px; font-size: 11px;">
+                            <i class="fas fa-expand"></i>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% endfor %}
                 </div>
             </div>
             {% endif %}
