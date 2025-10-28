@@ -866,6 +866,16 @@ def export_attendance():
 @login_required
 def add_attendance():
     """إضافة سجل حضور جديد للنسخة المحمولة"""
+    # دالة لتحويل القيم العربية إلى الإنجليزية
+    def normalize_status(status):
+        status_mapping = {
+            'حاضر': 'present',
+            'غائب': 'absent',
+            'إجازة': 'leave',
+            'مرضي': 'sick'
+        }
+        return status_mapping.get(status, status)
+    
     # الحصول على قائمة الموظفين والأقسام
     employees = Employee.query.order_by(Employee.name).all()
     departments = Department.query.order_by(Department.name).all()
@@ -880,7 +890,7 @@ def add_attendance():
             department_ids = request.form.getlist('department_ids')
             start_date_str = request.form.get('start_date')
             end_date_str = request.form.get('end_date')
-            status = request.form.get('status')
+            status = normalize_status(request.form.get('status'))
             
             if not department_ids:
                 flash('يرجى اختيار قسم واحد على الأقل', 'danger')
@@ -929,8 +939,8 @@ def add_attendance():
                                 employee_id=emp.id,
                                 date=current_date_iter,
                                 status=status,
-                                check_in='09:00' if status == 'حاضر' else None,
-                                check_out='17:00' if status == 'حاضر' else None,
+                                check_in='09:00' if status == 'present' else None,
+                                check_out='17:00' if status == 'present' else None,
                                 notes=f'تسجيل جماعي عبر النظام المحمول'
                             )
                             db.session.add(new_attendance)
@@ -954,7 +964,7 @@ def add_attendance():
         # معالجة النموذج المرسل العادي
         employee_id = request.form.get('employee_id')
         date_str = request.form.get('date')
-        status = request.form.get('status')
+        status = normalize_status(request.form.get('status'))
         check_in = request.form.get('check_in')
         check_out = request.form.get('check_out')
         notes = request.form.get('notes')
@@ -981,8 +991,8 @@ def add_attendance():
                         employee_id=emp.id,
                         date=attendance_date,
                         status=status,
-                        check_in=check_in if status == 'حاضر' else None,
-                        check_out=check_out if status == 'حاضر' else None,
+                        check_in=check_in if status == 'present' else None,
+                        check_out=check_out if status == 'present' else None,
                         notes=notes
                     )
 
@@ -1015,12 +1025,12 @@ def add_attendance():
                     now_time = datetime.now().time()
 
                     if action == 'check_in':
-                        status = 'حاضر'
+                        status = 'present'
                         check_in = now_time.strftime('%H:%M')
                         check_out = None
                         notes = "تم تسجيل الحضور عبر النظام المحمول."
                     elif action == 'check_out':
-                        status = 'حاضر'
+                        status = 'present'
                         check_in = None
                         check_out = now_time.strftime('%H:%M')
                         notes = "تم تسجيل الانصراف عبر النظام المحمول."

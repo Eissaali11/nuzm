@@ -681,18 +681,20 @@
                             <td>{{ attendance.notes or '-' }}</td>
                             <td>
                                 <div class="btn-group">
-                                    <a href="{{ url_for('attendance.record') }}?employee_id={{ attendance.employee_id }}&date={{ date.strftime('%Y-%m-%d') if date else '' }}" 
+                                    <a href="{{ url_for('attendance.record') }}?employee_id={{ attendance.employee.id }}&date={{ date.strftime('%Y-%m-%d') if date else '' }}" 
                                        class="btn btn-sm btn-outline-primary" 
                                        title="تعديل"
                                        data-bs-toggle="tooltip">
                                         <i class="fas fa-edit"></i>
                                     </a>
+                                    {% if attendance.id %}
                                     <a href="{{ url_for('attendance.confirm_delete_attendance', id=attendance.id) }}" 
                                        class="btn btn-sm btn-outline-danger" 
                                        title="حذف"
                                        data-bs-toggle="tooltip">
                                         <i class="fas fa-trash"></i>
                                     </a>
+                                    {% endif %}
                                 </div>
                             </td>
                         </tr>

@@ -20,7 +20,7 @@ attendance_bp = Blueprint('attendance', __name__)
 
 @attendance_bp.route('/')
 def index():
-    """List attendance records with filtering options"""
+    """List attendance records with filtering options - shows all employees"""
     # Get filter parameters
     date_str = request.args.get('date', datetime.now().strftime('%Y-%m-%d'))
     department_id = request.args.get('department_id', '')
@@ -32,49 +32,89 @@ def index():
     except ValueError:
         date = datetime.now().date()
     
-    # Build query
-    query = Attendance.query.filter(Attendance.date == date)
-    base_query = query  # Save the base query for statistics
-    
-    # Apply filters for the main query - استخدام علاقة many-to-many
-    if department_id and department_id != '':
-        # استخدام العلاقة many-to-many بين الموظفين والأقسام
-        query = query.join(Employee).join(employee_departments).filter(employee_departments.c.department_id == int(department_id))
-        base_query = base_query.join(Employee).join(employee_departments).filter(employee_departments.c.department_id == int(department_id))
-    
-    if status and status != '':
-        query = query.filter(Attendance.status == status)
-    
-    # Execute query
-    attendances = query.all()
-    
     # Get departments for filter dropdown based on user permissions
     from flask_login import current_user
     
     if current_user.is_authenticated:
         departments = current_user.get_accessible_departments()
         
-        # إذا كان لدى المستخدم قسم مخصص، فلتر البيانات تلقائياً لهذا القسم - استخدام many-to-many
+        # Auto-filter to user's assigned department if they have one
         if current_user.assigned_department_id and not department_id:
             department_id = str(current_user.assigned_department_id)
-            query = query.join(Employee).join(employee_departments).filter(employee_departments.c.department_id == current_user.assigned_department_id)
-            base_query = base_query.join(Employee).join(employee_departments).filter(employee_departments.c.department_id == current_user.assigned_department_id)
-            attendances = query.all()
     else:
         departments = Department.query.all()
     
-    # Calculate attendance statistics for the current date and department filter
-    present_count = base_query.filter(Attendance.status == 'present').count()
-    absent_count = base_query.filter(Attendance.status == 'absent').count()
-    leave_count = base_query.filter(Attendance.status == 'leave').count()
-    sick_count = base_query.filter(Attendance.status == 'sick').count()
+    # Build employee query (active employees only)
+    employee_query = Employee.query.filter_by(status='active')
+    
+    # Apply department filter if specified
+    if department_id and department_id != '':
+        employee_query = employee_query.join(employee_departments).filter(
+            employee_departments.c.department_id == int(department_id)
+        )
+    
+    # Get all active employees
+    employees = employee_query.all()
+    
+    # Get actual attendance records for this date
+    attendance_query = Attendance.query.filter(Attendance.date == date)
+    if department_id and department_id != '':
+        attendance_query = attendance_query.join(Employee).join(employee_departments).filter(
+            employee_departments.c.department_id == int(department_id)
+        )
+    
+    # Build a map of employee_id -> attendance record
+    attendance_map = {att.employee_id: att for att in attendance_query.all()}
+    
+    # Build unified attendance list
+    unified_attendances = []
+    for emp in employees:
+        att_record = attendance_map.get(emp.id)
+        if att_record:
+            # Employee has a record - use it
+            record = {
+                'id': att_record.id,
+                'employee': emp,
+                'date': date,
+                'status': att_record.status,
+                'check_in': att_record.check_in,
+                'check_out': att_record.check_out,
+                'notes': att_record.notes,
+                'sick_leave_file': att_record.sick_leave_file,
+                'has_record': True
+            }
+        else:
+            # Employee has no record - mark as absent
+            record = {
+                'id': None,
+                'employee': emp,
+                'date': date,
+                'status': 'absent',
+                'check_in': None,
+                'check_out': None,
+                'notes': None,
+                'sick_leave_file': None,
+                'has_record': False
+            }
+        
+        unified_attendances.append(record)
+    
+    # Apply status filter on unified list
+    if status and status != '':
+        unified_attendances = [rec for rec in unified_attendances if rec['status'] == status]
+    
+    # Calculate statistics from unified list
+    present_count = sum(1 for rec in unified_attendances if rec['status'] == 'present')
+    absent_count = sum(1 for rec in unified_attendances if rec['status'] == 'absent')
+    leave_count = sum(1 for rec in unified_attendances if rec['status'] == 'leave')
+    sick_count = sum(1 for rec in unified_attendances if rec['status'] == 'sick')
     
     # Format date for display in both calendars
     hijri_date = format_date_hijri(date)
     gregorian_date = format_date_gregorian(date)
     
     return render_template('attendance/index.html', 
-                          attendances=attendances,
+                          attendances=unified_attendances,
                           departments=departments,
                           date=date,
                           hijri_date=hijri_date,
