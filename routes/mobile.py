@@ -2154,7 +2154,7 @@ def vehicles():
     department_filter = request.args.get('department', '')
     search_filter = request.args.get('search', '')
     page = request.args.get('page', 1, type=int)
-    per_page = 10  # عدد السيارات في الصفحة الواحدة
+    per_page = 50  # عدد السيارات في الصفحة الواحدة
 
     # قاعدة الاستعلام الأساسية
     query = Vehicle.query
