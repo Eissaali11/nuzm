@@ -10,9 +10,14 @@
 .vehicle-header-card {
     color: white;
     border-radius: 0 0 24px 24px;
-    padding: 24px 20px;
-    margin: -20px -15px 20px -15px;
+    padding: 24px 20px 20px 20px;
+    margin: 0 -15px 20px -15px;
     box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+}
+
+/* إصلاح المسافة من الأعلى */
+.mobile-content-wrapper {
+    padding-top: 80px !important;
 }
 
 /* ألوان حسب حالة السيارة */
@@ -371,6 +376,7 @@
 }
 </style>
 
+<div class="mobile-content-wrapper">
 {% if not vehicle %}
 <div class="alert alert-warning mx-3 mt-3">
     <div class="text-center py-4">
@@ -873,4 +879,5 @@ function scrollToTop() {
 </script>
 
 {% endif %}
+</div>
 {% endblock %}
