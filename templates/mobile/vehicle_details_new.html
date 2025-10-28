@@ -530,12 +530,15 @@
             <div class="plate-content">
                 <div class="plate-flag">🇸🇦</div>
                 <div class="plate-text">
-                    {% set plate_parts = vehicle.plate_number.split() %}
-                    {% if plate_parts|length > 1 %}
-                        <div class="plate-letters">{{ plate_parts[0] }}</div>
-                        <div class="plate-number">{{ plate_parts[1] }}</div>
+                    {% set plate_full = vehicle.plate_number|trim %}
+                    {% set plate_parts = plate_full.split() %}
+                    {% if plate_parts|length >= 2 %}
+                        {% set letters = plate_parts[:-1]|join(' ') %}
+                        {% set numbers = plate_parts[-1] %}
+                        <div class="plate-letters">{{ letters }}</div>
+                        <div class="plate-number">{{ numbers }}</div>
                     {% else %}
-                        <div class="plate-number">{{ vehicle.plate_number }}</div>
+                        <div class="plate-number">{{ plate_full }}</div>
                     {% endif %}
                 </div>
             </div>
