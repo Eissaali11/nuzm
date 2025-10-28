@@ -755,20 +755,46 @@
         </div>
     </div>
 
-    <!-- بطاقة صورة الهوية -->
-    {% if employee.national_id_image %}
+    <!-- بطاقة الوثائق المصورة -->
+    {% if employee.national_id_image or employee.license_image %}
     <div class="info-card">
         <div class="card-header">
             <div class="card-icon info">
-                <i class="fas fa-image"></i>
+                <i class="fas fa-id-card"></i>
             </div>
-            <h2 class="card-title">صورة الهوية الوطنية</h2>
+            <h2 class="card-title">الوثائق المصورة</h2>
         </div>
-        <div class="id-image-container">
-            <img src="{{ url_for('static', filename=employee.national_id_image) }}" 
-                 alt="الهوية الوطنية" 
-                 class="id-image"
-                 onclick="openImageModal(this.src)">
+        <div style="padding: 16px; overflow-x: auto; -webkit-overflow-scrolling: touch;">
+            <div style="display: flex; gap: 16px; min-width: min-content;">
+                {% if employee.national_id_image %}
+                <div style="flex: 0 0 280px; max-width: 280px;">
+                    <div style="background: #f8f9fa; border-radius: 12px; padding: 12px; margin-bottom: 8px;">
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                            <i class="fas fa-id-card" style="color: #4A90E2; font-size: 16px;"></i>
+                            <span style="font-size: 13px; font-weight: 600; color: #2d3748;">الهوية الوطنية</span>
+                        </div>
+                        <img src="{{ url_for('static', filename=employee.national_id_image) }}" 
+                             alt="الهوية الوطنية" 
+                             style="width: 100%; border-radius: 8px; cursor: pointer; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);"
+                             onclick="openImageModal(this.src)">
+                    </div>
+                </div>
+                {% endif %}
+                {% if employee.license_image %}
+                <div style="flex: 0 0 280px; max-width: 280px;">
+                    <div style="background: #f8f9fa; border-radius: 12px; padding: 12px; margin-bottom: 8px;">
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                            <i class="fas fa-car" style="color: #34C759; font-size: 16px;"></i>
+                            <span style="font-size: 13px; font-weight: 600; color: #2d3748;">رخصة القيادة</span>
+                        </div>
+                        <img src="{{ url_for('static', filename=employee.license_image) }}" 
+                             alt="رخصة القيادة" 
+                             style="width: 100%; border-radius: 8px; cursor: pointer; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);"
+                             onclick="openImageModal(this.src)">
+                    </div>
+                </div>
+                {% endif %}
+            </div>
         </div>
     </div>
     {% endif %}
