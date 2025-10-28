@@ -494,11 +494,17 @@ def employee_details(employee_id):
 
     # استعلام السيارات المرتبطة بالموظف (كسائق أو مشرف)
     from models import VehicleHandover, Vehicle
+    from sqlalchemy import or_
     # جلب آخر عملية تسليم نشطة لكل سيارة (من نوع delivery)
-    active_handovers = VehicleHandover.query.filter(
-        (VehicleHandover.employee_id == employee_id) | (VehicleHandover.supervisor_employee_id == employee_id),
+    active_handovers = VehicleHandover.query.join(Vehicle).filter(
+        or_(VehicleHandover.employee_id == employee_id, VehicleHandover.supervisor_employee_id == employee_id),
         VehicleHandover.handover_type == 'delivery'  # عمليات التسليم فقط (السيارات النشطة)
     ).order_by(VehicleHandover.handover_date.desc()).all()
+    
+    # Debug log
+    print(f"DEBUG: Employee ID {employee_id} has {len(active_handovers)} active handovers")
+    for h in active_handovers:
+        print(f"  - Handover {h.id}: Vehicle {h.vehicle_id} ({h.vehicle.plate_number if h.vehicle else 'N/A'}), employee_id={h.employee_id}, supervisor={h.supervisor_employee_id}")
 
     return render_template('mobile/employee_details.html', 
                           employee=employee,
