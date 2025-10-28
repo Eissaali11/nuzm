@@ -1525,6 +1525,44 @@ def document_details(document_id):
                           current_date=current_date,
                           days_remaining=days_remaining)
 
+# تحديث تاريخ انتهاء الوثيقة - النسخة المحمولة
+@mobile_bp.route('/documents/<int:document_id>/update-expiry', methods=['POST'])
+@login_required
+def update_document_expiry(document_id):
+    """تحديث تاريخ انتهاء الوثيقة"""
+    document = Document.query.get_or_404(document_id)
+    
+    try:
+        # الحصول على التاريخ الجديد
+        expiry_date_str = request.form.get('expiry_date')
+        notes = request.form.get('notes', '').strip()
+        
+        if expiry_date_str:
+            # تحويل النص إلى تاريخ
+            from datetime import datetime
+            expiry_date = datetime.strptime(expiry_date_str, '%Y-%m-%d').date()
+            
+            # تحديث تاريخ الانتهاء
+            document.expiry_date = expiry_date
+            
+            # تحديث الملاحظات إذا وُجدت
+            if notes:
+                if document.notes:
+                    document.notes = f"{document.notes}\n\n[تحديث {datetime.now().strftime('%Y-%m-%d')}]: {notes}"
+                else:
+                    document.notes = f"[تحديث {datetime.now().strftime('%Y-%m-%d')}]: {notes}"
+            
+            db.session.commit()
+            flash('تم تحديث تاريخ انتهاء الوثيقة بنجاح', 'success')
+        else:
+            flash('يرجى إدخال تاريخ الانتهاء', 'error')
+            
+    except Exception as e:
+        db.session.rollback()
+        flash(f'حدث خطأ أثناء تحديث الوثيقة: {str(e)}', 'error')
+    
+    return redirect(url_for('mobile.document_details', document_id=document_id))
+
 # صفحة التقارير - النسخة المحمولة
 @mobile_bp.route('/reports')
 @login_required
