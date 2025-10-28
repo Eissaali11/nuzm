@@ -3,72 +3,83 @@
         <div class="col-12 mb-4">
             <div class="card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; border-radius: 20px; box-shadow: 0 10px 40px rgba(102, 126, 234, 0.3); color: white;">
                 <div class="card-body" style="padding: 30px;">
-                    <h3 style="margin-bottom: 10px; font-weight: 700;">
-                        <i class="fas fa-chart-pie"></i>
+                    <h3 style="margin-bottom: 10px; font-weight: 700; font-size: 28px;">
+                        <i class="fas fa-chart-pie me-2"></i>
                         داش بورد الوثائق
                     </h3>
-                    <p style="margin: 0; opacity: 0.9;">عرض شامل لجميع الوثائق والإحصائيات التفصيلية</p>
+                    <p style="margin: 0; opacity: 0.95; font-size: 16px;">عرض شامل لجميع الوثائق والإحصائيات التفصيلية</p>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="row mb-4">
-        <div class="col-lg-3 col-md-6 mb-4">
-            <div class="stats-card card text-white" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; border-radius: 16px; box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3); transition: all 0.3s ease;">
-                <div class="card-body" style="padding: 24px;">
-                    <div style="display: flex; align-items: center; gap: 15px;">
-                        <div style="width: 60px; height: 60px; background: rgba(255, 255, 255, 0.2); border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 26px;">
-                            <i class="fas fa-file-alt"></i>
+    <div class="row g-4 mb-4">
+        <div class="col-lg-3 col-md-6">
+            <div class="card h-100 border-0 shadow-lg" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; transition: transform 0.3s ease, box-shadow 0.3s ease;">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div class="flex-grow-1">
+                            <div class="text-white-50 mb-2" style="font-size: 15px; font-weight: 500; letter-spacing: 0.5px;">إجمالي الوثائق</div>
+                            <h2 class="display-4 fw-bold text-white mb-0" style="font-size: 3.5rem; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">{{ total_docs }}</h2>
                         </div>
-                        <div>
-                            <h2 class="counter-value" style="margin: 0; font-size: 36px; font-weight: 800;">{{ total_docs }}</h2>
-                            <p style="margin: 0; font-size: 14px; opacity: 0.9;">إجمالي الوثائق</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-3 col-md-6 mb-4">
-            <div class="stats-card card text-white" style="background: linear-gradient(135deg, #dc3545 0%, #f5576c 100%); border: none; border-radius: 16px; box-shadow: 0 4px 20px rgba(220, 53, 69, 0.3); transition: all 0.3s ease;">
-                <div class="card-body" style="padding: 24px;">
-                    <div style="display: flex; align-items: center; gap: 15px;">
-                        <div style="width: 60px; height: 60px; background: rgba(255, 255, 255, 0.2); border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 26px;">
-                            <i class="fas fa-exclamation-triangle"></i>
-                        </div>
-                        <div>
-                            <h2 class="counter-value" style="margin: 0; font-size: 36px; font-weight: 800;">{{ expired_docs }}</h2>
-                            <p style="margin: 0; font-size: 14px; opacity: 0.9;">وثائق منتهية</p>
+                        <div class="ms-3">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 70px; height: 70px; background: rgba(255, 255, 255, 0.25); backdrop-filter: blur(10px);">
+                                <i class="fas fa-file-alt text-white" style="font-size: 32px;"></i>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-lg-3 col-md-6 mb-4">
-            <div class="stats-card card text-white" style="background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%); border: none; border-radius: 16px; box-shadow: 0 4px 20px rgba(255, 193, 7, 0.3); transition: all 0.3s ease;">
-                <div class="card-body" style="padding: 24px;">
-                    <div style="display: flex; align-items: center; gap: 15px;">
-                        <div style="width: 60px; height: 60px; background: rgba(255, 255, 255, 0.2); border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 26px;">
-                            <i class="fas fa-clock"></i>
+        
+        <div class="col-lg-3 col-md-6">
+            <div class="card h-100 border-0 shadow-lg" style="background: linear-gradient(135deg, #f5576c 0%, #dc3545 100%); border-radius: 20px; transition: transform 0.3s ease, box-shadow 0.3s ease;">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div class="flex-grow-1">
+                            <div class="text-white-50 mb-2" style="font-size: 15px; font-weight: 500; letter-spacing: 0.5px;">وثائق منتهية</div>
+                            <h2 class="display-4 fw-bold text-white mb-0" style="font-size: 3.5rem; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">{{ expired_docs }}</h2>
                         </div>
-                        <div>
-                            <h2 class="counter-value" style="margin: 0; font-size: 36px; font-weight: 800;">{{ expiring_soon }}</h2>
-                            <p style="margin: 0; font-size: 14px; opacity: 0.9;">تنتهي قريباً</p>
+                        <div class="ms-3">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 70px; height: 70px; background: rgba(255, 255, 255, 0.25); backdrop-filter: blur(10px);">
+                                <i class="fas fa-exclamation-triangle text-white" style="font-size: 32px;"></i>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-lg-3 col-md-6 mb-4">
-            <div class="stats-card card text-white" style="background: linear-gradient(135deg, #28a745 0%, #28c76f 100%); border: none; border-radius: 16px; box-shadow: 0 4px 20px rgba(40, 167, 69, 0.3); transition: all 0.3s ease;">
-                <div class="card-body" style="padding: 24px;">
-                    <div style="display: flex; align-items: center; gap: 15px;">
-                        <div style="width: 60px; height: 60px; background: rgba(255, 255, 255, 0.2); border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 26px;">
-                            <i class="fas fa-check-circle"></i>
+        
+        <div class="col-lg-3 col-md-6">
+            <div class="card h-100 border-0 shadow-lg" style="background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%); border-radius: 20px; transition: transform 0.3s ease, box-shadow 0.3s ease;">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div class="flex-grow-1">
+                            <div class="text-white-50 mb-2" style="font-size: 15px; font-weight: 500; letter-spacing: 0.5px;">تنتهي قريباً</div>
+                            <h2 class="display-4 fw-bold text-white mb-0" style="font-size: 3.5rem; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">{{ expiring_soon }}</h2>
                         </div>
-                        <div>
-                            <h2 class="counter-value" style="margin: 0; font-size: 36px; font-weight: 800;">{{ valid_docs }}</h2>
-                            <p style="margin: 0; font-size: 14px; opacity: 0.9;">وثائق سارية</p>
+                        <div class="ms-3">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 70px; height: 70px; background: rgba(255, 255, 255, 0.25); backdrop-filter: blur(10px);">
+                                <i class="fas fa-clock text-white" style="font-size: 32px;"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6">
+            <div class="card h-100 border-0 shadow-lg" style="background: linear-gradient(135deg, #28c76f 0%, #1e8449 100%); border-radius: 20px; transition: transform 0.3s ease, box-shadow 0.3s ease;">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div class="flex-grow-1">
+                            <div class="text-white-50 mb-2" style="font-size: 15px; font-weight: 500; letter-spacing: 0.5px;">وثائق سارية</div>
+                            <h2 class="display-4 fw-bold text-white mb-0" style="font-size: 3.5rem; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">{{ valid_docs }}</h2>
+                        </div>
+                        <div class="ms-3">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 70px; height: 70px; background: rgba(255, 255, 255, 0.25); backdrop-filter: blur(10px);">
+                                <i class="fas fa-check-circle text-white" style="font-size: 32px;"></i>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -79,19 +90,26 @@
     <!-- Chart Section -->
     <div class="row mb-4">
         <div class="col-12">
-            <div class="card" style="border: none; border-radius: 16px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);">
-                <div class="card-body" style="padding: 30px;">
-                    <h5 style="margin-bottom: 20px; font-weight: 700; color: #2d3748;">
-                        <i class="fas fa-chart-bar"></i>
+            <div class="card border-0 shadow-lg" style="border-radius: 20px; background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px);">
+                <div class="card-body p-4">
+                    <h5 class="mb-4 text-white" style="font-weight: 700; font-size: 22px;">
+                        <i class="fas fa-chart-pie me-2"></i>
                         توزيع الوثائق حسب الحالة
                     </h5>
-                    <div style="position: relative; height: 300px; max-height: 300px;">
+                    <div style="position: relative; height: 350px; max-height: 350px;">
                         <canvas id="documentsChart"></canvas>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+    
+    <style>
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3) !important;
+        }
+    </style>
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
     <script>
@@ -105,33 +123,51 @@
                     datasets: [{
                         data: [{{ valid_docs }}, {{ expiring_soon }}, {{ expired_docs }}],
                         backgroundColor: [
-                            'rgba(40, 167, 69, 0.8)',
-                            'rgba(255, 193, 7, 0.8)',
-                            'rgba(220, 53, 69, 0.8)'
+                            'rgba(40, 199, 111, 0.9)',
+                            'rgba(255, 152, 0, 0.9)',
+                            'rgba(245, 87, 108, 0.9)'
                         ],
                         borderColor: [
-                            'rgba(40, 167, 69, 1)',
-                            'rgba(255, 193, 7, 1)',
-                            'rgba(220, 53, 69, 1)'
+                            'rgba(40, 199, 111, 1)',
+                            'rgba(255, 152, 0, 1)',
+                            'rgba(245, 87, 108, 1)'
                         ],
-                        borderWidth: 2
+                        borderWidth: 3,
+                        hoverOffset: 15
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: true,
-                    aspectRatio: 2,
+                    aspectRatio: 2.2,
                     plugins: {
                         legend: {
                             position: 'bottom',
                             labels: {
                                 font: {
-                                    family: 'Tajawal',
-                                    size: 14
+                                    family: 'Tajawal, sans-serif',
+                                    size: 15,
+                                    weight: '600'
                                 },
-                                padding: 20,
-                                usePointStyle: true
+                                padding: 25,
+                                usePointStyle: true,
+                                pointStyle: 'circle',
+                                color: '#ffffff'
                             }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleFont: {
+                                family: 'Tajawal, sans-serif',
+                                size: 16,
+                                weight: 'bold'
+                            },
+                            bodyFont: {
+                                family: 'Tajawal, sans-serif',
+                                size: 14
+                            },
+                            padding: 15,
+                            cornerRadius: 10
                         }
                     }
                 }
