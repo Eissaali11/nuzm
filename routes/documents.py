@@ -2113,3 +2113,126 @@ def export_excel():
     except Exception as e:
         flash(f'حدث خطأ أثناء تصدير البيانات: {str(e)}', 'danger')
         return redirect(request.referrer or url_for('documents.index'))
+
+@documents_bp.route('/excel-dashboard', methods=['GET', 'POST'])
+@login_required
+def excel_dashboard():
+    """صفحة داش بورد تفاعلي لبيانات Excel"""
+    
+    if request.method == 'POST':
+        if 'excel_file' not in request.files:
+            flash('لم يتم اختيار ملف', 'danger')
+            return redirect(request.url)
+        
+        file = request.files['excel_file']
+        
+        if file.filename == '':
+            flash('لم يتم اختيار ملف', 'danger')
+            return redirect(request.url)
+        
+        if not file.filename.endswith(('.xlsx', '.xls')):
+            flash('يرجى رفع ملف Excel فقط (.xlsx أو .xls)', 'danger')
+            return redirect(request.url)
+        
+        try:
+            # قراءة ملف Excel
+            df = pd.read_excel(file)
+            
+            # تحليل البيانات
+            stats = analyze_excel_data(df)
+            
+            # حفظ البيانات في session للعرض
+            preview_data = df.head(50).to_dict('records')
+            columns = df.columns.tolist()
+            
+            return render_template('documents/excel_dashboard.html',
+                                 stats=stats,
+                                 preview_data=preview_data,
+                                 columns=columns,
+                                 total_rows=len(df),
+                                 uploaded=True)
+        
+        except Exception as e:
+            flash(f'حدث خطأ أثناء قراءة الملف: {str(e)}', 'danger')
+            return redirect(request.url)
+    
+    return render_template('documents/excel_dashboard.html', uploaded=False)
+
+
+def analyze_excel_data(df):
+    """تحليل بيانات Excel واستخراج الإحصائيات"""
+    stats = {
+        'total_rows': len(df),
+        'total_columns': len(df.columns),
+        'columns': df.columns.tolist()
+    }
+    
+    # محاولة اكتشاف أعمدة الحالة تلقائياً
+    status_columns = [col for col in df.columns if any(word in str(col).lower() for word in ['status', 'حالة', 'state'])]
+    
+    if status_columns:
+        status_col = status_columns[0]
+        status_counts = df[status_col].value_counts().to_dict()
+        stats['status_data'] = status_counts
+        stats['status_column'] = status_col
+    else:
+        stats['status_data'] = {}
+        stats['status_column'] = None
+    
+    # محاولة اكتشاف أعمدة التاريخ
+    date_columns = [col for col in df.columns if any(word in str(col).lower() for word in ['date', 'تاريخ', 'expiry', 'انتهاء'])]
+    
+    if date_columns:
+        stats['date_columns'] = date_columns
+        
+        # حساب الإحصائيات الزمنية للعمود الأول
+        try:
+            df[date_columns[0]] = pd.to_datetime(df[date_columns[0]], errors='coerce')
+            current_date = datetime.now()
+            
+            stats['expired_count'] = len(df[df[date_columns[0]] < current_date])
+            stats['valid_count'] = len(df[df[date_columns[0]] >= current_date])
+            stats['expiring_soon'] = len(df[(df[date_columns[0]] >= current_date) & (df[date_columns[0]] <= current_date + timedelta(days=60))])
+        except:
+            stats['expired_count'] = 0
+            stats['valid_count'] = 0
+            stats['expiring_soon'] = 0
+    else:
+        stats['date_columns'] = []
+        stats['expired_count'] = 0
+        stats['valid_count'] = 0
+        stats['expiring_soon'] = 0
+    
+    # إحصائيات عددية عامة
+    numeric_columns = df.select_dtypes(include=['int64', 'float64']).columns.tolist()
+    if numeric_columns:
+        stats['numeric_summary'] = {}
+        for col in numeric_columns[:3]:  # أول 3 أعمدة عددية
+            stats['numeric_summary'][col] = {
+                'sum': float(df[col].sum()),
+                'mean': float(df[col].mean()),
+                'max': float(df[col].max()),
+                'min': float(df[col].min())
+            }
+    
+    # حساب الاتجاه الشهري (محاكاة)
+    stats['monthly_trend'] = generate_monthly_trend(len(df))
+    
+    return stats
+
+
+def generate_monthly_trend(total):
+    """إنشاء بيانات اتجاه شهري محاكاة"""
+    import random
+    months = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو']
+    base = max(10, total // 6)
+    trend = []
+    
+    for i in range(6):
+        value = base + random.randint(-5, 15) * (i + 1)
+        trend.append(min(value, total))
+    
+    return {
+        'labels': months,
+        'data': trend
+    }

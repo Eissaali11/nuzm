@@ -1,0 +1,495 @@
+{% extends 'layout.html' %}
+
+{% block extra_css %}
+<style>
+    .upload-zone {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 20px;
+        padding: 60px 40px;
+        text-align: center;
+        border: 3px dashed rgba(255, 255, 255, 0.3);
+        transition: all 0.3s ease;
+        cursor: pointer;
+        margin-bottom: 30px;
+    }
+    
+    .upload-zone:hover {
+        border-color: rgba(255, 255, 255, 0.6);
+        transform: translateY(-5px);
+        box-shadow: 0 15px 35px rgba(102, 126, 234, 0.4);
+    }
+    
+    .upload-zone .icon {
+        font-size: 64px;
+        color: white;
+        margin-bottom: 20px;
+    }
+    
+    .upload-zone h3 {
+        color: white;
+        font-weight: 700;
+        margin-bottom: 10px;
+    }
+    
+    .upload-zone p {
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 16px;
+    }
+    
+    #excel_file {
+        display: none;
+    }
+    
+    .stat-card {
+        background: #2c3e54;
+        border-radius: 16px;
+        padding: 24px;
+        position: relative;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: all 0.3s ease;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+    
+    .stat-card::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+    }
+    
+    .stat-card.green::after {
+        background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+    }
+    
+    .stat-card.orange::after {
+        background: linear-gradient(90deg, #f59e0b 0%, #d97706 100%);
+    }
+    
+    .stat-card.red::after {
+        background: linear-gradient(90deg, #ef4444 0%, #dc2626 100%);
+    }
+    
+    .stat-card.blue::after {
+        background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%);
+    }
+    
+    .stat-icon {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        margin-bottom: 16px;
+    }
+    
+    .stat-icon.green {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        box-shadow: 0 8px 16px rgba(16, 185, 129, 0.3);
+    }
+    
+    .stat-icon.orange {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        box-shadow: 0 8px 16px rgba(245, 158, 11, 0.3);
+    }
+    
+    .stat-icon.red {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        box-shadow: 0 8px 16px rgba(239, 68, 68, 0.3);
+    }
+    
+    .stat-icon.blue {
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        box-shadow: 0 8px 16px rgba(59, 130, 246, 0.3);
+    }
+    
+    .stat-number {
+        font-size: 48px;
+        font-weight: 800;
+        color: #ffffff;
+        line-height: 1;
+        margin-bottom: 8px;
+    }
+    
+    .stat-label {
+        font-size: 14px;
+        color: rgba(255, 255, 255, 0.7);
+        font-weight: 500;
+    }
+    
+    .chart-card {
+        background: #2c3e54;
+        border-radius: 16px;
+        padding: 30px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        height: 100%;
+        overflow: hidden;
+    }
+    
+    .chart-title {
+        color: #ffffff;
+        font-size: 18px;
+        font-weight: 700;
+        margin-bottom: 24px;
+    }
+    
+    .data-table {
+        background: #2c3e54;
+        border-radius: 16px;
+        padding: 30px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        overflow-x: auto;
+    }
+    
+    .data-table table {
+        width: 100%;
+        color: white;
+    }
+    
+    .data-table th {
+        background: rgba(102, 126, 234, 0.2);
+        padding: 12px;
+        font-weight: 600;
+        border-bottom: 2px solid rgba(102, 126, 234, 0.5);
+    }
+    
+    .data-table td {
+        padding: 10px 12px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .data-table tr:hover {
+        background: rgba(255, 255, 255, 0.05);
+    }
+    
+    .action-btn {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        padding: 14px 24px;
+        font-weight: 600;
+        font-size: 15px;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        text-decoration: none;
+        display: inline-block;
+        margin: 5px;
+    }
+    
+    .action-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+        color: white;
+        text-decoration: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div>
+    <!-- Page Header -->
+    <div class="page-header mb-4">
+        <h1 style="color: #667eea; font-weight: 700;">
+            <i class="fas fa-file-excel me-3"></i>
+            داش بورد Excel التفاعلي
+        </h1>
+        <p class="text-white-50">قم برفع ملف Excel للحصول على تحليل شامل مع رسوم بيانية تفاعلية</p>
+    </div>
+
+    {% if not uploaded %}
+    <!-- Upload Zone -->
+    <div class="upload-zone" onclick="document.getElementById('excel_file').click()">
+        <div class="icon">
+            <i class="fas fa-cloud-upload-alt"></i>
+        </div>
+        <h3>اسحب وأفلت ملف Excel هنا</h3>
+        <p>أو انقر لتحديد الملف (.xlsx, .xls)</p>
+        <form method="POST" enctype="multipart/form-data" id="uploadForm">
+            <input type="file" name="excel_file" id="excel_file" accept=".xlsx,.xls" onchange="document.getElementById('uploadForm').submit()">
+        </form>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="text-center mt-4">
+        <a href="{{ url_for('documents.index') }}" class="action-btn">
+            <i class="fas fa-arrow-right me-2"></i>
+            العودة للوثائق
+        </a>
+        <a href="{{ url_for('documents.export_excel') }}" class="action-btn" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);">
+            <i class="fas fa-download me-2"></i>
+            تحميل نموذج Excel
+        </a>
+    </div>
+    
+    {% else %}
+    <!-- Dashboard Stats -->
+    <div class="row g-4 mb-4">
+        <div class="col-lg-3 col-md-6">
+            <div class="stat-card blue">
+                <div class="stat-icon blue">
+                    <i class="fas fa-database text-white"></i>
+                </div>
+                <div class="stat-number">{{ stats.total_rows }}</div>
+                <div class="stat-label">إجمالي الصفوف</div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6">
+            <div class="stat-card green">
+                <div class="stat-icon green">
+                    <i class="fas fa-columns text-white"></i>
+                </div>
+                <div class="stat-number">{{ stats.total_columns }}</div>
+                <div class="stat-label">عدد الأعمدة</div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6">
+            <div class="stat-card orange">
+                <div class="stat-icon orange">
+                    <i class="fas fa-clock text-white"></i>
+                </div>
+                <div class="stat-number">{{ stats.expiring_soon }}</div>
+                <div class="stat-label">تنتهي قريباً</div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6">
+            <div class="stat-card red">
+                <div class="stat-icon red">
+                    <i class="fas fa-exclamation-triangle text-white"></i>
+                </div>
+                <div class="stat-number">{{ stats.expired_count }}</div>
+                <div class="stat-label">منتهية</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row g-4 mb-4">
+        <div class="col-lg-6">
+            <div class="chart-card" style="min-height: 420px;">
+                <h5 class="chart-title">
+                    <i class="fas fa-chart-pie me-2"></i>
+                    توزيع البيانات
+                </h5>
+                <div style="position: relative; height: 340px; max-height: 340px; overflow: hidden;">
+                    <canvas id="dataDistributionChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-6">
+            <div class="chart-card" style="min-height: 420px;">
+                <h5 class="chart-title">
+                    <i class="fas fa-chart-line me-2"></i>
+                    الاتجاه الشهري
+                </h5>
+                <div style="position: relative; height: 340px; max-height: 340px; overflow: hidden;">
+                    <canvas id="trendChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Preview -->
+    <div class="data-table mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="chart-title mb-0">
+                <i class="fas fa-table me-2"></i>
+                معاينة البيانات (أول 50 صف)
+            </h5>
+            <div>
+                <button onclick="window.print()" class="action-btn" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);">
+                    <i class="fas fa-print me-2"></i>
+                    طباعة
+                </button>
+                <a href="{{ url_for('documents.excel_dashboard') }}" class="action-btn" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);">
+                    <i class="fas fa-upload me-2"></i>
+                    رفع ملف آخر
+                </a>
+            </div>
+        </div>
+        
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    {% for col in columns %}
+                    <th>{{ col }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in preview_data %}
+                <tr>
+                    {% for col in columns %}
+                    <td>{{ row[col] }}</td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        {% if total_rows > 50 %}
+        <div class="text-center mt-3">
+            <p class="text-white-50">
+                <i class="fas fa-info-circle me-2"></i>
+                يتم عرض أول 50 صف من أصل {{ total_rows }} صف
+            </p>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+{% if uploaded %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+<script>
+    // Data Distribution Chart
+    const distCtx = document.getElementById('dataDistributionChart');
+    if (distCtx) {
+        {% if stats.status_data %}
+        const statusData = {{ stats.status_data | tojson }};
+        const labels = Object.keys(statusData);
+        const data = Object.values(statusData);
+        
+        new Chart(distCtx.getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: data,
+                    backgroundColor: [
+                        'rgba(16, 185, 129, 0.9)',
+                        'rgba(245, 158, 11, 0.9)',
+                        'rgba(239, 68, 68, 0.9)',
+                        'rgba(59, 130, 246, 0.9)',
+                        'rgba(139, 92, 246, 0.9)'
+                    ],
+                    borderWidth: 3,
+                    hoverOffset: 15
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '65%',
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            font: {
+                                family: 'Tajawal, sans-serif',
+                                size: 14,
+                                weight: '600'
+                            },
+                            padding: 20,
+                            usePointStyle: true,
+                            pointStyle: 'circle',
+                            color: 'rgba(255, 255, 255, 0.9)'
+                        }
+                    }
+                }
+            }
+        });
+        {% else %}
+        // Default chart if no status data
+        new Chart(distCtx.getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: ['البيانات المحملة'],
+                datasets: [{
+                    data: [{{ stats.total_rows }}],
+                    backgroundColor: ['rgba(59, 130, 246, 0.9)'],
+                    borderWidth: 3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '65%',
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: 'rgba(255, 255, 255, 0.9)'
+                        }
+                    }
+                }
+            }
+        });
+        {% endif %}
+    }
+    
+    // Trend Chart
+    const trendCtx = document.getElementById('trendChart');
+    if (trendCtx) {
+        const trendData = {{ stats.monthly_trend | tojson }};
+        
+        new Chart(trendCtx.getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: trendData.labels,
+                datasets: [{
+                    label: 'عدد السجلات',
+                    data: trendData.data,
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 6,
+                    pointHoverRadius: 8,
+                    pointBackgroundColor: '#10b981',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.05)'
+                        },
+                        ticks: {
+                            color: 'rgba(255, 255, 255, 0.7)',
+                            font: {
+                                family: 'Tajawal, sans-serif',
+                                size: 12
+                            }
+                        }
+                    },
+                    y: {
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.05)'
+                        },
+                        ticks: {
+                            color: 'rgba(255, 255, 255, 0.7)',
+                            font: {
+                                family: 'Tajawal, sans-serif',
+                                size: 12
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+</script>
+{% endif %}
+{% endblock %}
