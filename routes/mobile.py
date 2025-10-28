@@ -494,11 +494,11 @@ def employee_details(employee_id):
 
     # استعلام السيارات المرتبطة بالموظف (كسائق أو مشرف)
     from models import VehicleHandover, Vehicle
-    # جلب آخر عملية تسليم نشطة لكل سيارة
+    # جلب آخر عملية تسليم نشطة لكل سيارة (من نوع delivery)
     active_handovers = VehicleHandover.query.filter(
         (VehicleHandover.employee_id == employee_id) | (VehicleHandover.supervisor_employee_id == employee_id),
-        VehicleHandover.return_date == None  # السيارات التي لم يتم إرجاعها بعد
-    ).all()
+        VehicleHandover.handover_type == 'delivery'  # عمليات التسليم فقط (السيارات النشطة)
+    ).order_by(VehicleHandover.handover_date.desc()).all()
 
     return render_template('mobile/employee_details.html', 
                           employee=employee,
