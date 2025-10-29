@@ -2835,9 +2835,15 @@ def save_file(file, folder):
     if not file.filename:
         return None, None
 
-    # إنشاء اسم فريد للملف
-    filename = secure_filename(file.filename)
-    unique_filename = f"{uuid.uuid4()}_{filename}"
+    # فصل الاسم والامتداد قبل استخدام secure_filename لتجنب فقدان الامتداد
+    original_filename = file.filename
+    name_part, ext_part = os.path.splitext(original_filename)
+    
+    # استخدام secure_filename على الاسم فقط (بدون الامتداد)
+    safe_name = secure_filename(name_part) or 'file'
+    
+    # إنشاء اسم فريد مع الامتداد الأصلي
+    unique_filename = f"{uuid.uuid4()}_{safe_name}{ext_part}"
 
     # التأكد من وجود المجلد
     upload_folder = os.path.join(current_app.static_folder, 'uploads', folder)
@@ -2850,8 +2856,8 @@ def save_file(file, folder):
         file.save(file_path)
         
         # تحويل HEIC/HEIF إلى JPEG للتوافق مع المتصفحات
-        filename_lower = filename.lower()
-        if filename_lower.endswith(('.heic', '.heif')):
+        ext_lower = ext_part.lower()
+        if ext_lower in ('.heic', '.heif'):
             try:
                 from PIL import Image
                 img = Image.open(file_path)
@@ -2866,7 +2872,7 @@ def save_file(file, folder):
                 print(f"تحذير: فشل تحويل HEIC: {convert_error}")
         
         # تحديد نوع الملف
-        file_type = 'pdf' if filename.lower().endswith('.pdf') else 'image'
+        file_type = 'pdf' if ext_lower == '.pdf' else 'image'
         return f"static/uploads/{folder}/{unique_filename}", file_type
         
     except Exception as e:
