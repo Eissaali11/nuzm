@@ -3057,6 +3057,7 @@ def create_handover_mobile(vehicle_id):
             authorization_details = request.form.get('authorization_details')
             movement_officer_name = request.form.get('movement_officer_name')
             form_link = request.form.get('form_link')
+            form_link_2 = request.form.get('form_link_2')
             custom_company_name = request.form.get('custom_company_name', '').strip() or None
 
             # Checklist
@@ -3121,7 +3122,7 @@ def create_handover_mobile(vehicle_id):
                 has_lights_issue=has_lights_issue, has_ac_issue=has_ac_issue,
                 movement_officer_name=movement_officer_name,
                 movement_officer_signature_path=movement_officer_signature_path,
-                damage_diagram_path=saved_diagram_path, form_link=form_link,
+                damage_diagram_path=saved_diagram_path, form_link=form_link, form_link_2=form_link_2,
                 custom_company_name=custom_company_name, custom_logo_path=saved_custom_logo_path
             )
 
@@ -3225,6 +3226,7 @@ def edit_handover_mobile(handover_id):
             authorization_details = request.form.get('authorization_details')
             movement_officer_name = request.form.get('movement_officer_name')
             form_link = request.form.get('form_link')
+            form_link_2 = request.form.get('form_link_2')
             custom_company_name = request.form.get('custom_company_name', '').strip() or None
 
             # Checklist
@@ -3269,6 +3271,7 @@ def edit_handover_mobile(handover_id):
             existing_handover.has_oil_leaks, existing_handover.has_gear_issue, existing_handover.has_clutch_issue, existing_handover.has_engine_issue, existing_handover.has_windows_issue, existing_handover.has_tires_issue, existing_handover.has_body_issue, existing_handover.has_electricity_issue, existing_handover.has_lights_issue, existing_handover.has_ac_issue = has_oil_leaks, has_gear_issue, has_clutch_issue, has_engine_issue, has_windows_issue, has_tires_issue, has_body_issue, has_electricity_issue, has_lights_issue, has_ac_issue
             existing_handover.movement_officer_name = movement_officer_name
             existing_handover.form_link = form_link
+            existing_handover.form_link_2 = form_link_2
             existing_handover.custom_company_name = custom_company_name
             existing_handover.updated_at = datetime.utcnow()
 
@@ -3375,7 +3378,7 @@ def save_as_next_handover_mobile(handover_id):
             has_body_issue=has_body_issue, has_electricity_issue=has_electricity_issue,
             has_lights_issue=has_lights_issue, has_ac_issue=has_ac_issue,
             movement_officer_name=movement_officer_name,
-            form_link=form_link,
+            form_link=form_link, form_link_2=form_link_2,
             custom_company_name=custom_company_name,
             # created_by=current_user.id
         )
