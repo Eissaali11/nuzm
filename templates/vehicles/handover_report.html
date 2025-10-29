@@ -514,7 +514,37 @@
     الرابط الخارجي + QR Code
   </h3> -->
 
-  <!-- ✅ الحاوية المشتركة: الرابط + QR -->
+  <!-- الرابط الخارجي 1 + QR -->
+  {% if handover.form_link %}
+  <div style="
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    background-color: #f8f9fa;
+    padding: 4px;
+    font-size: 9pt;
+    line-height: 1.7;
+    text-align: right;
+    box-sizing: border-box;
+    max-width: 100%;
+    margin-bottom: 5px;
+  ">
+    <div style="flex: 1;">
+      <strong>رابط نموذج خارجي 1:</strong> {{ handover.form_link }}
+    </div>
+    {% if qr_code_url %}
+    <div style="flex-shrink: 0;">
+      <img src="{{ qr_code_url }}" alt="QR Code"
+           style="width: 40px; height: 40px; border-radius: 4px;">
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <!-- الرابط الخارجي 2 + QR -->
+  {% if handover.form_link_2 %}
   <div style="
     display: flex;
     align-items: center;
@@ -529,20 +559,17 @@
     box-sizing: border-box;
     max-width: 100%;
   ">
-
-    <!-- الرابط أو الملاحظة -->
     <div style="flex: 1;">
-      {{ handover.form_link or 'لا توجد ملاحظات مسجلة.' }}
+      <strong>رابط نموذج خارجي 2:</strong> {{ handover.form_link_2 }}
     </div>
-
-    <!-- صورة QR -->
-    {% if qr_code_url %}
+    {% if qr_code_url_2 %}
     <div style="flex-shrink: 0;">
-      <img src="{{ qr_code_url }}" alt="QR Code"
+      <img src="{{ qr_code_url_2 }}" alt="QR Code"
            style="width: 40px; height: 40px; border-radius: 4px;">
     </div>
     {% endif %}
   </div>
+  {% endif %}
 </section>
 
         
