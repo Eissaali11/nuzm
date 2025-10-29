@@ -2867,7 +2867,7 @@ def save_file(file, folder):
         
         # تحديد نوع الملف
         file_type = 'pdf' if filename.lower().endswith('.pdf') else 'image'
-        return f"uploads/{folder}/{unique_filename}", file_type
+        return f"static/uploads/{folder}/{unique_filename}", file_type
         
     except Exception as e:
         print(f"خطأ في حفظ الملف: {e}")

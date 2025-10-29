@@ -60,7 +60,18 @@ def download_image(object_key):
                 return None
         return None
     
-    # محاولة البحث المحلي أولاً (هذا هو الأساس الآن)
+    # إذا كان المسار يبدأ بـ uploads/ (بدون static/)، أضف static/ في البداية
+    if object_key.startswith('uploads/'):
+        local_path = os.path.join('static', object_key)
+        if os.path.exists(local_path):
+            try:
+                with open(local_path, 'rb') as f:
+                    return f.read()
+            except Exception as e:
+                print(f"Error reading local file {local_path}: {str(e)}")
+                # استمر للبحث مع المسار الأصلي
+    
+    # محاولة البحث المحلي في static/uploads/
     local_path = os.path.join('static', 'uploads', object_key)
     if os.path.exists(local_path):
         try:
