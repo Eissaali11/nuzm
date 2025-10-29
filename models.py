@@ -810,6 +810,7 @@ class VehicleHandover(db.Model):
     # الحقول التالية موجودة بالفعل
     damage_diagram_path = db.Column(db.String(255), nullable=True)
     form_link = db.Column(db.String(255), nullable=True)
+    form_link_2 = db.Column(db.String(500), nullable=True)
     custom_company_name = db.Column(db.String(100), nullable=True)
     custom_logo_path = db.Column(db.String(255), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
