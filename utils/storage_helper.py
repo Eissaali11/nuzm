@@ -40,10 +40,10 @@ def upload_image(file_data, folder_name, filename):
 
 def download_image(object_key):
     """
-    تحميل صورة من Replit Object Storage أو من النظام المحلي
+    تحميل صورة من النظام المحلي أولاً، ثم Object Storage كبديل
     
     Args:
-        object_key: المسار الكامل للملف (يدعم كلاً من Object Storage والمسارات المحلية)
+        object_key: المسار الكامل للملف (يدعم كلاً من المسارات المحلية و Object Storage)
     
     Returns:
         bytes: البيانات الثنائية للملف أو None
@@ -60,30 +60,24 @@ def download_image(object_key):
                 return None
         return None
     
-    # محاولة تحميل من Object Storage
+    # محاولة البحث المحلي أولاً (هذا هو الأساس الآن)
+    local_path = os.path.join('static', 'uploads', object_key)
+    if os.path.exists(local_path):
+        try:
+            with open(local_path, 'rb') as f:
+                return f.read()
+        except Exception as e:
+            print(f"Error reading local file {local_path}: {str(e)}")
+            # استمر للبحث في Object Storage كبديل
+    
+    # محاولة Object Storage كبديل فقط
     if not STORAGE_AVAILABLE or client is None:
-        # محاولة كمسار محلي بديل
-        local_path = os.path.join('static', 'uploads', object_key)
-        if os.path.exists(local_path):
-            try:
-                with open(local_path, 'rb') as f:
-                    return f.read()
-            except Exception as e:
-                print(f"Error reading fallback file {local_path}: {str(e)}")
         return None
     
     try:
         return client.download_as_bytes(object_key)
-    except Exception as e:
-        print(f"Error downloading image {object_key}: {str(e)}")
-        # محاولة أخيرة كمسار محلي
-        local_path = os.path.join('static', 'uploads', object_key)
-        if os.path.exists(local_path):
-            try:
-                with open(local_path, 'rb') as f:
-                    return f.read()
-            except:
-                pass
+    except Exception:
+        # فشل Object Storage، والملف المحلي غير موجود
         return None
 
 def delete_image(object_key):
