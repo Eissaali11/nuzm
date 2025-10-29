@@ -532,7 +532,7 @@
     margin-bottom: 5px;
   ">
     <div style="flex: 1;">
-      <strong>رابط نموذج خارجي 1:</strong> {{ handover.form_link }}
+      <strong>رابط نموذج خارجي 1:</strong> <a href="{{ handover.form_link }}" target="_blank" style="color: #0a9396; text-decoration: none;">اضغط لاستعراض الرابط</a>
     </div>
     {% if qr_code_url %}
     <div style="flex-shrink: 0;">
@@ -560,7 +560,7 @@
     max-width: 100%;
   ">
     <div style="flex: 1;">
-      <strong>رابط نموذج خارجي 2:</strong> {{ handover.form_link_2 }}
+      <strong>رابط نموذج خارجي 2:</strong> <a href="{{ handover.form_link_2 }}" target="_blank" style="color: #0a9396; text-decoration: none;">اضغط لاستعراض الرابط</a>
     </div>
     {% if qr_code_url_2 %}
     <div style="flex-shrink: 0;">
