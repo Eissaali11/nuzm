@@ -96,12 +96,22 @@ def generate_handover_report_pdf_weasyprint(handover):
             qr_img.save(buffered, format="PNG")
             img_str = base64.b64encode(buffered.getvalue()).decode('utf-8')
             qr_code_url = f"data:image/png;base64,{img_str}"
+        
+        # Generate QR code for second form link if provided
+        qr_code_url_2 = None
+        if handover.form_link_2:
+            qr_img_2 = qrcode.make(handover.form_link_2)
+            buffered_2 = io.BytesIO()
+            qr_img_2.save(buffered_2, format="PNG")
+            img_str_2 = base64.b64encode(buffered_2.getvalue()).decode('utf-8')
+            qr_code_url_2 = f"data:image/png;base64,{img_str_2}"
 
         # Render the HTML template with base64 images
         html_string = render_template(
             'vehicles/handover_report.html',
             handover=handover,
             qr_code_url=qr_code_url,
+            qr_code_url_2=qr_code_url_2,
             damage_diagram_b64=damage_diagram_b64,
             driver_signature_b64=driver_signature_b64,
             supervisor_signature_b64=supervisor_signature_b64,
