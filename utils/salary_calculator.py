@@ -95,23 +95,23 @@ def calculate_absence_deduction(basic_salary, working_days_in_month, absent_days
 
 
 def calculate_salary_with_attendance(employee_id, month, year, basic_salary, allowances=0, bonus=0, 
-                                     other_deductions=0, working_days_in_month=26,
-                                     exclude_leave=True, exclude_sick=True, attendance_bonus=0):
+                                     other_deductions=0, working_days_in_month=30,
+                                     exclude_leave=True, exclude_sick=True, attendance_bonus=300.0):
     """
-    حساب الراتب النهائي مع الأخذ في الاعتبار الحضور والغياب
+    حساب الراتب بناءً على (أيام الحضور × الأجر اليومي) + حافز 300 ريال للدوام الكامل
     
     Args:
         employee_id: معرف الموظف
         month: الشهر
         year: السنة
-        basic_salary: الراتب الأساسي (بدون الحافز)
+        basic_salary: الراتب الأساسي (يُقسم على 30 للحصول على الأجر اليومي)
         allowances: البدلات
         bonus: المكافآت
         other_deductions: خصومات أخرى
-        working_days_in_month: عدد أيام العمل في الشهر (افتراضي: 26 يوم)
+        working_days_in_month: عدد الأيام المطلوبة للحافز (افتراضي: 30 يوم)
         exclude_leave: عدم خصم أيام الإجازة الرسمية
         exclude_sick: عدم خصم أيام الإجازة المرضية
-        attendance_bonus: حافز الدوام الكامل (يُمنح فقط للحضور الكامل)
+        attendance_bonus: حافز الدوام الكامل 300 ريال (يُمنح فقط للحضور 30 يوم)
     
     Returns:
         dict: تفاصيل الراتب المحسوب
@@ -120,11 +120,15 @@ def calculate_salary_with_attendance(employee_id, month, year, basic_salary, all
         # جلب إحصائيات الحضور
         attendance_stats = get_attendance_statistics(employee_id, month, year)
         
+        # حساب الأجر اليومي من الراتب الأساسي
+        daily_wage = round(basic_salary / 30.0, 2)
+        
         if not attendance_stats:
             # في حالة عدم وجود سجلات، نرجع الراتب كاملاً + الحافز
             net_salary = basic_salary + attendance_bonus + allowances + bonus - other_deductions
             return {
                 'basic_salary': basic_salary,
+                'daily_wage': daily_wage,
                 'attendance_bonus': attendance_bonus,
                 'allowances': allowances,
                 'bonus': bonus,
@@ -134,11 +138,11 @@ def calculate_salary_with_attendance(employee_id, month, year, basic_salary, all
                 'total_deductions': other_deductions,
                 'net_salary': net_salary,
                 'attendance_stats': None,
+                'paid_days': 30,
                 'warning': 'لا توجد سجلات حضور للشهر المحدد'
             }
         
         # حساب أيام الحضور الفعلية التي تستحق الراتب
-        # نبدأ بأيام الحضور الفعلي
         paid_days = attendance_stats['present_days']
         
         # إضافة أيام الإجازة الرسمية إذا كانت السياسة تستثنيها من الخصم
@@ -149,20 +153,8 @@ def calculate_salary_with_attendance(employee_id, month, year, basic_salary, all
         if exclude_sick:
             paid_days += attendance_stats['sick_days']
         
-        # حساب راتب اليوم بناءً على الراتب الأساسي فقط (بدون الحافز)
-        # نستخدم 30 يوم ثابت كأساس للحساب (معيار ثابت)
-        total_days_in_month = attendance_stats['total_days']  # للمعلومات فقط
-        STANDARD_MONTH_DAYS = 30  # الأساس الثابت للحساب
-        daily_salary = round(basic_salary / STANDARD_MONTH_DAYS, 2)
-        
-        # سجل للتحقق من القيم
-        print(f"[DEBUG] الموظف {employee_id}: الشهر {month}/{year} - أيام الشهر الفعلية: {total_days_in_month}, أيام الحساب: {STANDARD_MONTH_DAYS}, الأجر اليومي: {daily_salary}, الراتب الأساسي: {basic_salary}")
-        
-        # تحديد هل الموظف مؤهل للحصول على حافز الدوام الكامل
-        # الحافز يُمنح فقط للموظفين الذين حضروا على الأقل working_days_in_month
-        
-        # حساب الراتب على أساس أيام الحضور الفعلية فقط (بدلاً من الراتب الكامل - الخصم)
-        earned_salary = round(daily_salary * paid_days, 2)
+        # حساب الراتب المكتسب = أيام الحضور × الأجر اليومي
+        earned_salary = round(daily_wage * paid_days, 2)
         
         # الحد الأقصى للراتب المكتسب هو الراتب الأساسي
         if earned_salary > basic_salary:
@@ -171,23 +163,25 @@ def calculate_salary_with_attendance(employee_id, month, year, basic_salary, all
         # حساب "الخصم" للعرض فقط (الفرق بين الراتب الأساسي والمكتسب)
         attendance_deduction = round(basic_salary - earned_salary, 2)
         
+        # الحافز 300 ريال يُمنح فقط إذا حضر الموظف 30 يوم كاملة
         if paid_days >= working_days_in_month:
-            # موظف حضر كامل أيام العمل - يستحق الحافز
-            earned_bonus = round(attendance_bonus, 2)
+            earned_bonus = attendance_bonus
             bonus_deduction = 0.0
         else:
-            # موظف غاب - يفقد الحافز (لا يحصل عليه)
             earned_bonus = 0.0
-            bonus_deduction = 0.0
+            bonus_deduction = attendance_bonus
         
-        # حساب إجمالي الخصومات مع تقريب نهائي
+        # حساب إجمالي الخصومات
         total_deductions = round(attendance_deduction + bonus_deduction + other_deductions, 2)
         
-        # حساب صافي الراتب بناءً على الراتب المكتسب من الحضور
+        # حساب صافي الراتب = الراتب المكتسب + الحافز + البدلات + المكافآت - الخصومات الأخرى
         net_salary = round(earned_salary + earned_bonus + allowances + bonus - other_deductions, 2)
+        
+        print(f"[DEBUG] الموظف {employee_id}: أيام الحضور={paid_days}, الأجر اليومي={daily_wage}, المكتسب={earned_salary}, الحافز={earned_bonus}, الصافي={net_salary}")
         
         return {
             'basic_salary': basic_salary,
+            'daily_wage': daily_wage,
             'attendance_bonus': earned_bonus,
             'bonus_deduction': bonus_deduction,
             'allowances': allowances,
@@ -197,11 +191,11 @@ def calculate_salary_with_attendance(employee_id, month, year, basic_salary, all
             'total_deductions': total_deductions,
             'net_salary': net_salary,
             'attendance_stats': attendance_stats,
-            'deductible_days': total_days_in_month - paid_days,
+            'deductible_days': 30 - paid_days,
             'working_days_in_month': working_days_in_month,
             'paid_days': paid_days,
-            'daily_salary': daily_salary,
-            'total_days_in_month': total_days_in_month
+            'earned_salary': earned_salary,
+            'total_days_in_month': attendance_stats['total_days']
         }
     except Exception as e:
         print(f"خطأ في حساب الراتب: {str(e)}")
