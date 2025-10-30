@@ -81,7 +81,8 @@ class Employee(db.Model):
     nationality_id = db.Column(db.Integer, db.ForeignKey('nationalities.id', name='fk_employee_nationality_id'), nullable=True)
     contract_type = db.Column(db.String(20), default='foreign')  # سعودي / وافد - saudi / foreign
     basic_salary = db.Column(db.Float, default=0.0)  # الراتب الأساسي
-    attendance_bonus = db.Column(db.Float, default=0.0)  # حافز الدوام الكامل
+    daily_wage = db.Column(db.Float, default=0.0)  # الأجر اليومي (يُحسب تلقائياً من الراتب الأساسي ÷ 30)
+    attendance_bonus = db.Column(db.Float, default=300.0)  # حافز الدوام الكامل (30 يوم)
     has_national_balance = db.Column(db.Boolean, default=False)  # هل يتوفر توازن وطني
     profile_image = db.Column(db.String(255))  # الصورة الشخصية
     national_id_image = db.Column(db.String(255))  # صورة الهوية الوطنية
