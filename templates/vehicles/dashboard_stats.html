@@ -105,12 +105,12 @@
                     <!-- المفاتيح والإحصائيات -->
                     <div class="col-6">
                         <div class="row g-1">
-                            <!-- متاح -->
+                            <!-- متاحة -->
                             <div class="col-12">
                                 <div class="d-flex align-items-center p-1" style="background: rgba(255,255,255,0.1); border-radius: 6px;">
                                     <div style="width: 12px; height: 12px; background: #4ade80; border-radius: 2px; margin-left: 8px;"></div>
                                     <div>
-                                        <div style="font-size: 0.7rem; opacity: 0.8;">متاح</div>
+                                        <div style="font-size: 0.7rem; opacity: 0.8;">متاحة</div>
                                         <div style="font-size: 1rem; font-weight: 600;">
                                             {% set available_count = vehicles | selectattr("status", "equalto", "available") | list | length %}
                                             {{ available_count }}
@@ -119,12 +119,12 @@
                                 </div>
                             </div>
                             
-                            <!-- مؤجر -->
+                            <!-- مؤجرة -->
                             <div class="col-12">
                                 <div class="d-flex align-items-center p-1" style="background: rgba(255,255,255,0.1); border-radius: 6px;">
                                     <div style="width: 12px; height: 12px; background: #06b6d4; border-radius: 2px; margin-left: 8px;"></div>
                                     <div>
-                                        <div style="font-size: 0.7rem; opacity: 0.8;">مؤجر</div>
+                                        <div style="font-size: 0.7rem; opacity: 0.8;">مؤجرة</div>
                                         <div style="font-size: 1rem; font-weight: 600;">
                                             {% set rented_count = vehicles | selectattr("status", "equalto", "rented") | list | length %}
                                             {{ rented_count }}
@@ -133,12 +133,12 @@
                                 </div>
                             </div>
                             
-                            <!-- في المشروع -->
+                            <!-- نشطة مع سائق -->
                             <div class="col-12">
                                 <div class="d-flex align-items-center p-1" style="background: rgba(255,255,255,0.1); border-radius: 6px;">
                                     <div style="width: 12px; height: 12px; background: #fbbf24; border-radius: 2px; margin-left: 8px;"></div>
                                     <div>
-                                        <div style="font-size: 0.7rem; opacity: 0.8;">في المشروع</div>
+                                        <div style="font-size: 0.7rem; opacity: 0.8;">نشطة مع سائق</div>
                                         <div style="font-size: 1rem; font-weight: 600;">
                                             {% set in_project_count = vehicles | selectattr("status", "equalto", "in_project") | list | length %}
                                             {{ in_project_count }}
@@ -147,12 +147,12 @@
                                 </div>
                             </div>
                             
-                            <!-- في الورشة -->
+                            <!-- في الورشة صيانة -->
                             <div class="col-12">
                                 <div class="d-flex align-items-center p-1" style="background: rgba(255,255,255,0.1); border-radius: 6px;">
                                     <div style="width: 12px; height: 12px; background: #f97316; border-radius: 2px; margin-left: 8px;"></div>
                                     <div>
-                                        <div style="font-size: 0.7rem; opacity: 0.8;">في الورشة</div>
+                                        <div style="font-size: 0.7rem; opacity: 0.8;">في الورشة صيانة</div>
                                         <div style="font-size: 1rem; font-weight: 600;">
                                             {% set in_workshop_count = vehicles | selectattr("status", "equalto", "in_workshop") | list | length %}
                                             {{ in_workshop_count }}
@@ -161,12 +161,12 @@
                                 </div>
                             </div>
                             
-                            <!-- حادث -->
+                            <!-- في الورشة حادث -->
                             <div class="col-12">
                                 <div class="d-flex align-items-center p-1" style="background: rgba(255,255,255,0.1); border-radius: 6px;">
                                     <div style="width: 12px; height: 12px; background: #ef4444; border-radius: 2px; margin-left: 8px;"></div>
                                     <div>
-                                        <div style="font-size: 0.7rem; opacity: 0.8;">حادث</div>
+                                        <div style="font-size: 0.7rem; opacity: 0.8;">في الورشة حادث</div>
                                         <div style="font-size: 1rem; font-weight: 600;">
                                             {% set accident_count = vehicles | selectattr("status", "equalto", "accident") | list | length %}
                                             {{ accident_count }}
@@ -313,7 +313,7 @@ document.addEventListener('DOMContentLoaded', function() {
     var vehicleChart = new Chart(ctx1, {
         type: 'doughnut',
         data: {
-            labels: ['متاح', 'مؤجر', 'في المشروع', 'في الورشة', 'حادث'],
+            labels: ['متاحة', 'مؤجرة', 'نشطة مع سائق', 'في الورشة صيانة', 'في الورشة حادث'],
             datasets: [{
                 data: [
                     {{ available_count }}, 
@@ -338,11 +338,29 @@ document.addEventListener('DOMContentLoaded', function() {
             responsive: true,
             maintainAspectRatio: true,
             plugins: {
-                legend: { display: false },
+                legend: { 
+                    display: false 
+                },
                 tooltip: {
+                    enabled: true,
+                    rtl: true,
+                    textDirection: 'rtl',
                     backgroundColor: 'rgba(0,0,0,0.8)',
                     titleColor: '#ffffff',
-                    bodyColor: '#ffffff'
+                    bodyColor: '#ffffff',
+                    titleFont: {
+                        family: 'Cairo, sans-serif',
+                        size: 13
+                    },
+                    bodyFont: {
+                        family: 'Cairo, sans-serif',
+                        size: 12
+                    },
+                    callbacks: {
+                        label: function(context) {
+                            return context.label + ': ' + context.parsed;
+                        }
+                    }
                 }
             }
         }
