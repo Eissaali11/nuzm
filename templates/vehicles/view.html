@@ -547,15 +547,17 @@
                                 <div class="col-sm-4 fw-bold">الحالة:</div>
                                 <div class="col-sm-8">
                                     {% if vehicle.status == 'available' %}
-                                    <span class="badge-enhanced bg-success">متاحة</span>
+                                    <span class="badge-enhanced bg-success">✅ متاحة</span>
                                     {% elif vehicle.status == 'rented' %}
-                                    <span class="badge-enhanced bg-primary">مؤجرة</span>
+                                    <span class="badge-enhanced bg-info">🚗 مؤجرة</span>
                                     {% elif vehicle.status == 'in_project' %}
-                                    <span class="badge-enhanced bg-info">في المشروع</span>
+                                    <span class="badge-enhanced bg-info">🚗 نشطة مع سائق</span>
                                     {% elif vehicle.status == 'in_workshop' %}
-                                    <span class="badge-enhanced bg-warning text-dark">في الورشة</span>
+                                    <span class="badge-enhanced bg-warning text-dark">🔧 في الورشة صيانة</span>
                                     {% elif vehicle.status == 'accident' %}
-                                    <span class="badge-enhanced bg-danger">حادث</span>
+                                    <span class="badge-enhanced bg-danger">⚠️ في الورشة حادث</span>
+                                    {% elif vehicle.status == 'out_of_service' %}
+                                    <span class="badge-enhanced bg-secondary">🔴 خارج الخدمة</span>
                                     {% else %}
                                     <span class="badge-enhanced bg-secondary">{{ vehicle.status }}</span>
                                     {% endif %}
