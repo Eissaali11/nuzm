@@ -544,27 +544,27 @@ body {
         <div class="stat-label">متاحة</div>
     </a>
     
-    <a href="{{ url_for('mobile.vehicles', status='active_with_driver') }}" class="stat-card-modern active-driver">
+    <a href="{{ url_for('mobile.vehicles', status='in_project') }}" class="stat-card-modern active-driver">
         <div class="stat-icon-large">
             <i class="fas fa-user-check"></i>
         </div>
-        <div class="stat-number">{{ stats.active_with_driver }}</div>
+        <div class="stat-number">{{ stats.in_project }}</div>
         <div class="stat-label">نشطة مع سائق</div>
     </a>
     
-    <a href="{{ url_for('mobile.vehicles', status='in_workshop_maintenance') }}" class="stat-card-modern maintenance">
+    <a href="{{ url_for('mobile.vehicles', status='in_workshop') }}" class="stat-card-modern maintenance">
         <div class="stat-icon-large">
             <i class="fas fa-tools"></i>
         </div>
-        <div class="stat-number">{{ stats.in_workshop_maintenance }}</div>
+        <div class="stat-number">{{ stats.in_workshop }}</div>
         <div class="stat-label">في الورشة صيانة</div>
     </a>
     
-    <a href="{{ url_for('mobile.vehicles', status='in_workshop_accident') }}" class="stat-card-modern accident">
+    <a href="{{ url_for('mobile.vehicles', status='accident') }}" class="stat-card-modern accident">
         <div class="stat-icon-large">
             <i class="fas fa-exclamation-triangle"></i>
         </div>
-        <div class="stat-number">{{ stats.in_workshop_accident }}</div>
+        <div class="stat-number">{{ stats.accident }}</div>
         <div class="stat-label">في الورشة حادث</div>
     </a>
     
@@ -589,7 +589,7 @@ body {
             <i class="fas fa-project-diagram"></i>
         </div>
         <div class="stat-number">{{ stats.in_project }}</div>
-        <div class="stat-label">في مشروع</div>
+        <div class="stat-label">نشطة مع سائق</div>
     </a>
 </div>
 
@@ -611,12 +611,12 @@ body {
             <select name="status" class="filter-select-modern">
                 <option value="">جميع الحالات</option>
                 <option value="available" {% if request.args.get('status') == 'available' %}selected{% endif %}>متاحة</option>
-                <option value="active_with_driver" {% if request.args.get('status') == 'active_with_driver' %}selected{% endif %}>نشطة مع سائق</option>
-                <option value="in_workshop_maintenance" {% if request.args.get('status') == 'in_workshop_maintenance' %}selected{% endif %}>في الورشة صيانة</option>
-                <option value="in_workshop_accident" {% if request.args.get('status') == 'in_workshop_accident' %}selected{% endif %}>في الورشة حادث</option>
+                <option value="in_project" {% if request.args.get('status') == 'in_project' %}selected{% endif %}>نشطة مع سائق</option>
+                <option value="in_workshop" {% if request.args.get('status') == 'in_workshop' %}selected{% endif %}>في الورشة صيانة</option>
+                <option value="accident" {% if request.args.get('status') == 'accident' %}selected{% endif %}>في الورشة حادث</option>
                 <option value="out_of_service" {% if request.args.get('status') == 'out_of_service' %}selected{% endif %}>خارج الخدمة</option>
                 <option value="out_of_region_management" {% if request.args.get('status') == 'out_of_region_management' %}selected{% endif %}>خارج إدارة المنطقة</option>
-                <option value="in_project" {% if request.args.get('status') == 'in_project' %}selected{% endif %}>في مشروع</option>
+                <option value="in_project" {% if request.args.get('status') == 'in_project' %}selected{% endif %}>نشطة مع سائق</option>
                 <option value="in_workshop" {% if request.args.get('status') == 'in_workshop' %}selected{% endif %}>في الورشة</option>
             </select>
             
@@ -684,16 +684,16 @@ body {
             <div class="vehicle-status-row">
                 <span class="status-badge 
                     {% if vehicle.status == 'available' %}active
-                    {% elif vehicle.status == 'active_with_driver' %}active
-                    {% elif vehicle.status == 'in_workshop_maintenance' or vehicle.status == 'in_workshop_accident' %}maintenance
+                    {% elif vehicle.status == 'in_project' %}active
+                    {% elif vehicle.status == 'in_workshop' or vehicle.status == 'accident' %}maintenance
                     {% else %}inactive{% endif %}">
                     {% if vehicle.status == 'available' %}
                         <i class="fas fa-check-circle"></i> متاحة
-                    {% elif vehicle.status == 'active_with_driver' %}
+                    {% elif vehicle.status == 'in_project' %}
                         <i class="fas fa-car"></i> نشطة مع سائق
-                    {% elif vehicle.status == 'in_workshop_maintenance' %}
+                    {% elif vehicle.status == 'in_workshop' %}
                         <i class="fas fa-tools"></i> في الورشة صيانة
-                    {% elif vehicle.status == 'in_workshop_accident' %}
+                    {% elif vehicle.status == 'accident' %}
                         <i class="fas fa-exclamation-triangle"></i> في الورشة حادث
                     {% elif vehicle.status == 'out_of_service' %}
                         <i class="fas fa-ban"></i> خارج الخدمة
