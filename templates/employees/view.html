@@ -1014,12 +1014,14 @@ document.addEventListener('DOMContentLoaded', function() {
                             <div class="d-flex flex-wrap gap-3">
                                 {% set image_files = employee.housing_images.split(',') if employee.housing_images else [] %}
                                 {% for image in image_files %}
-                                <div class="position-relative" style="width: 150px; height: 150px; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.15); cursor: pointer;" onclick="window.open('{{ url_for('static', filename=image.strip()) }}', '_blank')">
-                                    <img src="{{ url_for('static', filename=image.strip()) }}" 
+                                {% set clean_image = image.strip().replace('static/', '') %}
+                                <div class="position-relative" style="width: 150px; height: 150px; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.15); cursor: pointer;" onclick="window.open('{{ url_for('static', filename=clean_image) }}', '_blank')">
+                                    <img src="{{ url_for('static', filename=clean_image) }}" 
                                          class="w-100 h-100" 
                                          style="object-fit: cover; transition: transform 0.3s ease;"
                                          onmouseover="this.style.transform='scale(1.05)'"
-                                         onmouseout="this.style.transform='scale(1)'">
+                                         onmouseout="this.style.transform='scale(1)'"
+                                         onerror="this.src='/static/images/no-image.png'; this.onerror=null;">
                                     <div class="position-absolute bottom-0 start-0 end-0 bg-dark bg-opacity-50 text-white text-center py-1" style="font-size: 0.75rem;">
                                         <i class="fas fa-expand-alt"></i> انقر للتكبير
                                     </div>
