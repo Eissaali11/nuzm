@@ -306,14 +306,11 @@ def get_vehicle_current_employee_id(vehicle_id):
 # قائمة بأهم حالات السيارة للاختيار منها في النماذج
 VEHICLE_STATUS_CHOICES = [
         'available',  # متاحة
-        'active_with_driver',  # نشطة مع سائق
-        'in_workshop_maintenance',  # في الورشة صيانة
-        'in_workshop_accident',  # في الورشة حادث
+        'rented',  # مؤجرة
+        'in_project',  # نشطة مع سائق
+        'in_workshop',  # في الورشة صيانة
+        'accident',  # في الورشة حادث
         'out_of_service',  # خارج الخدمة
-        'out_of_region_management',  # خارج إدارة المنطقة
-        'stopped_inspection_expired',  # متوقفة انتهاء الفحص
-        'stopped_contract_expired',  # متوقفة انتهاء العقد
-        'stopped_registration_expired',  # متوقفة انتهاء الاستمارة
 ]
 
 # قائمة بأسباب دخول الورشة
