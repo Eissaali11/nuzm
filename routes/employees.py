@@ -940,6 +940,60 @@ def delete_iban_image(id):
     
     return redirect(url_for('employees.view', id=id))
 
+@employees_bp.route('/<int:id>/delete_housing_image', methods=['POST'])
+@login_required
+@require_module_access(Module.EMPLOYEES, Permission.EDIT)
+def delete_housing_image(id):
+    """حذف صورة من صور السكن التوضيحية"""
+    employee = Employee.query.get_or_404(id)
+    image_path = request.form.get('image_path', '').strip()
+    
+    try:
+        if not image_path:
+            flash('لم يتم تحديد الصورة المراد حذفها', 'warning')
+            return redirect(url_for('employees.view', id=id))
+        
+        if employee.housing_images:
+            # تحويل القائمة إلى list
+            image_list = [img.strip() for img in employee.housing_images.split(',')]
+            
+            # البحث عن الصورة في القائمة
+            clean_image_path = image_path.replace('static/', '')
+            image_to_remove = None
+            
+            for img in image_list:
+                if img.replace('static/', '') == clean_image_path:
+                    image_to_remove = img
+                    break
+            
+            if image_to_remove:
+                # حذف الصورة من القائمة
+                image_list.remove(image_to_remove)
+                
+                # حذف الملف من الخادم
+                full_path = os.path.join('static', clean_image_path)
+                if os.path.exists(full_path):
+                    os.remove(full_path)
+                
+                # تحديث قاعدة البيانات
+                employee.housing_images = ','.join(image_list) if image_list else None
+                db.session.commit()
+                
+                # تسجيل العملية
+                log_activity('delete', 'Employee', employee.id, f'تم حذف صورة من صور السكن للموظف: {employee.name}')
+                
+                flash('تم حذف الصورة بنجاح', 'success')
+            else:
+                flash('لم يتم العثور على الصورة في القائمة', 'warning')
+        else:
+            flash('لا توجد صور سكن لحذفها', 'warning')
+            
+    except Exception as e:
+        db.session.rollback()
+        flash(f'حدث خطأ أثناء حذف الصورة: {str(e)}', 'danger')
+    
+    return redirect(url_for('employees.view', id=id))
+
 @employees_bp.route('/<int:id>/confirm_delete')
 @login_required
 @require_module_access(Module.EMPLOYEES, Permission.DELETE)
