@@ -2468,6 +2468,82 @@ def delete_vehicle(vehicle_id):
         flash(f'حدث خطأ أثناء حذف السيارة: {str(e)}', 'error')
         return redirect(url_for('mobile.vehicles'))
 
+# رفع وثائق السيارة - النسخة المحمولة
+@mobile_bp.route('/vehicles/<int:vehicle_id>/upload-document', methods=['POST'])
+@login_required
+def upload_vehicle_document(vehicle_id):
+    """رفع الوثائق (استمارة، لوحة، تأمين) - واجهة الموبايل"""
+    vehicle = Vehicle.query.get_or_404(vehicle_id)
+    
+    document_type = request.form.get('document_type')
+    if 'file' not in request.files:
+        flash('لم يتم اختيار ملف', 'error')
+        return redirect(url_for('mobile.vehicle_details', vehicle_id=vehicle_id))
+    
+    file = request.files['file']
+    if file.filename == '':
+        flash('لم يتم اختيار ملف', 'error')
+        return redirect(url_for('mobile.vehicle_details', vehicle_id=vehicle_id))
+    
+    # التحقق من نوع الملف
+    ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'pdf', 'doc', 'docx'}
+    def allowed_file(filename):
+        return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+    
+    if file and allowed_file(file.filename):
+        from werkzeug.utils import secure_filename
+        
+        # إنشاء اسم ملف فريد
+        filename = secure_filename(file.filename)
+        unique_filename = f"{uuid.uuid4()}_{filename}"
+        
+        # إنشاء المسار المناسب حسب نوع الوثيقة
+        if document_type == 'registration_form':
+            upload_folder = 'static/uploads/vehicles/registration_forms'
+            field_name = 'registration_form_image'
+        elif document_type == 'plate':
+            upload_folder = 'static/uploads/vehicles/plates'
+            field_name = 'plate_image'
+        elif document_type == 'insurance':
+            upload_folder = 'static/uploads/vehicles/insurance'
+            field_name = 'insurance_file'
+        else:
+            flash('نوع الوثيقة غير صحيح', 'error')
+            return redirect(url_for('mobile.vehicle_details', vehicle_id=vehicle_id))
+        
+        # إنشاء المجلد إذا لم يكن موجوداً
+        os.makedirs(upload_folder, exist_ok=True)
+        
+        # حفظ الملف
+        file_path = os.path.join(upload_folder, unique_filename)
+        file.save(file_path)
+        
+        # تحديث قاعدة البيانات
+        setattr(vehicle, field_name, file_path)
+        
+        try:
+            db.session.commit()
+            flash('تم رفع الوثيقة بنجاح', 'success')
+            
+            # تسجيل النشاط
+            log_activity(
+                action='upload',
+                entity_type='Vehicle',
+                entity_id=vehicle.id,
+                details=f'رفع وثيقة {document_type} للسيارة {vehicle.plate_number}'
+            )
+            
+        except Exception as e:
+            db.session.rollback()
+            # حذف الملف إذا فشل الحفظ في قاعدة البيانات
+            if os.path.exists(file_path):
+                os.remove(file_path)
+            flash(f'خطأ في حفظ الوثيقة: {str(e)}', 'error')
+    else:
+        flash('نوع الملف غير مسموح. يرجى رفع صورة أو ملف PDF', 'error')
+    
+    return redirect(url_for('mobile.vehicle_details', vehicle_id=vehicle_id))
+
 # إضافة سيارة جديدة - النسخة المحمولة
 @mobile_bp.route('/vehicles/add', methods=['GET', 'POST'])
 @login_required

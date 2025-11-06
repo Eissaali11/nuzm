@@ -806,9 +806,13 @@
                 </button>
             </div>
             {% else %}
-            <button class="btn-doc btn-primary w-100 mt-2" onclick="alert('يرجى رفع الوثيقة من النظام الرئيسي')">
-                <i class="fas fa-upload me-1"></i> رفع الوثيقة
-            </button>
+            <form method="POST" action="{{ url_for('mobile.upload_vehicle_document', vehicle_id=vehicle.id) }}" enctype="multipart/form-data" class="mt-2">
+                <input type="hidden" name="document_type" value="registration_form">
+                <input type="file" id="registration_form_file" name="file" accept="image/*,application/pdf" class="d-none" onchange="this.form.submit()">
+                <button type="button" class="btn-doc btn-primary w-100" onclick="document.getElementById('registration_form_file').click()">
+                    <i class="fas fa-upload me-1"></i> رفع الوثيقة
+                </button>
+            </form>
             {% endif %}
         </div>
 
@@ -839,9 +843,13 @@
                 </button>
             </div>
             {% else %}
-            <button class="btn-doc btn-primary w-100 mt-2" onclick="alert('يرجى رفع الوثيقة من النظام الرئيسي')">
-                <i class="fas fa-upload me-1"></i> رفع الوثيقة
-            </button>
+            <form method="POST" action="{{ url_for('mobile.upload_vehicle_document', vehicle_id=vehicle.id) }}" enctype="multipart/form-data" class="mt-2">
+                <input type="hidden" name="document_type" value="plate">
+                <input type="file" id="plate_file" name="file" accept="image/*,application/pdf" class="d-none" onchange="this.form.submit()">
+                <button type="button" class="btn-doc btn-primary w-100" onclick="document.getElementById('plate_file').click()">
+                    <i class="fas fa-upload me-1"></i> رفع الوثيقة
+                </button>
+            </form>
             {% endif %}
         </div>
 
@@ -872,9 +880,13 @@
                 </button>
             </div>
             {% else %}
-            <button class="btn-doc btn-primary w-100 mt-2" onclick="alert('يرجى رفع الوثيقة من النظام الرئيسي')">
-                <i class="fas fa-upload me-1"></i> رفع الوثيقة
-            </button>
+            <form method="POST" action="{{ url_for('mobile.upload_vehicle_document', vehicle_id=vehicle.id) }}" enctype="multipart/form-data" class="mt-2">
+                <input type="hidden" name="document_type" value="insurance">
+                <input type="file" id="insurance_file" name="file" accept="image/*,application/pdf" class="d-none" onchange="this.form.submit()">
+                <button type="button" class="btn-doc btn-primary w-100" onclick="document.getElementById('insurance_file').click()">
+                    <i class="fas fa-upload me-1"></i> رفع الوثيقة
+                </button>
+            </form>
             {% endif %}
         </div>
     </div>
