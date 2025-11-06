@@ -161,17 +161,17 @@
                                 <label class="text-muted small">الحالة:</label>
                                 <div class="fw-bold">
                                     {% if operation.vehicle.status == 'available' %}
-                                        <span class="badge bg-success">متاحة</span>
+                                        <span class="badge bg-success">✅ متاحة</span>
                                     {% elif operation.vehicle.status == 'rented' %}
-                                        <span class="badge bg-info">مؤجرة</span>
+                                        <span class="badge bg-info">🚗 مؤجرة</span>
                                     {% elif operation.vehicle.status == 'in_project' %}
-                                        <span class="badge bg-primary">نشطة مع سائق</span>
+                                        <span class="badge bg-primary">🚗 نشطة مع سائق</span>
                                     {% elif operation.vehicle.status == 'in_workshop' %}
-                                        <span class="badge bg-warning">في الورشة</span>
+                                        <span class="badge bg-warning">🔧 في الورشة صيانة</span>
                                     {% elif operation.vehicle.status == 'accident' %}
-                                        <span class="badge bg-danger">حادث</span>
+                                        <span class="badge bg-danger">⚠️ في الورشة حادث</span>
                                     {% elif operation.vehicle.status == 'out_of_service' %}
-                                        <span class="badge bg-secondary">خارج الخدمة</span>
+                                        <span class="badge bg-secondary">🔴 خارج الخدمة</span>
                                     {% else %}
                                         <span class="badge bg-secondary">{{ operation.vehicle.status_arabic }}</span>
                                     {% endif %}

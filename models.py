@@ -629,8 +629,8 @@ class Vehicle(db.Model):
             'available': 'متاحة',
             'rented': 'مؤجرة',
             'in_project': 'نشطة مع سائق',
-            'in_workshop': 'في الورشة',
-            'accident': 'حادث',
+            'in_workshop': 'في الورشة صيانة',
+            'accident': 'في الورشة حادث',
             'out_of_service': 'خارج الخدمة'
         }
         return status_map.get(self.status, self.status)
