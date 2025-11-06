@@ -2830,7 +2830,7 @@ def export_department_period():
             
             # حساب ساعات العمل
             if attendance.check_in and attendance.check_out:
-                hours = attendance.hours_worked
+                hours = (attendance.check_out.hour - attendance.check_in.hour) + (attendance.check_out.minute - attendance.check_in.minute) / 60.0
                 ws_data.cell(row=row_num, column=7, value=f"{hours:.1f}")
             else:
                 ws_data.cell(row=row_num, column=7, value='-')
