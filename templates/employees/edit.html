@@ -516,8 +516,43 @@
                     </div> -->
                     <div class="col-md-6">
                         <div class="form-group mb-3">
-                            <label for="location" class="form-label required-field">الموقع</label>
-                            <input type="text" class="form-control" id="location" name="location" value="{{ employee.location }}" required>
+                            <label for="location" class="form-label required-field">الموقع (المدينة)</label>
+                            <select class="form-control" id="location" name="location" required>
+                                <option value="">اختر المدينة</option>
+                                <option value="Riyadh" {% if employee.location == 'Riyadh' %}selected{% endif %}>Riyadh - الرياض</option>
+                                <option value="Jeddah" {% if employee.location == 'Jeddah' %}selected{% endif %}>Jeddah - جدة</option>
+                                <option value="Makkah" {% if employee.location == 'Makkah' %}selected{% endif %}>Makkah - مكة المكرمة</option>
+                                <option value="Madinah" {% if employee.location == 'Madinah' %}selected{% endif %}>Madinah - المدينة المنورة</option>
+                                <option value="Dammam" {% if employee.location == 'Dammam' %}selected{% endif %}>Dammam - الدمام</option>
+                                <option value="Khobar" {% if employee.location == 'Khobar' %}selected{% endif %}>Khobar - الخبر</option>
+                                <option value="Dhahran" {% if employee.location == 'Dhahran' %}selected{% endif %}>Dhahran - الظهران</option>
+                                <option value="Jubail" {% if employee.location == 'Jubail' %}selected{% endif %}>Jubail - الجبيل</option>
+                                <option value="Qatif" {% if employee.location == 'Qatif' %}selected{% endif %}>Qatif - القطيف</option>
+                                <option value="Khamis Mushait" {% if employee.location == 'Khamis Mushait' %}selected{% endif %}>Khamis Mushait - خميس مشيط</option>
+                                <option value="Abha" {% if employee.location == 'Abha' %}selected{% endif %}>Abha - أبها</option>
+                                <option value="Tabuk" {% if employee.location == 'Tabuk' %}selected{% endif %}>Tabuk - تبوك</option>
+                                <option value="Taif" {% if employee.location == 'Taif' %}selected{% endif %}>Taif - الطائف</option>
+                                <option value="Buraidah" {% if employee.location == 'Buraidah' %}selected{% endif %}>Buraidah - بريدة</option>
+                                <option value="Hail" {% if employee.location == 'Hail' %}selected{% endif %}>Hail - حائل</option>
+                                <option value="Najran" {% if employee.location == 'Najran' %}selected{% endif %}>Najran - نجران</option>
+                                <option value="Jazan" {% if employee.location == 'Jazan' %}selected{% endif %}>Jazan - جازان</option>
+                                <option value="Yanbu" {% if employee.location == 'Yanbu' %}selected{% endif %}>Yanbu - ينبع</option>
+                                <option value="Al Ahsa" {% if employee.location == 'Al Ahsa' %}selected{% endif %}>Al Ahsa - الأحساء</option>
+                                <option value="Qassim" {% if employee.location == 'Qassim' %}selected{% endif %}>Qassim - القصيم</option>
+                                <option value="Arar" {% if employee.location == 'Arar' %}selected{% endif %}>Arar - عرعر</option>
+                                <option value="Sakaka" {% if employee.location == 'Sakaka' %}selected{% endif %}>Sakaka - سكاكا</option>
+                                <option value="Al Kharj" {% if employee.location == 'Al Kharj' %}selected{% endif %}>Al Kharj - الخرج</option>
+                                <option value="Al Qunfudhah" {% if employee.location == 'Al Qunfudhah' %}selected{% endif %}>Al Qunfudhah - القنفذة</option>
+                                <option value="Al Bahah" {% if employee.location == 'Al Bahah' %}selected{% endif %}>Al Bahah - الباحة</option>
+                                <option value="Unaizah" {% if employee.location == 'Unaizah' %}selected{% endif %}>Unaizah - عنيزة</option>
+                                <option value="Other" {% if employee.location not in ['Riyadh', 'Jeddah', 'Makkah', 'Madinah', 'Dammam', 'Khobar', 'Dhahran', 'Jubail', 'Qatif', 'Khamis Mushait', 'Abha', 'Tabuk', 'Taif', 'Buraidah', 'Hail', 'Najran', 'Jazan', 'Yanbu', 'Al Ahsa', 'Qassim', 'Arar', 'Sakaka', 'Al Kharj', 'Al Qunfudhah', 'Al Bahah', 'Unaizah'] %}selected{% endif %}>Other - أخرى</option>
+                            </select>
+                            {% if employee.location and employee.location not in ['Riyadh', 'Jeddah', 'Makkah', 'Madinah', 'Dammam', 'Khobar', 'Dhahran', 'Jubail', 'Qatif', 'Khamis Mushait', 'Abha', 'Tabuk', 'Taif', 'Buraidah', 'Hail', 'Najran', 'Jazan', 'Yanbu', 'Al Ahsa', 'Qassim', 'Arar', 'Sakaka', 'Al Kharj', 'Al Qunfudhah', 'Al Bahah', 'Unaizah'] %}
+                            <div class="form-text text-muted mt-2">
+                                <i class="fas fa-info-circle"></i>
+                                القيمة الحالية: {{ employee.location }}
+                            </div>
+                            {% endif %}
                         </div>
                     </div>
                     <div class="col-md-6">
