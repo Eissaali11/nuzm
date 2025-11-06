@@ -277,9 +277,9 @@ def index():
             
             if active_assignment:
                 # التحقق من حالة الموظف المرتبط
-                if active_assignment.employee and active_assignment.employee.status not in ['نشط', 'active']:
+                if active_assignment.employee and active_assignment.employee.status in ['inactive', 'terminated']:
                     # الموظف غير نشط - إلغاء الربط تلقائياً
-                    print(f"DEBUG: الموظف {active_assignment.employee.name} غير نشط - إلغاء الربط تلقائياً")
+                    print(f"DEBUG: الموظف {active_assignment.employee.name} غير نشط ({active_assignment.employee.status}) - إلغاء الربط تلقائياً")
                     inactive_assignments_to_remove.append(active_assignment)
                     
                     # إعداد الجهاز كمتاح
@@ -361,9 +361,9 @@ def index():
             'samsung_count': samsung_count
         }
         
-        # جلب قائمة الأقسام والموظفين
+        # جلب قائمة الأقسام والموظفين النشطين فقط
         departments = Department.query.all()
-        employees = Employee.query.filter(Employee.status.in_(['نشط', 'active'])).all()
+        employees = Employee.query.filter(~Employee.status.in_(['inactive', 'terminated'])).all()
         
         return render_template('device_management/index.html',
                              devices=devices,
@@ -575,9 +575,9 @@ def assign_to_employee(device_id):
         print(f"DEBUG: محاولة ربط الجهاز {device_id} بالموظف {employee.name} - حالة الموظف: {employee.status}")
         
         # التحقق من حالة الموظف أولاً
-        if employee.status not in ['نشط', 'active']:
-            print(f"DEBUG: تم رفض الربط - الموظف {employee.name} غير نشط")
-            flash(f'لا يمكن ربط الجهاز بالموظف {employee.name} لأن حالته غير نشطة', 'warning')
+        if employee.status in ['inactive', 'terminated']:
+            print(f"DEBUG: تم رفض الربط - الموظف {employee.name} غير نشط ({employee.status})")
+            flash(f'لا يمكن ربط الجهاز بالموظف {employee.name} لأن حالته غير نشطة ({employee.status})', 'warning')
             return redirect(url_for('device_management.index'))
         
         # التحقق من أن الجهاز متاح
