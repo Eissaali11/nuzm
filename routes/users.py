@@ -530,6 +530,10 @@ def delete(user_id):
     try:
         user_name = user.name
         
+        # حذف الإشعارات المرتبطة بهذا المستخدم أولاً
+        from models import OperationNotification
+        OperationNotification.query.filter_by(user_id=user_id).delete()
+        
         # حذف المستخدم من قاعدة البيانات
         db.session.delete(user)
         db.session.commit()
