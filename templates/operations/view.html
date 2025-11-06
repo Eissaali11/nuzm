@@ -819,7 +819,28 @@ body {
                 </div>
                 
                 <div class="info-item">
-                    <strong>النوع:</strong> {{ operation.vehicle.type or 'غير محدد' }}
+                    <strong>الحالة:</strong> 
+                    <div class="mt-2">
+                        {% if operation.vehicle.status == 'available' %}
+                            <span class="badge bg-success fs-6">متاحة</span>
+                        {% elif operation.vehicle.status == 'rented' %}
+                            <span class="badge bg-info fs-6">مؤجرة</span>
+                        {% elif operation.vehicle.status == 'in_project' %}
+                            <span class="badge bg-primary fs-6">نشطة مع سائق</span>
+                        {% elif operation.vehicle.status == 'in_workshop' %}
+                            <span class="badge bg-warning fs-6">في الورشة</span>
+                        {% elif operation.vehicle.status == 'accident' %}
+                            <span class="badge bg-danger fs-6">حادث</span>
+                        {% elif operation.vehicle.status == 'out_of_service' %}
+                            <span class="badge bg-secondary fs-6">خارج الخدمة</span>
+                        {% else %}
+                            <span class="badge bg-secondary fs-6">{{ operation.vehicle.status_arabic }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="info-item">
+                    <strong>النوع:</strong> {{ operation.vehicle.type_of_car or 'غير محدد' }}
                 </div>
                 <div class="info-item">
                     <strong>الماركة:</strong> {{ operation.vehicle.make or 'غير محدد' }}
@@ -830,6 +851,12 @@ body {
                 <div class="info-item">
                     <strong>السنة:</strong> {{ operation.vehicle.year or 'غير محدد' }}
                 </div>
+                
+                {% if operation.vehicle.driver_name %}
+                <div class="info-item">
+                    <strong>السائق الحالي:</strong> {{ operation.vehicle.driver_name }}
+                </div>
+                {% endif %}
             </div>
             {% endif %}
 

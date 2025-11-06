@@ -623,6 +623,18 @@ class Vehicle(db.Model):
     # العلاقة مع القسم
     department = db.relationship('Department', backref='vehicles')
 
+    @property
+    def status_arabic(self):
+        status_map = {
+            'available': 'متاحة',
+            'rented': 'مؤجرة',
+            'in_project': 'نشطة مع سائق',
+            'in_workshop': 'في الورشة',
+            'accident': 'حادث',
+            'out_of_service': 'خارج الخدمة'
+        }
+        return status_map.get(self.status, self.status)
+
     def __repr__(self):
         return f'<Vehicle {self.plate_number} {self.make} {self.model}>'
 

@@ -156,13 +156,35 @@
                                 <div class="fw-bold fs-4 text-primary">{{ operation.vehicle.plate_number }}</div>
                             </div>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-2">
                             <div class="info-item">
-                                <label class="text-muted small">نوع السيارة:</label>
-                                <div class="fw-bold">{{ operation.vehicle.vehicle_type or 'غير محدد' }}</div>
+                                <label class="text-muted small">الحالة:</label>
+                                <div class="fw-bold">
+                                    {% if operation.vehicle.status == 'available' %}
+                                        <span class="badge bg-success">متاحة</span>
+                                    {% elif operation.vehicle.status == 'rented' %}
+                                        <span class="badge bg-info">مؤجرة</span>
+                                    {% elif operation.vehicle.status == 'in_project' %}
+                                        <span class="badge bg-primary">نشطة مع سائق</span>
+                                    {% elif operation.vehicle.status == 'in_workshop' %}
+                                        <span class="badge bg-warning">في الورشة</span>
+                                    {% elif operation.vehicle.status == 'accident' %}
+                                        <span class="badge bg-danger">حادث</span>
+                                    {% elif operation.vehicle.status == 'out_of_service' %}
+                                        <span class="badge bg-secondary">خارج الخدمة</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">{{ operation.vehicle.status_arabic }}</span>
+                                    {% endif %}
+                                </div>
                             </div>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-2">
+                            <div class="info-item">
+                                <label class="text-muted small">نوع السيارة:</label>
+                                <div class="fw-bold">{{ operation.vehicle.type_of_car or 'غير محدد' }}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
                             <div class="info-item">
                                 <label class="text-muted small">الماركة:</label>
                                 <div class="fw-bold">{{ operation.vehicle.make or 'غير محدد' }}</div>
