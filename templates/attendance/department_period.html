@@ -605,7 +605,7 @@
                         </td>
                         <td>
                             {% if attendance.check_in and attendance.check_out %}
-                                {% set hours = attendance.hours_worked %}
+                                {% set hours = (attendance.check_out.hour - attendance.check_in.hour) + (attendance.check_out.minute - attendance.check_in.minute) / 60.0 %}
                                 <span class="hours-badge">{{ "%.1f"|format(hours) }} ساعة</span>
                             {% else %}
                                 <span class="text-muted">-</span>
