@@ -3480,6 +3480,7 @@ def save_as_next_handover_mobile(handover_id):
         authorization_details = request.form.get('authorization_details')
         movement_officer_name = request.form.get('movement_officer_name')
         form_link = request.form.get('form_link')
+        form_link_2 = request.form.get('form_link_2')
         custom_company_name = request.form.get('custom_company_name', '').strip() or None
 
         # Checklist
