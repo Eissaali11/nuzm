@@ -297,24 +297,18 @@
                             {% for status in statuses %}
                             <option value="{{ status }}" {% if status == vehicle.status %}selected{% endif %} 
                                     data-color="{% if status == 'available' %}success
-                                               {% elif status == 'active_with_driver' %}info
-                                               {% elif status == 'in_workshop_maintenance' %}warning
-                                               {% elif status == 'in_workshop_accident' %}danger
-                                               {% elif status == 'out_of_service' %}dark
-                                               {% elif status == 'out_of_region_management' %}secondary
-                                               {% elif status == 'stopped_inspection_expired' %}danger
-                                               {% elif status == 'stopped_contract_expired' %}danger
-                                               {% elif status == 'stopped_registration_expired' %}danger
+                                               {% elif status == 'rented' %}info
+                                               {% elif status == 'in_project' %}info
+                                               {% elif status == 'in_workshop' %}warning
+                                               {% elif status == 'accident' %}danger
+                                               {% elif status == 'out_of_service' %}secondary
                                                {% else %}secondary{% endif %}">
                                 {% if status == 'available' %}✅ متاحة
-                                {% elif status == 'active_with_driver' %}🚗 نشطة مع سائق
-                                {% elif status == 'in_workshop_maintenance' %}🔧 في الورشة صيانة
-                                {% elif status == 'in_workshop_accident' %}⚠️ في الورشة حادث
-                                {% elif status == 'out_of_service' %}🚫 خارج الخدمة
-                                {% elif status == 'out_of_region_management' %}📍 خارج إدارة المنطقة
-                                {% elif status == 'stopped_inspection_expired' %}⏸️ متوقفة انتهاء الفحص
-                                {% elif status == 'stopped_contract_expired' %}⏸️ متوقفة انتهاء العقد
-                                {% elif status == 'stopped_registration_expired' %}⏸️ متوقفة انتهاء الاستمارة
+                                {% elif status == 'rented' %}🚗 مؤجرة
+                                {% elif status == 'in_project' %}🚗 نشطة مع سائق
+                                {% elif status == 'in_workshop' %}🔧 في الورشة صيانة
+                                {% elif status == 'accident' %}⚠️ في الورشة حادث
+                                {% elif status == 'out_of_service' %}🔴 خارج الخدمة
                                 {% else %}{{ status }}{% endif %}
                             </option>
                             {% endfor %}
