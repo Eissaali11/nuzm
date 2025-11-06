@@ -3807,9 +3807,13 @@ def handover_pdf_public(id):
 
         current_app.logger.info(f"تم إنشاء PDF بحجم {pdf_size} بايت للتسليم {id}")
 
-        # تحضير اسم الملف
-        plate_clean = handover.vehicle.plate_number if handover.vehicle else f"record_{handover.id}"
-        filename = f"handover_{plate_clean}_{handover.handover_date}.pdf"
+        # تحضير اسم الملف مع رقم السيارة، اسم السائق، الحالة، والتاريخ
+        plate_clean = handover.vehicle.plate_number.replace(' ', '_') if handover.vehicle and handover.vehicle.plate_number else f"record_{handover.id}"
+        driver_name = handover.person_name.replace(' ', '_') if handover.person_name else "غير_محدد"
+        handover_type = "تسليم" if handover.handover_type == 'delivery' else "استلام"
+        date_str = handover.handover_date.strftime('%Y-%m-%d') if handover.handover_date else "no_date"
+        
+        filename = f"{plate_clean}_{driver_name}_{handover_type}_{date_str}.pdf"
 
         return send_file(
             pdf_buffer,
