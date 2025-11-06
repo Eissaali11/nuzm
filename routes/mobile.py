@@ -2544,6 +2544,58 @@ def upload_vehicle_document(vehicle_id):
     
     return redirect(url_for('mobile.vehicle_details', vehicle_id=vehicle_id))
 
+# حذف وثائق السيارة - النسخة المحمولة
+@mobile_bp.route('/vehicles/<int:vehicle_id>/delete-document', methods=['POST'])
+@login_required
+def delete_vehicle_document(vehicle_id):
+    """حذف الوثائق - واجهة الموبايل"""
+    vehicle = Vehicle.query.get_or_404(vehicle_id)
+    
+    document_type = request.form.get('document_type')
+    
+    if document_type == 'registration_form':
+        field_name = 'registration_form_image'
+    elif document_type == 'plate':
+        field_name = 'plate_image'
+    elif document_type == 'insurance':
+        field_name = 'insurance_file'
+    else:
+        flash('نوع الوثيقة غير صحيح', 'error')
+        return redirect(url_for('mobile.vehicle_details', vehicle_id=vehicle_id))
+    
+    # الحصول على مسار الملف الحالي
+    file_path = getattr(vehicle, field_name)
+    
+    if file_path:
+        # حذف الملف من النظام
+        if os.path.exists(file_path):
+            try:
+                os.remove(file_path)
+            except Exception as e:
+                flash(f'خطأ في حذف الملف: {str(e)}', 'error')
+        
+        # حذف المسار من قاعدة البيانات
+        setattr(vehicle, field_name, None)
+        
+        try:
+            db.session.commit()
+            flash('تم حذف الوثيقة بنجاح', 'success')
+            
+            # تسجيل النشاط
+            log_activity(
+                action='delete',
+                entity_type='Vehicle',
+                entity_id=vehicle.id,
+                details=f'حذف وثيقة {document_type} للسيارة {vehicle.plate_number}'
+            )
+        except Exception as e:
+            db.session.rollback()
+            flash(f'خطأ في حذف الوثيقة من قاعدة البيانات: {str(e)}', 'error')
+    else:
+        flash('لا توجد وثيقة لحذفها', 'warning')
+    
+    return redirect(url_for('mobile.vehicle_details', vehicle_id=vehicle_id))
+
 # إضافة سيارة جديدة - النسخة المحمولة
 @mobile_bp.route('/vehicles/add', methods=['GET', 'POST'])
 @login_required
