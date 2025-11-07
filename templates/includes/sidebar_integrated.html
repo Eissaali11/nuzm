@@ -43,6 +43,11 @@
                 </a>
                 <ul class="dropdown-menu">
                     <li><a class="dropdown-item" href="{{ url_for('employees.index') }}">قائمة الموظفين</a></li>
+                    {% if current_user.is_authenticated and current_user.role == 'admin' %}
+                    <li><a class="dropdown-item" href="{{ url_for('employees.tracking') }}">
+                        <i class="fas fa-map-marked-alt"></i> تتبع الموظفين
+                    </a></li>
+                    {% endif %}
                     <li><a class="dropdown-item" href="{{ url_for('attendance.index') }}">الحضور والانصراف</a></li>
                     <li><a class="dropdown-item" href="{{ url_for('salaries.index') }}">إدارة الرواتب</a></li>
                 </ul>

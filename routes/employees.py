@@ -7,7 +7,7 @@ from werkzeug.utils import secure_filename
 from sqlalchemy.exc import IntegrityError
 from flask_login import login_required
 from app import db
-from models import Employee, Department, SystemAudit, Document, Attendance, Salary, Module, Permission, Vehicle, VehicleHandover,User,Nationality, employee_departments, MobileDevice, DeviceAssignment
+from models import Employee, Department, SystemAudit, Document, Attendance, Salary, Module, Permission, Vehicle, VehicleHandover,User,Nationality, employee_departments, MobileDevice, DeviceAssignment, EmployeeLocation
 from sqlalchemy import func, or_
 from utils.excel import parse_employee_excel, generate_employee_excel, export_employee_attendance_to_excel
 from utils.date_converter import parse_date
@@ -1869,5 +1869,87 @@ def comprehensive_report_excel(id):
         
         flash(f'حدث خطأ أثناء إنشاء التقرير الشامل (إكسل): {str(e)}', 'danger')
         return redirect(url_for('employees.view', id=id))
+
+
+@employees_bp.route('/tracking')
+@login_required
+def tracking():
+    """صفحة تتبع مواقع الموظفين عبر GPS - للمديرين فقط"""
+    from flask_login import current_user
+    
+    # التحقق من أن المستخدم مدير فقط
+    if current_user.role != 'admin':
+        flash('هذه الصفحة متاحة للمديرين فقط', 'danger')
+        return redirect(url_for('dashboard.index'))
+    
+    # الحصول على معاملات الفلترة
+    department_filter = request.args.get('department', '')
+    search_query = request.args.get('search', '')
+    
+    # بناء استعلام الموظفين النشطين فقط
+    query = Employee.query.filter(Employee.status == 'active').options(
+        db.joinedload(Employee.departments)
+    )
+    
+    # تطبيق فلتر القسم
+    if department_filter:
+        query = query.join(employee_departments).join(Department).filter(Department.id == department_filter)
+    
+    # تطبيق فلتر البحث (اسم أو رقم وظيفي)
+    if search_query:
+        query = query.filter(
+            or_(
+                Employee.name.contains(search_query),
+                Employee.job_number.contains(search_query)
+            )
+        )
+    
+    employees = query.all()
+    
+    # جلب آخر موقع لكل موظف
+    employee_locations = {}
+    for emp in employees:
+        if emp.job_number:
+            # جلب أحدث موقع
+            latest_location = EmployeeLocation.query.filter_by(
+                job_number=emp.job_number
+            ).order_by(EmployeeLocation.recorded_at.desc()).first()
+            
+            if latest_location:
+                # حساب عمر الموقع بالساعات
+                age_hours = (datetime.utcnow() - latest_location.recorded_at).total_seconds() / 3600
+                
+                # تحديد اللون حسب عمر الموقع
+                if age_hours < 1:
+                    color = 'green'
+                    status_text = 'نشط'
+                elif age_hours < 6:
+                    color = 'orange'
+                    status_text = 'متوسط'
+                else:
+                    color = 'red'
+                    status_text = 'قديم'
+                
+                employee_locations[emp.id] = {
+                    'latitude': latest_location.latitude,
+                    'longitude': latest_location.longitude,
+                    'accuracy': latest_location.accuracy,
+                    'recorded_at': latest_location.recorded_at,
+                    'age_hours': age_hours,
+                    'color': color,
+                    'status_text': status_text
+                }
+    
+    # جلب جميع الأقسام للفلترة
+    departments = Department.query.all()
+    
+    return render_template(
+        'employees/tracking.html',
+        employees=employees,
+        employee_locations=employee_locations,
+        departments=departments,
+        department_filter=department_filter,
+        search_query=search_query
+    )
 
 

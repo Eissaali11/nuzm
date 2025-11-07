@@ -210,6 +210,19 @@
                                 </a>
                             </li>
                             
+                            
+                            {# تتبع الموظفين - للمديرين فقط #}
+                            {% if current_user.role == UserRole.ADMIN %}
+                            <li class="nav-item mb-1">
+                                <a
+                                    href="{{ url_for('employees.tracking') }}"
+                                    class="nav-link nav-link-custom {% if '/employees/tracking' in request.path %}active{% endif %}"
+                                >
+                                    <i class="fas fa-map-marked-alt me-2"></i>
+                                    <span>تتبع الموظفين</span>
+                                </a>
+                            </li>
+                            {% endif %}
                             {# إدارة الأجهزة المحمولة #}
                             {% if current_user.role == UserRole.ADMIN %}
                             <li class="nav-item mb-1">
