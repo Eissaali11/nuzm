@@ -1874,13 +1874,13 @@ def comprehensive_report_excel(id):
 @employees_bp.route('/tracking')
 @login_required
 def tracking():
-    """صفحة تتبع مواقع الموظفين عبر GPS - للمديرين فقط"""
+    """صفحة تتبع مواقع الموظفين عبر GPS"""
     from flask_login import current_user
     
-    # التحقق من أن المستخدم مدير فقط
-    if current_user.role != 'admin':
-        flash('هذه الصفحة متاحة للمديرين فقط', 'danger')
-        return redirect(url_for('dashboard.index'))
+    # TODO: لاحقاً فعّل هذا القيد للمديرين فقط
+    # if current_user.role != 'admin':
+    #     flash('هذه الصفحة متاحة للمديرين فقط', 'danger')
+    #     return redirect(url_for('dashboard.index'))
     
     # الحصول على معاملات الفلترة
     department_filter = request.args.get('department', '')
