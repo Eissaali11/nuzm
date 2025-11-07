@@ -1,501 +1,481 @@
-{% extends "layout.html" %}
-
-{% block title %}تتبع مواقع الموظفين{% endblock %}
-
-{% block extra_css %}
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<style>
-    /* تجاوز الوضع المظلم - فرض الوضع الفاتح */
-    body, html {
-        background: #f0f4f8 !important;
-        color: #2d3748 !important;
-    }
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تتبع مواقع الموظفين - نُظم</title>
     
-    /* صفحة التتبع - تصميم مستقل */
-    .tracking-page {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        min-height: 100vh;
-        padding: 30px 20px;
-    }
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     
-    .tracking-header {
-        background: white;
-        border-radius: 16px;
-        padding: 25px 30px;
-        margin-bottom: 25px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
     
-    .tracking-header h1 {
-        margin: 0;
-        color: #2d3748;
-        font-size: 28px;
-        font-weight: 700;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-    }
-    
-    .tracking-header h1 i {
-        color: #667eea;
-        font-size: 32px;
-    }
-    
-    .btn-back {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border: none;
-        padding: 12px 24px;
-        border-radius: 10px;
-        font-weight: 600;
-        text-decoration: none;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-    }
-    
-    .btn-back:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-        color: white;
-    }
-    
-    .auto-refresh-badge {
-        background: white;
-        border-radius: 12px;
-        padding: 12px 20px;
-        margin-bottom: 20px;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
-        display: inline-flex;
-        align-items: center;
-        gap: 10px;
-        color: #4a5568;
-        font-weight: 500;
-    }
-    
-    .auto-refresh-badge i {
-        color: #667eea;
-        animation: spin 2s linear infinite;
-    }
-    
-    @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
-    
-    .tracking-container {
-        display: flex;
-        gap: 25px;
-        height: calc(100vh - 250px);
-        min-height: 650px;
-    }
-    
-    .map-section {
-        flex: 65;
-        background: white;
-        border-radius: 16px;
-        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
-        overflow: hidden;
-        position: relative;
-    }
-    
-    #map {
-        width: 100%;
-        height: 100%;
-        border-radius: 16px;
-    }
-    
-    .legend {
-        position: absolute;
-        bottom: 25px;
-        right: 25px;
-        background: rgba(255, 255, 255, 0.95);
-        backdrop-filter: blur(10px);
-        padding: 20px;
-        border-radius: 12px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-        z-index: 1000;
-        border: 1px solid rgba(255, 255, 255, 0.3);
-    }
-    
-    .legend-title {
-        font-weight: 700;
-        font-size: 14px;
-        margin-bottom: 12px;
-        color: #2d3748;
-        border-bottom: 2px solid #667eea;
-        padding-bottom: 8px;
-    }
-    
-    .legend-item {
-        display: flex;
-        align-items: center;
-        margin-bottom: 8px;
-        font-size: 13px;
-        color: #4a5568;
-        font-weight: 500;
-    }
-    
-    .legend-item:last-child {
-        margin-bottom: 0;
-    }
-    
-    .legend-color {
-        width: 16px;
-        height: 16px;
-        border-radius: 50%;
-        margin-left: 10px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    }
-    
-    .employees-section {
-        flex: 35;
-        background: white;
-        border-radius: 16px;
-        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-    }
-    
-    .filter-controls {
-        padding: 20px;
-        background: linear-gradient(135deg, #f6f8fb 0%, #ffffff 100%);
-        border-bottom: 1px solid #e2e8f0;
-    }
-    
-    .filter-label {
-        font-size: 12px;
-        font-weight: 600;
-        color: #4a5568;
-        margin-bottom: 6px;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-    
-    .form-row {
-        margin-bottom: 15px;
-    }
-    
-    .form-row:last-child {
-        margin-bottom: 0;
-    }
-    
-    .filter-controls select,
-    .filter-controls input {
-        width: 100%;
-        padding: 12px 16px;
-        border: 2px solid #e2e8f0;
-        border-radius: 10px;
-        font-size: 14px;
-        color: #2d3748;
-        background: white;
-        transition: all 0.3s ease;
-    }
-    
-    .filter-controls select:focus,
-    .filter-controls input:focus {
-        outline: none;
-        border-color: #667eea;
-        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-    }
-    
-    .search-row {
-        display: flex;
-        gap: 8px;
-    }
-    
-    .search-row input {
-        flex: 1;
-    }
-    
-    .btn-search {
-        background: #667eea;
-        color: white;
-        border: none;
-        padding: 12px 20px;
-        border-radius: 10px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        white-space: nowrap;
-    }
-    
-    .btn-search:hover {
-        background: #5a67d8;
-        transform: translateY(-1px);
-    }
-    
-    .btn-clear {
-        background: #f7fafc;
-        color: #4a5568;
-        border: 2px solid #e2e8f0;
-        padding: 12px 20px;
-        border-radius: 10px;
-        font-weight: 600;
-        text-decoration: none;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        white-space: nowrap;
-    }
-    
-    .btn-clear:hover {
-        background: #edf2f7;
-        border-color: #cbd5e0;
-        color: #2d3748;
-    }
-    
-    .employees-list {
-        flex: 1;
-        overflow-y: auto;
-        padding: 20px;
-        background: #fafbfc;
-    }
-    
-    .employees-list::-webkit-scrollbar {
-        width: 8px;
-    }
-    
-    .employees-list::-webkit-scrollbar-track {
-        background: #f1f5f9;
-        border-radius: 10px;
-    }
-    
-    .employees-list::-webkit-scrollbar-thumb {
-        background: #cbd5e0;
-        border-radius: 10px;
-    }
-    
-    .employees-list::-webkit-scrollbar-thumb:hover {
-        background: #a0aec0;
-    }
-    
-    .employee-card {
-        background: white;
-        border-radius: 12px;
-        padding: 16px;
-        margin-bottom: 12px;
-        cursor: pointer;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        border-right: 4px solid #e2e8f0;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-    }
-    
-    .employee-card:hover {
-        transform: translateX(-5px);
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-    }
-    
-    .employee-card.active {
-        background: linear-gradient(135deg, #f0f4ff 0%, #e8eeff 100%);
-        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.2);
-        border-right-color: #667eea;
-    }
-    
-    .employee-card.status-green {
-        border-right-color: #10b981;
-    }
-    
-    .employee-card.status-green:hover {
-        box-shadow: 0 8px 20px rgba(16, 185, 129, 0.2);
-    }
-    
-    .employee-card.status-orange {
-        border-right-color: #f59e0b;
-    }
-    
-    .employee-card.status-orange:hover {
-        box-shadow: 0 8px 20px rgba(245, 158, 11, 0.2);
-    }
-    
-    .employee-card.status-red {
-        border-right-color: #ef4444;
-    }
-    
-    .employee-card.status-red:hover {
-        box-shadow: 0 8px 20px rgba(239, 68, 68, 0.2);
-    }
-    
-    .employee-card.status-gray {
-        border-right-color: #9ca3af;
-    }
-    
-    .employee-name {
-        font-weight: 700;
-        font-size: 16px;
-        color: #1a202c;
-        margin-bottom: 8px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-    
-    .employee-info {
-        font-size: 13px;
-        color: #6b7280;
-        margin-bottom: 4px;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-    }
-    
-    .employee-info i {
-        color: #9ca3af;
-        width: 14px;
-    }
-    
-    .employee-status {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        padding: 6px 12px;
-        border-radius: 20px;
-        font-size: 11px;
-        font-weight: 700;
-        margin-top: 8px;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-    
-    .status-green {
-        background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
-        color: #065f46;
-    }
-    
-    .status-orange {
-        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-        color: #92400e;
-    }
-    
-    .status-red {
-        background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
-        color: #991b1b;
-    }
-    
-    .status-gray {
-        background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
-        color: #374151;
-    }
-    
-    .no-location {
-        text-align: center;
-        padding: 60px 20px;
-        color: #9ca3af;
-    }
-    
-    .no-location i {
-        color: #d1d5db;
-        margin-bottom: 15px;
-    }
-    
-    .no-location p {
-        font-size: 15px;
-        font-weight: 500;
-        color: #6b7280;
-    }
-    
-    /* تحسين نافذة المعلومات في الخريطة */
-    .leaflet-popup-content-wrapper {
-        border-radius: 12px;
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-    }
-    
-    .leaflet-popup-content {
-        margin: 16px;
-        font-family: inherit;
-    }
-    
-    /* Responsive Design */
-    @media (max-width: 1200px) {
-        .tracking-container {
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #2d3748;
+        }
+        
+        .page-container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: white;
+            border-radius: 16px;
+            padding: 25px 30px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header h1 {
+            color: #2d3748;
+            font-size: 28px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 0;
+        }
+        
+        .header h1 i {
+            color: #667eea;
+            font-size: 32px;
+        }
+        
+        .btn-back {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-back:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .refresh-info {
+            background: white;
+            border-radius: 12px;
+            padding: 12px 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            color: #4a5568;
+            font-weight: 500;
+        }
+        
+        .refresh-info i {
+            color: #667eea;
+            animation: spin 2s linear infinite;
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .main-content {
+            display: flex;
+            gap: 25px;
+            height: calc(100vh - 220px);
+            min-height: 600px;
+        }
+        
+        .map-container {
+            flex: 65;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+            overflow: hidden;
+            position: relative;
+        }
+        
+        #map {
+            width: 100%;
+            height: 100%;
+            border-radius: 16px;
+        }
+        
+        .map-legend {
+            position: absolute;
+            bottom: 25px;
+            right: 25px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+        }
+        
+        .legend-title {
+            font-weight: 700;
+            font-size: 14px;
+            margin-bottom: 12px;
+            color: #2d3748;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 8px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 13px;
+            color: #4a5568;
+            font-weight: 500;
+        }
+        
+        .legend-dot {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            margin-left: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        .sidebar {
+            flex: 35;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+            display: flex;
             flex-direction: column;
-            height: auto;
+            overflow: hidden;
         }
         
-        .map-section {
-            height: 450px;
-            min-height: 450px;
+        .filters {
+            padding: 20px;
+            background: linear-gradient(135deg, #f6f8fb 0%, #ffffff 100%);
+            border-bottom: 1px solid #e2e8f0;
         }
         
-        .employees-section {
-            height: 550px;
-        }
-    }
-    
-    @media (max-width: 768px) {
-        .tracking-header {
-            flex-direction: column;
-            gap: 15px;
-            text-align: center;
+        .filter-group {
+            margin-bottom: 15px;
         }
         
-        .tracking-header h1 {
-            font-size: 22px;
+        .filter-group:last-child {
+            margin-bottom: 0;
         }
         
-        .search-row {
-            flex-direction: column;
+        .filter-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #4a5568;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: block;
         }
         
-        .search-row input,
+        .filter-input,
+        .filter-select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 14px;
+            color: #2d3748;
+            background: white;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+        
+        .filter-input:focus,
+        .filter-select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .search-bar {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .search-bar input {
+            flex: 1;
+        }
+        
         .btn-search,
         .btn-clear {
-            width: 100%;
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            white-space: nowrap;
         }
-    }
-</style>
-{% endblock %}
-
-{% block content %}
-<div class="tracking-page">
-    <div class="container-fluid">
-        <div class="tracking-header">
+        
+        .btn-search {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-search:hover {
+            background: #5a67d8;
+            transform: translateY(-1px);
+        }
+        
+        .btn-clear {
+            background: #f7fafc;
+            color: #4a5568;
+            border: 2px solid #e2e8f0;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .btn-clear:hover {
+            background: #edf2f7;
+            border-color: #cbd5e0;
+        }
+        
+        .employees-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #fafbfc;
+        }
+        
+        .employees-list::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .employees-list::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        
+        .employees-list::-webkit-scrollbar-thumb {
+            background: #cbd5e0;
+            border-radius: 10px;
+        }
+        
+        .employee-card {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-right: 4px solid #e2e8f0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+        
+        .employee-card:hover {
+            transform: translateX(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .employee-card.active {
+            background: linear-gradient(135deg, #f0f4ff 0%, #e8eeff 100%);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.2);
+            border-right-color: #667eea;
+        }
+        
+        .employee-card.status-green {
+            border-right-color: #10b981;
+        }
+        
+        .employee-card.status-orange {
+            border-right-color: #f59e0b;
+        }
+        
+        .employee-card.status-red {
+            border-right-color: #ef4444;
+        }
+        
+        .employee-card.status-gray {
+            border-right-color: #9ca3af;
+        }
+        
+        .employee-name {
+            font-weight: 700;
+            font-size: 16px;
+            color: #1a202c;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .employee-info {
+            font-size: 13px;
+            color: #6b7280;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .employee-info i {
+            color: #9ca3af;
+            width: 14px;
+        }
+        
+        .employee-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            margin-top: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .badge-green {
+            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+            color: #065f46;
+        }
+        
+        .badge-orange {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            color: #92400e;
+        }
+        
+        .badge-red {
+            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+            color: #991b1b;
+        }
+        
+        .badge-gray {
+            background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+            color: #374151;
+        }
+        
+        .no-data {
+            text-align: center;
+            padding: 60px 20px;
+            color: #9ca3af;
+        }
+        
+        .no-data i {
+            font-size: 48px;
+            color: #d1d5db;
+            margin-bottom: 15px;
+        }
+        
+        .no-data p {
+            font-size: 15px;
+            font-weight: 500;
+            color: #6b7280;
+        }
+        
+        @media (max-width: 1200px) {
+            .main-content {
+                flex-direction: column;
+                height: auto;
+            }
+            
+            .map-container {
+                height: 450px;
+            }
+            
+            .sidebar {
+                height: 550px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+            
+            .header h1 {
+                font-size: 22px;
+            }
+            
+            .search-bar {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <div class="header">
             <h1>
                 <i class="fas fa-map-marked-alt"></i>
                 تتبع مواقع الموظفين
             </h1>
-            <a href="{{ url_for('employees.index') }}" class="btn-back">
-                <i class="fas fa-arrow-right"></i> العودة
+            <a href="/employees" class="btn-back">
+                <i class="fas fa-arrow-right"></i>
+                العودة
             </a>
         </div>
         
-        <div class="auto-refresh-badge">
+        <div class="refresh-info">
             <i class="fas fa-sync-alt"></i>
             <span>يتم تحديث الصفحة تلقائياً كل 5 دقائق</span>
         </div>
         
-        <div class="tracking-container">
-            <div class="map-section">
+        <div class="main-content">
+            <div class="map-container">
                 <div id="map"></div>
-                <div class="legend">
+                <div class="map-legend">
                     <div class="legend-title">حالة الموقع</div>
                     <div class="legend-item">
-                        <span class="legend-color" style="background: #10b981;"></span>
+                        <span class="legend-dot" style="background: #10b981;"></span>
                         <span>نشط (أقل من ساعة)</span>
                     </div>
                     <div class="legend-item">
-                        <span class="legend-color" style="background: #f59e0b;"></span>
+                        <span class="legend-dot" style="background: #f59e0b;"></span>
                         <span>متوسط (1-6 ساعات)</span>
                     </div>
                     <div class="legend-item">
-                        <span class="legend-color" style="background: #ef4444;"></span>
+                        <span class="legend-dot" style="background: #ef4444;"></span>
                         <span>قديم (أكثر من 6 ساعات)</span>
                     </div>
                     <div class="legend-item">
-                        <span class="legend-color" style="background: #9ca3af;"></span>
+                        <span class="legend-dot" style="background: #9ca3af;"></span>
                         <span>غير متوفر</span>
                     </div>
                 </div>
             </div>
             
-            <div class="employees-section">
-                <div class="filter-controls">
-                    <form method="get" action="{{ url_for('employees.tracking') }}" id="filterForm">
-                        <div class="form-row">
-                            <div class="filter-label">القسم</div>
-                            <select name="department" class="form-control" onchange="this.form.submit()">
+            <div class="sidebar">
+                <div class="filters">
+                    <form method="get" action="/employees/tracking">
+                        <div class="filter-group">
+                            <label class="filter-label">القسم</label>
+                            <select name="department" class="filter-select" onchange="this.form.submit()">
                                 <option value="">جميع الأقسام</option>
                                 {% for dept in departments %}
                                 <option value="{{ dept.id }}" {% if department_filter == dept.id|string %}selected{% endif %}>
@@ -504,19 +484,20 @@
                                 {% endfor %}
                             </select>
                         </div>
-                        <div class="form-row">
-                            <div class="filter-label">بحث</div>
-                            <div class="search-row">
+                        
+                        <div class="filter-group">
+                            <label class="filter-label">بحث</label>
+                            <div class="search-bar">
                                 <input type="text" 
                                        name="search" 
-                                       class="form-control" 
+                                       class="filter-input" 
                                        placeholder="ابحث بالاسم أو الرقم الوظيفي..."
                                        value="{{ search_query }}">
                                 <button type="submit" class="btn-search">
                                     <i class="fas fa-search"></i>
                                 </button>
                                 {% if department_filter or search_query %}
-                                <a href="{{ url_for('employees.tracking') }}" class="btn-clear">
+                                <a href="/employees/tracking" class="btn-clear">
                                     <i class="fas fa-times"></i>
                                 </a>
                                 {% endif %}
@@ -554,12 +535,12 @@
                                 <i class="fas fa-clock"></i>
                                 {{ location.recorded_at.strftime('%Y-%m-%d %H:%M') }}
                             </div>
-                            <span class="employee-status status-{{ location.color }}">
+                            <span class="employee-badge badge-{{ location.color }}">
                                 <i class="fas fa-circle" style="font-size: 6px;"></i>
                                 {{ location.status_text }}
                             </span>
                             {% else %}
-                            <span class="employee-status status-gray">
+                            <span class="employee-badge badge-gray">
                                 <i class="fas fa-circle" style="font-size: 6px;"></i>
                                 لا يوجد موقع
                             </span>
@@ -567,8 +548,8 @@
                         </div>
                         {% endfor %}
                     {% else %}
-                    <div class="no-location">
-                        <i class="fas fa-users-slash fa-4x"></i>
+                    <div class="no-data">
+                        <i class="fas fa-users-slash"></i>
                         <p>لا يوجد موظفين نشطين</p>
                     </div>
                     {% endif %}
@@ -576,149 +557,91 @@
             </div>
         </div>
     </div>
-</div>
-{% endblock %}
-
-{% block extra_js %}
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script>
-    // تهيئة الخريطة
-    const map = L.map('map').setView([24.7136, 46.6753], 11);
     
-    // خريطة فاتحة عصرية من OpenStreetMap
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-        maxZoom: 19
-    }).addTo(map);
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
-    // تخزين العلامات
-    const markers = {};
-    
-    // ألوان عصرية
-    const colors = {
-        green: '#10b981',
-        orange: '#f59e0b',
-        red: '#ef4444'
-    };
-    
-    // إضافة علامات الموظفين
-    {% for employee in employees %}
-    {% set location = employee_locations.get(employee.id) %}
-    {% if location %}
-    (function() {
-        const empId = {{ employee.id }};
-        const lat = {{ location.latitude }};
-        const lng = {{ location.longitude }};
-        const color = '{{ location.color }}';
-        const name = '{{ employee.name }}';
-        const employeeId = '{{ employee.employee_id or "لا يوجد" }}';
-        const statusText = '{{ location.status_text }}';
-        const recordedAt = '{{ location.recorded_at.strftime("%Y-%m-%d %H:%M") }}';
+    <script>
+        // تهيئة الخريطة بالوضع الفاتح
+        var map = L.map('map').setView([24.7136, 46.6753], 11);
         
-        // تحديد لون العلامة
-        const markerColor = colors[color] || '#9ca3af';
+        // خريطة فاتحة من OpenStreetMap
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap',
+            maxZoom: 19
+        }).addTo(map);
         
-        // إنشاء أيقونة مخصصة عصرية
-        const customIcon = L.divIcon({
-            className: 'custom-marker',
-            html: `<div style="
-                background: ${markerColor};
-                width: 32px;
-                height: 32px;
-                border-radius: 50% 50% 50% 0;
-                border: 3px solid white;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-                transform: rotate(-45deg);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            ">
-                <i class="fas fa-user" style="
-                    color: white;
-                    font-size: 12px;
-                    transform: rotate(45deg);
-                "></i>
-            </div>`,
-            iconSize: [32, 32],
-            iconAnchor: [16, 32]
-        });
+        var markers = {};
         
-        // إضافة العلامة
-        const marker = L.marker([lat, lng], { icon: customIcon }).addTo(map);
+        var colors = {
+            green: '#10b981',
+            orange: '#f59e0b',
+            red: '#ef4444'
+        };
         
-        // نافذة معلومات عصرية
-        marker.bindPopup(`
-            <div style="
-                text-align: center;
-                min-width: 220px;
-                padding: 8px;
-                font-family: inherit;
-            ">
-                <div style="
-                    background: linear-gradient(135deg, ${markerColor} 0%, ${markerColor}dd 100%);
-                    color: white;
-                    padding: 12px;
-                    margin: -8px -8px 12px -8px;
-                    border-radius: 8px 8px 0 0;
-                ">
-                    <i class="fas fa-user-circle" style="font-size: 24px; margin-bottom: 4px;"></i>
-                    <h6 style="margin: 0; font-size: 15px; font-weight: 700;">${name}</h6>
-                </div>
-                <div style="text-align: right; color: #4a5568;">
-                    <p style="margin: 8px 0; font-size: 13px;">
-                        <strong style="color: #2d3748;">الرقم الوظيفي:</strong> ${employeeId}
-                    </p>
-                    <p style="margin: 8px 0; font-size: 13px;">
-                        <strong style="color: #2d3748;">الحالة:</strong> ${statusText}
-                    </p>
-                    <p style="margin: 8px 0; font-size: 12px; color: #718096;">
-                        <i class="fas fa-clock"></i> ${recordedAt}
-                    </p>
-                </div>
-            </div>
-        `);
-        
-        markers[empId] = marker;
-    })();
-    {% endif %}
-    {% endfor %}
-    
-    // ضبط حدود الخريطة
-    const markerArray = Object.values(markers);
-    if (markerArray.length > 0) {
-        const group = L.featureGroup(markerArray);
-        map.fitBounds(group.getBounds().pad(0.1));
-    }
-    
-    // ربط القائمة بالخريطة
-    document.querySelectorAll('.employee-card').forEach(card => {
-        card.addEventListener('click', function() {
-            const empId = parseInt(this.dataset.employeeId);
-            const lat = parseFloat(this.dataset.lat);
-            const lng = parseFloat(this.dataset.lng);
+        {% for employee in employees %}
+        {% set location = employee_locations.get(employee.id) %}
+        {% if location %}
+        (function() {
+            var empId = {{ employee.id }};
+            var lat = {{ location.latitude }};
+            var lng = {{ location.longitude }};
+            var color = '{{ location.color }}';
+            var name = '{{ employee.name }}';
+            var employeeId = '{{ employee.employee_id or "لا يوجد" }}';
+            var statusText = '{{ location.status_text }}';
+            var recordedAt = '{{ location.recorded_at.strftime("%Y-%m-%d %H:%M") }}';
             
-            if (lat && lng && markers[empId]) {
-                // إزالة النشط من الكل
-                document.querySelectorAll('.employee-card').forEach(c => c.classList.remove('active'));
+            var markerColor = colors[color] || '#9ca3af';
+            
+            var customIcon = L.divIcon({
+                className: 'custom-marker',
+                html: '<div style="background:' + markerColor + ';width:32px;height:32px;border-radius:50% 50% 50% 0;border:3px solid white;box-shadow:0 4px 12px rgba(0,0,0,0.3);transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;"><i class="fas fa-user" style="color:white;font-size:12px;transform:rotate(45deg);"></i></div>',
+                iconSize: [32, 32],
+                iconAnchor: [16, 32]
+            });
+            
+            var marker = L.marker([lat, lng], { icon: customIcon }).addTo(map);
+            
+            marker.bindPopup('<div style="text-align:center;min-width:220px;padding:8px;font-family:inherit;"><div style="background:linear-gradient(135deg,' + markerColor + ' 0%,' + markerColor + 'dd 100%);color:white;padding:12px;margin:-8px -8px 12px -8px;border-radius:8px 8px 0 0;"><i class="fas fa-user-circle" style="font-size:24px;margin-bottom:4px;"></i><h6 style="margin:0;font-size:15px;font-weight:700;">' + name + '</h6></div><div style="text-align:right;color:#4a5568;"><p style="margin:8px 0;font-size:13px;"><strong style="color:#2d3748;">الرقم الوظيفي:</strong> ' + employeeId + '</p><p style="margin:8px 0;font-size:13px;"><strong style="color:#2d3748;">الحالة:</strong> ' + statusText + '</p><p style="margin:8px 0;font-size:12px;color:#718096;"><i class="fas fa-clock"></i> ' + recordedAt + '</p></div></div>');
+            
+            markers[empId] = marker;
+        })();
+        {% endif %}
+        {% endfor %}
+        
+        var markerArray = Object.values(markers);
+        if (markerArray.length > 0) {
+            var group = L.featureGroup(markerArray);
+            map.fitBounds(group.getBounds().pad(0.1));
+        }
+        
+        document.querySelectorAll('.employee-card').forEach(function(card) {
+            card.addEventListener('click', function() {
+                var empId = parseInt(this.dataset.employeeId);
+                var lat = parseFloat(this.dataset.lat);
+                var lng = parseFloat(this.dataset.lng);
                 
-                // تفعيل البطاقة المحددة
-                this.classList.add('active');
-                
-                // التركيز على الموقع
-                map.setView([lat, lng], 15, {
-                    animate: true,
-                    duration: 1
-                });
-                
-                // فتح نافذة المعلومات
-                markers[empId].openPopup();
-            }
+                if (lat && lng && markers[empId]) {
+                    document.querySelectorAll('.employee-card').forEach(function(c) {
+                        c.classList.remove('active');
+                    });
+                    
+                    this.classList.add('active');
+                    
+                    map.setView([lat, lng], 15, {
+                        animate: true,
+                        duration: 1
+                    });
+                    
+                    markers[empId].openPopup();
+                }
+            });
         });
-    });
-    
-    // تحديث تلقائي
-    setTimeout(function() {
-        location.reload();
-    }, 5 * 60 * 1000);
-</script>
-{% endblock %}
+        
+        setTimeout(function() {
+            location.reload();
+        }, 5 * 60 * 1000);
+    </script>
+</body>
+</html>
