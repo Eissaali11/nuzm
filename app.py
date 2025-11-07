@@ -378,11 +378,13 @@ with app.app_context():
     from routes.email_queue import email_queue_bp
     from routes.voicehub import voicehub_bp
     from routes.properties import properties_bp
+    from routes.api_external import api_external_bp
 
     # تعطيل حماية CSRF لطرق معينة
     csrf.exempt(voicehub_bp)
     csrf.exempt(auth_bp)
 
+    csrf.exempt(api_external_bp)  # API خارجي بدون CSRF
     app.register_blueprint(dashboard_bp, url_prefix='/dashboard')
     app.register_blueprint(employees_bp, url_prefix='/employees')
     app.register_blueprint(departments_bp, url_prefix='/departments')
@@ -416,6 +418,7 @@ with app.app_context():
     app.register_blueprint(voicehub_bp, url_prefix="/voicehub")
     app.register_blueprint(ai_services_bp, url_prefix='/ai')
     app.register_blueprint(email_queue_bp)
+    app.register_blueprint(api_external_bp)  # API خارجي لتتبع المواقع
     app.register_blueprint(properties_bp, url_prefix='/properties')
     
     # استيراد وتسجيل مسار صفحة الهبوط - مسار منفصل عن النظام
