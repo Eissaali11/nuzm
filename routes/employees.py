@@ -1900,7 +1900,7 @@ def tracking():
         query = query.filter(
             or_(
                 Employee.name.contains(search_query),
-                Employee.job_number.contains(search_query)
+                Employee.employee_id.contains(search_query)
             )
         )
     
@@ -1909,13 +1909,12 @@ def tracking():
     # جلب آخر موقع لكل موظف
     employee_locations = {}
     for emp in employees:
-        if emp.job_number:
-            # جلب أحدث موقع
-            latest_location = EmployeeLocation.query.filter_by(
-                job_number=emp.job_number
-            ).order_by(EmployeeLocation.recorded_at.desc()).first()
-            
-            if latest_location:
+        # جلب أحدث موقع للموظف باستخدام employee.id
+        latest_location = EmployeeLocation.query.filter_by(
+            employee_id=emp.id
+        ).order_by(EmployeeLocation.recorded_at.desc()).first()
+        
+        if latest_location:
                 # حساب عمر الموقع بالساعات
                 age_hours = (datetime.utcnow() - latest_location.recorded_at).total_seconds() / 3600
                 
