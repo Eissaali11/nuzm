@@ -1,0 +1,296 @@
+═══════════════════════════════════════════════════════════════════════
+          توثيق API لتتبع مواقع الموظفين - تطبيق الأندرويد
+═══════════════════════════════════════════════════════════════════════
+
+📌 نظرة عامة:
+--------------
+هذا API يستقبل مواقع GPS من تطبيق الأندرويد ويحفظها في قاعدة البيانات
+لعرضها لاحقاً على الخريطة التفاعلية في واجهة الويب للمديرين.
+
+═══════════════════════════════════════════════════════════════════════
+
+🔗 معلومات نقطة النهاية (Endpoint):
+-------------------------------------
+
+📍 الرابط الكامل:
+   https://YOUR_DOMAIN.replit.app/api/external/employee-location
+
+📍 الطريقة (HTTP Method):
+   POST
+
+📍 نوع المحتوى (Content-Type):
+   application/json
+
+═══════════════════════════════════════════════════════════════════════
+
+🔑 المصادقة (Authentication):
+-------------------------------
+
+يتطلب API إرسال مفتاح API ثابت مع كل طلب:
+
+   المفتاح: test_location_key_2025
+   
+⚠️ ملاحظة: هذا مفتاح تجريبي. في الإنتاج، سيتم تغييره إلى مفتاح آمن.
+
+═══════════════════════════════════════════════════════════════════════
+
+📤 البيانات المطلوبة (Request Body):
+-------------------------------------
+
+يجب إرسال JSON يحتوي على الحقول التالية:
+
+┌─────────────────┬──────────────┬───────────────────────────────────┐
+│ الحقل           │ النوع       │ الوصف                            │
+├─────────────────┼──────────────┼───────────────────────────────────┤
+│ api_key         │ String       │ مفتاح API (مطلوب)                │
+│ job_number      │ String       │ الرقم الوظيفي للموظف (مطلوب)    │
+│ latitude        │ Number       │ خط العرض (مطلوب)                 │
+│ longitude       │ Number       │ خط الطول (مطلوب)                 │
+│ accuracy        │ Number       │ دقة الموقع بالأمتار (اختياري)    │
+│ recorded_at     │ String (ISO) │ وقت التسجيل (اختياري)            │
+│ notes           │ String       │ ملاحظات إضافية (اختياري)         │
+└─────────────────┴──────────────┴───────────────────────────────────┘
+
+📝 تفاصيل الحقول:
+
+1. api_key (مطلوب):
+   - القيمة: "test_location_key_2025"
+   - يُستخدم للتحقق من صلاحية الطلب
+
+2. job_number (مطلوب):
+   - رقم الموظف في النظام (مثال: "EMP001", "123456")
+   - يجب أن يكون موجوداً في قاعدة البيانات
+
+3. latitude (مطلوب):
+   - خط العرض من GPS
+   - النطاق المسموح: من -90 إلى 90
+   - مثال: 24.7136
+
+4. longitude (مطلوب):
+   - خط الطول من GPS
+   - النطاق المسموح: من -180 إلى 180
+   - مثال: 46.6753
+
+5. accuracy (اختياري):
+   - دقة الموقع بالأمتار (من Android Location API)
+   - مثال: 10.5
+
+6. recorded_at (اختياري):
+   - وقت أخذ الموقع بصيغة ISO 8601
+   - إذا لم يُرسل، سيتم استخدام وقت الخادم الحالي
+   - مثال: "2025-11-07T10:30:00Z"
+
+7. notes (اختياري):
+   - ملاحظات إضافية (مثلاً: "موقع تلقائي كل 15 دقيقة")
+
+═══════════════════════════════════════════════════════════════════════
+
+📥 الاستجابات (Responses):
+---------------------------
+
+✅ نجاح العملية (200 OK):
+{
+  "success": true,
+  "message": "تم حفظ الموقع بنجاح",
+  "data": {
+    "employee_name": "محمد أحمد",
+    "location_id": 123,
+    "recorded_at": "2025-11-07T10:30:00",
+    "received_at": "2025-11-07T10:30:05"
+  }
+}
+
+❌ خطأ في البيانات (400 Bad Request):
+{
+  "success": false,
+  "error": "الإحداثيات (latitude, longitude) مطلوبة"
+}
+
+🔐 مفتاح API خاطئ (401 Unauthorized):
+{
+  "success": false,
+  "error": "مفتاح API غير صحيح"
+}
+
+🔍 موظف غير موجود (404 Not Found):
+{
+  "success": false,
+  "error": "لم يتم العثور على موظف بالرقم الوظيفي: EMP999"
+}
+
+⚠️ خطأ في الخادم (500 Internal Server Error):
+{
+  "success": false,
+  "error": "حدث خطأ في الخادم"
+}
+
+═══════════════════════════════════════════════════════════════════════
+
+📱 مثال عملي - Android (Kotlin):
+----------------------------------
+
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
+import org.json.JSONObject
+import java.io.IOException
+import java.time.Instant
+
+class LocationAPI {
+    
+    private val client = OkHttpClient()
+    private val apiUrl = "https://YOUR_DOMAIN.replit.app/api/external/employee-location"
+    private val apiKey = "test_location_key_2025"
+    
+    fun sendLocation(
+        jobNumber: String,
+        latitude: Double,
+        longitude: Double,
+        accuracy: Float? = null
+    ) {
+        // إنشاء JSON
+        val json = JSONObject().apply {
+            put("api_key", apiKey)
+            put("job_number", jobNumber)
+            put("latitude", latitude)
+            put("longitude", longitude)
+            accuracy?.let { put("accuracy", it.toDouble()) }
+            put("recorded_at", Instant.now().toString())
+        }
+        
+        // إنشاء الطلب
+        val body = json.toString()
+            .toRequestBody("application/json; charset=utf-8".toMediaType())
+        
+        val request = Request.Builder()
+            .url(apiUrl)
+            .post(body)
+            .build()
+        
+        // إرسال الطلب
+        client.newCall(request).execute().use { response ->
+            if (response.isSuccessful) {
+                val responseBody = response.body?.string()
+                println("✅ تم إرسال الموقع بنجاح: $responseBody")
+            } else {
+                println("❌ خطأ: ${response.code} - ${response.message}")
+            }
+        }
+    }
+}
+
+// الاستخدام:
+val locationAPI = LocationAPI()
+locationAPI.sendLocation(
+    jobNumber = "EMP001",
+    latitude = 24.7136,
+    longitude = 46.6753,
+    accuracy = 10.5f
+)
+
+═══════════════════════════════════════════════════════════════════════
+
+📱 مثال عملي - cURL (للاختبار):
+----------------------------------
+
+curl -X POST \
+  https://YOUR_DOMAIN.replit.app/api/external/employee-location \
+  -H "Content-Type: application/json" \
+  -d '{
+    "api_key": "test_location_key_2025",
+    "job_number": "EMP001",
+    "latitude": 24.7136,
+    "longitude": 46.6753,
+    "accuracy": 10.5,
+    "recorded_at": "2025-11-07T10:30:00Z"
+  }'
+
+═══════════════════════════════════════════════════════════════════════
+
+🔧 نقطة اختبار (Test Endpoint):
+---------------------------------
+
+للتحقق من أن API يعمل بشكل صحيح:
+
+GET https://YOUR_DOMAIN.replit.app/api/external/test
+
+الاستجابة المتوقعة:
+{
+  "success": true,
+  "message": "External API is working!",
+  "endpoints": {
+    "employee_location": "/api/external/employee-location [POST]"
+  }
+}
+
+═══════════════════════════════════════════════════════════════════════
+
+⚙️ توصيات للتطبيق:
+--------------------
+
+1. تكرار الإرسال:
+   ✓ أرسل الموقع كل 15-30 دقيقة (لتوفير البطارية)
+   ✓ استخدم JobScheduler أو WorkManager للإرسال في الخلفية
+
+2. معالجة الأخطاء:
+   ✓ احفظ المواقع محلياً إذا فشل الإرسال
+   ✓ أعد المحاولة لاحقاً عند توفر الإنترنت
+   ✓ استخدم ExponentialBackoff للمحاولات المتكررة
+
+3. الدقة:
+   ✓ استخدم LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY
+   ✓ تجاهل المواقع ذات الدقة الضعيفة (> 100 متر)
+
+4. الأمان:
+   ✓ لا تحفظ مفتاح API في كود مفتوح
+   ✓ استخدم ProGuard لحماية الكود
+
+5. الأداء:
+   ✓ استخدم coroutines للعمليات غير المتزامنة
+   ✓ لا ترسل المواقع أثناء الشحن فقط
+
+═══════════════════════════════════════════════════════════════════════
+
+📊 حالات الاستخدام:
+--------------------
+
+1. الإرسال التلقائي:
+   - يرسل التطبيق الموقع كل فترة محددة تلقائياً
+
+2. الإرسال عند الطلب:
+   - يمكن للموظف إرسال موقعه يدوياً عند الحاجة
+
+3. تتبع المسار:
+   - إرسال نقاط GPS متتالية لرسم مسار الموظف
+
+═══════════════════════════════════════════════════════════════════════
+
+🔐 ملاحظات أمنية مهمة:
+------------------------
+
+⚠️ هذا النظام للاستخدام التجريبي فقط:
+
+1. مفتاح API الحالي ثابت وتجريبي
+2. يجب تحديث المفتاح قبل النشر الفعلي
+3. يُنصح بإضافة:
+   - Rate limiting (تحديد عدد الطلبات)
+   - IP whitelisting (قائمة IPs مسموح بها)
+   - Token-based authentication
+   - SSL/TLS encryption
+
+═══════════════════════════════════════════════════════════════════════
+
+📞 الدعم الفني:
+----------------
+
+في حالة وجود مشاكل:
+1. تحقق من صحة الرابط والمفتاح
+2. تأكد من أن الرقم الوظيفي موجود في النظام
+3. راجع رسائل الخطأ المُرسلة من الخادم
+4. تحقق من اتصال الإنترنت
+
+═══════════════════════════════════════════════════════════════════════
+
+تم إنشاء هذا التوثيق بتاريخ: 07 نوفمبر 2025
+الإصدار: 1.0
