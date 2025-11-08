@@ -2272,13 +2272,17 @@ def export_track_history_pdf(employee_id):
 @employees_bp.route('/<int:employee_id>/track-history/export-excel')
 @login_required
 def export_track_history_excel(employee_id):
-    """تصدير سجل التحركات إلى Excel مع صورة الخريطة"""
+    """تصدير سجل التحركات إلى Excel بتصميم احترافي مع صورة الخريطة"""
     from openpyxl import Workbook
-    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side, GradientFill, Color
     from openpyxl.utils import get_column_letter
     from openpyxl.drawing.image import Image as XLImage
+    from openpyxl.chart import BarChart, Reference, LineChart
     import requests
     from io import BytesIO
+    from math import radians, sin, cos, sqrt, atan2
+    import tempfile
+    import os
     
     employee = Employee.query.get_or_404(employee_id)
     
@@ -2291,44 +2295,56 @@ def export_track_history_excel(employee_id):
     wb = Workbook()
     ws = wb.active
     ws.title = "سجل التحركات"
-    
     ws.right_to_left = True
     
-    header_font = Font(name='Arial', size=14, bold=True, color='FFFFFF')
-    header_fill = PatternFill(start_color='4F46E5', end_color='4F46E5', fill_type='solid')
-    header_alignment = Alignment(horizontal='center', vertical='center')
+    ws.merge_cells('A1:J1')
+    ws['A1'] = f"📍 سجل تحركات الموظف - {employee.name}"
+    ws['A1'].font = Font(name='Arial', size=20, bold=True, color='FFFFFF')
+    ws['A1'].fill = GradientFill(stop=("4F46E5", "7C3AED"))
+    ws['A1'].alignment = Alignment(horizontal='center', vertical='center')
+    ws.row_dimensions[1].height = 35
     
-    title_font = Font(name='Arial', size=18, bold=True, color='1E1B4B')
-    title_alignment = Alignment(horizontal='center', vertical='center')
+    ws.merge_cells('A2:J2')
+    ws['A2'] = f"التقرير الشامل - {datetime.now().strftime('%Y-%m-%d')}"
+    ws['A2'].font = Font(name='Arial', size=12, italic=True, color='6366F1')
+    ws['A2'].alignment = Alignment(horizontal='center', vertical='center')
+    ws.row_dimensions[2].height = 25
     
-    ws.merge_cells('A1:G1')
-    ws['A1'] = f"سجل تحركات الموظف - {employee.name}"
-    ws['A1'].font = title_font
-    ws['A1'].alignment = title_alignment
-    ws.row_dimensions[1].height = 30
+    current_row = 4
     
-    ws.merge_cells('A2:B2')
-    ws['A2'] = "معلومات الموظف"
-    ws['A2'].font = Font(name='Arial', size=12, bold=True, color='312E81')
-    ws['A2'].fill = PatternFill(start_color='E0E7FF', end_color='E0E7FF', fill_type='solid')
-    ws['A2'].alignment = Alignment(horizontal='right', vertical='center')
+    ws.merge_cells(f'A{current_row}:D{current_row}')
+    ws[f'A{current_row}'] = "📋 معلومات الموظف"
+    ws[f'A{current_row}'].font = Font(name='Arial', size=14, bold=True, color='FFFFFF')
+    ws[f'A{current_row}'].fill = PatternFill(start_color='6366F1', end_color='6366F1', fill_type='solid')
+    ws[f'A{current_row}'].alignment = Alignment(horizontal='center', vertical='center')
+    ws.row_dimensions[current_row].height = 28
     
-    ws['A3'] = "رقم الموظف:"
-    ws['B3'] = employee.employee_id
-    ws['A4'] = "الاسم:"
-    ws['B4'] = employee.name
+    current_row += 1
+    info_data = [
+        ['رقم الموظف:', employee.employee_id, 'الاسم:', employee.name],
+        ['القسم:', employee.departments[0].name if employee.departments else '-', 'تاريخ التقرير:', format_time_12hr_arabic(datetime.now())],
+    ]
     
-    if employee.departments:
-        ws['A5'] = "القسم:"
-        ws['B5'] = employee.departments[0].name
-        start_row = 6
-    else:
-        start_row = 5
+    for row_data in info_data:
+        for col_idx, value in enumerate(row_data, 1):
+            cell = ws.cell(row=current_row, column=col_idx)
+            cell.value = value
+            cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+            cell.border = Border(
+                left=Side(style='thin', color='C7D2FE'),
+                right=Side(style='thin', color='C7D2FE'),
+                top=Side(style='thin', color='C7D2FE'),
+                bottom=Side(style='thin', color='C7D2FE')
+            )
+            if col_idx % 2 == 1:
+                cell.font = Font(name='Arial', size=11, bold=True, color='312E81')
+                cell.fill = PatternFill(start_color='E0E7FF', end_color='E0E7FF', fill_type='solid')
+            else:
+                cell.font = Font(name='Arial', size=11, color='1E1B4B')
+                cell.fill = PatternFill(start_color='F5F7FF', end_color='F5F7FF', fill_type='solid')
+        current_row += 1
     
-    ws[f'A{start_row}'] = "عدد النقاط:"
-    ws[f'B{start_row}'] = len(locations)
-    ws[f'A{start_row+1}'] = "تاريخ التقرير:"
-    ws[f'B{start_row+1}'] = datetime.now().strftime('%Y-%m-%d %H:%M')
+    current_row += 1
     
     if locations and len(locations) > 0:
         max_speed = max([float(loc.speed_kmh) if loc.speed_kmh else 0 for loc in locations])
@@ -2341,7 +2357,6 @@ def export_track_history_excel(employee_id):
             lat1, lon1 = float(prev.latitude), float(prev.longitude)
             lat2, lon2 = float(curr.latitude), float(curr.longitude)
             
-            from math import radians, sin, cos, sqrt, atan2
             R = 6371
             dlat = radians(lat2 - lat1)
             dlon = radians(lon2 - lon1)
@@ -2349,69 +2364,158 @@ def export_track_history_excel(employee_id):
             c = 2 * atan2(sqrt(a), sqrt(1-a))
             total_distance += R * c
         
-        stats_row = start_row + 3
-        ws.merge_cells(f'A{stats_row}:B{stats_row}')
-        ws[f'A{stats_row}'] = "إحصائيات التحركات"
-        ws[f'A{stats_row}'].font = Font(name='Arial', size=12, bold=True, color='1E3A8A')
-        ws[f'A{stats_row}'].fill = PatternFill(start_color='DBEAFE', end_color='DBEAFE', fill_type='solid')
-        ws[f'A{stats_row}'].alignment = Alignment(horizontal='right', vertical='center')
+        ws.merge_cells(f'A{current_row}:D{current_row}')
+        ws[f'A{current_row}'] = "📊 إحصائيات التحركات"
+        ws[f'A{current_row}'].font = Font(name='Arial', size=14, bold=True, color='FFFFFF')
+        ws[f'A{current_row}'].fill = PatternFill(start_color='10B981', end_color='10B981', fill_type='solid')
+        ws[f'A{current_row}'].alignment = Alignment(horizontal='center', vertical='center')
+        ws.row_dimensions[current_row].height = 28
         
-        ws[f'A{stats_row+1}'] = "إجمالي المسافة:"
-        ws[f'B{stats_row+1}'] = f"{total_distance:.2f} كم"
-        ws[f'A{stats_row+2}'] = "أقصى سرعة:"
-        ws[f'B{stats_row+2}'] = f"{max_speed:.1f} كم/س"
-        ws[f'A{stats_row+3}'] = "عدد النقاط على سيارة:"
-        ws[f'B{stats_row+3}'] = vehicle_count
+        current_row += 1
+        stats_data = [
+            ['عدد نقاط التتبع:', len(locations), 'إجمالي المسافة:', f"{total_distance:.2f} كم"],
+            ['أقصى سرعة:', f"{max_speed:.1f} كم/س", 'نقاط على سيارة:', vehicle_count],
+        ]
         
-        table_start = stats_row + 5
+        for row_data in stats_data:
+            for col_idx, value in enumerate(row_data, 1):
+                cell = ws.cell(row=current_row, column=col_idx)
+                cell.value = value
+                cell.alignment = Alignment(horizontal='center', vertical='center')
+                cell.border = Border(
+                    left=Side(style='medium', color='10B981'),
+                    right=Side(style='medium', color='10B981'),
+                    top=Side(style='thin', color='D1FAE5'),
+                    bottom=Side(style='thin', color='D1FAE5')
+                )
+                if col_idx % 2 == 1:
+                    cell.font = Font(name='Arial', size=12, bold=True, color='065F46')
+                    cell.fill = PatternFill(start_color='D1FAE5', end_color='D1FAE5', fill_type='solid')
+                else:
+                    cell.font = Font(name='Arial', size=13, bold=True, color='059669')
+                    cell.fill = PatternFill(start_color='A7F3D0', end_color='A7F3D0', fill_type='solid')
+            current_row += 1
+        
+        current_row += 1
+        
+        map_row = current_row
+        ws.merge_cells(f'F{map_row}:J{map_row}')
+        ws[f'F{map_row}'] = "🗺️ خريطة المسار"
+        ws[f'F{map_row}'].font = Font(name='Arial', size=14, bold=True, color='FFFFFF')
+        ws[f'F{map_row}'].fill = PatternFill(start_color='F59E0B', end_color='F59E0B', fill_type='solid')
+        ws[f'F{map_row}'].alignment = Alignment(horizontal='center', vertical='center')
+        ws.row_dimensions[map_row].height = 28
         
         if len(locations) > 0:
-            center_lat = sum([float(loc.latitude) for loc in locations]) / len(locations)
-            center_lon = sum([float(loc.longitude) for loc in locations]) / len(locations)
+            lats = [float(loc.latitude) for loc in locations]
+            lons = [float(loc.longitude) for loc in locations]
+            center_lat = sum(lats) / len(lats)
+            center_lon = sum(lons) / len(lons)
+            
+            min_lat, max_lat = min(lats), max(lats)
+            min_lon, max_lon = min(lons), max(lons)
             
             try:
-                map_url = f"https://maps.geoapify.com/v1/staticmap?style=osm-bright&width=600&height=400&center=lonlat:{center_lon},{center_lat}&zoom=12&marker=lonlat:{center_lon},{center_lat};color:%234f46e5;size:medium&apiKey=YOUR_API_KEY"
+                polyline_coords = "|".join([f"{lon},{lat}" for lat, lon in zip(lats, lons)])
                 
-                lats = [float(loc.latitude) for loc in locations]
-                lons = [float(loc.longitude) for loc in locations]
-                min_lat, max_lat = min(lats), max(lats)
-                min_lon, max_lon = min(lons), max(lons)
+                map_url = f"https://api.mapbox.com/styles/v1/mapbox/streets-v11/static/path-5+4F46E5-0.8({polyline_coords})/auto/800x500@2x?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw"
                 
-                map_url = f"https://api.mapbox.com/styles/v1/mapbox/satellite-streets-v11/static/[{min_lon},{min_lat},{max_lon},{max_lat}]/600x400?access_token=pk.YOUR_TOKEN"
-                
-            except:
-                pass
+                response = requests.get(map_url, timeout=10)
+                if response.status_code == 200:
+                    temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.png')
+                    temp_file.write(response.content)
+                    temp_file.close()
+                    
+                    img = XLImage(temp_file.name)
+                    img.width = 450
+                    img.height = 300
+                    
+                    ws.add_image(img, f'F{map_row + 1}')
+                    
+                    for i in range(map_row + 1, map_row + 16):
+                        ws.row_dimensions[i].height = 20
+                    
+                    try:
+                        os.unlink(temp_file.name)
+                    except:
+                        pass
+            except Exception as e:
+                ws[f'F{map_row + 1}'] = f"⚠️ تعذر تحميل الخريطة"
+                ws[f'F{map_row + 1}'].font = Font(name='Arial', size=11, color='DC2626')
+                ws[f'F{map_row + 1}'].alignment = Alignment(horizontal='center', vertical='center')
         
-        headers = ['#', 'الوقت', 'خط العرض', 'خط الطول', 'السرعة (كم/س)', 'السيارة', 'رابط الموقع']
-        for col, header in enumerate(headers, 1):
-            cell = ws.cell(row=table_start, column=col)
+        table_start_row = max(current_row + 1, map_row + 17)
+        
+        ws.merge_cells(f'A{table_start_row}:J{table_start_row}')
+        ws[f'A{table_start_row}'] = "📝 سجل التحركات التفصيلي"
+        ws[f'A{table_start_row}'].font = Font(name='Arial', size=14, bold=True, color='FFFFFF')
+        ws[f'A{table_start_row}'].fill = PatternFill(start_color='EC4899', end_color='EC4899', fill_type='solid')
+        ws[f'A{table_start_row}'].alignment = Alignment(horizontal='center', vertical='center')
+        ws.row_dimensions[table_start_row].height = 28
+        
+        table_start_row += 1
+        
+        headers = ['#', 'الوقت', 'خط العرض', 'خط الطول', 'السرعة (كم/س)', 'الحالة', 'السيارة', 'الدقة (م)', 'رابط الموقع', 'ملاحظات']
+        for col_idx, header in enumerate(headers, 1):
+            cell = ws.cell(row=table_start_row, column=col_idx)
             cell.value = header
-            cell.font = header_font
-            cell.fill = header_fill
-            cell.alignment = header_alignment
+            cell.font = Font(name='Arial', size=12, bold=True, color='FFFFFF')
+            cell.fill = PatternFill(start_color='4F46E5', end_color='4F46E5', fill_type='solid')
+            cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+            cell.border = Border(
+                left=Side(style='medium', color='312E81'),
+                right=Side(style='medium', color='312E81'),
+                top=Side(style='medium', color='312E81'),
+                bottom=Side(style='medium', color='312E81')
+            )
+        ws.row_dimensions[table_start_row].height = 30
         
         for idx, loc in enumerate(locations, 1):
-            row = table_start + idx
+            row = table_start_row + idx
+            
+            speed_val = float(loc.speed_kmh) if loc.speed_kmh else 0
             
             ws.cell(row=row, column=1).value = idx
             ws.cell(row=row, column=2).value = format_time_12hr_arabic(loc.recorded_at)
             ws.cell(row=row, column=3).value = float(loc.latitude)
             ws.cell(row=row, column=4).value = float(loc.longitude)
-            ws.cell(row=row, column=5).value = f"{float(loc.speed_kmh):.1f}" if loc.speed_kmh and float(loc.speed_kmh) > 0 else "-"
+            ws.cell(row=row, column=5).value = f"{speed_val:.1f}" if speed_val > 0 else "-"
+            
+            if speed_val > 100:
+                ws.cell(row=row, column=6).value = "⚠️ سرعة عالية"
+                status_color = 'FEE2E2'
+            elif speed_val > 60:
+                ws.cell(row=row, column=6).value = "⚡ متوسطة"
+                status_color = 'FEF3C7'
+            elif speed_val > 0:
+                ws.cell(row=row, column=6).value = "✅ عادية"
+                status_color = 'D1FAE5'
+            else:
+                ws.cell(row=row, column=6).value = "⏸️ متوقف"
+                status_color = 'E0E7FF'
             
             if loc.vehicle_id and loc.vehicle:
-                ws.cell(row=row, column=6).value = f"{loc.vehicle.plate_number} - {loc.vehicle.make} {loc.vehicle.model}"
+                ws.cell(row=row, column=7).value = f"🚗 {loc.vehicle.plate_number} - {loc.vehicle.make}"
             else:
-                ws.cell(row=row, column=6).value = "-"
+                ws.cell(row=row, column=7).value = "-"
+            
+            ws.cell(row=row, column=8).value = f"{float(loc.accuracy_m):.1f}" if loc.accuracy_m else "-"
             
             maps_link = f"https://www.google.com/maps?q={float(loc.latitude)},{float(loc.longitude)}"
-            ws.cell(row=row, column=7).value = maps_link
-            ws.cell(row=row, column=7).hyperlink = maps_link
-            ws.cell(row=row, column=7).font = Font(color='0000FF', underline='single')
+            ws.cell(row=row, column=9).value = "📍 عرض الموقع"
+            ws.cell(row=row, column=9).hyperlink = maps_link
+            ws.cell(row=row, column=9).font = Font(name='Arial', size=10, color='2563EB', underline='single', bold=True)
             
-            for col in range(1, 8):
+            if speed_val > 120:
+                ws.cell(row=row, column=10).value = "⚠️ تجاوز السرعة القصوى"
+            elif loc.accuracy_m and float(loc.accuracy_m) > 50:
+                ws.cell(row=row, column=10).value = "⚠️ دقة منخفضة"
+            else:
+                ws.cell(row=row, column=10).value = "-"
+            
+            for col in range(1, 11):
                 cell = ws.cell(row=row, column=col)
-                cell.alignment = Alignment(horizontal='center', vertical='center')
+                cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
                 cell.border = Border(
                     left=Side(style='thin', color='C7D2FE'),
                     right=Side(style='thin', color='C7D2FE'),
@@ -2419,11 +2523,34 @@ def export_track_history_excel(employee_id):
                     bottom=Side(style='thin', color='C7D2FE')
                 )
                 
-                if idx % 2 == 0:
+                if col == 6:
+                    cell.fill = PatternFill(start_color=status_color, end_color=status_color, fill_type='solid')
+                elif idx % 2 == 0:
                     cell.fill = PatternFill(start_color='F5F7FF', end_color='F5F7FF', fill_type='solid')
+                else:
+                    cell.fill = PatternFill(start_color='FFFFFF', end_color='FFFFFF', fill_type='solid')
+                
+                if col == 5 and speed_val > 100:
+                    cell.font = Font(name='Arial', size=11, bold=True, color='DC2626')
+            
+            ws.row_dimensions[row].height = 22
+    else:
+        ws.merge_cells(f'A{current_row}:J{current_row}')
+        ws[f'A{current_row}'] = "⚠️ لا توجد بيانات تتبع خلال آخر 24 ساعة"
+        ws[f'A{current_row}'].font = Font(name='Arial', size=14, bold=True, color='DC2626')
+        ws[f'A{current_row}'].alignment = Alignment(horizontal='center', vertical='center')
+        ws.row_dimensions[current_row].height = 40
     
-    for col in range(1, 8):
-        ws.column_dimensions[get_column_letter(col)].width = 18
+    ws.column_dimensions['A'].width = 6
+    ws.column_dimensions['B'].width = 22
+    ws.column_dimensions['C'].width = 14
+    ws.column_dimensions['D'].width = 14
+    ws.column_dimensions['E'].width = 13
+    ws.column_dimensions['F'].width = 13
+    ws.column_dimensions['G'].width = 22
+    ws.column_dimensions['H'].width = 12
+    ws.column_dimensions['I'].width = 15
+    ws.column_dimensions['J'].width = 18
     
     output = BytesIO()
     wb.save(output)
