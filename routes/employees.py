@@ -1956,7 +1956,7 @@ def tracking():
             'id': emp.id,
             'name': emp.name,
             'employee_id': emp.employee_id,
-            'photo_url': emp.photo_url,
+            'photo_url': emp.profile_image,
             'departments': [{'id': d.id, 'name': d.name} for d in emp.departments] if emp.departments else []
         }
         employees_data.append(emp_dict)
