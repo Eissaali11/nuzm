@@ -2047,8 +2047,8 @@ def export_track_history_pdf(employee_id):
         EmployeeLocation.recorded_at >= cutoff_time
     ).order_by(EmployeeLocation.recorded_at.asc()).all()
     
-    pdfmetrics.registerFont(TTFont('Cairo', 'fonts/Cairo-Bold.ttf'))
-    pdfmetrics.registerFont(TTFont('CairoReg', 'fonts/Cairo-Regular.ttf'))
+    pdfmetrics.registerFont(TTFont('Cairo', 'static/fonts/Cairo.ttf'))
+    pdfmetrics.registerFont(TTFont('CairoReg', 'static/fonts/Cairo.ttf'))
     
     buffer = BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=2*cm, leftMargin=2*cm, topMargin=2*cm, bottomMargin=2*cm)
