@@ -50,7 +50,30 @@ class ProfessionalArabicPDF(FPDF):
             'text_dark': (44, 62, 80),       # نص غامق
             'text_light': (127, 140, 141),   # نص فاتح
             'gradient_start': (74, 144, 226), # بداية التدرج
-            'gradient_end': (80, 170, 200)   # نهاية التدرج
+            'gradient_end': (80, 170, 200),  # نهاية التدرج
+            # ألوان مستقبلية جديدة
+            'cyan': (6, 182, 212),           # سيان (cyan-600)
+            'cyan_dark': (8, 145, 178),      # سيان غامق (cyan-700)
+            'cyan_light': (103, 232, 249),   # سيان فاتح (cyan-300)
+            'purple': (147, 51, 234),        # بنفسجي (purple-600)
+            'purple_dark': (126, 34, 206),   # بنفسجي غامق (purple-700)
+            'purple_light': (216, 180, 254), # بنفسجي فاتح (purple-300)
+            'pink': (236, 72, 153),          # وردي (pink-500)
+            'pink_dark': (219, 39, 119),     # وردي غامق (pink-600)
+            'pink_light': (249, 168, 212),   # وردي فاتح (pink-300)
+            'blue': (37, 99, 235),           # أزرق (blue-600)
+            'blue_dark': (29, 78, 216),      # أزرق غامق (blue-700)
+            'blue_light': (147, 197, 253),   # أزرق فاتح (blue-300)
+            'emerald': (16, 185, 129),       # زمردي (emerald-500)
+            'emerald_dark': (5, 150, 105),   # زمردي غامق (emerald-600)
+            'emerald_light': (110, 231, 183),# زمردي فاتح (emerald-300)
+            'indigo': (79, 70, 229),         # نيلي (indigo-600)
+            'indigo_dark': (67, 56, 202),    # نيلي غامق (indigo-700)
+            'rose': (244, 63, 94),           # وردي غامق (rose-500)
+            'amber': (245, 158, 11),         # كهرماني (amber-500)
+            'teal': (20, 184, 166),          # تيل (teal-500)
+            'violet': (139, 92, 246),        # بنفسجي فاتح (violet-500)
+            'sky': (14, 165, 233)            # سماوي (sky-500)
         }
     
     def arabic_text(self, txt):
@@ -105,26 +128,84 @@ class ProfessionalArabicPDF(FPDF):
             return r, g, b
         return 255, 255, 255
     
+    def draw_colored_badge(self, x, y, text, bg_color='cyan', text_color='white', width=None):
+        """رسم badge ملون مميز"""
+        # حساب عرض البادج بناءً على النص إذا لم يتم تحديده
+        if width is None:
+            text_width = self.get_string_width(self.arabic_text(text))
+            width = text_width + 10
+        
+        # رسم الخلفية المستديرة
+        self.set_fill_color_custom(bg_color)
+        radius = 3
+        # رسم شبه مستطيل دائري
+        self.rect(x, y, width, 8, 'F')
+        
+        # رسم الدوائر في الأطراف لإعطاء شكل دائري
+        self.ellipse(x, y, radius*2, 8, 'F')
+        self.ellipse(x + width - radius*2, y, radius*2, 8, 'F')
+        
+        # النص
+        self.set_text_color(*self.colors.get(text_color, (255, 255, 255)))
+        if self.fonts_available:
+            self.set_font('Tajawal', 'B', 9)
+        else:
+            self.set_font('Arial', 'B', 9)
+        self.set_xy(x, y + 1)
+        self.cell(width, 6, text, 0, 0, 'C')
+    
+    def draw_gradient_header(self):
+        """رسم رأس صفحة بتدرج لوني مستقبلي"""
+        # رسم تدرج من cyan إلى purple إلى indigo
+        num_stripes = 60
+        stripe_height = 60 / num_stripes
+        
+        for i in range(num_stripes):
+            # حساب النسبة
+            ratio = i / num_stripes
+            
+            # التدرج من cyan إلى purple إلى indigo
+            if ratio < 0.33:
+                # cyan إلى purple
+                local_ratio = ratio / 0.33
+                r = int(6 + (147 - 6) * local_ratio)
+                g = int(182 + (51 - 182) * local_ratio)
+                b = int(212 + (234 - 212) * local_ratio)
+            elif ratio < 0.66:
+                # purple إلى indigo
+                local_ratio = (ratio - 0.33) / 0.33
+                r = int(147 + (79 - 147) * local_ratio)
+                g = int(51 + (70 - 51) * local_ratio)
+                b = int(234 + (229 - 234) * local_ratio)
+            else:
+                # indigo إلى نهاية أغمق
+                local_ratio = (ratio - 0.66) / 0.34
+                r = int(79 - (79 - 50) * local_ratio)
+                g = int(70 - (70 - 50) * local_ratio)
+                b = int(229 - (229 - 180) * local_ratio)
+            
+            self.set_fill_color(r, g, b)
+            self.rect(0, i * stripe_height, 210, stripe_height + 0.5, 'F')
+        
+        # إضافة عناصر زخرفية
+        self.set_fill_color(255, 255, 255, 10)
+        for i in range(0, 220, 25):
+            self.line(i, 0, i+10, 60)
+        
+        # إضافة نقاط لامعة
+        self.set_fill_color(255, 255, 255)
+        import random
+        random.seed(42)
+        for _ in range(15):
+            x = random.randint(10, 200)
+            y = random.randint(5, 55)
+            size = random.choice([0.5, 1, 1.5])
+            self.rect(x, y, size, size, 'F')
+    
     def draw_header_background(self):
         """رسم خلفية متدرجة لرأس الصفحة"""
-        # رسم مستطيل متدرج للخلفية
-        self.set_fill_color_custom('primary')
-        self.rect(0, 0, 210, 60, 'F')
-        
-        # إضافة نمط هندسي خفيف
-        self.set_draw_color(255, 255, 255)
-        self.set_line_width(0.3)
-        
-        # رسم خطوط قطرية خفيفة بدلاً من الشفافية
-        for i in range(0, 220, 30):
-            self.line(i, 0, i+15, 60)
-            
-        # إضافة تأثير بصري بدلاً من الشفافية
-        self.set_fill_color(255, 255, 255)
-        # رسم مستطيلات صغيرة كنقاط زخرفية
-        for x in range(20, 200, 40):
-            for y in range(10, 50, 20):
-                self.rect(x, y, 2, 2, 'F')
+        # استخدام الرأس المتدرج الجديد
+        self.draw_gradient_header()
     
     def add_decorative_border(self, x, y, w, h, color='primary'):
         """إضافة حدود زخرفية ملونة"""
@@ -139,27 +220,85 @@ class ProfessionalArabicPDF(FPDF):
         # الحد الأيمن
         self.rect(x + w - 2, y, 2, h, 'F')
     
-    def add_section_header(self, title, icon='■'):
-        """إضافة رأس قسم مع تصميم احترافي"""
+    def draw_decorative_separator(self, color1='cyan', color2='purple', color3='pink'):
+        """رسم فاصل زخرفي ملون بين الأقسام"""
         current_y = self.get_y()
         
-        # خلفية القسم
-        self.set_fill_color_custom('light_gray')
-        self.rect(10, current_y, 190, 12, 'F')
+        # رسم خط تدرج
+        num_segments = 180
+        segment_width = 180 / num_segments
         
-        # شريط ملون على اليسار
-        self.set_fill_color_custom('primary')
-        self.rect(10, current_y, 4, 12, 'F')
+        for i in range(num_segments):
+            ratio = i / num_segments
+            
+            # التدرج بين ثلاثة ألوان
+            if ratio < 0.5:
+                local_ratio = ratio / 0.5
+                r1, g1, b1 = self.colors[color1]
+                r2, g2, b2 = self.colors[color2]
+            else:
+                local_ratio = (ratio - 0.5) / 0.5
+                r1, g1, b1 = self.colors[color2]
+                r2, g2, b2 = self.colors[color3]
+            
+            r = int(r1 + (r2 - r1) * local_ratio)
+            g = int(g1 + (g2 - g1) * local_ratio)
+            b = int(b1 + (b2 - b1) * local_ratio)
+            
+            self.set_fill_color(r, g, b)
+            self.rect(15 + i * segment_width, current_y, segment_width + 0.5, 1, 'F')
+        
+        # إضافة نجوم زخرفية
+        self.set_fill_color(*self.colors[color2])
+        for x_pos in [65, 105, 145]:
+            # رسم نجمة صغيرة (معين)
+            self.rect(x_pos - 1.5, current_y - 2, 3, 3, 'F')
+        
+        self.ln(6)
+    
+    def add_section_header(self, title, icon='■', color='cyan'):
+        """إضافة رأس قسم مع تصميم مستقبلي مميز"""
+        current_y = self.get_y()
+        
+        # خلفية متدرجة للقسم
+        num_stripes = 12
+        stripe_height = 12 / num_stripes
+        base_color = self.colors[color]
+        
+        for i in range(num_stripes):
+            ratio = i / num_stripes
+            # تدرج من اللون الأساسي إلى أفتح
+            r = int(base_color[0] + (255 - base_color[0]) * ratio * 0.7)
+            g = int(base_color[1] + (255 - base_color[1]) * ratio * 0.7)
+            b = int(base_color[2] + (255 - base_color[2]) * ratio * 0.7)
+            
+            self.set_fill_color(r, g, b)
+            self.rect(15, current_y + i * stripe_height, 180, stripe_height + 0.5, 'F')
+        
+        # شريط ملون بارز على اليسار
+        self.set_fill_color_custom(color)
+        self.rect(15, current_y, 5, 12, 'F')
+        
+        # أيقونة/شعار في الجانب
+        self.set_fill_color_custom('white')
+        self.rect(22, current_y + 2, 8, 8, 'F')
+        self.set_text_color(*self.colors[color])
+        if self.fonts_available:
+            self.set_font('Tajawal', 'B', 10)
+        else:
+            self.set_font('Arial', 'B', 10)
+        self.set_xy(22, current_y + 2.5)
+        self.cell(8, 7, icon, 0, 0, 'C')
         
         # النص
-        self.set_xy(20, current_y + 2)
+        self.set_xy(35, current_y + 2)
         if self.fonts_available:
             self.set_font('Tajawal', 'B', 14)
         else:
             self.set_font('Arial', 'B', 14)
         
-        self.set_color('text_dark')
-        self.cell(0, 8, f'{icon} {title}', 0, 1, 'R')
+        self.set_color('white')
+        self.cell(0, 8, title, 0, 1, 'R')
         self.ln(3)
 
 
@@ -657,10 +796,10 @@ def generate_safety_check_report_pdf(safety_check):
     # إضافة صفحة جديدة
     pdf.add_page()
     
-    # ===== رأس الصفحة الاحترافي =====
+    # ===== رأس الصفحة المستقبلي المميز =====
     pdf.draw_header_background()
     
-    # إضافة الشعار في رأس الصفحة
+    # إضافة الشعار في رأس الصفحة مع تصميم مميز
     possible_logo_paths = [
         os.path.join(PROJECT_DIR, 'static', 'images', 'logo', 'logo_new.png'),
         os.path.join(PROJECT_DIR, 'static', 'images', 'logo_new.png'),
@@ -674,184 +813,239 @@ def generate_safety_check_report_pdf(safety_check):
             logo_path = path
             break
     
+    # رسم إطار مميز للشعار
+    pdf.set_fill_color(255, 255, 255, 20)
+    pdf.rect(13, 8, 44, 44, 'F')
+    pdf.set_draw_color(255, 255, 255)
+    pdf.set_line_width(2)
+    pdf.rect(13, 8, 44, 44)
+    
     # إذا وجدنا شعارًا، قم بإضافته
     if logo_path:
         try:
             pdf.image(logo_path, x=15, y=10, w=40, h=40)
         except:
-            # شعار نصي بديل
-            pdf.set_fill_color(255, 255, 255)
-            pdf.rect(15, 20, 40, 20, 'F')
-            pdf.set_text_color(41, 128, 185)
+            # شعار نصي بديل مميز
+            pdf.set_fill_color(*pdf.colors['white'])
+            pdf.rect(17, 18, 32, 24, 'F')
+            pdf.set_text_color(*pdf.colors['cyan'])
             if pdf.fonts_available:
-                pdf.set_font('Tajawal', 'B', 16)
+                pdf.set_font('Tajawal', 'B', 20)
             else:
-                pdf.set_font('Arial', 'B', 16)
-            pdf.set_xy(15, 25)
-            pdf.cell(40, 10, 'نُظم', 0, 0, 'C')
+                pdf.set_font('Arial', 'B', 20)
+            pdf.set_xy(17, 25)
+            pdf.cell(32, 10, 'نُظم', 0, 0, 'C')
     else:
-        # شعار نصي بديل
-        pdf.set_fill_color(255, 255, 255)
-        pdf.rect(15, 15, 40, 30, 'F')
-        pdf.set_text_color(41, 128, 185)
+        # شعار نصي بديل مميز
+        pdf.set_fill_color(*pdf.colors['white'])
+        pdf.rect(17, 18, 32, 24, 'F')
+        pdf.set_text_color(*pdf.colors['cyan'])
         if pdf.fonts_available:
             pdf.set_font('Tajawal', 'B', 20)
         else:
             pdf.set_font('Arial', 'B', 20)
-        pdf.set_xy(15, 25)
-        pdf.cell(40, 10, 'نُظم', 0, 0, 'C')
+        pdf.set_xy(17, 25)
+        pdf.cell(32, 10, 'نُظم', 0, 0, 'C')
     
-    # عنوان التقرير
+    # عنوان التقرير المميز
     pdf.set_text_color(255, 255, 255)
     if pdf.fonts_available:
-        pdf.set_font('Tajawal', 'B', 24)
+        pdf.set_font('Tajawal', 'B', 26)
     else:
-        pdf.set_font('Arial', 'B', 24)
-    pdf.set_xy(70, 15)
-    pdf.cell(120, 12, 'تقرير فحص السلامة الخارجي', 0, 1, 'C')
+        pdf.set_font('Arial', 'B', 26)
+    pdf.set_xy(65, 12)
+    pdf.cell(130, 12, 'فحص السلامة الخارجي', 0, 1, 'C')
     
-    # رقم التقرير
-    if pdf.fonts_available:
-        pdf.set_font('Tajawal', 'B', 16)
-    else:
-        pdf.set_font('Arial', 'B', 16)
-    pdf.set_xy(70, 30)
-    pdf.cell(120, 10, f'رقم التقرير: {safety_check.id}', 0, 1, 'C')
+    # Badge لرقم اللوحة
+    plate_number = safety_check.vehicle_plate_number or 'غير محدد'
+    pdf.set_fill_color(*pdf.colors['white'], 30)
+    pdf.rect(80, 28, 50, 10, 'F')
+    pdf.set_draw_color(255, 255, 255)
+    pdf.set_line_width(0.5)
+    pdf.rect(80, 28, 50, 10)
     
-    # تاريخ التقرير
+    pdf.set_text_color(255, 255, 255)
     if pdf.fonts_available:
-        pdf.set_font('Amiri', '', 12)
+        pdf.set_font('Tajawal', 'B', 14)
     else:
-        pdf.set_font('Arial', '', 12)
-    pdf.set_xy(70, 42)
-    pdf.cell(120, 8, f'تاريخ الفحص: {safety_check.inspection_date.strftime("%Y-%m-%d %H:%M")}', 0, 1, 'C')
+        pdf.set_font('Arial', 'B', 14)
+    pdf.set_xy(80, 30)
+    pdf.cell(50, 6, f'🚗 {plate_number}', 0, 1, 'C')
+    
+    # حالة الموافقة في الزاوية
+    if hasattr(safety_check, 'approval_status') and safety_check.approval_status:
+        status_text = '✓ معتمدة' if safety_check.approval_status == 'approved' else '✗ مرفوضة'
+        status_color = 'emerald' if safety_check.approval_status == 'approved' else 'rose'
+        
+        pdf.set_fill_color(*pdf.colors[status_color])
+        pdf.rect(138, 43, 50, 10, 'F')
+        pdf.set_text_color(255, 255, 255)
+        if pdf.fonts_available:
+            pdf.set_font('Tajawal', 'B', 12)
+        else:
+            pdf.set_font('Arial', 'B', 12)
+        pdf.set_xy(138, 45)
+        pdf.cell(50, 6, status_text, 0, 0, 'C')
     
     # إعادة تعيين اللون للنص العادي
     pdf.set_text_color(0, 0, 0)
-    pdf.set_y(70)
+    pdf.set_y(68)
     
     # ===== معلومات السيارة =====
-    pdf.add_section_header('معلومات السيارة', '🚗')
+    pdf.add_section_header('معلومات السيارة', '🚗', 'cyan')
     
-    # جدول معلومات السيارة
+    # بطاقة معلومات السيارة المميزة
     vehicle_info = [
-        ['رقم اللوحة:', safety_check.vehicle_plate_number or 'غير محدد'],
-        ['نوع السيارة:', safety_check.vehicle_make_model or 'غير محدد'],
-        ['المفوض الحالي:', safety_check.current_delegate or 'غير محدد']
+        ['رقم اللوحة:', safety_check.vehicle_plate_number or 'غير محدد', 'cyan'],
+        ['نوع السيارة:', safety_check.vehicle_make_model or 'غير محدد', 'purple'],
+        ['المفوض الحالي:', safety_check.current_delegate or 'غير محدد', 'pink']
     ]
     
-    # رسم جدول معلومات السيارة
+    # رسم بطاقة بإطار ملون متدرج
     current_y = pdf.get_y()
-    pdf.set_fill_color_custom('white')
-    pdf.rect(15, current_y, 180, len(vehicle_info) * 8 + 4, 'F')
-    pdf.add_decorative_border(15, current_y, 180, len(vehicle_info) * 8 + 4)
-    pdf.set_y(current_y + 2)
+    
+    # خلفية فاتحة للبطاقة
+    pdf.set_fill_color(245, 250, 255)
+    pdf.rect(15, current_y, 180, len(vehicle_info) * 10 + 6, 'F')
+    
+    # إطار متدرج للبطاقة
+    pdf.set_draw_color(*pdf.colors['cyan'])
+    pdf.set_line_width(1)
+    pdf.rect(15, current_y, 180, len(vehicle_info) * 10 + 6)
+    
+    pdf.set_y(current_y + 3)
     
     for i, info in enumerate(vehicle_info):
-        if i % 2 == 0:
-            pdf.set_fill_color(248, 249, 250)
-        else:
-            pdf.set_fill_color(255, 255, 255)
+        field_color = info[2]
         
-        pdf.set_x(17)
+        pdf.set_x(18)
+        
+        # أيقونة ملونة صغيرة
+        pdf.set_fill_color(*pdf.colors[field_color])
+        pdf.rect(20, pdf.get_y() + 1, 3, 6, 'F')
+        
+        # العنوان
+        pdf.set_x(26)
         if pdf.fonts_available:
             pdf.set_font('Tajawal', 'B', 11)
         else:
             pdf.set_font('Arial', 'B', 11)
         pdf.set_color('text_dark')
-        pdf.cell(80, 8, info[0], 0, 0, 'R', True)
+        pdf.cell(70, 8, info[0], 0, 0, 'R')
         
+        # القيمة
         if pdf.fonts_available:
-            pdf.set_font('Amiri', '', 11)
+            pdf.set_font('Amiri', '', 12)
         else:
-            pdf.set_font('Arial', '', 11)
-        pdf.set_color('primary')
-        pdf.cell(96, 8, info[1], 0, 1, 'R', True)
+            pdf.set_font('Arial', '', 12)
+        pdf.set_color(field_color)
+        pdf.cell(86, 8, info[1], 0, 1, 'R')
+        
+        pdf.ln(2)
     
-    pdf.ln(10)
+    pdf.ln(6)
+    
+    # فاصل زخرفي
+    pdf.draw_decorative_separator('cyan', 'purple', 'pink')
     
     # ===== معلومات السائق =====
-    pdf.add_section_header('معلومات السائق', '👤')
+    pdf.add_section_header('معلومات السائق', '👤', 'purple')
     
-    # جدول معلومات السائق
+    # بطاقة معلومات السائق المميزة
     driver_info = [
-        ['اسم السائق:', safety_check.driver_name or 'غير محدد'],
-        ['رقم الهوية:', safety_check.driver_national_id or 'غير محدد'],
-        ['القسم:', safety_check.driver_department or 'غير محدد'],
-        ['المدينة:', safety_check.driver_city or 'غير محدد']
+        ['اسم السائق:', safety_check.driver_name or 'غير محدد', 'emerald'],
+        ['رقم الهوية:', safety_check.driver_national_id or 'غير محدد', 'sky'],
+        ['القسم:', safety_check.driver_department or 'غير محدد', 'violet'],
+        ['المدينة:', safety_check.driver_city or 'غير محدد', 'amber']
     ]
     
-    # رسم جدول معلومات السائق
+    # رسم بطاقة بإطار ملون متدرج
     current_y = pdf.get_y()
-    pdf.set_fill_color_custom('white')
-    pdf.rect(15, current_y, 180, len(driver_info) * 8 + 4, 'F')
-    pdf.add_decorative_border(15, current_y, 180, len(driver_info) * 8 + 4, 'success')
-    pdf.set_y(current_y + 2)
+    
+    # خلفية فاتحة للبطاقة
+    pdf.set_fill_color(250, 245, 255)
+    pdf.rect(15, current_y, 180, len(driver_info) * 10 + 6, 'F')
+    
+    # إطار متدرج للبطاقة
+    pdf.set_draw_color(*pdf.colors['purple'])
+    pdf.set_line_width(1)
+    pdf.rect(15, current_y, 180, len(driver_info) * 10 + 6)
+    
+    pdf.set_y(current_y + 3)
     
     for i, info in enumerate(driver_info):
-        if i % 2 == 0:
-            pdf.set_fill_color(248, 249, 250)
-        else:
-            pdf.set_fill_color(255, 255, 255)
+        field_color = info[2]
         
-        pdf.set_x(17)
+        pdf.set_x(18)
+        
+        # أيقونة ملونة صغيرة
+        pdf.set_fill_color(*pdf.colors[field_color])
+        pdf.rect(20, pdf.get_y() + 1, 3, 6, 'F')
+        
+        # العنوان
+        pdf.set_x(26)
         if pdf.fonts_available:
             pdf.set_font('Tajawal', 'B', 11)
         else:
             pdf.set_font('Arial', 'B', 11)
         pdf.set_color('text_dark')
-        pdf.cell(80, 8, info[0], 0, 0, 'R', True)
+        pdf.cell(70, 8, info[0], 0, 0, 'R')
         
+        # القيمة
         if pdf.fonts_available:
-            pdf.set_font('Amiri', '', 11)
+            pdf.set_font('Amiri', '', 12)
         else:
-            pdf.set_font('Arial', '', 11)
-        pdf.set_color('success')
-        pdf.cell(96, 8, info[1], 0, 1, 'R', True)
+            pdf.set_font('Arial', '', 12)
+        pdf.set_color(field_color)
+        pdf.cell(86, 8, info[1], 0, 1, 'R')
+        
+        pdf.ln(2)
     
-    pdf.ln(10)
+    pdf.ln(6)
+    
+    # فاصل زخرفي
+    pdf.draw_decorative_separator('purple', 'indigo', 'pink')
     
     # ===== الملاحظات =====
     if safety_check.notes:
-        pdf.add_section_header('الملاحظات والتوصيات', '📋')
+        pdf.add_section_header('الملاحظات والتوصيات', '📋', 'blue')
         
         current_y = pdf.get_y()
-        pdf.set_fill_color(235, 248, 255)
+        
+        # خلفية متدرجة للملاحظات
+        pdf.set_fill_color(235, 245, 255)
         pdf.rect(15, current_y, 180, 30, 'F')
-        pdf.add_decorative_border(15, current_y, 180, 30, 'primary')
+        
+        # إطار ملون
+        pdf.set_draw_color(*pdf.colors['blue'])
+        pdf.set_line_width(1)
+        pdf.rect(15, current_y, 180, 30)
+        
+        # شريط جانبي
+        pdf.set_fill_color(*pdf.colors['blue_light'])
+        pdf.rect(15, current_y, 5, 30, 'F')
         
         if pdf.fonts_available:
             pdf.set_font('Amiri', '', 11)
         else:
             pdf.set_font('Arial', '', 11)
         pdf.set_color('text_dark')
-        pdf.set_xy(20, current_y + 5)
-        pdf.multi_cell(170, 6, safety_check.notes, 0, 'R')
+        pdf.set_xy(22, current_y + 5)
+        pdf.multi_cell(168, 6, safety_check.notes, 0, 'R')
         pdf.ln(5)
+        
+        # فاصل زخرفي
+        pdf.draw_decorative_separator('blue', 'cyan', 'purple')
     
-    # ===== حالة الاعتماد =====
-    if hasattr(safety_check, 'approved_by') and safety_check.approved_by:
-        pdf.add_section_header('حالة الاعتماد', '✅')
-        
-        status_color = 'success' if safety_check.approval_status == 'approved' else 'danger'
-        status_text = 'معتمدة ✓' if safety_check.approval_status == 'approved' else 'مرفوضة ✗'
-        
-        current_y = pdf.get_y()
-        pdf.set_fill_color_custom(status_color)
-        pdf.rect(15, current_y, 180, 12, 'F')
-        
-        pdf.set_text_color(255, 255, 255)
-        if pdf.fonts_available:
-            pdf.set_font('Tajawal', 'B', 14)
-        else:
-            pdf.set_font('Arial', 'B', 14)
-        pdf.set_xy(15, current_y + 2)
-        pdf.cell(180, 8, f'الحالة: {status_text}', 0, 1, 'C')
-        pdf.ln(5)
+    # ===== حالة الاعتماد (إذا كانت موجودة) =====
+    # تم نقلها للرأس العلوي
     
     # ===== صور فحص السلامة =====
     if hasattr(safety_check, 'safety_images') and safety_check.safety_images:
-        pdf.add_section_header(f'صور فحص السلامة ({len(safety_check.safety_images)} صورة)', '📷')
+        pdf.add_section_header(f'صور فحص السلامة ({len(safety_check.safety_images)} صورة)', '📷', 'pink')
+        
+        # ألوان مختلفة لكل صورة
+        image_colors = ['cyan', 'purple', 'pink', 'emerald', 'blue', 'violet', 'rose', 'amber']
         
         for i, image in enumerate(safety_check.safety_images):
             try:
@@ -866,15 +1060,43 @@ def generate_safety_check_report_pdf(safety_check):
                     if i > 0:
                         pdf.add_page()
                         pdf.ln(10)
+                        
+                        # فاصل زخرفي في الصفحات الجديدة
+                        pdf.draw_decorative_separator('cyan', 'purple', 'pink')
+                        pdf.ln(5)
                     
-                    # عنوان الصورة
+                    # اختيار لون للصورة الحالية
+                    image_color = image_colors[i % len(image_colors)]
+                    
+                    # عنوان الصورة مع badge ملون
                     description = image.image_description or f'صورة رقم {i+1}'
+                    
+                    current_y = pdf.get_y()
+                    
+                    # خلفية العنوان
+                    pdf.set_fill_color(*pdf.colors[image_color], 20)
+                    pdf.rect(15, current_y, 180, 12, 'F')
+                    
+                    # Badge رقم الصورة
+                    pdf.set_fill_color(*pdf.colors[image_color])
+                    pdf.rect(165, current_y + 2, 25, 8, 'F')
+                    pdf.set_text_color(255, 255, 255)
                     if pdf.fonts_available:
-                        pdf.set_font('Tajawal', 'B', 14)
+                        pdf.set_font('Tajawal', 'B', 10)
                     else:
-                        pdf.set_font('Arial', 'B', 14)
-                    pdf.set_color('primary')
-                    pdf.cell(0, 10, description, 0, 1, 'C')
+                        pdf.set_font('Arial', 'B', 10)
+                    pdf.set_xy(165, current_y + 3)
+                    pdf.cell(25, 6, f'صورة {i+1}', 0, 0, 'C')
+                    
+                    # وصف الصورة
+                    if pdf.fonts_available:
+                        pdf.set_font('Tajawal', 'B', 13)
+                    else:
+                        pdf.set_font('Arial', 'B', 13)
+                    pdf.set_color(image_color)
+                    pdf.set_xy(20, current_y + 3)
+                    pdf.cell(140, 6, description, 0, 1, 'R')
+                    
                     pdf.ln(5)
                     
                     # الحصول على أبعاد الصورة الأصلية
@@ -886,7 +1108,7 @@ def generate_safety_check_report_pdf(safety_check):
                         original_width, original_height = 800, 600
                     
                     # حساب الأبعاد المناسبة مع الحفاظ على نسبة العرض إلى الارتفاع
-                    max_width = 170  # عرض الصفحة - الهوامش
+                    max_width = 168  # عرض الصفحة - الهوامش
                     max_height = 200  # ارتفاع مناسب
                     
                     # حساب النسبة
@@ -902,20 +1124,28 @@ def generate_safety_check_report_pdf(safety_check):
                     x_position = (210 - final_width) / 2
                     y_position = pdf.get_y()
                     
-                    # رسم إطار جميل حول الصورة
-                    pdf.set_draw_color(41, 128, 185)
-                    pdf.set_line_width(0.5)
-                    pdf.rect(x_position - 2, y_position - 2, final_width + 4, final_height + 4)
+                    # خلفية البطاقة
+                    padding = 6
+                    pdf.set_fill_color(255, 255, 255)
+                    pdf.rect(x_position - padding, y_position - padding, 
+                            final_width + 2*padding, final_height + 2*padding, 'F')
                     
-                    # إضافة ظل خفيف
-                    pdf.set_fill_color(200, 200, 200)
-                    pdf.rect(x_position + 2, y_position + 2, final_width + 4, final_height + 4, 'F')
+                    # إطار ملون مميز
+                    pdf.set_draw_color(*pdf.colors[image_color])
+                    pdf.set_line_width(2)
+                    pdf.rect(x_position - padding, y_position - padding, 
+                            final_width + 2*padding, final_height + 2*padding)
+                    
+                    # ظل خفيف
+                    pdf.set_fill_color(200, 200, 200, 30)
+                    pdf.rect(x_position - padding + 2, y_position - padding + 2, 
+                            final_width + 2*padding, final_height + 2*padding, 'F')
                     
                     # إضافة الصورة
                     pdf.image(image_path, x_position, y_position, final_width, final_height)
                     
                     # مساحة بعد الصورة
-                    pdf.set_y(y_position + final_height + 5)
+                    pdf.set_y(y_position + final_height + 12)
                     
             except Exception as e:
                 import logging
@@ -929,20 +1159,42 @@ def generate_safety_check_report_pdf(safety_check):
                 pdf.cell(0, 10, f'تعذر تحميل الصورة رقم {i+1}', 0, 1, 'C')
                 continue
     
-    # ===== تذييل التقرير =====
-    pdf.set_y(-30)
-    pdf.set_draw_color(41, 128, 185)
-    pdf.line(15, pdf.get_y(), 195, pdf.get_y())
-    pdf.ln(5)
+    # ===== تذييل التقرير المميز =====
+    pdf.set_y(-35)
+    
+    # خط تدرج في التذييل
+    current_y = pdf.get_y()
+    pdf.draw_decorative_separator('cyan', 'purple', 'pink')
+    
+    pdf.ln(2)
+    
+    # معلومات التذييل
+    if pdf.fonts_available:
+        pdf.set_font('Amiri', '', 9)
+    else:
+        pdf.set_font('Arial', '', 9)
+    pdf.set_color('text_light')
+    pdf.cell(0, 5, f'تاريخ إنشاء التقرير: {datetime.now().strftime("%Y-%m-%d | %H:%M")}', 0, 1, 'C')
     
     if pdf.fonts_available:
-        pdf.set_font('Amiri', '', 10)
+        pdf.set_font('Tajawal', 'B', 10)
     else:
-        pdf.set_font('Arial', '', 10)
-    pdf.set_color('text_light')
-    pdf.cell(0, 6, f'تاريخ إنشاء التقرير: {datetime.now().strftime("%Y-%m-%d | %H:%M")}', 0, 1, 'C')
+        pdf.set_font('Arial', 'B', 10)
+    pdf.set_color('cyan')
     pdf.cell(0, 5, 'نُظم - نظام إدارة المركبات والموظفين الشامل', 0, 1, 'C')
-    pdf.cell(0, 5, 'تم إنشاؤه آلياً من النظام', 0, 0, 'C')
+    
+    if pdf.fonts_available:
+        pdf.set_font('Amiri', '', 8)
+    else:
+        pdf.set_font('Arial', '', 8)
+    pdf.set_color('text_light')
+    pdf.cell(0, 4, 'تم إنشاؤه آلياً من النظام • مصمم بتقنية احترافية', 0, 0, 'C')
+    
+    # نقاط زخرفية في التذييل
+    footer_y = pdf.get_y() + 2
+    for x_pos, color in [(70, 'cyan'), (105, 'purple'), (140, 'pink')]:
+        pdf.set_fill_color(*pdf.colors[color])
+        pdf.rect(x_pos, footer_y, 2, 2, 'F')
     
     # حفظ PDF إلى buffer
     pdf_buffer = io.BytesIO()
