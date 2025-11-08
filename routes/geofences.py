@@ -17,7 +17,21 @@ def index():
     for geofence in geofences:
         employees_inside = geofence.get_department_employees_inside()
         geofences_data.append({
-            'geofence': geofence,
+            'geofence': {
+                'id': geofence.id,
+                'name': geofence.name,
+                'type': geofence.type,
+                'center_latitude': geofence.center_latitude,
+                'center_longitude': geofence.center_longitude,
+                'radius_meters': geofence.radius_meters,
+                'color': geofence.color,
+                'description': geofence.description,
+                'department_id': geofence.department_id,
+                'department': {
+                    'id': geofence.department.id,
+                    'name': geofence.department.name
+                }
+            },
             'employees_count': len(employees_inside),
             'employees_inside': employees_inside
         })
