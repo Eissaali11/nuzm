@@ -18,6 +18,18 @@ def index():
     geofences_data = []
     for geofence in geofences:
         employees_inside = geofence.get_department_employees_inside()
+        
+        # تحويل الموظفين إلى قواميس قابلة للتحويل إلى JSON
+        employees_list = []
+        for emp_data in employees_inside:
+            emp = emp_data.get('employee') if isinstance(emp_data, dict) else emp_data
+            employees_list.append({
+                'id': emp.id,
+                'name': emp.name,
+                'employee_id': emp.employee_id,
+                'profile_image': emp.profile_image if hasattr(emp, 'profile_image') else None
+            })
+        
         geofences_data.append({
             'geofence': {
                 'id': geofence.id,
@@ -35,7 +47,7 @@ def index():
                 }
             },
             'employees_count': len(employees_inside),
-            'employees_inside': employees_inside
+            'employees_inside': employees_list
         })
     
     return render_template(
