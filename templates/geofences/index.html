@@ -679,6 +679,58 @@
             background: rgba(129, 140, 248, 0.3) !important;
         }
         
+        /* حقل البحث بروابط Google Maps */
+        .google-maps-search {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex: 1;
+            max-width: 500px;
+        }
+        
+        .google-maps-input {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            padding: 10px 15px;
+            color: #ffffff;
+            font-family: 'Cairo', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+        
+        .google-maps-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+        
+        .google-maps-input:focus {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(129, 140, 248, 0.5);
+            box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.2);
+        }
+        
+        .search-btn {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .search-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        
         @media (max-width: 1200px) {
             .main-content {
                 grid-template-columns: 1fr;
@@ -718,6 +770,19 @@
             <div class="map-container">
                 <div class="map-header">
                     <h2><i class="fas fa-map"></i> خريطة الدوائر الجغرافية</h2>
+                    <div class="google-maps-search">
+                        <input 
+                            type="text" 
+                            id="googleMapsUrl" 
+                            class="google-maps-input" 
+                            placeholder="🔗 الصق رابط Google Maps هنا للانتقال إلى الموقع..."
+                            onkeypress="if(event.key === 'Enter') searchGoogleMapsUrl()"
+                        >
+                        <button class="search-btn" onclick="searchGoogleMapsUrl()">
+                            <i class="fas fa-search"></i>
+                            بحث
+                        </button>
+                    </div>
                     <div>
                         <button class="btn btn-small btn-secondary" onclick="toggleMapView()">
                             <i class="fas fa-satellite"></i>
@@ -929,6 +994,121 @@
                 currentLayer = 'street';
                 document.getElementById('mapViewText').textContent = 'صورة القمر الصناعي';
             }
+        }
+        
+        // دالة لاستخراج الإحداثيات من روابط Google Maps
+        function extractGoogleMapsCoordinates(url) {
+            // نمط 1: !3d/!4d (الأكثر دقة - موقع العلامة)
+            let match = url.match(/!3d(-?\d+\.?\d*)!4d(-?\d+\.?\d*)/);
+            if (match) {
+                return { lat: parseFloat(match[1]), lng: parseFloat(match[2]) };
+            }
+            
+            // نمط 2: @ (مركز الخريطة)
+            match = url.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+            if (match) {
+                return { lat: parseFloat(match[1]), lng: parseFloat(match[2]) };
+            }
+            
+            // نمط 3: ?q= أو ll= (روابط قصيرة)
+            match = url.match(/[?&](q|ll)=(-?\d+\.?\d*),(-?\d+\.?\d*)/);
+            if (match) {
+                return { lat: parseFloat(match[2]), lng: parseFloat(match[3]) };
+            }
+            
+            return null;
+        }
+        
+        // دالة البحث عن الموقع من رابط Google Maps
+        function searchGoogleMapsUrl() {
+            const input = document.getElementById('googleMapsUrl');
+            const url = input.value.trim();
+            
+            if (!url) {
+                alert('⚠️ الرجاء إدخال رابط Google Maps');
+                return;
+            }
+            
+            const coords = extractGoogleMapsCoordinates(url);
+            
+            if (!coords) {
+                alert('❌ لم يتم العثور على إحداثيات في الرابط\n\nتأكد من نسخ الرابط كاملاً من Google Maps');
+                return;
+            }
+            
+            // الانتقال إلى الموقع في الخريطة
+            map.setView([coords.lat, coords.lng], 16);
+            
+            // إضافة علامة مؤقتة على الموقع
+            if (window.tempSearchMarker) {
+                map.removeLayer(window.tempSearchMarker);
+            }
+            
+            window.tempSearchMarker = L.marker([coords.lat, coords.lng], {
+                icon: L.divIcon({
+                    className: 'custom-search-marker',
+                    html: `
+                        <div style="position: relative;">
+                            <div style="
+                                width: 40px; 
+                                height: 40px; 
+                                background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+                                border-radius: 50% 50% 50% 0;
+                                transform: rotate(-45deg);
+                                border: 3px solid white;
+                                box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                            ">
+                                <i class="fas fa-map-marker-alt" style="
+                                    color: white;
+                                    font-size: 18px;
+                                    transform: rotate(45deg);
+                                "></i>
+                            </div>
+                        </div>
+                    `,
+                    iconSize: [40, 40],
+                    iconAnchor: [20, 40]
+                })
+            }).addTo(map);
+            
+            window.tempSearchMarker.bindPopup(`
+                <div style="text-align: center; font-family: 'Cairo', sans-serif; min-width: 180px;">
+                    <h4 style="margin: 0 0 10px 0; color: #1e1b4b; font-weight: 700;">📍 الموقع من Google Maps</h4>
+                    <p style="margin: 5px 0; color: #4b5563; font-size: 13px;"><strong>خط العرض:</strong> ${coords.lat.toFixed(6)}</p>
+                    <p style="margin: 5px 0; color: #4b5563; font-size: 13px;"><strong>خط الطول:</strong> ${coords.lng.toFixed(6)}</p>
+                </div>
+            `).openPopup();
+            
+            // تحديث حقول النموذج إذا كانت اللوحة الجانبية مفتوحة
+            if (document.getElementById('createPanel').classList.contains('active')) {
+                document.getElementById('latitude').value = coords.lat;
+                document.getElementById('longitude').value = coords.lng;
+                
+                if (tempMarker) map.removeLayer(tempMarker);
+                if (tempCircle) map.removeLayer(tempCircle);
+                
+                tempMarker = L.marker([coords.lat, coords.lng]).addTo(map);
+                
+                const radius = parseInt(document.querySelector('[name="radius"]').value) || 500;
+                const color = document.querySelector('[name="color"]').value || '#818cf8';
+                
+                tempCircle = L.circle([coords.lat, coords.lng], {
+                    color: color,
+                    fillColor: color,
+                    fillOpacity: 0.25,
+                    radius: radius,
+                    weight: 3
+                }).addTo(map);
+            }
+            
+            // مسح حقل الإدخال
+            input.value = '';
+            
+            // عرض رسالة نجاح
+            alert('✅ تم الانتقال إلى الموقع بنجاح!');
         }
         
         const geofences = {{ geofences_data|tojson }};
