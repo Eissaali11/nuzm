@@ -750,18 +750,20 @@
                         {% if assigned_employees %}
                             {% for emp in assigned_employees %}
                             <div class="employee-item">
-                                {% if emp.profile_image %}
-                                <img src="{{ emp.profile_image }}" alt="{{ emp.name }}" class="employee-photo">
-                                {% else %}
-                                <div class="employee-photo" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 18px;">
-                                    {{ emp.name[0] if emp.name else 'M' }}
-                                </div>
-                                {% endif %}
-                                
-                                <div class="employee-info">
-                                    <div class="employee-name">{{ emp.name }}</div>
-                                    <div class="employee-id">{{ emp.employee_id }}</div>
-                                </div>
+                                <a href="/employees/{{ emp.id }}" style="display: flex; align-items: center; gap: 12px; flex: 1; text-decoration: none; color: inherit;">
+                                    {% if emp.profile_image %}
+                                    <img src="{{ emp.profile_image }}" alt="{{ emp.name }}" class="employee-photo">
+                                    {% else %}
+                                    <div class="employee-photo" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 18px;">
+                                        {{ emp.name[0] if emp.name else 'M' }}
+                                    </div>
+                                    {% endif %}
+                                    
+                                    <div class="employee-info">
+                                        <div class="employee-name">{{ emp.name }}</div>
+                                        <div class="employee-id">{{ emp.employee_id }}</div>
+                                    </div>
+                                </a>
                                 
                                 <button class="btn btn-danger btn-sm" onclick="unassignEmployee({{ emp.id }}, '{{ emp.name }}')" style="margin-right: auto;">
                                     <i class="fas fa-times"></i>
@@ -795,7 +797,7 @@
                         {% if employees_inside %}
                             {% for emp_data in employees_inside %}
                             {% set emp = emp_data.employee %}
-                            <div class="employee-item">
+                            <a href="/employees/{{ emp.id }}" class="employee-item" style="text-decoration: none; color: inherit;">
                                 {% if emp.profile_image %}
                                 <img src="{{ emp.profile_image }}" alt="{{ emp.name }}" class="employee-photo">
                                 {% else %}
@@ -808,7 +810,7 @@
                                     <div class="employee-name">{{ emp.name }}</div>
                                     <div class="employee-id">{{ emp.employee_id }}</div>
                                 </div>
-                            </div>
+                            </a>
                             {% endfor %}
                         {% else %}
                             <div class="empty-state">
