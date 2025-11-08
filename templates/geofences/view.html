@@ -750,7 +750,7 @@
                         {% if assigned_employees %}
                             {% for emp in assigned_employees %}
                             <div class="employee-item">
-                                <a href="/employees/{{ emp.id }}" style="display: flex; align-items: center; gap: 12px; flex: 1; text-decoration: none; color: inherit;">
+                                <a href="/employees/{{ emp.id }}/view" style="display: flex; align-items: center; gap: 12px; flex: 1; text-decoration: none; color: inherit;">
                                     {% if emp.profile_image %}
                                     <img src="{{ emp.profile_image }}" alt="{{ emp.name }}" class="employee-photo">
                                     {% else %}
@@ -797,7 +797,7 @@
                         {% if employees_inside %}
                             {% for emp_data in employees_inside %}
                             {% set emp = emp_data.employee %}
-                            <a href="/employees/{{ emp.id }}" class="employee-item" style="text-decoration: none; color: inherit;">
+                            <a href="/employees/{{ emp.id }}/view" class="employee-item" style="text-decoration: none; color: inherit;">
                                 {% if emp.profile_image %}
                                 <img src="{{ emp.profile_image }}" alt="{{ emp.name }}" class="employee-photo">
                                 {% else %}
