@@ -2039,6 +2039,12 @@ def export_track_history_pdf(employee_id):
     from bidi.algorithm import get_display
     import requests
     
+    def prepare_arabic(text):
+        """دالة مساعدة لمعالجة النص العربي بشكل صحيح"""
+        if not text:
+            return ""
+        return get_display(reshape(str(text)))
+    
     employee = Employee.query.get_or_404(employee_id)
     
     cutoff_time = datetime.utcnow() - timedelta(hours=24)
@@ -2047,66 +2053,82 @@ def export_track_history_pdf(employee_id):
         EmployeeLocation.recorded_at >= cutoff_time
     ).order_by(EmployeeLocation.recorded_at.asc()).all()
     
-    pdfmetrics.registerFont(TTFont('Cairo', 'static/fonts/Cairo.ttf'))
-    pdfmetrics.registerFont(TTFont('CairoReg', 'static/fonts/Cairo.ttf'))
+    pdfmetrics.registerFont(TTFont('Amiri', 'static/fonts/Amiri-Regular.ttf'))
+    pdfmetrics.registerFont(TTFont('AmiriBold', 'static/fonts/Amiri-Bold.ttf'))
+    pdfmetrics.registerFontFamily('Amiri', normal='Amiri', bold='AmiriBold')
     
     buffer = BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=2*cm, leftMargin=2*cm, topMargin=2*cm, bottomMargin=2*cm)
+    doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=1.5*cm, leftMargin=1.5*cm, topMargin=2*cm, bottomMargin=2*cm)
     
     story = []
     
     title_style = ParagraphStyle(
         'CustomTitle',
         parent=getSampleStyleSheet()['Heading1'],
-        fontName='Cairo',
-        fontSize=20,
+        fontName='AmiriBold',
+        fontSize=24,
         textColor=colors.HexColor('#1e1b4b'),
         alignment=TA_CENTER,
-        spaceAfter=20,
+        spaceAfter=15,
+        spaceBefore=10,
+    )
+    
+    subtitle_style = ParagraphStyle(
+        'CustomSubtitle',
+        parent=getSampleStyleSheet()['Heading2'],
+        fontName='AmiriBold',
+        fontSize=16,
+        textColor=colors.HexColor('#4f46e5'),
+        alignment=TA_RIGHT,
+        spaceAfter=12,
+        spaceBefore=8,
     )
     
     normal_style = ParagraphStyle(
         'CustomNormal',
         parent=getSampleStyleSheet()['Normal'],
-        fontName='CairoReg',
-        fontSize=11,
+        fontName='Amiri',
+        fontSize=12,
         alignment=TA_RIGHT,
         rightIndent=0,
         leftIndent=0,
         textColor=colors.HexColor('#374151'),
+        leading=18,
     )
     
-    title_text = get_display(reshape(f"سجل تحركات الموظف - {employee.name}"))
+    title_text = prepare_arabic(f"سجل تحركات الموظف - {employee.name}")
     story.append(Paragraph(title_text, title_style))
-    story.append(Spacer(1, 0.3*cm))
+    story.append(Spacer(1, 0.5*cm))
     
     info_data = [
-        [get_display(reshape('رقم الموظف:')), get_display(reshape(str(employee.employee_id)))],
-        [get_display(reshape('الاسم:')), get_display(reshape(employee.name))],
-        [get_display(reshape('عدد النقاط:')), str(len(locations))],
-        [get_display(reshape('التاريخ:')), datetime.now().strftime('%Y-%m-%d %H:%M')],
+        [prepare_arabic('رقم الموظف:'), prepare_arabic(str(employee.employee_id))],
+        [prepare_arabic('الاسم:'), prepare_arabic(employee.name)],
+        [prepare_arabic('عدد النقاط:'), str(len(locations))],
+        [prepare_arabic('التاريخ:'), datetime.now().strftime('%Y-%m-%d %H:%M')],
     ]
     
     if employee.departments:
-        info_data.insert(2, [get_display(reshape('القسم:')), get_display(reshape(employee.departments[0].name))])
+        info_data.insert(2, [prepare_arabic('القسم:'), prepare_arabic(employee.departments[0].name)])
     
-    info_table = Table(info_data, colWidths=[5*cm, 10*cm])
+    info_table = Table(info_data, colWidths=[4.5*cm, 12*cm])
     info_table.setStyle(TableStyle([
-        ('FONT', (0, 0), (-1, -1), 'CairoReg', 11),
-        ('BACKGROUND', (0, 0), (0, -1), colors.HexColor('#e0e7ff')),
-        ('TEXTCOLOR', (0, 0), (0, -1), colors.HexColor('#312e81')),
+        ('FONT', (0, 0), (-1, -1), 'Amiri', 12),
+        ('BACKGROUND', (0, 0), (0, -1), colors.HexColor('#4f46e5')),
+        ('BACKGROUND', (1, 0), (1, -1), colors.white),
+        ('TEXTCOLOR', (0, 0), (0, -1), colors.white),
+        ('TEXTCOLOR', (1, 0), (1, -1), colors.HexColor('#1e1b4b')),
         ('ALIGN', (0, 0), (-1, -1), 'RIGHT'),
         ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-        ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#c7d2fe')),
-        ('ROWBACKGROUNDS', (0, 0), (-1, -1), [colors.white, colors.HexColor('#f5f7ff')]),
-        ('LEFTPADDING', (0, 0), (-1, -1), 12),
-        ('RIGHTPADDING', (0, 0), (-1, -1), 12),
-        ('TOPPADDING', (0, 0), (-1, -1), 8),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+        ('GRID', (0, 0), (-1, -1), 1.5, colors.HexColor('#c7d2fe')),
+        ('LEFTPADDING', (0, 0), (-1, -1), 15),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 15),
+        ('TOPPADDING', (0, 0), (-1, -1), 10),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 10),
+        ('ROUNDEDCORNERS', [5, 5, 5, 5]),
     ]))
     
     story.append(info_table)
-    story.append(Spacer(1, 0.8*cm))
+    story.append(Spacer(1, 1*cm))
     
     if locations and len(locations) > 0:
         max_speed = max([float(loc.speed_kmh) if loc.speed_kmh else 0 for loc in locations])
@@ -2127,81 +2149,88 @@ def export_track_history_pdf(employee_id):
             c = 2 * atan2(sqrt(a), sqrt(1-a))
             total_distance += R * c
         
+        subtitle = prepare_arabic('إحصائيات التحركات')
+        story.append(Paragraph(subtitle, subtitle_style))
+        story.append(Spacer(1, 0.3*cm))
+        
         stats_data = [
-            [get_display(reshape('إجمالي المسافة:')), f"{total_distance:.2f} " + get_display(reshape('كم'))],
-            [get_display(reshape('أقصى سرعة:')), f"{max_speed:.1f} " + get_display(reshape('كم/س'))],
-            [get_display(reshape('عدد النقاط على سيارة:')), str(vehicle_count)],
+            [prepare_arabic('إجمالي المسافة:'), f"{total_distance:.2f} " + prepare_arabic('كم')],
+            [prepare_arabic('أقصى سرعة:'), f"{max_speed:.1f} " + prepare_arabic('كم/س')],
+            [prepare_arabic('عدد النقاط على سيارة:'), str(vehicle_count)],
         ]
         
-        stats_table = Table(stats_data, colWidths=[5*cm, 10*cm])
+        stats_table = Table(stats_data, colWidths=[4.5*cm, 12*cm])
         stats_table.setStyle(TableStyle([
-            ('FONT', (0, 0), (-1, -1), 'CairoReg', 11),
-            ('BACKGROUND', (0, 0), (0, -1), colors.HexColor('#dbeafe')),
-            ('TEXTCOLOR', (0, 0), (0, -1), colors.HexColor('#1e3a8a')),
+            ('FONT', (0, 0), (-1, -1), 'Amiri', 12),
+            ('BACKGROUND', (0, 0), (0, -1), colors.HexColor('#10b981')),
+            ('BACKGROUND', (1, 0), (1, -1), colors.HexColor('#d1fae5')),
+            ('TEXTCOLOR', (0, 0), (0, -1), colors.white),
+            ('TEXTCOLOR', (1, 0), (1, -1), colors.HexColor('#065f46')),
             ('ALIGN', (0, 0), (-1, -1), 'RIGHT'),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#93c5fd')),
-            ('ROWBACKGROUNDS', (0, 0), (-1, -1), [colors.white, colors.HexColor('#eff6ff')]),
-            ('LEFTPADDING', (0, 0), (-1, -1), 12),
-            ('RIGHTPADDING', (0, 0), (-1, -1), 12),
-            ('TOPPADDING', (0, 0), (-1, -1), 8),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+            ('GRID', (0, 0), (-1, -1), 1.5, colors.HexColor('#6ee7b7')),
+            ('LEFTPADDING', (0, 0), (-1, -1), 15),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 15),
+            ('TOPPADDING', (0, 0), (-1, -1), 10),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 10),
         ]))
         
         story.append(stats_table)
-        story.append(Spacer(1, 0.8*cm))
+        story.append(Spacer(1, 1*cm))
         
-        subtitle = get_display(reshape('سجل التحركات التفصيلي'))
-        story.append(Paragraph(subtitle, title_style))
+        subtitle2 = prepare_arabic('سجل التحركات التفصيلي')
+        story.append(Paragraph(subtitle2, subtitle_style))
         story.append(Spacer(1, 0.3*cm))
         
         data = [[
-            get_display(reshape('الإحداثيات')),
-            get_display(reshape('السرعة')),
-            get_display(reshape('السيارة')),
-            get_display(reshape('الوقت')),
-            get_display(reshape('#'))
+            prepare_arabic('#'),
+            prepare_arabic('الوقت'),
+            prepare_arabic('الإحداثيات'),
+            prepare_arabic('السرعة'),
+            prepare_arabic('السيارة'),
         ]]
         
         for idx, loc in enumerate(locations, 1):
             coords = f"{float(loc.latitude):.6f}, {float(loc.longitude):.6f}"
-            coords_link = f'<link href="https://www.google.com/maps?q={float(loc.latitude)},{float(loc.longitude)}" color="blue">{coords}</link>'
+            coords_link = f'<link href="https://www.google.com/maps?q={float(loc.latitude)},{float(loc.longitude)}" color="#2563eb"><u>{coords}</u></link>'
             
-            speed = f"{float(loc.speed_kmh):.1f} " + get_display(reshape('كم/س')) if loc.speed_kmh and float(loc.speed_kmh) > 0 else "-"
+            speed_val = f"{float(loc.speed_kmh):.1f} " + prepare_arabic('كم/س') if loc.speed_kmh and float(loc.speed_kmh) > 0 else "-"
             
             vehicle_info = "-"
             if loc.vehicle_id and loc.vehicle:
-                vehicle_info = get_display(reshape(f"{loc.vehicle.plate_number} - {loc.vehicle.make}"))
+                vehicle_info = prepare_arabic(f"{loc.vehicle.plate_number} - {loc.vehicle.make}")
             
             time_str = loc.recorded_at.strftime('%Y-%m-%d %H:%M:%S')
             
             data.append([
-                Paragraph(coords_link, normal_style),
-                get_display(reshape(speed)),
-                vehicle_info,
+                str(idx),
                 time_str,
-                str(idx)
+                Paragraph(coords_link, normal_style),
+                speed_val,
+                vehicle_info,
             ])
         
-        table = Table(data, colWidths=[6*cm, 2.5*cm, 4*cm, 4*cm, 1*cm])
+        table = Table(data, colWidths=[1.2*cm, 3.5*cm, 5*cm, 3*cm, 4.5*cm])
         table.setStyle(TableStyle([
-            ('FONT', (0, 0), (-1, 0), 'Cairo', 12),
-            ('FONT', (0, 1), (-1, -1), 'CairoReg', 9),
+            ('FONT', (0, 0), (-1, 0), 'AmiriBold', 13),
+            ('FONT', (0, 1), (-1, -1), 'Amiri', 11),
             ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#4f46e5')),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-            ('ALIGN', (0, 0), (-1, -1), 'RIGHT'),
+            ('TEXTCOLOR', (0, 1), (-1, -1), colors.HexColor('#1e1b4b')),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('ALIGN', (2, 1), (2, -1), 'LEFT'),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#c7d2fe')),
-            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f5f7ff')]),
-            ('LEFTPADDING', (0, 0), (-1, -1), 8),
-            ('RIGHTPADDING', (0, 0), (-1, -1), 8),
-            ('TOPPADDING', (0, 0), (-1, -1), 6),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+            ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#c7d2fe')),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#eef2ff')]),
+            ('LEFTPADDING', (0, 0), (-1, -1), 10),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 10),
+            ('TOPPADDING', (0, 0), (-1, -1), 8),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
         ]))
         
         story.append(table)
     else:
-        no_data_text = get_display(reshape('لا توجد بيانات تتبع خلال آخر 24 ساعة'))
+        no_data_text = prepare_arabic('لا توجد بيانات تتبع خلال آخر 24 ساعة')
         story.append(Paragraph(no_data_text, normal_style))
     
     doc.build(story)
