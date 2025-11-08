@@ -2416,12 +2416,28 @@ def export_track_history_excel(employee_id):
             min_lon, max_lon = min(lons), max(lons)
             
             try:
-                polyline_coords = "|".join([f"{lon},{lat}" for lat, lon in zip(lats, lons)])
+                zoom_level = 12
+                lat_diff = max_lat - min_lat
+                lon_diff = max_lon - min_lon
                 
-                map_url = f"https://api.mapbox.com/styles/v1/mapbox/streets-v11/static/path-5+4F46E5-0.8({polyline_coords})/auto/800x500@2x?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw"
+                if lat_diff > 0.5 or lon_diff > 0.5:
+                    zoom_level = 10
+                elif lat_diff < 0.05 and lon_diff < 0.05:
+                    zoom_level = 14
                 
-                response = requests.get(map_url, timeout=10)
-                if response.status_code == 200:
+                markers = ""
+                for i, (lat, lon) in enumerate(zip(lats, lons)):
+                    if i == 0:
+                        markers += f"{center_lat},{center_lon},lightblue1"
+                    elif i == len(lats) - 1:
+                        markers += f"|{lat},{lon},lightblue2"
+                    elif i % 5 == 0:
+                        markers += f"|{lat},{lon},lightblue3"
+                
+                map_url = f"https://staticmap.openstreetmap.de/staticmap.php?center={center_lat},{center_lon}&zoom={zoom_level}&size=800x500&maptype=mapnik&markers={markers}"
+                
+                response = requests.get(map_url, timeout=15, headers={'User-Agent': 'Mozilla/5.0'})
+                if response.status_code == 200 and len(response.content) > 1000:
                     temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.png')
                     temp_file.write(response.content)
                     temp_file.close()
@@ -2439,10 +2455,19 @@ def export_track_history_excel(employee_id):
                         os.unlink(temp_file.name)
                     except:
                         pass
+                else:
+                    raise Exception("فشل تحميل الخريطة")
             except Exception as e:
-                ws[f'F{map_row + 1}'] = f"⚠️ تعذر تحميل الخريطة"
-                ws[f'F{map_row + 1}'].font = Font(name='Arial', size=11, color='DC2626')
-                ws[f'F{map_row + 1}'].alignment = Alignment(horizontal='center', vertical='center')
+                ws.merge_cells(f'F{map_row + 1}:J{map_row + 5}')
+                ws[f'F{map_row + 1}'] = f"🗺️ عرض الخريطة\n\nانقر هنا لفتح الخريطة في Google Maps"
+                ws[f'F{map_row + 1}'].font = Font(name='Arial', size=12, bold=True, color='2563EB', underline='single')
+                ws[f'F{map_row + 1}'].alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+                google_maps_url = f"https://www.google.com/maps/dir/{lats[0]},{lons[0]}/{lats[-1]},{lons[-1]}"
+                ws[f'F{map_row + 1}'].hyperlink = google_maps_url
+                ws[f'F{map_row + 1}'].fill = PatternFill(start_color='DBEAFE', end_color='DBEAFE', fill_type='solid')
+                
+                for i in range(map_row + 1, map_row + 6):
+                    ws.row_dimensions[i].height = 25
         
         table_start_row = max(current_row + 1, map_row + 17)
         
