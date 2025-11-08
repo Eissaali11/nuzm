@@ -380,6 +380,7 @@ with app.app_context():
     from routes.properties import properties_bp
     from routes.api_external import api_external_bp
     from routes.geofences import geofences_bp
+    from routes.google_drive_settings import google_drive_settings_bp
 
     # تعطيل حماية CSRF لطرق معينة
     csrf.exempt(voicehub_bp)
@@ -421,6 +422,7 @@ with app.app_context():
     app.register_blueprint(email_queue_bp)
     app.register_blueprint(api_external_bp)  # API خارجي لتتبع المواقع
     app.register_blueprint(properties_bp, url_prefix='/properties')
+    app.register_blueprint(google_drive_settings_bp)  # إعدادات Google Drive
     app.register_blueprint(geofences_bp)  # الدوائر الجغرافية
     
     # استيراد وتسجيل مسار صفحة الهبوط - مسار منفصل عن النظام

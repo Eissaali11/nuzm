@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block title %}إعدادات Google Drive{% endblock %}
+
+{% block content %}
+<div class="container-fluid" dir="rtl">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-lg border-0" style="background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1)); backdrop-filter: blur(10px);">
+                <div class="card-header border-0" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <h3 class="mb-0 text-white">
+                        <i class="fas fa-cloud-upload-alt ms-2"></i>
+                        إعدادات الأرشفة التلقائية على Google Drive
+                    </h3>
+                </div>
+                
+                <div class="card-body p-4">
+                    <!-- معلومات توضيحية -->
+                    <div class="alert alert-info border-0 shadow-sm mb-4" style="background: linear-gradient(135deg, rgba(23, 162, 184, 0.1), rgba(0, 184, 212, 0.1));">
+                        <h5 class="alert-heading">
+                            <i class="fas fa-info-circle ms-2"></i>
+                            كيف يعمل النظام؟
+                        </h5>
+                        <p class="mb-2">✅ يتم رفع جميع عمليات السيارات تلقائياً إلى Google Drive</p>
+                        <p class="mb-2">✅ البنية: <strong>نُظم / [رقم اللوحة] / [نوع العملية] / [التاريخ والوقت]</strong></p>
+                        <p class="mb-2">✅ يشمل: سجلات الورش، عمليات التسليم والاستلام، فحوصات السلامة</p>
+                        <p class="mb-0">✅ جميع الصور وملفات PDF محفوظة</p>
+                    </div>
+
+                    <!-- حالة التفعيل -->
+                    <div class="row mb-4">
+                        <div class="col-md-12">
+                            <div class="card border-0 shadow-sm {% if is_configured %}border-success{% else %}border-warning{% endif %}">
+                                <div class="card-body text-center">
+                                    {% if is_configured %}
+                                    <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                                    <h4 class="text-success">مفعّل ✓</h4>
+                                    <p class="text-muted">الأرشفة التلقائية تعمل بنجاح</p>
+                                    {% else %}
+                                    <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
+                                    <h4 class="text-warning">غير مفعّل</h4>
+                                    <p class="text-muted">الرجاء إدخال بيانات الاعتماد أدناه</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- نموذج التكوين -->
+                    <form method="POST" enctype="multipart/form-data">
+                        <div class="card border-0 shadow-sm mb-4">
+                            <div class="card-header bg-light">
+                                <h5 class="mb-0">
+                                    <i class="fab fa-google ms-2"></i>
+                                    بيانات الاعتماد (Service Account)
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="alert alert-warning border-0 shadow-sm mb-3">
+                                    <strong><i class="fas fa-shield-alt ms-2"></i> كيفية الحصول على بيانات الاعتماد:</strong>
+                                    <ol class="mb-0 mt-2">
+                                        <li>اذهب إلى <a href="https://console.cloud.google.com" target="_blank" class="alert-link">Google Cloud Console</a></li>
+                                        <li>أنشئ مشروع جديد أو اختر مشروع موجود</li>
+                                        <li>فعّل Google Drive API</li>
+                                        <li>أنشئ Service Account وحمّل مفتاح JSON</li>
+                                    </ol>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="credentials_file" class="form-label">
+                                        <i class="fas fa-file-code ms-2"></i>
+                                        رفع ملف credentials.json
+                                    </label>
+                                    <input type="file" class="form-control" id="credentials_file" name="credentials_file" accept=".json">
+                                    <small class="form-text text-muted">ملف JSON من Google Cloud Console</small>
+                                </div>
+
+                                <div class="text-center">
+                                    <button type="submit" class="btn btn-lg shadow-sm" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                                        <i class="fas fa-save ms-2"></i>
+                                        حفظ الإعدادات
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+
+                    <!-- معلومات إضافية -->
+                    <div class="card border-0 shadow-sm" style="background: linear-gradient(135deg, rgba(32, 201, 151, 0.1), rgba(0, 168, 255, 0.1));">
+                        <div class="card-body">
+                            <h5 class="mb-3">
+                                <i class="fas fa-lightbulb ms-2"></i>
+                                ملاحظات مهمة
+                            </h5>
+                            <ul class="mb-0">
+                                <li>بيانات الاعتماد محفوظة بأمان في متغيرات البيئة</li>
+                                <li>الرفع يتم تلقائياً عند كل عملية جديدة</li>
+                                <li>الملفات المحلية تبقى موجودة على السيرفر كنسخة احتياطية</li>
+                                <li>يمكنك الوصول للملفات مباشرة من روابط Google Drive</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.card {
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1) !important;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+</style>
+{% endblock %}
