@@ -1952,22 +1952,77 @@ def tracking():
     # تحويل الموظفين إلى قواميس لكي يمكن تحويلها إلى JSON
     employees_data = []
     for emp in employees:
+        # Get employee department
+        dept_name = emp.departments[0].name if emp.departments else 'غير محدد'
+        
+        # Get location data if exists
+        location_data = employee_locations.get(emp.id)
+        geofence_name = None
+        vehicle_name = None
+        
+        if location_data:
+            # Check if employee is in a geofence
+            latest_location = EmployeeLocation.query.filter_by(
+                employee_id=emp.id
+            ).order_by(EmployeeLocation.recorded_at.desc()).first()
+            
+            if latest_location and latest_location.geofence_id:
+                geofence = Geofence.query.get(latest_location.geofence_id)
+                if geofence:
+                    geofence_name = geofence.name
+                    location_data['geofence_name'] = geofence_name
+            
+            if latest_location and latest_location.vehicle_id:
+                vehicle = Vehicle.query.get(latest_location.vehicle_id)
+                if vehicle:
+                    vehicle_name = vehicle.plate_number
+                    location_data['vehicle_name'] = vehicle_name
+        
         emp_dict = {
             'id': emp.id,
             'name': emp.name,
-            'employee_id': emp.employee_id,
+            'employee_number': emp.employee_id,
             'photo_url': emp.profile_image,
-            'departments': [{'id': d.id, 'name': d.name} for d in emp.departments] if emp.departments else []
+            'department_name': dept_name
         }
         employees_data.append(emp_dict)
+    
+    # تحويل employee_locations لكي تكون serializable
+    employee_locations_json = {}
+    for emp_id, loc_data in employee_locations.items():
+        employee_locations_json[emp_id] = {
+            'latitude': loc_data['latitude'],
+            'longitude': loc_data['longitude'],
+            'color': loc_data['color'],
+            'status_text': loc_data['status_text'],
+            'geofence_name': loc_data.get('geofence_name'),
+            'vehicle_name': loc_data.get('vehicle_name')
+        }
+    
+    # جلب جميع الدوائر الجغرافية
+    geofences = Geofence.query.all()
+    geofences_data = []
+    for gf in geofences:
+        geofences_data.append({
+            'id': gf.id,
+            'name': gf.name,
+            'latitude': gf.latitude,
+            'longitude': gf.longitude,
+            'radius': gf.radius
+        })
     
     # جلب جميع الأقسام للفلترة
     departments = Department.query.all()
     
+    import json
+    
     return render_template(
         'employees/tracking.html',
-        employees=employees_data,
+        employees=employees,
         employee_locations=employee_locations,
+        employees_json=json.dumps(employees_data, ensure_ascii=False),
+        employee_locations_json=json.dumps(employee_locations_json, ensure_ascii=False),
+        geofences_json=json.dumps(geofences_data, ensure_ascii=False),
         departments=departments,
         department_filter=department_filter,
         search_query=search_query
