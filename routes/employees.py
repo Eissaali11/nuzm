@@ -1949,12 +1949,24 @@ def tracking():
     # ترتيب: الموظفون الذين لديهم موقع أولاً
     employees = employees_with_location + employees_without_location
     
+    # تحويل الموظفين إلى قواميس لكي يمكن تحويلها إلى JSON
+    employees_data = []
+    for emp in employees:
+        emp_dict = {
+            'id': emp.id,
+            'name': emp.name,
+            'employee_id': emp.employee_id,
+            'photo_url': emp.photo_url,
+            'departments': [{'id': d.id, 'name': d.name} for d in emp.departments] if emp.departments else []
+        }
+        employees_data.append(emp_dict)
+    
     # جلب جميع الأقسام للفلترة
     departments = Department.query.all()
     
     return render_template(
         'employees/tracking.html',
-        employees=employees,
+        employees=employees_data,
         employee_locations=employee_locations,
         departments=departments,
         department_filter=department_filter,
