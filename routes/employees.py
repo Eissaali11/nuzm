@@ -2004,8 +2004,8 @@ def tracking():
     employee_locations_json = {}
     for emp_id, loc_data in employee_locations.items():
         employee_locations_json[emp_id] = {
-            'latitude': loc_data['latitude'],
-            'longitude': loc_data['longitude'],
+            'latitude': float(loc_data['latitude']),
+            'longitude': float(loc_data['longitude']),
             'color': loc_data['color'],
             'status_text': loc_data['status_text'],
             'geofence_name': loc_data.get('geofence_name'),
