@@ -1957,26 +1957,39 @@ def tracking():
         
         # Get location data if exists
         location_data = employee_locations.get(emp.id)
-        geofence_name = None
-        vehicle_name = None
         
         if location_data:
-            # Check if employee is in a geofence
+            # Check if employee is in a geofence by calculating distance
+            from math import radians, sin, cos, sqrt, atan2
+            
             latest_location = EmployeeLocation.query.filter_by(
                 employee_id=emp.id
             ).order_by(EmployeeLocation.recorded_at.desc()).first()
             
-            if latest_location and latest_location.geofence_id:
-                geofence = Geofence.query.get(latest_location.geofence_id)
-                if geofence:
-                    geofence_name = geofence.name
-                    location_data['geofence_name'] = geofence_name
-            
-            if latest_location and latest_location.vehicle_id:
-                vehicle = Vehicle.query.get(latest_location.vehicle_id)
-                if vehicle:
-                    vehicle_name = vehicle.plate_number
-                    location_data['vehicle_name'] = vehicle_name
+            if latest_location:
+                # Check all geofences to see if employee is inside any of them
+                all_geofences = Geofence.query.all()
+                for gf in all_geofences:
+                    # Calculate distance using Haversine formula
+                    R = 6371000  # Earth radius in meters
+                    lat1, lon1 = radians(float(latest_location.latitude)), radians(float(latest_location.longitude))
+                    lat2, lon2 = radians(float(gf.latitude)), radians(float(gf.longitude))
+                    dlat = lat2 - lat1
+                    dlon = lon2 - lon1
+                    a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
+                    c = 2 * atan2(sqrt(a), sqrt(1-a))
+                    distance = R * c
+                    
+                    # If employee is within geofence radius
+                    if distance <= gf.radius:
+                        location_data['geofence_name'] = gf.name
+                        break
+                
+                # Get vehicle name if assigned
+                if latest_location.vehicle_id:
+                    vehicle = Vehicle.query.get(latest_location.vehicle_id)
+                    if vehicle:
+                        location_data['vehicle_name'] = vehicle.plate_number
         
         emp_dict = {
             'id': emp.id,
