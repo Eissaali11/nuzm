@@ -27,6 +27,7 @@ from utils.audit_logger import log_activity
 from utils.audit_logger import log_audit
 from utils.whatsapp_message_generator import generate_whatsapp_url
 from utils.vehicles_export import export_vehicle_pdf, export_workshop_records_pdf, export_vehicle_excel, export_workshop_records_excel
+from utils.vehicle_drive_uploader import VehicleDriveUploader
 from utils.simple_pdf_generator import create_vehicle_handover_pdf as generate_complete_vehicle_report
 from utils.vehicle_excel_report import generate_complete_vehicle_excel_report
 from utils.vehicle_excel_report import generate_complete_vehicle_excel_report
@@ -2145,6 +2146,14 @@ def create_workshop(id):
 
                 db.session.commit()
 
+                # رفع تلقائي إلى Google Drive
+                try:
+                        uploader = VehicleDriveUploader()
+                        uploader.upload_workshop_record(workshop_record.id)
+                except Exception as e:
+                        current_app.logger.error(f'خطأ في الرفع التلقائي إلى Google Drive: {str(e)}')
+                        # لا نوقف العملية إذا فشل الرفع
+
                 # تسجيل الإجراء
                 log_audit('create', 'vehicle_workshop', workshop_record.id, 
                                  f'تم إضافة سجل دخول الورشة للسيارة: {vehicle.plate_number}')
@@ -3072,7 +3081,13 @@ def create_handover(id):
                                 db.session.add(file_record)
                                 db.session.commit()
 
-
+            # رفع تلقائي إلى Google Drive
+            try:
+                uploader = VehicleDriveUploader()
+                uploader.upload_handover_operation(handover.id)
+            except Exception as e:
+                current_app.logger.error(f'خطأ في الرفع التلقائي إلى Google Drive: {str(e)}')
+                # لا نوقف العملية إذا فشل الرفع
 
         
 

@@ -12,6 +12,7 @@ from models import VehicleExternalSafetyCheck, VehicleSafetyImage, Vehicle, Empl
 from app import db
 from utils.audit_logger import log_audit
 from utils.storage_helper import upload_image, delete_image
+from utils.vehicle_drive_uploader import VehicleDriveUploader
 from flask_login import current_user
 from sqlalchemy import func, select
 from sqlalchemy.orm import aliased, contains_eager
@@ -570,6 +571,14 @@ def handle_safety_check_submission(vehicle):
         
         # حفظ جميع التغييرات
         db.session.commit()
+
+        # رفع تلقائي إلى Google Drive
+        try:
+            uploader = VehicleDriveUploader()
+            uploader.upload_safety_check(safety_check.id)
+        except Exception as e:
+            current_app.logger.error(f'خطأ في الرفع التلقائي إلى Google Drive: {str(e)}')
+            # لا نوقف العملية إذا فشل الرفع
 
         send_supervisor_notification_email(safety_check)
 
