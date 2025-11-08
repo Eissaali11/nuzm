@@ -1976,6 +1976,29 @@ def tracking():
 
 
 
+def format_time_12hr_arabic(dt):
+    """تحويل الوقت إلى نظام 12 ساعة بالعربية"""
+    hour = dt.hour
+    minute = dt.minute
+    second = dt.second
+    
+    if hour == 0:
+        hour_12 = 12
+        period = "ليلاً"
+    elif hour < 12:
+        hour_12 = hour
+        period = "صباحاً"
+    elif hour == 12:
+        hour_12 = 12
+        period = "ظهراً"
+    else:
+        hour_12 = hour - 12
+        period = "مساءً"
+    
+    date_str = dt.strftime('%Y-%m-%d')
+    return f"{date_str} {hour_12:02d}:{minute:02d}:{second:02d} {period}"
+
+
 @employees_bp.route('/<int:id>/track-history')
 @login_required
 def track_history(id):
@@ -1998,7 +2021,7 @@ def track_history(id):
             'longitude': float(loc.longitude),
             'speed': float(loc.speed_kmh) if loc.speed_kmh else 0,
             'vehicle_id': loc.vehicle_id,
-            'recorded_at': loc.recorded_at.strftime('%Y-%m-%d %H:%M:%S'),
+            'recorded_at': format_time_12hr_arabic(loc.recorded_at),
             'accuracy': float(loc.accuracy_m) if loc.accuracy_m else None
         }
         
@@ -2200,7 +2223,7 @@ def export_track_history_pdf(employee_id):
             if loc.vehicle_id and loc.vehicle:
                 vehicle_info = prepare_arabic(f"{loc.vehicle.plate_number} - {loc.vehicle.make}")
             
-            time_str = loc.recorded_at.strftime('%Y-%m-%d %H:%M:%S')
+            time_str = format_time_12hr_arabic(loc.recorded_at)
             
             data.append([
                 str(idx),
@@ -2371,7 +2394,7 @@ def export_track_history_excel(employee_id):
             row = table_start + idx
             
             ws.cell(row=row, column=1).value = idx
-            ws.cell(row=row, column=2).value = loc.recorded_at.strftime('%Y-%m-%d %H:%M:%S')
+            ws.cell(row=row, column=2).value = format_time_12hr_arabic(loc.recorded_at)
             ws.cell(row=row, column=3).value = float(loc.latitude)
             ws.cell(row=row, column=4).value = float(loc.longitude)
             ws.cell(row=row, column=5).value = f"{float(loc.speed_kmh):.1f}" if loc.speed_kmh and float(loc.speed_kmh) > 0 else "-"
