@@ -1919,28 +1919,40 @@ def tracking():
         ).order_by(EmployeeLocation.recorded_at.desc()).first()
         
         if latest_location:
-            # حساب عمر الموقع بالساعات
-            age_hours = (datetime.utcnow() - latest_location.recorded_at).total_seconds() / 3600
+            # حساب عمر الموقع بالدقائق والساعات
+            age_seconds = (datetime.utcnow() - latest_location.recorded_at).total_seconds()
+            age_minutes = age_seconds / 60
+            age_hours = age_seconds / 3600
             
-            # تحديد اللون حسب عمر الموقع
-            if age_hours < 1:
+            # تحديد حالة الاتصال والألوان
+            # إذا لم يرسل موقع منذ 5 دقائق = غير متصل
+            if age_minutes < 5:
                 color = 'green'
-                status_text = 'نشط'
-            elif age_hours < 6:
+                status_text = 'متصل'
+                connection_status = 'connected'
+            elif age_minutes < 30:  # بين 5-30 دقيقة
                 color = 'orange'
-                status_text = 'متوسط'
-            else:
+                status_text = 'نشط مؤخراً'
+                connection_status = 'recently_active'
+            elif age_hours < 6:  # بين 30 دقيقة - 6 ساعات
                 color = 'red'
-                status_text = 'قديم'
+                status_text = 'غير متصل'
+                connection_status = 'disconnected'
+            else:  # أكثر من 6 ساعات
+                color = 'gray'
+                status_text = 'غير نشط'
+                connection_status = 'inactive'
             
             employee_locations[emp.id] = {
                 'latitude': latest_location.latitude,
                 'longitude': latest_location.longitude,
                 'accuracy': getattr(latest_location, 'accuracy_m', None), 
                 'recorded_at': latest_location.recorded_at,
+                'age_minutes': age_minutes,
                 'age_hours': age_hours,
                 'color': color,
-                'status_text': status_text
+                'status_text': status_text,
+                'connection_status': connection_status
             }
             employees_with_location.append(emp)
         else:
@@ -2008,6 +2020,8 @@ def tracking():
             'longitude': float(loc_data['longitude']),
             'color': loc_data['color'],
             'status_text': loc_data['status_text'],
+            'connection_status': loc_data.get('connection_status', 'disconnected'),
+            'age_minutes': loc_data.get('age_minutes', 0),
             'geofence_name': loc_data.get('geofence_name'),
             'vehicle_name': loc_data.get('vehicle_name')
         }
