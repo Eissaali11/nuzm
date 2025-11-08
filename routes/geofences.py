@@ -323,7 +323,7 @@ def update(geofence_id):
         }), 400
 
 
-@geofences_bp.route('/<int:geofence_id>/delete', methods=['DELETE'])
+@geofences_bp.route('/<int:geofence_id>/delete', methods=['POST', 'DELETE'])
 @login_required
 def delete(geofence_id):
     """حذف دائرة"""

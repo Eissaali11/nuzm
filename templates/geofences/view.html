@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ geofence.name }} - نُظم</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #e0e7ff;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(99, 102, 241, 0.2) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        .page-container {
+            max-width: 1800px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .header {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 25px 35px;
+            margin-bottom: 25px;
+            box-shadow: 
+                0 8px 32px rgba(31, 38, 135, 0.37),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            animation: slideDown 0.6s ease-out;
+        }
+        
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .header-content {
+            flex: 1;
+        }
+        
+        .header h1 {
+            color: #ffffff;
+            font-size: 32px;
+            font-weight: 900;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin: 0 0 10px 0;
+            text-shadow: 0 2px 10px rgba(99, 102, 241, 0.5);
+        }
+        
+        .header h1 i {
+            color: #818cf8;
+            font-size: 36px;
+        }
+        
+        .header-meta {
+            display: flex;
+            gap: 20px;
+            color: #c7d2fe;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .meta-item i {
+            color: #818cf8;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 16px;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 
+                0 4px 15px rgba(102, 126, 234, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            font-size: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s;
+        }
+        
+        .btn:hover::before {
+            left: 100%;
+        }
+        
+        .btn:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(135deg, #4c1d95 0%, #5b21b6 100%);
+        }
+        
+        .btn-warning {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 25px;
+            animation: fadeIn 0.8s ease-out 0.2s both;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .map-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+            overflow: hidden;
+        }
+        
+        .card-header {
+            padding: 25px 30px;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .card-header h2 {
+            font-size: 22px;
+            color: #ffffff;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .card-header h2 i {
+            color: #818cf8;
+        }
+        
+        #map {
+            height: 500px;
+        }
+        
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .stats-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+        }
+        
+        .stats-card h3 {
+            color: #ffffff;
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .stats-card h3 i {
+            color: #818cf8;
+        }
+        
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            margin-bottom: 12px;
+        }
+        
+        .stat-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .stat-label {
+            color: #c7d2fe;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: 900;
+            background: linear-gradient(135deg, #818cf8 0%, #a78bfa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .employees-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+            overflow: hidden;
+        }
+        
+        .employees-list {
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        
+        .employees-list::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .employees-list::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        .employees-list::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #818cf8 0%, #a78bfa 100%);
+            border-radius: 10px;
+        }
+        
+        .employee-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.3s ease;
+        }
+        
+        .employee-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(-5px);
+        }
+        
+        .employee-photo {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid rgba(129, 140, 248, 0.5);
+        }
+        
+        .employee-info {
+            flex: 1;
+        }
+        
+        .employee-name {
+            color: #ffffff;
+            font-weight: 700;
+            font-size: 15px;
+            margin-bottom: 4px;
+        }
+        
+        .employee-id {
+            color: #c7d2fe;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .badge {
+            background: linear-gradient(135deg, #818cf8 0%, #a78bfa 100%);
+            color: white;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 700;
+            box-shadow: 0 4px 15px rgba(129, 140, 248, 0.4);
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #c7d2fe;
+        }
+        
+        .empty-state i {
+            font-size: 60px;
+            color: #818cf8;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+        
+        .empty-state h3 {
+            font-size: 18px;
+            color: #ffffff;
+            margin-bottom: 10px;
+        }
+        
+        @media (max-width: 1200px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <div class="header">
+            <div class="header-content">
+                <h1>
+                    <i class="fas fa-circle-notch"></i>
+                    {{ geofence.name }}
+                </h1>
+                <div class="header-meta">
+                    <div class="meta-item">
+                        <i class="fas fa-building"></i>
+                        <span>{{ geofence.department.name }}</span>
+                    </div>
+                    <div class="meta-item">
+                        <i class="fas fa-ruler-horizontal"></i>
+                        <span>{{ geofence.radius_meters }} متر</span>
+                    </div>
+                    <div class="meta-item">
+                        <i class="fas fa-tag"></i>
+                        <span>{{ geofence.type }}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-warning" onclick="editGeofence()">
+                    <i class="fas fa-edit"></i>
+                    تعديل
+                </button>
+                <button class="btn btn-danger" onclick="deleteGeofence()">
+                    <i class="fas fa-trash"></i>
+                    حذف
+                </button>
+                <a href="/employees/geofences" class="btn btn-secondary">
+                    <i class="fas fa-arrow-right"></i>
+                    العودة
+                </a>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <div class="map-card">
+                <div class="card-header">
+                    <h2><i class="fas fa-map"></i> الموقع على الخريطة</h2>
+                </div>
+                <div id="map"></div>
+            </div>
+            
+            <div class="sidebar">
+                <div class="stats-card">
+                    <h3><i class="fas fa-chart-bar"></i> الإحصائيات</h3>
+                    
+                    <div class="stat-item">
+                        <span class="stat-label">موظفي القسم بالداخل</span>
+                        <span class="stat-value">{{ employees_inside|length }}</span>
+                    </div>
+                    
+                    <div class="stat-item">
+                        <span class="stat-label">إجمالي الموظفين بالداخل</span>
+                        <span class="stat-value">{{ all_employees|length }}</span>
+                    </div>
+                    
+                    <div class="stat-item">
+                        <span class="stat-label">نصف القطر</span>
+                        <span class="stat-value">{{ geofence.radius_meters }}</span>
+                    </div>
+                </div>
+                
+                <div class="employees-card">
+                    <div class="card-header">
+                        <h2>
+                            <i class="fas fa-users"></i> 
+                            الموظفين داخل الدائرة
+                            <span class="badge" style="margin-right: auto;">{{ employees_inside|length }}</span>
+                        </h2>
+                    </div>
+                    <div class="employees-list">
+                        {% if employees_inside %}
+                            {% for emp_data in employees_inside %}
+                            {% set emp = emp_data.employee %}
+                            <div class="employee-item">
+                                {% if emp.profile_image %}
+                                <img src="{{ emp.profile_image }}" alt="{{ emp.name }}" class="employee-photo">
+                                {% else %}
+                                <div class="employee-photo" style="background: linear-gradient(135deg, #818cf8 0%, #a78bfa 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 18px;">
+                                    {{ emp.name[0] if emp.name else 'M' }}
+                                </div>
+                                {% endif %}
+                                
+                                <div class="employee-info">
+                                    <div class="employee-name">{{ emp.name }}</div>
+                                    <div class="employee-id">{{ emp.employee_id }}</div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="empty-state">
+                                <i class="fas fa-user-slash"></i>
+                                <h3>لا يوجد موظفين</h3>
+                                <p>لا يوجد موظفين داخل هذه الدائرة حالياً</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <script>
+        const geofence = {
+            id: {{ geofence.id }},
+            name: "{{ geofence.name }}",
+            latitude: {{ geofence.center_latitude }},
+            longitude: {{ geofence.center_longitude }},
+            radius: {{ geofence.radius_meters }},
+            color: "{{ geofence.color }}"
+        };
+        
+        const map = L.map('map').setView([geofence.latitude, geofence.longitude], 15);
+        
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: '© Esri',
+            maxZoom: 19
+        }).addTo(map);
+        
+        const circle = L.circle([geofence.latitude, geofence.longitude], {
+            color: geofence.color,
+            fillColor: geofence.color,
+            fillOpacity: 0.25,
+            radius: geofence.radius,
+            weight: 3
+        }).addTo(map);
+        
+        circle.bindPopup(`
+            <div style="text-align: center; font-family: 'Cairo', sans-serif; min-width: 200px;">
+                <h4 style="margin: 0 0 10px 0; color: #1e1b4b; font-weight: 700;">${geofence.name}</h4>
+                <p style="margin: 5px 0; color: #4b5563;"><strong>نصف القطر:</strong> ${geofence.radius} متر</p>
+            </div>
+        `);
+        
+        {% for emp_data in employees_inside %}
+        {% set emp = emp_data.employee %}
+        {% set location = emp_data.location %}
+        L.marker([{{ location.latitude }}, {{ location.longitude }}], {
+            icon: L.divIcon({
+                className: 'custom-marker',
+                html: `
+                    <div style="position: relative;">
+                        {% if emp.profile_image %}
+                        <img src="{{ emp.profile_image }}" style="width: 35px; height: 35px; border-radius: 50%; border: 3px solid {{ geofence.color }}; box-shadow: 0 4px 12px rgba(0,0,0,0.3); object-fit: cover;">
+                        {% else %}
+                        <div style="width: 35px; height: 35px; border-radius: 50%; border: 3px solid {{ geofence.color }}; background: linear-gradient(135deg, #818cf8 0%, #a78bfa 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">{{ emp.name[0] if emp.name else 'M' }}</div>
+                        {% endif %}
+                    </div>
+                `,
+                iconSize: [35, 35],
+                iconAnchor: [17, 35]
+            })
+        }).addTo(map).bindPopup(`
+            <div style="text-align: center; font-family: 'Cairo', sans-serif;">
+                <h4 style="margin: 0 0 5px 0; color: #1e1b4b; font-weight: 700;">{{ emp.name }}</h4>
+                <p style="margin: 3px 0; color: #4b5563; font-size: 12px;">{{ emp.employee_id }}</p>
+            </div>
+        `);
+        {% endfor %}
+        
+        function editGeofence() {
+            if (confirm('ميزة التعديل ستكون متاحة قريباً. هل تريد العودة إلى قائمة الدوائر؟')) {
+                window.location.href = '/employees/geofences';
+            }
+        }
+        
+        function deleteGeofence() {
+            if (!confirm('هل أنت متأكد من حذف هذه الدائرة؟\n\nسيتم حذف جميع الأحداث المسجلة لهذه الدائرة.')) {
+                return;
+            }
+            
+            fetch(`/employees/geofences/${geofence.id}/delete`, {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('تم حذف الدائرة بنجاح!');
+                    window.location.href = '/employees/geofences';
+                } else {
+                    alert('حدث خطأ: ' + (data.message || 'فشل الحذف'));
+                }
+            })
+            .catch(error => {
+                alert('حدث خطأ في الاتصال');
+            });
+        }
+    </script>
+</body>
+</html>
