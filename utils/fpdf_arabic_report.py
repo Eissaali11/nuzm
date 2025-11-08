@@ -24,9 +24,9 @@ class ProfessionalArabicPDF(FPDF):
         font_path = os.path.join(PROJECT_DIR, 'static', 'fonts')
         
         try:
-            # إضافة خط Tajawal (خط عصري للعناوين)
-            self.add_font('Tajawal', '', os.path.join(font_path, 'Tajawal-Regular.ttf'), uni=True)
-            self.add_font('Tajawal', 'B', os.path.join(font_path, 'Tajawal-Bold.ttf'), uni=True)
+            # إضافة خط Cairo (خط عربي حديث يدعم كل الأحرف)
+            self.add_font('Cairo', '', os.path.join(font_path, 'Cairo-Regular.ttf'), uni=True)
+            self.add_font('Cairo', 'B', os.path.join(font_path, 'Cairo-Bold.ttf'), uni=True)
             
             # إضافة خط Amiri (خط تقليدي للنصوص)
             self.add_font('Amiri', '', os.path.join(font_path, 'Amiri-Regular.ttf'), uni=True)
@@ -153,7 +153,7 @@ class ProfessionalArabicPDF(FPDF):
         # النص
         self.set_text_color(*self.colors.get(text_color, (255, 255, 255)))
         if self.fonts_available:
-            self.set_font('Tajawal', 'B', 9)
+            self.set_font('Cairo', 'B', 9)
         else:
             self.set_font('Arial', 'B', 9)
         self.set_xy(x, y + 1)
@@ -290,7 +290,7 @@ class ProfessionalArabicPDF(FPDF):
         self.rect(22, current_y + 2, 8, 8, 'F')
         self.set_text_color(*self.colors[color])
         if self.fonts_available:
-            self.set_font('Tajawal', 'B', 10)
+            self.set_font('Cairo', 'B', 10)
         else:
             self.set_font('Arial', 'B', 10)
         self.set_xy(22, current_y + 2.5)
@@ -299,7 +299,7 @@ class ProfessionalArabicPDF(FPDF):
         # النص
         self.set_xy(35, current_y + 2)
         if self.fonts_available:
-            self.set_font('Tajawal', 'B', 14)
+            self.set_font('Cairo', 'B', 14)
         else:
             self.set_font('Arial', 'B', 14)
         
@@ -386,7 +386,7 @@ def generate_workshop_report_pdf_fpdf(vehicle, workshop_records):
             pdf.rect(15, 20, 40, 20, 'F')
             pdf.set_text_color(41, 128, 185)
             if pdf.fonts_available:
-                pdf.set_font('Tajawal', 'B', 16)
+                pdf.set_font('Cairo', 'B', 16)
             else:
                 pdf.set_font('Arial', 'B', 16)
             pdf.set_xy(15, 25)
@@ -397,7 +397,7 @@ def generate_workshop_report_pdf_fpdf(vehicle, workshop_records):
         pdf.rect(15, 15, 40, 30, 'F')
         pdf.set_text_color(41, 128, 185)
         if pdf.fonts_available:
-            pdf.set_font('Tajawal', 'B', 20)
+            pdf.set_font('Cairo', 'B', 20)
         else:
             pdf.set_font('Arial', 'B', 20)
         pdf.set_xy(15, 25)
@@ -406,7 +406,7 @@ def generate_workshop_report_pdf_fpdf(vehicle, workshop_records):
     # عنوان التقرير
     pdf.set_text_color(255, 255, 255)
     if pdf.fonts_available:
-        pdf.set_font('Tajawal', 'B', 24)
+        pdf.set_font('Cairo', 'B', 24)
     else:
         pdf.set_font('Arial', 'B', 24)
     pdf.set_xy(70, 15)
@@ -414,7 +414,7 @@ def generate_workshop_report_pdf_fpdf(vehicle, workshop_records):
     
     # معلومات السيارة في الرأس
     if pdf.fonts_available:
-        pdf.set_font('Tajawal', 'B', 16)
+        pdf.set_font('Cairo', 'B', 16)
     else:
         pdf.set_font('Arial', 'B', 16)
     pdf.set_xy(70, 30)
@@ -473,7 +473,7 @@ def generate_workshop_report_pdf_fpdf(vehicle, workshop_records):
         
         # العمود الأول (التسمية)
         if pdf.fonts_available:
-            pdf.set_font('Tajawal', 'B', 11)
+            pdf.set_font('Cairo', 'B', 11)
         else:
             pdf.set_font('Arial', 'B', 11)
         pdf.set_color('text_dark')
@@ -501,7 +501,7 @@ def generate_workshop_report_pdf_fpdf(vehicle, workshop_records):
         pdf.add_decorative_border(15, pdf.get_y(), 180, 30, 'warning')
         
         if pdf.fonts_available:
-            pdf.set_font('Tajawal', 'B', 14)
+            pdf.set_font('Cairo', 'B', 14)
         else:
             pdf.set_font('Arial', 'B', 14)
         pdf.set_color('text_light')
@@ -527,7 +527,7 @@ def generate_workshop_report_pdf_fpdf(vehicle, workshop_records):
         
         pdf.set_text_color(255, 255, 255)
         if pdf.fonts_available:
-            pdf.set_font('Tajawal', 'B', 12)
+            pdf.set_font('Cairo', 'B', 12)
         else:
             pdf.set_font('Arial', 'B', 12)
         
@@ -570,7 +570,7 @@ def generate_workshop_report_pdf_fpdf(vehicle, workshop_records):
         
         pdf.set_text_color(255, 255, 255)
         if pdf.fonts_available:
-            pdf.set_font('Tajawal', 'B', 9)
+            pdf.set_font('Cairo', 'B', 9)
         else:
             pdf.set_font('Arial', 'B', 9)
         
@@ -685,7 +685,7 @@ def generate_workshop_report_pdf_fpdf(vehicle, workshop_records):
                 
                 pdf.set_text_color(255, 255, 255)
                 if pdf.fonts_available:
-                    pdf.set_font('Tajawal', 'B', 9)
+                    pdf.set_font('Cairo', 'B', 9)
                 else:
                     pdf.set_font('Arial', 'B', 9)
                 
@@ -711,7 +711,7 @@ def generate_workshop_report_pdf_fpdf(vehicle, workshop_records):
     
     # معلومات النظام
     if pdf.fonts_available:
-        pdf.set_font('Tajawal', 'B', 10)
+        pdf.set_font('Cairo', 'B', 10)
     else:
         pdf.set_font('Arial', 'B', 10)
     pdf.set_color('primary')
@@ -836,7 +836,7 @@ def generate_safety_check_report_pdf(safety_check):
             pdf.rect(17, 18, 32, 24, 'F')
             pdf.set_text_color(*pdf.colors['cyan'])
             if pdf.fonts_available:
-                pdf.set_font('Tajawal', 'B', 20)
+                pdf.set_font('Cairo', 'B', 20)
             else:
                 pdf.set_font('Arial', 'B', 20)
             pdf.set_xy(17, 25)
@@ -847,7 +847,7 @@ def generate_safety_check_report_pdf(safety_check):
         pdf.rect(17, 18, 32, 24, 'F')
         pdf.set_text_color(*pdf.colors['cyan'])
         if pdf.fonts_available:
-            pdf.set_font('Tajawal', 'B', 20)
+            pdf.set_font('Cairo', 'B', 20)
         else:
             pdf.set_font('Arial', 'B', 20)
         pdf.set_xy(17, 25)
@@ -856,7 +856,7 @@ def generate_safety_check_report_pdf(safety_check):
     # عنوان التقرير المميز
     pdf.set_text_color(255, 255, 255)
     if pdf.fonts_available:
-        pdf.set_font('Tajawal', 'B', 26)
+        pdf.set_font('Cairo', 'B', 26)
     else:
         pdf.set_font('Arial', 'B', 26)
     pdf.set_xy(65, 12)
@@ -872,7 +872,7 @@ def generate_safety_check_report_pdf(safety_check):
     
     pdf.set_text_color(255, 255, 255)
     if pdf.fonts_available:
-        pdf.set_font('Tajawal', 'B', 14)
+        pdf.set_font('Cairo', 'B', 14)
     else:
         pdf.set_font('Arial', 'B', 14)
     pdf.set_xy(80, 30)
@@ -887,7 +887,7 @@ def generate_safety_check_report_pdf(safety_check):
         pdf.rect(138, 43, 50, 10, 'F')
         pdf.set_text_color(255, 255, 255)
         if pdf.fonts_available:
-            pdf.set_font('Tajawal', 'B', 12)
+            pdf.set_font('Cairo', 'B', 12)
         else:
             pdf.set_font('Arial', 'B', 12)
         pdf.set_xy(138, 45)
@@ -941,7 +941,7 @@ def generate_safety_check_report_pdf(safety_check):
         # العنوان
         pdf.set_x(30)
         if pdf.fonts_available:
-            pdf.set_font('Tajawal', 'B', 11)
+            pdf.set_font('Cairo', 'B', 11)
         else:
             pdf.set_font('Arial', 'B', 11)
         pdf.set_text_color(60, 60, 60)
@@ -949,7 +949,7 @@ def generate_safety_check_report_pdf(safety_check):
         
         # القيمة
         if pdf.fonts_available:
-            pdf.set_font('Tajawal', '', 11)
+            pdf.set_font('Cairo', '', 11)
         else:
             pdf.set_font('Arial', '', 11)
         pdf.set_text_color(*pdf.colors[field_color])
@@ -1005,7 +1005,7 @@ def generate_safety_check_report_pdf(safety_check):
         # العنوان
         pdf.set_x(30)
         if pdf.fonts_available:
-            pdf.set_font('Tajawal', 'B', 11)
+            pdf.set_font('Cairo', 'B', 11)
         else:
             pdf.set_font('Arial', 'B', 11)
         pdf.set_text_color(60, 60, 60)
@@ -1013,7 +1013,7 @@ def generate_safety_check_report_pdf(safety_check):
         
         # القيمة
         if pdf.fonts_available:
-            pdf.set_font('Tajawal', '', 11)
+            pdf.set_font('Cairo', '', 11)
         else:
             pdf.set_font('Arial', '', 11)
         pdf.set_text_color(*pdf.colors[field_color])
@@ -1049,7 +1049,7 @@ def generate_safety_check_report_pdf(safety_check):
         # النص
         pdf.set_xy(30, current_y + 5)
         if pdf.fonts_available:
-            pdf.set_font('Tajawal', '', 10)
+            pdf.set_font('Cairo', '', 10)
         else:
             pdf.set_font('Arial', '', 10)
         pdf.set_text_color(60, 60, 60)
@@ -1108,7 +1108,7 @@ def generate_safety_check_report_pdf(safety_check):
                     pdf.rect(165, current_y + 2, 25, 8, 'F')
                     pdf.set_text_color(255, 255, 255)
                     if pdf.fonts_available:
-                        pdf.set_font('Tajawal', 'B', 10)
+                        pdf.set_font('Cairo', 'B', 10)
                     else:
                         pdf.set_font('Arial', 'B', 10)
                     pdf.set_xy(165, current_y + 3)
@@ -1116,7 +1116,7 @@ def generate_safety_check_report_pdf(safety_check):
                     
                     # وصف الصورة
                     if pdf.fonts_available:
-                        pdf.set_font('Tajawal', 'B', 13)
+                        pdf.set_font('Cairo', 'B', 13)
                     else:
                         pdf.set_font('Arial', 'B', 13)
                     pdf.set_color(image_color)
@@ -1203,7 +1203,7 @@ def generate_safety_check_report_pdf(safety_check):
     pdf.cell(0, 5, f'تاريخ إنشاء التقرير: {datetime.now().strftime("%Y-%m-%d | %H:%M")}', 0, 1, 'C')
     
     if pdf.fonts_available:
-        pdf.set_font('Tajawal', 'B', 10)
+        pdf.set_font('Cairo', 'B', 10)
     else:
         pdf.set_font('Arial', 'B', 10)
     pdf.set_color('cyan')
