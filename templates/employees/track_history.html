@@ -1,23 +1,15 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تتبع تحركات {{ employee.name }}</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+{% extends 'layout.html' %}
+
+{% block title %}تتبع تحركات {{ employee.name }}{% endblock %}
+
+{% block extra_css %}
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
+        /* فرض التصميم المستقبلي الداكن */
         body {
-            font-family: 'Cairo', sans-serif;
-            background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #1e1b4b 100%);
+            font-family: 'Cairo', sans-serif !important;
+            background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #1e1b4b 100%) !important;
             min-height: 100vh;
             padding: 20px;
         }
@@ -298,8 +290,9 @@
             background: #f8fafc;
         }
     </style>
-</head>
-<body>
+{% endblock %}
+
+{% block content %}
     <div class="container">
         <div class="header">
             <div class="header-content">
@@ -574,5 +567,4 @@
             }
         }
     </script>
-</body>
-</html>
+{% endblock %}
