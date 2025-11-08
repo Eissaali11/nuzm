@@ -1,0 +1,1152 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تتبع مواقع الموظفين - نُظم</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+    
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #e0e7ff;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(99, 102, 241, 0.2) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        .page-container {
+            max-width: 1800px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .header {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 25px 35px;
+            margin-bottom: 25px;
+            box-shadow: 
+                0 8px 32px rgba(31, 38, 135, 0.37),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            animation: slideDown 0.6s ease-out;
+        }
+        
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .header h1 {
+            color: #ffffff;
+            font-size: 32px;
+            font-weight: 900;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin: 0;
+            text-shadow: 0 2px 10px rgba(99, 102, 241, 0.5);
+        }
+        
+        .header h1 i {
+            color: #818cf8;
+            font-size: 36px;
+            animation: pulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.1);
+            }
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 16px;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 
+                0 4px 15px rgba(102, 126, 234, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            font-size: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s;
+        }
+        
+        .btn:hover::before {
+            left: 100%;
+        }
+        
+        .btn:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+        }
+        
+        .btn:active {
+            transform: translateY(-1px);
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(135deg, #4c1d95 0%, #5b21b6 100%);
+            border: 2px solid rgba(139, 92, 246, 0.5);
+        }
+        
+        .btn-secondary:hover {
+            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.6);
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            border: 2px solid rgba(16, 185, 129, 0.5);
+        }
+        
+        .btn-success:hover {
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.6);
+        }
+        
+        .refresh-info {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 16px;
+            padding: 12px 20px;
+            margin-bottom: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            color: #c7d2fe;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .refresh-info i {
+            color: #818cf8;
+            animation: spin 2s linear infinite;
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 420px;
+            gap: 25px;
+            animation: fadeIn 0.8s ease-out 0.2s both;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .map-container {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            box-shadow: 
+                0 8px 32px rgba(31, 38, 135, 0.37),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .map-header {
+            padding: 25px 30px;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .map-header h2 {
+            font-size: 22px;
+            color: #ffffff;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .map-header h2 i {
+            color: #818cf8;
+        }
+        
+        #map {
+            height: calc(100vh - 280px);
+            min-height: 500px;
+        }
+        
+        .map-legend {
+            position: absolute;
+            bottom: 25px;
+            right: 25px;
+            background: rgba(30, 27, 75, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+        
+        .legend-title {
+            font-weight: 700;
+            font-size: 14px;
+            margin-bottom: 12px;
+            color: #ffffff;
+            border-bottom: 2px solid #818cf8;
+            padding-bottom: 8px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 13px;
+            color: #c7d2fe;
+            font-weight: 500;
+        }
+        
+        .legend-dot {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            margin-left: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+        
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .filters-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+        }
+        
+        .filters-card h3 {
+            color: #ffffff;
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .filters-card h3 i {
+            color: #818cf8;
+        }
+        
+        .filter-group {
+            margin-bottom: 15px;
+        }
+        
+        .filter-group:last-child {
+            margin-bottom: 0;
+        }
+        
+        .filter-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #c7d2fe;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: block;
+        }
+        
+        .filter-input,
+        .filter-select {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            color: #ffffff;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .filter-input:focus,
+        .filter-select:focus {
+            outline: none;
+            border-color: #818cf8;
+            background: rgba(255, 255, 255, 0.12);
+            box-shadow: 0 0 0 4px rgba(129, 140, 248, 0.2);
+        }
+        
+        .filter-input::placeholder {
+            color: rgba(199, 210, 254, 0.5);
+        }
+        
+        .filter-select option {
+            background: #1e1b4b;
+            color: #ffffff;
+        }
+        
+        .search-bar {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .search-bar input {
+            flex: 1;
+        }
+        
+        .btn-search {
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            background: linear-gradient(135deg, #818cf8 0%, #a78bfa 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(129, 140, 248, 0.3);
+        }
+        
+        .btn-search:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(129, 140, 248, 0.5);
+        }
+        
+        .btn-clear {
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.08);
+            color: #c7d2fe;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .btn-clear:hover {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: #818cf8;
+        }
+        
+        .employees-list-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .list-header {
+            padding: 20px 25px;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .list-header h3 {
+            font-size: 18px;
+            color: #ffffff;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .list-header h3 i {
+            color: #818cf8;
+        }
+        
+        .badge {
+            background: linear-gradient(135deg, #818cf8 0%, #a78bfa 100%);
+            color: white;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 700;
+            box-shadow: 0 4px 15px rgba(129, 140, 248, 0.4);
+        }
+        
+        .employees-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            max-height: calc(100vh - 550px);
+        }
+        
+        .employees-list::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .employees-list::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        .employees-list::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #818cf8 0%, #a78bfa 100%);
+            border-radius: 10px;
+        }
+        
+        .employee-card {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 18px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-right: 4px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            position: relative;
+        }
+        
+        .employee-card::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(135deg, #818cf8 0%, #a78bfa 100%);
+            transform: scaleY(0);
+            transition: transform 0.3s ease;
+        }
+        
+        .employee-card:hover {
+            transform: translateX(-5px);
+            background: rgba(255, 255, 255, 0.12);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .employee-card:hover::before {
+            transform: scaleY(1);
+        }
+        
+        .employee-card.active {
+            background: linear-gradient(135deg, rgba(129, 140, 248, 0.2) 0%, rgba(167, 139, 250, 0.2) 100%);
+            border-right-color: #818cf8;
+            box-shadow: 0 8px 25px rgba(129, 140, 248, 0.3);
+        }
+        
+        .employee-card.status-green {
+            border-right-color: #10b981;
+        }
+        
+        .employee-card.status-orange {
+            border-right-color: #f59e0b;
+        }
+        
+        .employee-card.status-red {
+            border-right-color: #ef4444;
+        }
+        
+        .employee-card.status-gray {
+            border-right-color: #6b7280;
+        }
+        
+        .employee-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+        
+        .employee-photo {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+        
+        .employee-info {
+            flex: 1;
+        }
+        
+        .employee-name {
+            font-weight: 700;
+            font-size: 16px;
+            color: #ffffff;
+            margin-bottom: 4px;
+        }
+        
+        .employee-id {
+            font-size: 12px;
+            color: #c7d2fe;
+            font-weight: 600;
+        }
+        
+        .employee-details {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .detail-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: #c7d2fe;
+        }
+        
+        .detail-item i {
+            width: 16px;
+            color: #818cf8;
+        }
+        
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .status-badge.active {
+            background: rgba(16, 185, 129, 0.2);
+            color: #6ee7b7;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+        
+        .status-badge.inactive {
+            background: rgba(107, 114, 128, 0.2);
+            color: #d1d5db;
+            border: 1px solid rgba(107, 114, 128, 0.3);
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            animation: blink 2s infinite;
+        }
+        
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+        
+        .status-badge.active .status-dot {
+            background: #10b981;
+        }
+        
+        .status-badge.inactive .status-dot {
+            background: #6b7280;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #c7d2fe;
+        }
+        
+        .empty-state i {
+            font-size: 60px;
+            color: #818cf8;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+        
+        .empty-state h3 {
+            font-size: 18px;
+            color: #ffffff;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+        
+        /* تخصيص عنصر البحث في الخريطة */
+        .leaflet-control-geocoder {
+            background: rgba(30, 27, 75, 0.95) !important;
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+            border-radius: 12px !important;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3) !important;
+        }
+        
+        .leaflet-control-geocoder-form input {
+            background: rgba(255, 255, 255, 0.1) !important;
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+            color: #ffffff !important;
+            padding: 10px !important;
+            border-radius: 8px !important;
+        }
+        
+        .leaflet-control-geocoder-alternatives {
+            background: rgba(30, 27, 75, 0.95) !important;
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        }
+        
+        .leaflet-control-geocoder-alternatives a {
+            color: #ffffff !important;
+            padding: 10px !important;
+        }
+        
+        .leaflet-control-geocoder-alternatives a:hover {
+            background: rgba(129, 140, 248, 0.3) !important;
+        }
+        
+        @media (max-width: 1200px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .sidebar {
+                order: -1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <div class="header">
+            <h1>
+                <i class="fas fa-map-marker-alt"></i>
+                تتبع مواقع الموظفين
+            </h1>
+            <div class="header-actions">
+                <a href="/employees/tracking-dashboard" class="btn">
+                    <i class="fas fa-chart-bar"></i>
+                    لوحة التحكم
+                </a>
+                <a href="/employees/geofences" class="btn btn-success">
+                    <i class="fas fa-circle-notch"></i>
+                    الدوائر الجغرافية
+                </a>
+                <a href="/employees" class="btn btn-secondary">
+                    <i class="fas fa-arrow-right"></i>
+                    العودة
+                </a>
+            </div>
+        </div>
+        
+        <div class="refresh-info">
+            <i class="fas fa-sync-alt"></i>
+            <span>التحديث التلقائي كل 30 ثانية</span>
+        </div>
+        
+        <div class="main-content">
+            <div class="map-container">
+                <div class="map-header">
+                    <h2><i class="fas fa-map"></i> الخريطة المباشرة</h2>
+                    <div>
+                        <button class="btn btn-secondary" onclick="toggleMapView()" style="padding: 10px 18px; font-size: 13px;">
+                            <i class="fas fa-satellite"></i>
+                            <span id="mapViewText">صورة القمر الصناعي</span>
+                        </button>
+                    </div>
+                </div>
+                <div id="map"></div>
+                
+                <div class="map-legend">
+                    <div class="legend-title">حالة الموقع</div>
+                    <div class="legend-item">
+                        <span class="legend-dot" style="background: #10b981;"></span>
+                        <span>محدث (أقل من دقيقة)</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-dot" style="background: #f59e0b;"></span>
+                        <span>حديث (1-5 دقائق)</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-dot" style="background: #ef4444;"></span>
+                        <span>قديم (أكثر من 5 دقائق)</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-dot" style="background: #6b7280;"></span>
+                        <span>لا يوجد موقع</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="sidebar">
+                <div class="filters-card">
+                    <h3><i class="fas fa-filter"></i> البحث والفلترة</h3>
+                    
+                    <form method="GET" action="{{ url_for('employees.tracking') }}">
+                        <div class="filter-group">
+                            <label class="filter-label">بحث بالاسم أو الرقم الوظيفي</label>
+                            <div class="search-bar">
+                                <input type="text" 
+                                       name="search" 
+                                       class="filter-input" 
+                                       placeholder="ابحث عن موظف..." 
+                                       value="{{ request.args.get('search', '') }}">
+                                <button type="submit" class="btn-search">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="filter-group">
+                            <label class="filter-label">القسم</label>
+                            <select name="department" class="filter-select">
+                                <option value="">جميع الأقسام</option>
+                                {% for dept in departments %}
+                                <option value="{{ dept.id }}" {% if request.args.get('department') == dept.id|string %}selected{% endif %}>
+                                    {{ dept.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="filter-group">
+                            <label class="filter-label">حالة الموقع</label>
+                            <select name="status" class="filter-select">
+                                <option value="">الكل</option>
+                                <option value="active" {% if request.args.get('status') == 'active' %}selected{% endif %}>لديهم مواقع</option>
+                                <option value="inactive" {% if request.args.get('status') == 'inactive' %}selected{% endif %}>بدون مواقع</option>
+                            </select>
+                        </div>
+                        
+                        {% if request.args.get('search') or request.args.get('department') or request.args.get('status') %}
+                        <a href="{{ url_for('employees.tracking') }}" class="btn-clear" style="width: 100%; margin-top: 10px;">
+                            <i class="fas fa-times"></i>
+                            <span>إعادة تعيين</span>
+                        </a>
+                        {% endif %}
+                    </form>
+                </div>
+                
+                <div class="employees-list-card">
+                    <div class="list-header">
+                        <h3><i class="fas fa-users"></i> الموظفين</h3>
+                        <span class="badge">{{ employees|length }}</span>
+                    </div>
+                    <div class="employees-list" id="employeesList">
+                        {% if employees %}
+                            {% for emp in employees %}
+                            {% set location = employee_locations.get(emp.id) %}
+                            {% set age_class = location.color if location else 'gray' %}
+                            
+                            <div class="employee-card status-{{ age_class }}" 
+                                 onclick="focusEmployee({{ emp.id }}, {% if location %}{{ location.latitude }}, {{ location.longitude }}{% else %}null, null{% endif %})"
+                                 data-employee-id="{{ emp.id }}">
+                                <div class="employee-header">
+                                    {% if emp.photo_url %}
+                                    <img src="{{ emp.photo_url }}" alt="{{ emp.name }}" class="employee-photo">
+                                    {% else %}
+                                    <div class="employee-photo" style="background: linear-gradient(135deg, #818cf8 0%, #a78bfa 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 20px;">
+                                        {{ emp.name[0] if emp.name else 'M' }}
+                                    </div>
+                                    {% endif %}
+                                    
+                                    <div class="employee-info">
+                                        <div class="employee-name">
+                                            <a href="{{ url_for('employees.track_history', id=emp.id) }}" 
+                                               style="color: inherit; text-decoration: none; display: block;"
+                                               onclick="event.stopPropagation();">
+                                                {{ emp.name }}
+                                            </a>
+                                        </div>
+                                        <div class="employee-id">{{ emp.employee_id }}</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="employee-details">
+                                    {% if emp.departments %}
+                                    <div class="detail-item">
+                                        <i class="fas fa-building"></i>
+                                        <span>{{ emp.departments[0].name }}</span>
+                                    </div>
+                                    {% endif %}
+                                    
+                                    {% if location %}
+                                    <div class="detail-item">
+                                        <i class="fas fa-clock"></i>
+                                        <span>{{ location.status_text }}</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <span class="status-badge active">
+                                            <span class="status-dot"></span>
+                                            نشط
+                                        </span>
+                                    </div>
+                                    {% else %}
+                                    <div class="detail-item">
+                                        <span class="status-badge inactive">
+                                            <span class="status-dot"></span>
+                                            لا يوجد موقع
+                                        </span>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="empty-state">
+                                <i class="fas fa-user-slash"></i>
+                                <h3>لا يوجد موظفين</h3>
+                                <p>لم يتم العثور على أي موظفين</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- نافذة مشاركة الموقع -->
+    <div id="shareModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(8px); z-index: 10000; justify-content: center; align-items: center; animation: fadeIn 0.3s ease;">
+        <div id="shareModalContent" style="background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); padding: 35px; border-radius: 24px; max-width: 450px; width: 90%; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4); position: relative; animation: slideUp 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);">
+            <!-- المحتوى سيتم تعبئته ديناميكياً -->
+        </div>
+        <div onclick="closeShareModal()" style="position: absolute; top: 20px; right: 20px; background: rgba(255, 255, 255, 0.9); width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);">
+            <i class="fas fa-times" style="font-size: 20px; color: #1e1b4b;"></i>
+        </div>
+    </div>
+    
+    <style>
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideUp {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        #shareModal button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3) !important;
+        }
+    </style>
+    
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+    
+    <script>
+        const map = L.map('map').setView([24.7136, 46.6753], 11);
+        
+        const streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap',
+            maxZoom: 19
+        });
+        
+        const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: '© Esri',
+            maxZoom: 19
+        });
+        
+        streetLayer.addTo(map);
+        let currentLayer = 'street';
+        
+        // إضافة أداة البحث الجغرافي
+        L.Control.geocoder({
+            defaultMarkGeocode: false,
+            placeholder: 'ابحث عن موقع...',
+            errorMessage: 'لم يتم العثور على نتائج'
+        }).on('markgeocode', function(e) {
+            const latlng = e.geocode.center;
+            map.setView(latlng, 15);
+        }).addTo(map);
+        
+        function toggleMapView() {
+            if (currentLayer === 'street') {
+                map.removeLayer(streetLayer);
+                satelliteLayer.addTo(map);
+                currentLayer = 'satellite';
+                document.getElementById('mapViewText').textContent = 'الخريطة العادية';
+            } else {
+                map.removeLayer(satelliteLayer);
+                streetLayer.addTo(map);
+                currentLayer = 'street';
+                document.getElementById('mapViewText').textContent = 'صورة القمر الصناعي';
+            }
+        }
+        
+        const markers = {};
+        const employees = {{ employees|tojson }};
+        const employeeLocations = {{ employee_locations|tojson }};
+        
+        employees.forEach(emp => {
+            const location = employeeLocations[emp.id];
+            
+            if (location) {
+                const ageClass = location.color;
+                let markerColor = '#6b7280';
+                
+                if (ageClass === 'green') markerColor = '#10b981';
+                else if (ageClass === 'orange') markerColor = '#f59e0b';
+                else if (ageClass === 'red') markerColor = '#ef4444';
+                
+                const markerIcon = L.divIcon({
+                    className: 'custom-marker',
+                    html: `
+                        <div style="position: relative;">
+                            ${emp.photo_url ? 
+                                `<img src="${emp.photo_url}" style="width: 40px; height: 40px; border-radius: 50%; border: 3px solid ${markerColor}; box-shadow: 0 4px 12px rgba(0,0,0,0.3); object-fit: cover;">` :
+                                `<div style="width: 40px; height: 40px; border-radius: 50%; border: 3px solid ${markerColor}; background: linear-gradient(135deg, #818cf8 0%, #a78bfa 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 18px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">${emp.name ? emp.name[0] : 'M'}</div>`
+                            }
+                            <div style="position: absolute; bottom: -3px; right: -3px; width: 14px; height: 14px; background: ${markerColor}; border: 2px solid white; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>
+                        </div>
+                    `,
+                    iconSize: [40, 40],
+                    iconAnchor: [20, 40],
+                    popupAnchor: [0, -40]
+                });
+                
+                const marker = L.marker([location.latitude, location.longitude], {
+                    icon: markerIcon
+                }).addTo(map);
+                
+                marker.bindPopup(`
+                    <div style="text-align: center; font-family: 'Cairo', sans-serif; min-width: 220px;">
+                        <h4 style="margin: 0 0 10px 0; color: #1e1b4b; font-weight: 700;">${emp.name}</h4>
+                        <p style="margin: 5px 0; color: #4b5563;"><strong>الرقم الوظيفي:</strong> ${emp.employee_id}</p>
+                        ${emp.departments && emp.departments.length > 0 ? `<p style="margin: 5px 0; color: #4b5563;"><strong>القسم:</strong> ${emp.departments[0].name}</p>` : ''}
+                        <p style="margin: 5px 0; color: #4b5563;"><strong>الحالة:</strong> ${location.status_text}</p>
+                        <div style="margin-top: 15px; display: flex; gap: 8px; justify-content: center;">
+                            <button onclick="shareLocation(${location.latitude}, ${location.longitude}, '${emp.name}')" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-family: 'Cairo'; font-weight: 600; font-size: 13px; display: flex; align-items: center; gap: 6px; transition: all 0.3s ease;">
+                                <i class="fas fa-share-alt"></i> مشاركة الموقع
+                            </button>
+                        </div>
+                    </div>
+                `);
+                
+                markers[emp.id] = marker;
+            }
+        });
+        
+        function focusEmployee(employeeId, lat, lng) {
+            document.querySelectorAll('.employee-card').forEach(card => {
+                card.classList.remove('active');
+            });
+            
+            const card = document.querySelector(`[data-employee-id="${employeeId}"]`);
+            if (card) {
+                card.classList.add('active');
+            }
+            
+            if (lat && lng && markers[employeeId]) {
+                map.setView([lat, lng], 15);
+                markers[employeeId].openPopup();
+            }
+        }
+        
+        if (employees.length > 0) {
+            const bounds = [];
+            employees.forEach(emp => {
+                const location = employeeLocations[emp.id];
+                if (location) {
+                    bounds.push([location.latitude, location.longitude]);
+                }
+            });
+            
+            if (bounds.length > 0) {
+                map.fitBounds(bounds, { padding: [50, 50] });
+            }
+        }
+        
+        // دالة مشاركة الموقع
+        function shareLocation(lat, lng, employeeName) {
+            const modal = document.getElementById('shareModal');
+            modal.style.display = 'flex';
+            
+            // إعداد الروابط
+            const googleMapsUrl = `https://www.google.com/maps?q=${lat},${lng}`;
+            const locationText = `موقع ${employeeName}: ${lat}, ${lng}`;
+            const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(locationText + '\n' + googleMapsUrl)}`;
+            
+            // تحديث محتوى النافذة
+            document.getElementById('shareModalContent').innerHTML = `
+                <h3 style="margin: 0 0 20px 0; color: #1e1b4b; font-size: 22px; font-weight: 700;">مشاركة موقع ${employeeName}</h3>
+                
+                <div style="display: grid; gap: 12px;">
+                    <button onclick="window.open('${googleMapsUrl}', '_blank')" style="background: linear-gradient(135deg, #ea4335 0%, #d32f2f 100%); color: white; border: none; padding: 14px 20px; border-radius: 12px; cursor: pointer; font-family: 'Cairo'; font-weight: 600; font-size: 15px; display: flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(234, 67, 53, 0.3);">
+                        <i class="fab fa-google" style="font-size: 20px;"></i>
+                        <span>فتح في خرائط Google</span>
+                    </button>
+                    
+                    <button onclick="window.open('${whatsappUrl}', '_blank')" style="background: linear-gradient(135deg, #25D366 0%, #128C7E 100%); color: white; border: none; padding: 14px 20px; border-radius: 12px; cursor: pointer; font-family: 'Cairo'; font-weight: 600; font-size: 15px; display: flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);">
+                        <i class="fab fa-whatsapp" style="font-size: 20px;"></i>
+                        <span>مشاركة عبر واتساب</span>
+                    </button>
+                    
+                    <button onclick="copyLocation('${lat}', '${lng}', '${employeeName}')" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 14px 20px; border-radius: 12px; cursor: pointer; font-family: 'Cairo'; font-weight: 600; font-size: 15px; display: flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);">
+                        <i class="fas fa-copy" style="font-size: 18px;"></i>
+                        <span>نسخ الموقع</span>
+                    </button>
+                    
+                    <button onclick="copyCoordinates('${lat}', '${lng}')" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; border: none; padding: 14px 20px; border-radius: 12px; cursor: pointer; font-family: 'Cairo'; font-weight: 600; font-size: 15px; display: flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(240, 147, 251, 0.3);">
+                        <i class="fas fa-map-marker-alt" style="font-size: 18px;"></i>
+                        <span>نسخ الإحداثيات</span>
+                    </button>
+                </div>
+            `;
+        }
+        
+        function copyLocation(lat, lng, employeeName) {
+            const googleMapsUrl = `https://www.google.com/maps?q=${lat},${lng}`;
+            const text = `موقع ${employeeName}: ${googleMapsUrl}`;
+            
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('تم نسخ الموقع بنجاح!');
+            }).catch(err => {
+                console.error('خطأ في النسخ:', err);
+                showToast('حدث خطأ أثناء النسخ', 'error');
+            });
+        }
+        
+        function copyCoordinates(lat, lng) {
+            const text = `${lat}, ${lng}`;
+            
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('تم نسخ الإحداثيات بنجاح!');
+            }).catch(err => {
+                console.error('خطأ في النسخ:', err);
+                showToast('حدث خطأ أثناء النسخ', 'error');
+            });
+        }
+        
+        function closeShareModal() {
+            const modal = document.getElementById('shareModal');
+            modal.style.display = 'none';
+        }
+        
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            const bgColor = type === 'success' ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
+            
+            toast.style.cssText = `
+                position: fixed;
+                top: 20px;
+                left: 50%;
+                transform: translateX(-50%) translateY(-100px);
+                background: ${bgColor};
+                color: white;
+                padding: 16px 24px;
+                border-radius: 12px;
+                font-family: 'Cairo';
+                font-weight: 600;
+                font-size: 15px;
+                box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+                z-index: 100000;
+                transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            `;
+            
+            toast.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>${message}`;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.transform = 'translateX(-50%) translateY(0)';
+            }, 100);
+            
+            setTimeout(() => {
+                toast.style.transform = 'translateX(-50%) translateY(-100px)';
+                setTimeout(() => {
+                    document.body.removeChild(toast);
+                }, 500);
+            }, 2500);
+        }
+        
+        // تحديث تلقائي كل 30 ثانية
+        setInterval(() => {
+            window.location.reload();
+        }, 30000);
+    </script>
+</body>
+</html>
