@@ -324,10 +324,20 @@
                         </p>
                     </div>
                 </div>
-                <a href="{{ url_for('employees.tracking') }}" class="back-btn">
-                    <i class="fas fa-arrow-right"></i>
-                    العودة للتتبع
-                </a>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <a href="{{ url_for('employees.export_track_history_pdf', employee_id=employee.id) }}" class="back-btn" style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);">
+                        <i class="fas fa-file-pdf"></i>
+                        تصدير PDF
+                    </a>
+                    <a href="{{ url_for('employees.export_track_history_excel', employee_id=employee.id) }}" class="back-btn" style="background: linear-gradient(135deg, #059669 0%, #047857 100%);">
+                        <i class="fas fa-file-excel"></i>
+                        تصدير Excel
+                    </a>
+                    <a href="{{ url_for('employees.tracking') }}" class="back-btn">
+                        <i class="fas fa-arrow-right"></i>
+                        العودة للتتبع
+                    </a>
+                </div>
             </div>
         </div>
         
@@ -405,10 +415,24 @@
         
         const map = L.map('map').setView([24.7136, 46.6753], 11);
         
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        const streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap',
             maxZoom: 19
-        }).addTo(map);
+        });
+        
+        const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles © Esri',
+            maxZoom: 19
+        });
+        
+        streetLayer.addTo(map);
+        
+        const baseMaps = {
+            "خريطة الشوارع": streetLayer,
+            "خريطة القمر الصناعي": satelliteLayer
+        };
+        
+        L.control.layers(baseMaps).addTo(map);
         
         if (locations && locations.length > 0) {
             const pathCoordinates = locations.map(loc => [loc.latitude, loc.longitude]);

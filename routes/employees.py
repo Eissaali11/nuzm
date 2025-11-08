@@ -2020,3 +2020,368 @@ def track_history(id):
         locations=locations_data,
         departments=departments
     )
+
+
+@employees_bp.route('/<int:employee_id>/track-history/export-pdf')
+@login_required
+def export_track_history_pdf(employee_id):
+    """تصدير سجل التحركات إلى PDF مع روابط قابلة للنقر"""
+    from io import BytesIO
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import A4
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak, Image
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.units import cm
+    from reportlab.lib.enums import TA_RIGHT, TA_CENTER
+    from reportlab.pdfbase import pdfmetrics
+    from reportlab.pdfbase.ttfonts import TTFont
+    from arabic_reshaper import reshape
+    from bidi.algorithm import get_display
+    import requests
+    
+    employee = Employee.query.get_or_404(employee_id)
+    
+    cutoff_time = datetime.utcnow() - timedelta(hours=24)
+    locations = EmployeeLocation.query.filter(
+        EmployeeLocation.employee_id == employee_id,
+        EmployeeLocation.recorded_at >= cutoff_time
+    ).order_by(EmployeeLocation.recorded_at.asc()).all()
+    
+    pdfmetrics.registerFont(TTFont('Cairo', 'fonts/Cairo-Bold.ttf'))
+    pdfmetrics.registerFont(TTFont('CairoReg', 'fonts/Cairo-Regular.ttf'))
+    
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=2*cm, leftMargin=2*cm, topMargin=2*cm, bottomMargin=2*cm)
+    
+    story = []
+    
+    title_style = ParagraphStyle(
+        'CustomTitle',
+        parent=getSampleStyleSheet()['Heading1'],
+        fontName='Cairo',
+        fontSize=20,
+        textColor=colors.HexColor('#1e1b4b'),
+        alignment=TA_CENTER,
+        spaceAfter=20,
+    )
+    
+    normal_style = ParagraphStyle(
+        'CustomNormal',
+        parent=getSampleStyleSheet()['Normal'],
+        fontName='CairoReg',
+        fontSize=11,
+        alignment=TA_RIGHT,
+        rightIndent=0,
+        leftIndent=0,
+        textColor=colors.HexColor('#374151'),
+    )
+    
+    title_text = get_display(reshape(f"سجل تحركات الموظف - {employee.name}"))
+    story.append(Paragraph(title_text, title_style))
+    story.append(Spacer(1, 0.3*cm))
+    
+    info_data = [
+        [get_display(reshape('رقم الموظف:')), get_display(reshape(str(employee.employee_id)))],
+        [get_display(reshape('الاسم:')), get_display(reshape(employee.name))],
+        [get_display(reshape('عدد النقاط:')), str(len(locations))],
+        [get_display(reshape('التاريخ:')), datetime.now().strftime('%Y-%m-%d %H:%M')],
+    ]
+    
+    if employee.departments:
+        info_data.insert(2, [get_display(reshape('القسم:')), get_display(reshape(employee.departments[0].name))])
+    
+    info_table = Table(info_data, colWidths=[5*cm, 10*cm])
+    info_table.setStyle(TableStyle([
+        ('FONT', (0, 0), (-1, -1), 'CairoReg', 11),
+        ('BACKGROUND', (0, 0), (0, -1), colors.HexColor('#e0e7ff')),
+        ('TEXTCOLOR', (0, 0), (0, -1), colors.HexColor('#312e81')),
+        ('ALIGN', (0, 0), (-1, -1), 'RIGHT'),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#c7d2fe')),
+        ('ROWBACKGROUNDS', (0, 0), (-1, -1), [colors.white, colors.HexColor('#f5f7ff')]),
+        ('LEFTPADDING', (0, 0), (-1, -1), 12),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 12),
+        ('TOPPADDING', (0, 0), (-1, -1), 8),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+    ]))
+    
+    story.append(info_table)
+    story.append(Spacer(1, 0.8*cm))
+    
+    if locations and len(locations) > 0:
+        max_speed = max([float(loc.speed_kmh) if loc.speed_kmh else 0 for loc in locations])
+        total_distance = 0
+        vehicle_count = sum([1 for loc in locations if loc.vehicle_id])
+        
+        for i in range(1, len(locations)):
+            prev = locations[i-1]
+            curr = locations[i]
+            lat1, lon1 = float(prev.latitude), float(prev.longitude)
+            lat2, lon2 = float(curr.latitude), float(curr.longitude)
+            
+            from math import radians, sin, cos, sqrt, atan2
+            R = 6371
+            dlat = radians(lat2 - lat1)
+            dlon = radians(lon2 - lon1)
+            a = sin(dlat/2)**2 + cos(radians(lat1)) * cos(radians(lat2)) * sin(dlon/2)**2
+            c = 2 * atan2(sqrt(a), sqrt(1-a))
+            total_distance += R * c
+        
+        stats_data = [
+            [get_display(reshape('إجمالي المسافة:')), f"{total_distance:.2f} " + get_display(reshape('كم'))],
+            [get_display(reshape('أقصى سرعة:')), f"{max_speed:.1f} " + get_display(reshape('كم/س'))],
+            [get_display(reshape('عدد النقاط على سيارة:')), str(vehicle_count)],
+        ]
+        
+        stats_table = Table(stats_data, colWidths=[5*cm, 10*cm])
+        stats_table.setStyle(TableStyle([
+            ('FONT', (0, 0), (-1, -1), 'CairoReg', 11),
+            ('BACKGROUND', (0, 0), (0, -1), colors.HexColor('#dbeafe')),
+            ('TEXTCOLOR', (0, 0), (0, -1), colors.HexColor('#1e3a8a')),
+            ('ALIGN', (0, 0), (-1, -1), 'RIGHT'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#93c5fd')),
+            ('ROWBACKGROUNDS', (0, 0), (-1, -1), [colors.white, colors.HexColor('#eff6ff')]),
+            ('LEFTPADDING', (0, 0), (-1, -1), 12),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 12),
+            ('TOPPADDING', (0, 0), (-1, -1), 8),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+        ]))
+        
+        story.append(stats_table)
+        story.append(Spacer(1, 0.8*cm))
+        
+        subtitle = get_display(reshape('سجل التحركات التفصيلي'))
+        story.append(Paragraph(subtitle, title_style))
+        story.append(Spacer(1, 0.3*cm))
+        
+        data = [[
+            get_display(reshape('الإحداثيات')),
+            get_display(reshape('السرعة')),
+            get_display(reshape('السيارة')),
+            get_display(reshape('الوقت')),
+            get_display(reshape('#'))
+        ]]
+        
+        for idx, loc in enumerate(locations, 1):
+            coords = f"{float(loc.latitude):.6f}, {float(loc.longitude):.6f}"
+            coords_link = f'<link href="https://www.google.com/maps?q={float(loc.latitude)},{float(loc.longitude)}" color="blue">{coords}</link>'
+            
+            speed = f"{float(loc.speed_kmh):.1f} " + get_display(reshape('كم/س')) if loc.speed_kmh and float(loc.speed_kmh) > 0 else "-"
+            
+            vehicle_info = "-"
+            if loc.vehicle_id and loc.vehicle:
+                vehicle_info = get_display(reshape(f"{loc.vehicle.plate_number} - {loc.vehicle.make}"))
+            
+            time_str = loc.recorded_at.strftime('%Y-%m-%d %H:%M:%S')
+            
+            data.append([
+                Paragraph(coords_link, normal_style),
+                get_display(reshape(speed)),
+                vehicle_info,
+                time_str,
+                str(idx)
+            ])
+        
+        table = Table(data, colWidths=[6*cm, 2.5*cm, 4*cm, 4*cm, 1*cm])
+        table.setStyle(TableStyle([
+            ('FONT', (0, 0), (-1, 0), 'Cairo', 12),
+            ('FONT', (0, 1), (-1, -1), 'CairoReg', 9),
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#4f46e5')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('ALIGN', (0, 0), (-1, -1), 'RIGHT'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#c7d2fe')),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f5f7ff')]),
+            ('LEFTPADDING', (0, 0), (-1, -1), 8),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 8),
+            ('TOPPADDING', (0, 0), (-1, -1), 6),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+        ]))
+        
+        story.append(table)
+    else:
+        no_data_text = get_display(reshape('لا توجد بيانات تتبع خلال آخر 24 ساعة'))
+        story.append(Paragraph(no_data_text, normal_style))
+    
+    doc.build(story)
+    buffer.seek(0)
+    
+    filename = f"track_history_{employee.employee_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+    
+    return send_file(
+        buffer,
+        mimetype='application/pdf',
+        as_attachment=True,
+        download_name=filename
+    )
+
+
+@employees_bp.route('/<int:employee_id>/track-history/export-excel')
+@login_required
+def export_track_history_excel(employee_id):
+    """تصدير سجل التحركات إلى Excel مع صورة الخريطة"""
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+    from openpyxl.utils import get_column_letter
+    from openpyxl.drawing.image import Image as XLImage
+    import requests
+    from io import BytesIO
+    
+    employee = Employee.query.get_or_404(employee_id)
+    
+    cutoff_time = datetime.utcnow() - timedelta(hours=24)
+    locations = EmployeeLocation.query.filter(
+        EmployeeLocation.employee_id == employee_id,
+        EmployeeLocation.recorded_at >= cutoff_time
+    ).order_by(EmployeeLocation.recorded_at.asc()).all()
+    
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "سجل التحركات"
+    
+    ws.right_to_left = True
+    
+    header_font = Font(name='Arial', size=14, bold=True, color='FFFFFF')
+    header_fill = PatternFill(start_color='4F46E5', end_color='4F46E5', fill_type='solid')
+    header_alignment = Alignment(horizontal='center', vertical='center')
+    
+    title_font = Font(name='Arial', size=18, bold=True, color='1E1B4B')
+    title_alignment = Alignment(horizontal='center', vertical='center')
+    
+    ws.merge_cells('A1:G1')
+    ws['A1'] = f"سجل تحركات الموظف - {employee.name}"
+    ws['A1'].font = title_font
+    ws['A1'].alignment = title_alignment
+    ws.row_dimensions[1].height = 30
+    
+    ws.merge_cells('A2:B2')
+    ws['A2'] = "معلومات الموظف"
+    ws['A2'].font = Font(name='Arial', size=12, bold=True, color='312E81')
+    ws['A2'].fill = PatternFill(start_color='E0E7FF', end_color='E0E7FF', fill_type='solid')
+    ws['A2'].alignment = Alignment(horizontal='right', vertical='center')
+    
+    ws['A3'] = "رقم الموظف:"
+    ws['B3'] = employee.employee_id
+    ws['A4'] = "الاسم:"
+    ws['B4'] = employee.name
+    
+    if employee.departments:
+        ws['A5'] = "القسم:"
+        ws['B5'] = employee.departments[0].name
+        start_row = 6
+    else:
+        start_row = 5
+    
+    ws[f'A{start_row}'] = "عدد النقاط:"
+    ws[f'B{start_row}'] = len(locations)
+    ws[f'A{start_row+1}'] = "تاريخ التقرير:"
+    ws[f'B{start_row+1}'] = datetime.now().strftime('%Y-%m-%d %H:%M')
+    
+    if locations and len(locations) > 0:
+        max_speed = max([float(loc.speed_kmh) if loc.speed_kmh else 0 for loc in locations])
+        total_distance = 0
+        vehicle_count = sum([1 for loc in locations if loc.vehicle_id])
+        
+        for i in range(1, len(locations)):
+            prev = locations[i-1]
+            curr = locations[i]
+            lat1, lon1 = float(prev.latitude), float(prev.longitude)
+            lat2, lon2 = float(curr.latitude), float(curr.longitude)
+            
+            from math import radians, sin, cos, sqrt, atan2
+            R = 6371
+            dlat = radians(lat2 - lat1)
+            dlon = radians(lon2 - lon1)
+            a = sin(dlat/2)**2 + cos(radians(lat1)) * cos(radians(lat2)) * sin(dlon/2)**2
+            c = 2 * atan2(sqrt(a), sqrt(1-a))
+            total_distance += R * c
+        
+        stats_row = start_row + 3
+        ws.merge_cells(f'A{stats_row}:B{stats_row}')
+        ws[f'A{stats_row}'] = "إحصائيات التحركات"
+        ws[f'A{stats_row}'].font = Font(name='Arial', size=12, bold=True, color='1E3A8A')
+        ws[f'A{stats_row}'].fill = PatternFill(start_color='DBEAFE', end_color='DBEAFE', fill_type='solid')
+        ws[f'A{stats_row}'].alignment = Alignment(horizontal='right', vertical='center')
+        
+        ws[f'A{stats_row+1}'] = "إجمالي المسافة:"
+        ws[f'B{stats_row+1}'] = f"{total_distance:.2f} كم"
+        ws[f'A{stats_row+2}'] = "أقصى سرعة:"
+        ws[f'B{stats_row+2}'] = f"{max_speed:.1f} كم/س"
+        ws[f'A{stats_row+3}'] = "عدد النقاط على سيارة:"
+        ws[f'B{stats_row+3}'] = vehicle_count
+        
+        table_start = stats_row + 5
+        
+        if len(locations) > 0:
+            center_lat = sum([float(loc.latitude) for loc in locations]) / len(locations)
+            center_lon = sum([float(loc.longitude) for loc in locations]) / len(locations)
+            
+            try:
+                map_url = f"https://maps.geoapify.com/v1/staticmap?style=osm-bright&width=600&height=400&center=lonlat:{center_lon},{center_lat}&zoom=12&marker=lonlat:{center_lon},{center_lat};color:%234f46e5;size:medium&apiKey=YOUR_API_KEY"
+                
+                lats = [float(loc.latitude) for loc in locations]
+                lons = [float(loc.longitude) for loc in locations]
+                min_lat, max_lat = min(lats), max(lats)
+                min_lon, max_lon = min(lons), max(lons)
+                
+                map_url = f"https://api.mapbox.com/styles/v1/mapbox/satellite-streets-v11/static/[{min_lon},{min_lat},{max_lon},{max_lat}]/600x400?access_token=pk.YOUR_TOKEN"
+                
+            except:
+                pass
+        
+        headers = ['#', 'الوقت', 'خط العرض', 'خط الطول', 'السرعة (كم/س)', 'السيارة', 'رابط الموقع']
+        for col, header in enumerate(headers, 1):
+            cell = ws.cell(row=table_start, column=col)
+            cell.value = header
+            cell.font = header_font
+            cell.fill = header_fill
+            cell.alignment = header_alignment
+        
+        for idx, loc in enumerate(locations, 1):
+            row = table_start + idx
+            
+            ws.cell(row=row, column=1).value = idx
+            ws.cell(row=row, column=2).value = loc.recorded_at.strftime('%Y-%m-%d %H:%M:%S')
+            ws.cell(row=row, column=3).value = float(loc.latitude)
+            ws.cell(row=row, column=4).value = float(loc.longitude)
+            ws.cell(row=row, column=5).value = f"{float(loc.speed_kmh):.1f}" if loc.speed_kmh and float(loc.speed_kmh) > 0 else "-"
+            
+            if loc.vehicle_id and loc.vehicle:
+                ws.cell(row=row, column=6).value = f"{loc.vehicle.plate_number} - {loc.vehicle.make} {loc.vehicle.model}"
+            else:
+                ws.cell(row=row, column=6).value = "-"
+            
+            maps_link = f"https://www.google.com/maps?q={float(loc.latitude)},{float(loc.longitude)}"
+            ws.cell(row=row, column=7).value = maps_link
+            ws.cell(row=row, column=7).hyperlink = maps_link
+            ws.cell(row=row, column=7).font = Font(color='0000FF', underline='single')
+            
+            for col in range(1, 8):
+                cell = ws.cell(row=row, column=col)
+                cell.alignment = Alignment(horizontal='center', vertical='center')
+                cell.border = Border(
+                    left=Side(style='thin', color='C7D2FE'),
+                    right=Side(style='thin', color='C7D2FE'),
+                    top=Side(style='thin', color='C7D2FE'),
+                    bottom=Side(style='thin', color='C7D2FE')
+                )
+                
+                if idx % 2 == 0:
+                    cell.fill = PatternFill(start_color='F5F7FF', end_color='F5F7FF', fill_type='solid')
+    
+    for col in range(1, 8):
+        ws.column_dimensions[get_column_letter(col)].width = 18
+    
+    output = BytesIO()
+    wb.save(output)
+    output.seek(0)
+    
+    filename = f"track_history_{employee.employee_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+    
+    return send_file(
+        output,
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        as_attachment=True,
+        download_name=filename
+    )
