@@ -4,7 +4,7 @@ API Endpoints الخارجية - بدون مصادقة
 """
 from flask import Blueprint, request, jsonify
 from datetime import datetime
-from models import Employee, EmployeeLocation, db
+from models import Employee, EmployeeLocation, Geofence, GeofenceEvent, employee_departments, db
 import os
 import logging
 
@@ -17,6 +17,72 @@ LOCATION_API_KEY = os.environ.get('LOCATION_API_KEY', 'test_location_key_2025')
 # إعداد السجلات
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+
+def process_geofence_events(employee, latitude, longitude):
+    """
+    معالجة أحداث الدوائر الجغرافية عند استلام موقع جديد
+    يكتشف تلقائياً دخول/خروج الموظف من جميع الدوائر (بغض النظر عن القسم)
+    """
+    try:
+        # جلب جميع الدوائر النشطة (بدون تصفية حسب القسم)
+        # هذا يضمن تسجيل جميع الدخولات والخروجات للأمان والمراقبة
+        active_geofences = Geofence.query.filter(
+            Geofence.is_active == True
+        ).all()
+        
+        for geofence in active_geofences:
+            # حساب المسافة من مركز الدائرة
+            distance = geofence.calculate_distance(latitude, longitude)
+            is_inside = distance <= geofence.radius_meters
+            
+            # جلب آخر حدث للموظف في هذه الدائرة
+            last_event = GeofenceEvent.query.filter_by(
+                geofence_id=geofence.id,
+                employee_id=employee.id
+            ).order_by(GeofenceEvent.recorded_at.desc()).first()
+            
+            # تحديد نوع الحدث
+            event_type = None
+            
+            if is_inside:
+                # داخل الدائرة
+                if not last_event or last_event.event_type == 'exit':
+                    # دخول جديد
+                    event_type = 'enter'
+                    logger.info(f"🟢 دخول: {employee.name} دخل دائرة {geofence.name}")
+            else:
+                # خارج الدائرة
+                if last_event and last_event.event_type == 'enter':
+                    # خروج جديد
+                    event_type = 'exit'
+                    logger.info(f"🔴 خروج: {employee.name} خرج من دائرة {geofence.name}")
+            
+            # تسجيل الحدث
+            if event_type:
+                event = GeofenceEvent(
+                    geofence_id=geofence.id,
+                    employee_id=employee.id,
+                    event_type=event_type,
+                    location_latitude=latitude,
+                    location_longitude=longitude,
+                    distance_from_center=int(distance),
+                    source='auto',
+                    notes=f'كشف تلقائي من نظام تتبع المواقع'
+                )
+                db.session.add(event)
+                
+                # إرسال إشعار (اختياري) - يمكن تفعيله لاحقاً
+                if (event_type == 'enter' and geofence.notify_on_entry) or \
+                   (event_type == 'exit' and geofence.notify_on_exit):
+                    # TODO: إضافة إشعارات (SendGrid أو Twilio)
+                    logger.info(f"📧 يجب إرسال إشعار لـ {event_type} في {geofence.name}")
+        
+        db.session.commit()
+        
+    except Exception as e:
+        logger.error(f"خطأ في معالجة أحداث الدوائر الجغرافية: {str(e)}")
+        db.session.rollback()
 
 
 @api_external_bp.route('/employee-location', methods=['POST'])
@@ -134,6 +200,9 @@ def receive_employee_location():
         # حفظ في قاعدة البيانات
         db.session.add(location)
         db.session.commit()
+        
+        # معالجة الدوائر الجغرافية (كشف تلقائي للدخول/الخروج)
+        process_geofence_events(employee, lat, lng)
         
         # تسجيل النجاح
         logger.info(f"✅ تم حفظ موقع الموظف {employee.name} ({job_number}) من {request.remote_addr}")

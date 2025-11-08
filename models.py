@@ -2101,3 +2101,132 @@ class PropertyFurnishing(db.Model):
     def __repr__(self):
         return f'<PropertyFurnishing {self.id} - Property {self.property_id}>'
 
+
+class Geofence(db.Model):
+    """دائرة جغرافية مرتبطة بقسم معين"""
+    __tablename__ = 'geofences'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(200), nullable=False)
+    type = db.Column(db.String(50), default='project')
+    description = db.Column(db.Text)
+    center_latitude = db.Column(db.Numeric(9, 6), nullable=False)
+    center_longitude = db.Column(db.Numeric(9, 6), nullable=False)
+    radius_meters = db.Column(db.Integer, nullable=False)
+    color = db.Column(db.String(20), default='#667eea')
+    is_active = db.Column(db.Boolean, default=True)
+    department_id = db.Column(db.Integer, db.ForeignKey('department.id', ondelete='CASCADE'), nullable=False)
+    notify_on_entry = db.Column(db.Boolean, default=False)
+    notify_on_exit = db.Column(db.Boolean, default=False)
+    created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    department = db.relationship('Department', backref='geofences')
+    events = db.relationship('GeofenceEvent', backref='geofence', cascade='all, delete-orphan')
+    
+    def get_department_employees_inside(self):
+        """جلب موظفي القسم المرتبط الموجودين داخل الدائرة فقط"""
+        employees_inside = []
+        
+        department_employees = Employee.query.join(employee_departments).filter(
+            employee_departments.c.department_id == self.department_id
+        ).all()
+        
+        for employee in department_employees:
+            latest_location = EmployeeLocation.query.filter_by(
+                employee_id=employee.id
+            ).order_by(EmployeeLocation.recorded_at.desc()).first()
+            
+            if latest_location:
+                distance = self.calculate_distance(
+                    latest_location.latitude,
+                    latest_location.longitude
+                )
+                
+                if distance <= self.radius_meters:
+                    employees_inside.append({
+                        'employee': employee,
+                        'location': latest_location,
+                        'distance': distance
+                    })
+        
+        return employees_inside
+    
+    def get_all_employees_inside(self):
+        """جلب جميع الموظفين داخل الدائرة (للعرض فقط)"""
+        all_employees_inside = []
+        
+        all_employees = Employee.query.all()
+        
+        for employee in all_employees:
+            latest_location = EmployeeLocation.query.filter_by(
+                employee_id=employee.id
+            ).order_by(EmployeeLocation.recorded_at.desc()).first()
+            
+            if latest_location:
+                distance = self.calculate_distance(
+                    latest_location.latitude,
+                    latest_location.longitude
+                )
+                
+                if distance <= self.radius_meters:
+                    is_from_linked_department = any(
+                        dept.id == self.department_id 
+                        for dept in employee.departments
+                    )
+                    
+                    all_employees_inside.append({
+                        'employee': employee,
+                        'location': latest_location,
+                        'distance': distance,
+                        'is_eligible': is_from_linked_department
+                    })
+        
+        return all_employees_inside
+    
+    def calculate_distance(self, lat, lon):
+        """حساب المسافة من مركز الدائرة باستخدام Haversine formula"""
+        from math import radians, sin, cos, sqrt, atan2
+        
+        R = 6371000
+        
+        lat1 = radians(float(self.center_latitude))
+        lon1 = radians(float(self.center_longitude))
+        lat2 = radians(lat)
+        lon2 = radians(lon)
+        
+        dlat = lat2 - lat1
+        dlon = lon2 - lon1
+        
+        a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
+        c = 2 * atan2(sqrt(a), sqrt(1-a))
+        
+        return R * c
+    
+    def __repr__(self):
+        return f'<Geofence {self.name}>'
+
+
+class GeofenceEvent(db.Model):
+    """حدث دخول/خروج/تسجيل جماعي"""
+    __tablename__ = 'geofence_events'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    geofence_id = db.Column(db.Integer, db.ForeignKey('geofences.id', ondelete='CASCADE'))
+    employee_id = db.Column(db.Integer, db.ForeignKey('employee.id', ondelete='CASCADE'))
+    event_type = db.Column(db.String(30), nullable=False)
+    location_latitude = db.Column(db.Numeric(9, 6))
+    location_longitude = db.Column(db.Numeric(9, 6))
+    distance_from_center = db.Column(db.Integer)
+    recorded_at = db.Column(db.DateTime, default=datetime.utcnow)
+    processed_at = db.Column(db.DateTime)
+    source = db.Column(db.String(20), default='auto')
+    attendance_id = db.Column(db.Integer, db.ForeignKey('attendance.id'))
+    notes = db.Column(db.Text)
+    
+    employee = db.relationship('Employee', backref='geofence_events')
+    
+    def __repr__(self):
+        return f'<GeofenceEvent {self.event_type} - {self.employee_id}>'
+

@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الدوائر الجغرافية - نُظم</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #2d3748;
+        }
+        
+        .page-container {
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: white;
+            border-radius: 16px;
+            padding: 25px 30px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header h1 {
+            color: #2d3748;
+            font-size: 28px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 0;
+        }
+        
+        .header h1 i {
+            color: #667eea;
+            font-size: 32px;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+        
+        .btn-secondary:hover {
+            background: #f7fafc;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 25px;
+        }
+        
+        .map-container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+        }
+        
+        .map-header {
+            padding: 20px 25px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .map-header h2 {
+            font-size: 20px;
+            color: #2d3748;
+            font-weight: 600;
+        }
+        
+        #map {
+            height: calc(100vh - 280px);
+            min-height: 500px;
+        }
+        
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .geofences-list {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+        }
+        
+        .list-header {
+            padding: 20px 25px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .list-header h3 {
+            font-size: 18px;
+            color: #2d3748;
+            font-weight: 600;
+        }
+        
+        .geofence-items {
+            max-height: calc(100vh - 400px);
+            overflow-y: auto;
+        }
+        
+        .geofence-item {
+            padding: 20px 25px;
+            border-bottom: 1px solid #f7fafc;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .geofence-item:hover {
+            background: #f7fafc;
+        }
+        
+        .geofence-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .geofence-name {
+            font-weight: 600;
+            color: #2d3748;
+            font-size: 16px;
+        }
+        
+        .geofence-type {
+            background: #667eea;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .geofence-info {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #718096;
+            font-size: 14px;
+        }
+        
+        .info-item i {
+            width: 16px;
+            color: #667eea;
+        }
+        
+        .geofence-actions {
+            display: flex;
+            gap: 8px;
+            padding-top: 12px;
+            border-top: 1px solid #f7fafc;
+        }
+        
+        .btn-small {
+            padding: 8px 16px;
+            font-size: 13px;
+            border-radius: 8px;
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+        }
+        
+        .btn-info {
+            background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+        }
+        
+        .employees-count {
+            background: #f7fafc;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 12px;
+        }
+        
+        .employees-count-number {
+            font-size: 24px;
+            font-weight: 700;
+            color: #667eea;
+        }
+        
+        .employees-count-label {
+            font-size: 12px;
+            color: #718096;
+            margin-top: 4px;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 10000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .modal-header h3 {
+            font-size: 22px;
+            color: #2d3748;
+            font-weight: 700;
+        }
+        
+        .btn-close {
+            background: transparent;
+            border: none;
+            font-size: 24px;
+            color: #718096;
+            cursor: pointer;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-close:hover {
+            background: #f7fafc;
+            color: #2d3748;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2d3748;
+            font-size: 14px;
+        }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .alert {
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 14px;
+        }
+        
+        .alert-success {
+            background: #c6f6d5;
+            color: #22543d;
+            border: 1px solid #9ae6b4;
+        }
+        
+        .alert-error {
+            background: #fed7d7;
+            color: #742a2a;
+            border: 1px solid #fc8181;
+        }
+        
+        .alert-info {
+            background: #bee3f8;
+            color: #2c5282;
+            border: 1px solid #90cdf4;
+        }
+        
+        .color-picker-wrapper {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .color-picker-wrapper input[type="color"] {
+            width: 60px;
+            height: 45px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #718096;
+        }
+        
+        .empty-state i {
+            font-size: 64px;
+            color: #cbd5e0;
+            margin-bottom: 20px;
+        }
+        
+        .empty-state h3 {
+            font-size: 18px;
+            color: #4a5568;
+            margin-bottom: 10px;
+        }
+        
+        @media (max-width: 1200px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .sidebar {
+                order: -1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <div class="header">
+            <h1>
+                <i class="fas fa-circle-notch"></i>
+                الدوائر الجغرافية
+            </h1>
+            <div class="header-actions">
+                <a href="/employees/tracking" class="btn btn-secondary">
+                    <i class="fas fa-map-marker-alt"></i>
+                    تتبع المواقع
+                </a>
+                <button class="btn" onclick="showCreateModal()">
+                    <i class="fas fa-plus"></i>
+                    إضافة دائرة جديدة
+                </button>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <div class="map-container">
+                <div class="map-header">
+                    <h2><i class="fas fa-map"></i> خريطة الدوائر الجغرافية</h2>
+                    <div>
+                        <button class="btn btn-small btn-secondary" onclick="toggleMapView()">
+                            <i class="fas fa-satellite"></i>
+                            <span id="mapViewText">عرض صورة القمر الصناعي</span>
+                        </button>
+                    </div>
+                </div>
+                <div id="map"></div>
+            </div>
+            
+            <div class="sidebar">
+                <div class="geofences-list">
+                    <div class="list-header">
+                        <h3><i class="fas fa-list"></i> الدوائر النشطة</h3>
+                        <span class="badge">{{ geofences_data|length }}</span>
+                    </div>
+                    <div class="geofence-items">
+                        {% if geofences_data %}
+                            {% for item in geofences_data %}
+                            <div class="geofence-item" data-geofence-id="{{ item.geofence.id }}">
+                                <div class="geofence-item-header">
+                                    <span class="geofence-name">{{ item.geofence.name }}</span>
+                                    <span class="geofence-type">{{ item.geofence.type }}</span>
+                                </div>
+                                
+                                <div class="geofence-info">
+                                    <div class="info-item">
+                                        <i class="fas fa-building"></i>
+                                        <span>القسم: {{ item.geofence.department.name }}</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <i class="fas fa-ruler-horizontal"></i>
+                                        <span>نصف القطر: {{ item.geofence.radius_meters }} متر</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="employees-count">
+                                    <div class="employees-count-number">{{ item.employees_count }}</div>
+                                    <div class="employees-count-label">موظف داخل الدائرة</div>
+                                </div>
+                                
+                                <div class="geofence-actions">
+                                    <button class="btn btn-small btn-success" onclick="bulkCheckIn({{ item.geofence.id }})">
+                                        <i class="fas fa-check-circle"></i>
+                                        تسجيل حضور جماعي
+                                    </button>
+                                    <button class="btn btn-small btn-info" onclick="viewGeofence({{ item.geofence.id }})">
+                                        <i class="fas fa-eye"></i>
+                                        التفاصيل
+                                    </button>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="empty-state">
+                                <i class="fas fa-circle-notch"></i>
+                                <h3>لا توجد دوائر جغرافية</h3>
+                                <p>ابدأ بإضافة دائرة جديدة من الزر أعلاه</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal إضافة دائرة جديدة -->
+    <div id="createModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-plus-circle"></i> إضافة دائرة جغرافية جديدة</h3>
+                <button class="btn-close" onclick="closeCreateModal()">×</button>
+            </div>
+            
+            <div id="alertContainer"></div>
+            
+            <form id="createForm" onsubmit="createGeofence(event)">
+                <div class="form-group">
+                    <label>اسم الدائرة <span style="color: red;">*</span></label>
+                    <input type="text" name="name" required placeholder="مثال: مشروع برج المملكة">
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>النوع <span style="color: red;">*</span></label>
+                        <select name="type" required>
+                            <option value="project">مشروع</option>
+                            <option value="office">مكتب</option>
+                            <option value="warehouse">مستودع</option>
+                            <option value="other">أخرى</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>القسم المرتبط <span style="color: red;">*</span></label>
+                        <select name="department_id" required>
+                            <option value="">-- اختر القسم --</option>
+                            {% for dept in departments %}
+                            <option value="{{ dept.id }}">{{ dept.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>نصف القطر (بالأمتار) <span style="color: red;">*</span></label>
+                    <input type="number" name="radius" required min="50" max="10000" value="500">
+                </div>
+                
+                <div class="form-group">
+                    <label>اللون</label>
+                    <div class="color-picker-wrapper">
+                        <input type="color" name="color" value="#667eea">
+                        <span>اختر لون الدائرة على الخريطة</span>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>الوصف</label>
+                    <textarea name="description" rows="3" placeholder="وصف اختياري للدائرة"></textarea>
+                </div>
+                
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    <span>انقر على الخريطة لتحديد موقع الدائرة</span>
+                </div>
+                
+                <input type="hidden" name="latitude" id="latitude">
+                <input type="hidden" name="longitude" id="longitude">
+                
+                <button type="submit" class="btn" style="width: 100%;">
+                    <i class="fas fa-save"></i>
+                    حفظ الدائرة
+                </button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <script>
+        // تهيئة الخريطة
+        const map = L.map('map').setView([24.7136, 46.6753], 11); // الرياض
+        
+        // طبقات الخريطة
+        const streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors',
+            maxZoom: 19
+        });
+        
+        const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: '© Esri',
+            maxZoom: 19
+        });
+        
+        streetLayer.addTo(map);
+        let currentLayer = 'street';
+        
+        // تبديل طبقة الخريطة
+        function toggleMapView() {
+            if (currentLayer === 'street') {
+                map.removeLayer(streetLayer);
+                satelliteLayer.addTo(map);
+                currentLayer = 'satellite';
+                document.getElementById('mapViewText').textContent = 'عرض الخريطة العادية';
+            } else {
+                map.removeLayer(satelliteLayer);
+                streetLayer.addTo(map);
+                currentLayer = 'street';
+                document.getElementById('mapViewText').textContent = 'عرض صورة القمر الصناعي';
+            }
+        }
+        
+        // رسم الدوائر الموجودة
+        const geofences = {{ geofences_data|tojson }};
+        const circles = {};
+        
+        geofences.forEach(item => {
+            const geofence = item.geofence;
+            const circle = L.circle([geofence.center_latitude, geofence.center_longitude], {
+                color: geofence.color,
+                fillColor: geofence.color,
+                fillOpacity: 0.2,
+                radius: geofence.radius_meters
+            }).addTo(map);
+            
+            circle.bindPopup(`
+                <div style="text-align: center; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+                    <h4 style="margin: 0 0 10px 0; color: #2d3748;">${geofence.name}</h4>
+                    <p style="margin: 5px 0;"><strong>القسم:</strong> ${geofence.department.name}</p>
+                    <p style="margin: 5px 0;"><strong>الموظفين داخل الدائرة:</strong> ${item.employees_count}</p>
+                    <button onclick="bulkCheckIn(${geofence.id})" style="margin-top: 10px; padding: 8px 16px; background: #667eea; color: white; border: none; border-radius: 8px; cursor: pointer;">
+                        تسجيل حضور جماعي
+                    </button>
+                </div>
+            `);
+            
+            circles[geofence.id] = circle;
+        });
+        
+        // متغيرات لإنشاء دائرة جديدة
+        let tempMarker = null;
+        let tempCircle = null;
+        
+        // عند فتح نافذة الإنشاء، تفعيل الاستماع للنقر على الخريطة
+        function showCreateModal() {
+            document.getElementById('createModal').classList.add('active');
+            
+            // إضافة مستمع للنقر على الخريطة
+            map.on('click', onMapClick);
+        }
+        
+        function closeCreateModal() {
+            document.getElementById('createModal').classList.remove('active');
+            
+            // إزالة المستمع والعلامات المؤقتة
+            map.off('click', onMapClick);
+            if (tempMarker) {
+                map.removeLayer(tempMarker);
+                tempMarker = null;
+            }
+            if (tempCircle) {
+                map.removeLayer(tempCircle);
+                tempCircle = null;
+            }
+            
+            // مسح النموذج
+            document.getElementById('createForm').reset();
+            document.getElementById('latitude').value = '';
+            document.getElementById('longitude').value = '';
+            document.getElementById('alertContainer').innerHTML = '';
+        }
+        
+        function onMapClick(e) {
+            const lat = e.latlng.lat;
+            const lng = e.latlng.lng;
+            
+            document.getElementById('latitude').value = lat;
+            document.getElementById('longitude').value = lng;
+            
+            // إزالة العلامات القديمة
+            if (tempMarker) map.removeLayer(tempMarker);
+            if (tempCircle) map.removeLayer(tempCircle);
+            
+            // إضافة علامة جديدة
+            tempMarker = L.marker([lat, lng]).addTo(map);
+            
+            // إضافة دائرة مؤقتة
+            const radius = parseInt(document.querySelector('[name="radius"]').value) || 500;
+            const color = document.querySelector('[name="color"]').value || '#667eea';
+            
+            tempCircle = L.circle([lat, lng], {
+                color: color,
+                fillColor: color,
+                fillOpacity: 0.2,
+                radius: radius
+            }).addTo(map);
+            
+            showAlert('تم تحديد الموقع بنجاح!', 'success');
+        }
+        
+        // تحديث الدائرة عند تغيير نصف القطر أو اللون
+        document.querySelector('[name="radius"]').addEventListener('change', function() {
+            if (tempCircle) {
+                const lat = document.getElementById('latitude').value;
+                const lng = document.getElementById('longitude').value;
+                map.removeLayer(tempCircle);
+                
+                const radius = parseInt(this.value);
+                const color = document.querySelector('[name="color"]').value;
+                
+                tempCircle = L.circle([lat, lng], {
+                    color: color,
+                    fillColor: color,
+                    fillOpacity: 0.2,
+                    radius: radius
+                }).addTo(map);
+            }
+        });
+        
+        document.querySelector('[name="color"]').addEventListener('change', function() {
+            if (tempCircle) {
+                const lat = document.getElementById('latitude').value;
+                const lng = document.getElementById('longitude').value;
+                map.removeLayer(tempCircle);
+                
+                const radius = parseInt(document.querySelector('[name="radius"]').value);
+                const color = this.value;
+                
+                tempCircle = L.circle([lat, lng], {
+                    color: color,
+                    fillColor: color,
+                    fillOpacity: 0.2,
+                    radius: radius
+                }).addTo(map);
+            }
+        });
+        
+        // إنشاء دائرة جديدة
+        async function createGeofence(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            
+            if (!formData.get('latitude') || !formData.get('longitude')) {
+                showAlert('يرجى تحديد موقع الدائرة على الخريطة أولاً', 'error');
+                return;
+            }
+            
+            const data = {
+                name: formData.get('name'),
+                type: formData.get('type'),
+                department_id: parseInt(formData.get('department_id')),
+                radius: parseInt(formData.get('radius')),
+                color: formData.get('color'),
+                description: formData.get('description'),
+                latitude: parseFloat(formData.get('latitude')),
+                longitude: parseFloat(formData.get('longitude'))
+            };
+            
+            try {
+                const response = await fetch('/employees/geofences/create', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showAlert('تم إنشاء الدائرة بنجاح!', 'success');
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
+                } else {
+                    showAlert(result.message || 'حدث خطأ أثناء الإنشاء', 'error');
+                }
+            } catch (error) {
+                showAlert('حدث خطأ في الاتصال بالخادم', 'error');
+            }
+        }
+        
+        // تسجيل حضور جماعي
+        async function bulkCheckIn(geofenceId) {
+            if (!confirm('هل تريد تسجيل حضور جميع موظفي القسم الموجودين داخل الدائرة؟')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/employees/geofences/${geofenceId}/bulk-check-in`, {
+                    method: 'POST'
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert(`${result.message}\n\nتم التسجيل: ${result.checked_in_count}\nمسجل مسبقاً: ${result.already_checked_count}`);
+                } else {
+                    alert(result.message || 'حدث خطأ أثناء تسجيل الحضور');
+                }
+            } catch (error) {
+                alert('حدث خطأ في الاتصال بالخادم');
+            }
+        }
+        
+        // عرض تفاصيل دائرة
+        function viewGeofence(id) {
+            window.location.href = `/employees/geofences/${id}`;
+        }
+        
+        // عرض رسالة تنبيه
+        function showAlert(message, type) {
+            const alertContainer = document.getElementById('alertContainer');
+            const alertClass = type === 'success' ? 'alert-success' : (type === 'error' ? 'alert-error' : 'alert-info');
+            const icon = type === 'success' ? 'check-circle' : (type === 'error' ? 'exclamation-circle' : 'info-circle');
+            
+            alertContainer.innerHTML = `
+                <div class="alert ${alertClass}">
+                    <i class="fas fa-${icon}"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            
+            setTimeout(() => {
+                alertContainer.innerHTML = '';
+            }, 5000);
+        }
+        
+        // التركيز على دائرة عند النقر على عنصر القائمة
+        document.querySelectorAll('.geofence-item').forEach(item => {
+            item.addEventListener('click', function(e) {
+                if (e.target.tagName !== 'BUTTON' && !e.target.closest('button')) {
+                    const geofenceId = this.getAttribute('data-geofence-id');
+                    const circle = circles[geofenceId];
+                    
+                    if (circle) {
+                        map.setView(circle.getLatLng(), 15);
+                        circle.openPopup();
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
