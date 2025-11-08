@@ -7,7 +7,7 @@ from werkzeug.utils import secure_filename
 from sqlalchemy.exc import IntegrityError
 from flask_login import login_required
 from app import db
-from models import Employee, Department, SystemAudit, Document, Attendance, Salary, Module, Permission, Vehicle, VehicleHandover,User,Nationality, employee_departments, MobileDevice, DeviceAssignment, EmployeeLocation
+from models import Employee, Department, SystemAudit, Document, Attendance, Salary, Module, Permission, Vehicle, VehicleHandover,User,Nationality, employee_departments, MobileDevice, DeviceAssignment, EmployeeLocation, Geofence
 from sqlalchemy import func, or_
 from utils.excel import parse_employee_excel, generate_employee_excel, export_employee_attendance_to_excel
 from utils.date_converter import parse_date
@@ -1974,6 +1974,128 @@ def tracking():
     )
 
 
+
+
+@employees_bp.route('/tracking-dashboard')
+@login_required
+def tracking_dashboard():
+    """لوحة تحكم مختصرة لإحصائيات التتبع المباشر"""
+    from math import radians, sin, cos, sqrt, atan2
+    
+    cutoff_time_active = datetime.utcnow() - timedelta(hours=1)
+    cutoff_time_location = datetime.utcnow() - timedelta(hours=24)
+    
+    all_employees = Employee.query.all()
+    active_employees = []
+    inactive_employees = []
+    employees_with_vehicles = []
+    
+    for emp in all_employees:
+        latest_location = EmployeeLocation.query.filter_by(
+            employee_id=emp.id
+        ).order_by(EmployeeLocation.recorded_at.desc()).first()
+        
+        if latest_location and latest_location.recorded_at >= cutoff_time_active:
+            active_employees.append({
+                'employee': emp,
+                'location': latest_location,
+                'departments': [d.name for d in emp.departments]
+            })
+            
+            if latest_location.vehicle_id:
+                employees_with_vehicles.append({
+                    'employee': emp,
+                    'location': latest_location,
+                    'vehicle': latest_location.vehicle
+                })
+        else:
+            inactive_employees.append(emp)
+    
+    all_geofences = Geofence.query.filter_by(is_active=True).all()
+    
+    employees_inside_geofences = []
+    employees_outside_geofences = []
+    geofence_stats = []
+    
+    for geofence in all_geofences:
+        inside_count = 0
+        inside_employees = []
+        
+        for emp in all_employees:
+            latest_location = EmployeeLocation.query.filter_by(
+                employee_id=emp.id
+            ).filter(EmployeeLocation.recorded_at >= cutoff_time_location
+            ).order_by(EmployeeLocation.recorded_at.desc()).first()
+            
+            if latest_location:
+                lat1, lon1 = float(latest_location.latitude), float(latest_location.longitude)
+                lat2, lon2 = float(geofence.center_latitude), float(geofence.center_longitude)
+                
+                R = 6371000
+                dlat = radians(lat2 - lat1)
+                dlon = radians(lon2 - lon1)
+                a = sin(dlat/2)**2 + cos(radians(lat1)) * cos(radians(lat2)) * sin(dlon/2)**2
+                c = 2 * atan2(sqrt(a), sqrt(1-a))
+                distance = R * c
+                
+                if distance <= geofence.radius_meters:
+                    inside_count += 1
+                    inside_employees.append({
+                        'employee': emp,
+                        'location': latest_location,
+                        'distance': distance
+                    })
+        
+        geofence_stats.append({
+            'geofence': geofence,
+            'inside_count': inside_count,
+            'inside_employees': inside_employees
+        })
+    
+    employees_inside_any_geofence = set()
+    for stat in geofence_stats:
+        for emp_data in stat['inside_employees']:
+            employees_inside_any_geofence.add(emp_data['employee'].id)
+    
+    for emp in all_employees:
+        latest_location = EmployeeLocation.query.filter_by(
+            employee_id=emp.id
+        ).filter(EmployeeLocation.recorded_at >= cutoff_time_location
+        ).order_by(EmployeeLocation.recorded_at.desc()).first()
+        
+        if latest_location:
+            if emp.id in employees_inside_any_geofence:
+                if not any(e['employee'].id == emp.id for e in employees_inside_geofences):
+                    employees_inside_geofences.append({
+                        'employee': emp,
+                        'location': latest_location
+                    })
+            else:
+                employees_outside_geofences.append({
+                    'employee': emp,
+                    'location': latest_location
+                })
+    
+    stats = {
+        'total_employees': len(all_employees),
+        'active_count': len(active_employees),
+        'inactive_count': len(inactive_employees),
+        'with_vehicles_count': len(employees_with_vehicles),
+        'inside_geofences_count': len(employees_inside_geofences),
+        'outside_geofences_count': len(employees_outside_geofences),
+        'total_geofences': len(all_geofences)
+    }
+    
+    return render_template(
+        'employees/tracking_dashboard.html',
+        stats=stats,
+        active_employees=active_employees,
+        inactive_employees=inactive_employees,
+        employees_with_vehicles=employees_with_vehicles,
+        employees_inside_geofences=employees_inside_geofences,
+        employees_outside_geofences=employees_outside_geofences,
+        geofence_stats=geofence_stats
+    )
 
 
 def format_time_12hr_arabic(dt):

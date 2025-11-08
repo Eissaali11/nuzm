@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة تحكم التتبع المباشر</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+<style>
+    :root {
+        --primary: #667eea;
+        --secondary: #764ba2;
+        --success: #10b981;
+        --warning: #f59e0b;
+        --danger: #ef4444;
+        --info: #3b82f6;
+        --dark: #1e1b4b;
+    }
+
+    body {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        font-family: 'Cairo', Arial, sans-serif;
+    }
+
+    .dashboard-container {
+        max-width: 1400px;
+        margin: 40px auto;
+        padding: 0 20px;
+    }
+
+    .page-header {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        padding: 30px;
+        margin-bottom: 30px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+
+    .page-header h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--dark);
+        margin: 0 0 10px;
+        text-align: center;
+    }
+
+    .page-header p {
+        text-align: center;
+        color: #64748b;
+        font-size: 1.1rem;
+        margin: 0;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    .stat-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        padding: 25px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 100%;
+        height: 4px;
+        background: linear-gradient(90deg, var(--card-color, #667eea) 0%, transparent 100%);
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    .stat-card.success { --card-color: #10b981; }
+    .stat-card.danger { --card-color: #ef4444; }
+    .stat-card.warning { --card-color: #f59e0b; }
+    .stat-card.info { --card-color: #3b82f6; }
+    .stat-card.primary { --card-color: #667eea; }
+    .stat-card.secondary { --card-color: #8b5cf6; }
+
+    .stat-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 15px;
+    }
+
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+        background: linear-gradient(135deg, var(--card-color, #667eea), rgba(var(--card-color-rgb, 102, 126, 234), 0.7));
+        color: white;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--dark);
+        text-align: right;
+    }
+
+    .stat-label {
+        font-size: 1rem;
+        color: #64748b;
+        font-weight: 600;
+        text-align: right;
+        margin-top: 5px;
+    }
+
+    .section-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        padding: 30px;
+        margin-bottom: 30px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    .section-header {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 25px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid #e2e8f0;
+    }
+
+    .section-header i {
+        font-size: 2rem;
+        color: var(--primary);
+    }
+
+    .section-header h2 {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: var(--dark);
+        margin: 0;
+    }
+
+    .section-header .badge {
+        margin-right: auto;
+        padding: 8px 16px;
+        border-radius: 50px;
+        font-weight: 700;
+        font-size: 1rem;
+    }
+
+    .employee-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 20px;
+    }
+
+    .employee-card {
+        background: white;
+        border-radius: 15px;
+        padding: 20px;
+        border: 2px solid #e2e8f0;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .employee-card:hover {
+        border-color: var(--primary);
+        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.2);
+        transform: translateY(-3px);
+    }
+
+    .employee-avatar {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid var(--primary);
+    }
+
+    .employee-info {
+        flex: 1;
+    }
+
+    .employee-name {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--dark);
+        margin-bottom: 5px;
+    }
+
+    .employee-meta {
+        font-size: 0.9rem;
+        color: #64748b;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .meta-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 4px 10px;
+        border-radius: 50px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+
+    .meta-badge.vehicle {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .meta-badge.department {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+
+    .meta-badge.time {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #94a3b8;
+    }
+
+    .empty-state i {
+        font-size: 4rem;
+        margin-bottom: 20px;
+        opacity: 0.5;
+    }
+
+    .empty-state h3 {
+        font-size: 1.5rem;
+        margin-bottom: 10px;
+    }
+
+    .geofence-card {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        border-radius: 15px;
+        padding: 25px;
+        color: white;
+        margin-bottom: 20px;
+    }
+
+    .geofence-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 15px;
+    }
+
+    .geofence-title {
+        font-size: 1.3rem;
+        font-weight: 700;
+    }
+
+    .geofence-count {
+        background: rgba(255, 255, 255, 0.2);
+        padding: 8px 16px;
+        border-radius: 50px;
+        font-weight: 700;
+    }
+
+    .geofence-employees {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 10px;
+        margin-top: 15px;
+    }
+
+    .geofence-employee {
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(10px);
+        padding: 12px;
+        border-radius: 10px;
+        font-size: 0.95rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 15px;
+        margin-top: 20px;
+        flex-wrap: wrap;
+    }
+
+    .btn-action {
+        padding: 12px 24px;
+        border-radius: 12px;
+        font-weight: 700;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        transition: all 0.3s ease;
+        font-size: 1rem;
+    }
+
+    .btn-action:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+    }
+
+    .btn-secondary {
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        color: white;
+    }
+
+    @media (max-width: 768px) {
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .employee-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .page-header h1 {
+            font-size: 2rem;
+        }
+    }
+</style>
+</head>
+<body>
+<div class="dashboard-container">
+    <div class="page-header">
+        <h1>📊 لوحة تحكم التتبع المباشر</h1>
+        <p>نظرة شاملة على حالة الموظفين والتتبع الجغرافي</p>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card primary">
+            <div class="stat-header">
+                <div class="stat-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div>
+                    <div class="stat-value">{{ stats.total_employees }}</div>
+                    <div class="stat-label">إجمالي الموظفين</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card success">
+            <div class="stat-header">
+                <div class="stat-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div>
+                    <div class="stat-value">{{ stats.active_count }}</div>
+                    <div class="stat-label">نشطون (آخر ساعة)</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card danger">
+            <div class="stat-header">
+                <div class="stat-icon">
+                    <i class="fas fa-times-circle"></i>
+                </div>
+                <div>
+                    <div class="stat-value">{{ stats.inactive_count }}</div>
+                    <div class="stat-label">غير نشطين</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card warning">
+            <div class="stat-header">
+                <div class="stat-icon">
+                    <i class="fas fa-car"></i>
+                </div>
+                <div>
+                    <div class="stat-value">{{ stats.with_vehicles_count }}</div>
+                    <div class="stat-label">على سيارات</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card info">
+            <div class="stat-header">
+                <div class="stat-icon">
+                    <i class="fas fa-map-marker-alt"></i>
+                </div>
+                <div>
+                    <div class="stat-value">{{ stats.inside_geofences_count }}</div>
+                    <div class="stat-label">داخل الدوائر</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card secondary">
+            <div class="stat-header">
+                <div class="stat-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div>
+                    <div class="stat-value">{{ stats.outside_geofences_count }}</div>
+                    <div class="stat-label">خارج الدوائر</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="action-buttons">
+        <a href="{{ url_for('employees.tracking') }}" class="btn-action btn-primary">
+            <i class="fas fa-map"></i>
+            التتبع على الخريطة
+        </a>
+        <a href="{{ url_for('employees.index') }}" class="btn-action btn-secondary">
+            <i class="fas fa-list"></i>
+            قائمة الموظفين
+        </a>
+    </div>
+
+    {% if active_employees %}
+    <div class="section-card">
+        <div class="section-header">
+            <i class="fas fa-user-check"></i>
+            <h2>الموظفون النشطون</h2>
+            <span class="badge bg-success">{{ stats.active_count }} موظف</span>
+        </div>
+        <div class="employee-grid">
+            {% for item in active_employees %}
+            <div class="employee-card">
+                {% if item.employee.profile_image %}
+                <img src="{{ url_for('static', filename=item.employee.profile_image.replace('static/', '')) }}" alt="{{ item.employee.name }}" class="employee-avatar">
+                {% else %}
+                <div class="employee-avatar" style="background: linear-gradient(135deg, #667eea, #764ba2); display: flex; align-items: center; justify-content: center; color: white; font-size: 1.5rem; font-weight: 700;">
+                    {{ item.employee.name[0] }}
+                </div>
+                {% endif %}
+                <div class="employee-info">
+                    <div class="employee-name">{{ item.employee.name }}</div>
+                    <div class="employee-meta">
+                        <span class="meta-badge time">
+                            <i class="fas fa-clock"></i>
+                            {{ item.location.recorded_at.strftime('%H:%M') }}
+                        </span>
+                        {% if item.departments %}
+                        <span class="meta-badge department">
+                            <i class="fas fa-building"></i>
+                            {{ item.departments[0] }}
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if employees_with_vehicles %}
+    <div class="section-card">
+        <div class="section-header">
+            <i class="fas fa-car"></i>
+            <h2>الموظفون على سيارات</h2>
+            <span class="badge bg-warning">{{ stats.with_vehicles_count }} موظف</span>
+        </div>
+        <div class="employee-grid">
+            {% for item in employees_with_vehicles %}
+            <div class="employee-card">
+                {% if item.employee.profile_image %}
+                <img src="{{ url_for('static', filename=item.employee.profile_image.replace('static/', '')) }}" alt="{{ item.employee.name }}" class="employee-avatar">
+                {% else %}
+                <div class="employee-avatar" style="background: linear-gradient(135deg, #f59e0b, #ea580c); display: flex; align-items: center; justify-content: center; color: white; font-size: 1.5rem; font-weight: 700;">
+                    {{ item.employee.name[0] }}
+                </div>
+                {% endif %}
+                <div class="employee-info">
+                    <div class="employee-name">{{ item.employee.name }}</div>
+                    <div class="employee-meta">
+                        <span class="meta-badge vehicle">
+                            <i class="fas fa-car"></i>
+                            {{ item.vehicle.plate_number }}
+                        </span>
+                        <span class="meta-badge time">
+                            <i class="fas fa-clock"></i>
+                            {{ item.location.recorded_at.strftime('%H:%M') }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if geofence_stats %}
+    <div class="section-card">
+        <div class="section-header">
+            <i class="fas fa-draw-polygon"></i>
+            <h2>الدوائر الجغرافية</h2>
+            <span class="badge bg-info">{{ stats.total_geofences }} دائرة</span>
+        </div>
+        {% for stat in geofence_stats %}
+        <div class="geofence-card" style="background: linear-gradient(135deg, {{ stat.geofence.color }}, {{ stat.geofence.color }}dd);">
+            <div class="geofence-header">
+                <div class="geofence-title">
+                    <i class="fas fa-map-pin"></i> {{ stat.geofence.name }}
+                </div>
+                <div class="geofence-count">
+                    {{ stat.inside_count }} موظف
+                </div>
+            </div>
+            {% if stat.inside_employees %}
+            <div class="geofence-employees">
+                {% for emp_data in stat.inside_employees %}
+                <div class="geofence-employee">
+                    <i class="fas fa-user"></i>
+                    {{ emp_data.employee.name }}
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div style="text-align: center; padding: 20px; opacity: 0.7;">
+                <i class="fas fa-inbox"></i> لا يوجد موظفين داخل هذه الدائرة
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if employees_outside_geofences %}
+    <div class="section-card">
+        <div class="section-header">
+            <i class="fas fa-exclamation-triangle"></i>
+            <h2>الموظفون خارج الدوائر</h2>
+            <span class="badge bg-danger">{{ stats.outside_geofences_count }} موظف</span>
+        </div>
+        <div class="employee-grid">
+            {% for item in employees_outside_geofences %}
+            <div class="employee-card">
+                {% if item.employee.profile_image %}
+                <img src="{{ url_for('static', filename=item.employee.profile_image.replace('static/', '')) }}" alt="{{ item.employee.name }}" class="employee-avatar">
+                {% else %}
+                <div class="employee-avatar" style="background: linear-gradient(135deg, #ef4444, #dc2626); display: flex; align-items: center; justify-content: center; color: white; font-size: 1.5rem; font-weight: 700;">
+                    {{ item.employee.name[0] }}
+                </div>
+                {% endif %}
+                <div class="employee-info">
+                    <div class="employee-name">{{ item.employee.name }}</div>
+                    <div class="employee-meta">
+                        <span class="meta-badge time">
+                            <i class="fas fa-clock"></i>
+                            {{ item.location.recorded_at.strftime('%H:%M') }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
