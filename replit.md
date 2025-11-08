@@ -33,7 +33,7 @@ Preferred communication style: Simple, everyday language.
 - **Salary Management**: Calculation, processing, allowances/deductions, monthly payroll reports.
 - **Department Management**: Organizational structure and hierarchy, with department-based access control across all modules.
 - **User Management**: Role-based access control, permission management, multi-tenant authentication/authorization.
-- **Report Generation**: PDF and Excel generation with full Arabic support and professional designs. Excel employee reports feature a 3-sheet workbook structure (Dashboard, Employee Data, Complete Data) with professional formatting and visual statistics.
+- **Report Generation**: PDF and Excel generation with full Arabic support and professional futuristic designs. External safety check PDFs feature modern gradient headers (cyan→purple→indigo), color-coded information cards, decorative separators, and image frames with unique colors (cyan, purple, pink, emerald, blue, violet, rose, amber). Excel employee reports feature a 3-sheet workbook structure (Dashboard, Employee Data, Complete Data) with professional formatting and visual statistics.
 - **File Management**: Secure validation, virus scanning, image processing, organized physical storage in `static/uploads/` directory, and enhanced static file serving for uploads. All files (images, PDFs) are stored locally for permanent accessibility.
 - **Mobile Device Management**: CRUD operations for devices, IMEI tracking, department/brand/status filtering, Excel import/export, employee assignment.
 - **API**: Comprehensive RESTful API with 25+ endpoints, JWT authentication, search, filtering, and pagination.
