@@ -1968,12 +1968,12 @@ def tracking():
             
             if latest_location:
                 # Check all geofences to see if employee is inside any of them
-                all_geofences = Geofence.query.all()
+                all_geofences = Geofence.query.filter_by(is_active=True).all()
                 for gf in all_geofences:
                     # Calculate distance using Haversine formula
                     R = 6371000  # Earth radius in meters
                     lat1, lon1 = radians(float(latest_location.latitude)), radians(float(latest_location.longitude))
-                    lat2, lon2 = radians(float(gf.latitude)), radians(float(gf.longitude))
+                    lat2, lon2 = radians(float(gf.center_latitude)), radians(float(gf.center_longitude))
                     dlat = lat2 - lat1
                     dlon = lon2 - lon1
                     a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
@@ -1981,7 +1981,7 @@ def tracking():
                     distance = R * c
                     
                     # If employee is within geofence radius
-                    if distance <= gf.radius:
+                    if distance <= gf.radius_meters:
                         location_data['geofence_name'] = gf.name
                         break
                 
@@ -2012,16 +2012,16 @@ def tracking():
             'vehicle_name': loc_data.get('vehicle_name')
         }
     
-    # جلب جميع الدوائر الجغرافية
-    geofences = Geofence.query.all()
+    # جلب جميع الدوائر الجغرافية النشطة
+    geofences = Geofence.query.filter_by(is_active=True).all()
     geofences_data = []
     for gf in geofences:
         geofences_data.append({
             'id': gf.id,
             'name': gf.name,
-            'latitude': gf.latitude,
-            'longitude': gf.longitude,
-            'radius': gf.radius
+            'latitude': float(gf.center_latitude),
+            'longitude': float(gf.center_longitude),
+            'radius': gf.radius_meters
         })
     
     # جلب جميع الأقسام للفلترة
