@@ -7,6 +7,7 @@ from werkzeug.utils import secure_filename
 import os
 import json
 from utils.google_drive_service import drive_service
+from models import UserRole
 
 google_drive_settings_bp = Blueprint('google_drive_settings', __name__)
 
@@ -17,9 +18,9 @@ def google_drive():
     """صفحة إعدادات Google Drive"""
     
     # التحقق من أن المستخدم admin
-    if not current_user.is_admin:
+    if current_user.role != UserRole.ADMIN:
         flash('غير مصرح لك بالوصول إلى هذه الصفحة', 'danger')
-        return redirect(url_for('index'))
+        return redirect(url_for('dashboard.index'))
     
     if request.method == 'POST':
         # التحقق من وجود ملف
