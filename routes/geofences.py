@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, jsonify, flash, redirect, url_for, send_file
 from flask_login import login_required, current_user
 from models import Geofence, GeofenceEvent, Employee, Department, Attendance, EmployeeLocation, db, employee_departments
-from datetime import datetime
+from datetime import datetime, timedelta
 import re
 import requests
 
@@ -87,6 +87,9 @@ def create():
 @login_required
 def view(geofence_id):
     """عرض تفاصيل دائرة معينة"""
+    from collections import defaultdict
+    import json
+    
     geofence = Geofence.query.get_or_404(geofence_id)
     
     employees_inside = geofence.get_department_employees_inside()
@@ -105,6 +108,59 @@ def view(geofence_id):
     assigned_employee_ids = [emp.id for emp in geofence.assigned_employees]
     available_employees = [emp for emp in department_employees if emp.id not in assigned_employee_ids]
     
+    # إحصائيات الحضور
+    today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    week_start = today_start - timedelta(days=7)
+    
+    total_assigned = len(geofence.assigned_employees)
+    present_count = len([emp for emp in geofence.assigned_employees if emp.id in {e['employee'].id for e in employees_inside}])
+    absent_count = total_assigned - present_count
+    attendance_rate = (present_count / total_assigned * 100) if total_assigned > 0 else 0
+    
+    # إحصائيات آخر 24 ساعة (كل ساعة)
+    hourly_data = []
+    for hour in range(24):
+        hour_start = today_start + timedelta(hours=hour)
+        hour_end = hour_start + timedelta(hours=1)
+        
+        events_count = GeofenceEvent.query.filter(
+            GeofenceEvent.geofence_id == geofence_id,
+            GeofenceEvent.recorded_at >= hour_start,
+            GeofenceEvent.recorded_at < hour_end
+        ).count()
+        
+        hourly_data.append({
+            'hour': hour,
+            'count': events_count
+        })
+    
+    # إحصائيات أسبوعية
+    weekly_data = []
+    days_ar = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت']
+    for day in range(7):
+        day_start = week_start + timedelta(days=day)
+        day_end = day_start + timedelta(days=1)
+        
+        events_count = GeofenceEvent.query.filter(
+            GeofenceEvent.geofence_id == geofence_id,
+            GeofenceEvent.recorded_at >= day_start,
+            GeofenceEvent.recorded_at < day_end
+        ).count()
+        
+        weekly_data.append({
+            'day': days_ar[day_start.weekday()],
+            'count': events_count
+        })
+    
+    stats = {
+        'total_assigned': total_assigned,
+        'present_count': present_count,
+        'absent_count': absent_count,
+        'attendance_rate': round(attendance_rate, 1),
+        'hourly_data': json.dumps(hourly_data),
+        'weekly_data': json.dumps(weekly_data)
+    }
+    
     return render_template(
         'geofences/view.html',
         geofence=geofence,
@@ -112,7 +168,8 @@ def view(geofence_id):
         all_employees=all_employees,
         recent_events=recent_events,
         assigned_employees=geofence.assigned_employees,
-        available_employees=available_employees
+        available_employees=available_employees,
+        stats=stats
     )
 
 
