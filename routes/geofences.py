@@ -511,3 +511,52 @@ def unassign_employee(geofence_id, employee_id):
             'success': False,
             'message': f'خطأ: {str(e)}'
         }), 400
+
+
+@geofences_bp.route('/<int:geofence_id>/update', methods=['POST'])
+@login_required
+def update_geofence(geofence_id):
+    """تحديث بيانات الدائرة الجغرافية"""
+    try:
+        geofence = Geofence.query.get_or_404(geofence_id)
+        data = request.get_json()
+        
+        name = data.get('name', '').strip()
+        radius_meters = data.get('radius_meters')
+        color = data.get('color', '').strip()
+        
+        if not name:
+            return jsonify({
+                'success': False,
+                'message': 'الرجاء إدخال اسم الدائرة'
+            }), 400
+        
+        if not radius_meters or radius_meters < 10:
+            return jsonify({
+                'success': False,
+                'message': 'نصف القطر يجب أن يكون 10 متر على الأقل'
+            }), 400
+        
+        if not color or not color.startswith('#'):
+            return jsonify({
+                'success': False,
+                'message': 'الرجاء اختيار لون صحيح'
+            }), 400
+        
+        geofence.name = name
+        geofence.radius_meters = radius_meters
+        geofence.color = color
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'تم تحديث الدائرة بنجاح'
+        })
+    
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'message': f'خطأ في التحديث: {str(e)}'
+        }), 400

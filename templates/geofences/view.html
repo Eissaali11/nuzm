@@ -377,6 +377,73 @@
             justify-content: flex-end;
         }
         
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        .form-group label {
+            display: block;
+            color: #c7d2fe;
+            font-weight: 700;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        
+        .form-group label i {
+            color: #818cf8;
+            margin-left: 8px;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 15px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: #ffffff;
+            font-size: 16px;
+            font-family: 'Cairo', sans-serif;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: #818cf8;
+            background: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 0 20px rgba(129, 140, 248, 0.3);
+        }
+        
+        .color-picker {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .color-input {
+            width: 80px;
+            height: 50px;
+            border-radius: 12px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .color-input:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 15px rgba(129, 140, 248, 0.4);
+        }
+        
+        .color-preview {
+            padding: 12px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: #ffffff;
+            font-family: monospace;
+            font-size: 16px;
+            font-weight: 700;
+        }
+        
         .main-content {
             display: grid;
             grid-template-columns: 2fr 1fr;
@@ -752,6 +819,49 @@
         </div>
     </div>
     
+    <!-- Modal لتعديل الدائرة -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-edit"></i> تعديل الدائرة الجغرافية</h2>
+                <button class="close-btn" onclick="closeEditModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="modal-body">
+                <form id="editForm">
+                    <div class="form-group">
+                        <label><i class="fas fa-tag"></i> اسم الدائرة</label>
+                        <input type="text" id="editName" value="{{ geofence.name }}" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label><i class="fas fa-circle-notch"></i> نصف القطر (متر)</label>
+                        <input type="number" id="editRadius" value="{{ geofence.radius_meters }}" class="form-control" min="10" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label><i class="fas fa-palette"></i> اللون</label>
+                        <div class="color-picker">
+                            <input type="color" id="editColor" value="{{ geofence.color }}" class="color-input">
+                            <span id="colorPreview" class="color-preview">{{ geofence.color }}</span>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeEditModal()">
+                    <i class="fas fa-times"></i> إلغاء
+                </button>
+                <button id="updateBtn" class="btn btn-primary" onclick="updateGeofence()">
+                    <i class="fas fa-save"></i> حفظ التعديلات
+                </button>
+            </div>
+        </div>
+    </div>
+    
     <!-- Modal لربط الموظفين -->
     <div id="assignModal" class="modal">
         <div class="modal-content">
@@ -947,10 +1057,65 @@
         }
         
         function editGeofence() {
-            if (confirm('ميزة التعديل ستكون متاحة قريباً. هل تريد العودة إلى قائمة الدوائر؟')) {
-                window.location.href = '/employees/geofences';
+            document.getElementById('editModal').style.display = 'flex';
+        }
+        
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+        }
+        
+        async function updateGeofence() {
+            const name = document.getElementById('editName').value.trim();
+            const radius = parseInt(document.getElementById('editRadius').value);
+            const color = document.getElementById('editColor').value;
+            
+            if (!name) {
+                alert('الرجاء إدخال اسم الدائرة');
+                return;
+            }
+            
+            if (radius < 10) {
+                alert('نصف القطر يجب أن يكون 10 متر على الأقل');
+                return;
+            }
+            
+            const updateBtn = document.getElementById('updateBtn');
+            updateBtn.disabled = true;
+            updateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...';
+            
+            try {
+                const response = await fetch(`/employees/geofences/${geofence.id}/update`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        name: name,
+                        radius_meters: radius,
+                        color: color
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('تم تحديث الدائرة بنجاح!');
+                    location.reload();
+                } else {
+                    alert('خطأ: ' + data.message);
+                    updateBtn.disabled = false;
+                    updateBtn.innerHTML = '<i class="fas fa-save"></i> حفظ التعديلات';
+                }
+            } catch (error) {
+                alert('حدث خطأ في الاتصال');
+                updateBtn.disabled = false;
+                updateBtn.innerHTML = '<i class="fas fa-save"></i> حفظ التعديلات';
             }
         }
+        
+        document.getElementById('editColor')?.addEventListener('input', function(e) {
+            document.getElementById('colorPreview').textContent = e.target.value;
+        });
         
         function deleteGeofence() {
             if (!confirm('هل أنت متأكد من حذف هذه الدائرة؟\n\nسيتم حذف جميع الأحداث المسجلة لهذه الدائرة.')) {
