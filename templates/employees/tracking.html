@@ -863,6 +863,15 @@
                                     </span>
                                 </div>
                                 {% endif %}
+                                
+                                <div class="detail-item" style="margin-top: 8px;">
+                                    <a href="{{ url_for('employees.track_history', id=emp.id) }}" 
+                                       onclick="event.stopPropagation();"
+                                       style="display: flex; align-items: center; gap: 6px; padding: 8px 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 8px; text-decoration: none; font-size: 13px; font-weight: 600; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);">
+                                        <i class="fas fa-route"></i>
+                                        <span>تاريخ التتبع</span>
+                                    </a>
+                                </div>
                             </div>
                         </div>
                         {% endfor %}
