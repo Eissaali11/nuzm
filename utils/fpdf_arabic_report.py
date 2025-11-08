@@ -1134,8 +1134,8 @@ def generate_safety_check_report_pdf(safety_check):
                         original_width, original_height = 800, 600
                     
                     # حساب الأبعاد المناسبة مع الحفاظ على نسبة العرض إلى الارتفاع
-                    max_width = 168  # عرض الصفحة - الهوامش
-                    max_height = 200  # ارتفاع مناسب
+                    max_width = 150
+                    max_height = 120
                     
                     # حساب النسبة
                     width_ratio = max_width / original_width
@@ -1147,31 +1147,31 @@ def generate_safety_check_report_pdf(safety_check):
                     final_height = original_height * ratio
                     
                     # مركز الصورة
+                    padding = 4
                     x_position = (210 - final_width) / 2
                     y_position = pdf.get_y()
                     
-                    # خلفية البطاقة
-                    padding = 6
+                    # ظل خفيف خلف الإطار
+                    pdf.set_fill_color(230, 230, 230)
+                    pdf.rect(x_position - padding + 1, y_position - padding + 1, 
+                            final_width + 2*padding, final_height + 2*padding, 'F')
+                    
+                    # خلفية بيضاء
                     pdf.set_fill_color(255, 255, 255)
                     pdf.rect(x_position - padding, y_position - padding, 
                             final_width + 2*padding, final_height + 2*padding, 'F')
                     
                     # إطار ملون مميز
                     pdf.set_draw_color(*pdf.colors[image_color])
-                    pdf.set_line_width(2)
+                    pdf.set_line_width(1.5)
                     pdf.rect(x_position - padding, y_position - padding, 
                             final_width + 2*padding, final_height + 2*padding)
-                    
-                    # ظل خفيف (رمادي فاتح جداً)
-                    pdf.set_fill_color(235, 235, 235)
-                    pdf.rect(x_position - padding + 2, y_position - padding + 2, 
-                            final_width + 2*padding, final_height + 2*padding, 'F')
                     
                     # إضافة الصورة
                     pdf.image(image_path, x_position, y_position, final_width, final_height)
                     
                     # مساحة بعد الصورة
-                    pdf.set_y(y_position + final_height + 12)
+                    pdf.set_y(y_position + final_height + 10)
                     
             except Exception as e:
                 import logging
