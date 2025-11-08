@@ -736,6 +736,13 @@ class VehicleWorkshop(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
+    # حقول Google Drive (اختيارية - لا تؤثر على البيانات الحالية)
+    drive_folder_id = db.Column(db.String(200), nullable=True)  # ID المجلد في Google Drive
+    drive_pdf_link = db.Column(db.String(500), nullable=True)  # رابط ملف PDF
+    drive_images_links = db.Column(db.Text, nullable=True)  # روابط الصور (JSON)
+    drive_upload_status = db.Column(db.String(20), nullable=True)  # success, failed, pending
+    drive_uploaded_at = db.Column(db.DateTime, nullable=True)  # تاريخ الرفع
+    
     # العلاقات
     vehicle = db.relationship('Vehicle', back_populates='workshop_records')
     images = db.relationship('VehicleWorkshopImage', back_populates='workshop_record', cascade='all, delete-orphan')
@@ -881,6 +888,13 @@ class VehicleHandover(db.Model):
     custom_company_name = db.Column(db.String(100), nullable=True)
     custom_logo_path = db.Column(db.String(255), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # حقول Google Drive (اختيارية - لا تؤثر على البيانات الحالية)
+    drive_folder_id = db.Column(db.String(200), nullable=True)  # ID المجلد في Google Drive
+    drive_pdf_link = db.Column(db.String(500), nullable=True)  # رابط ملف PDF
+    drive_images_links = db.Column(db.Text, nullable=True)  # روابط الصور (JSON)
+    drive_upload_status = db.Column(db.String(20), nullable=True)  # success, failed, pending
+    drive_uploaded_at = db.Column(db.DateTime, nullable=True)  # تاريخ الرفع
 
     # --- حقول وعلاقات تم حذفها أو تعديلها ---
     # employee_id: تم حذفه لأنه لم نعد نربط الموظف مباشرةً.
@@ -1462,6 +1476,13 @@ class VehicleExternalSafetyCheck(db.Model):
     # معلومات النظام
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # حقول Google Drive (اختيارية - لا تؤثر على البيانات الحالية)
+    drive_folder_id = db.Column(db.String(200), nullable=True)  # ID المجلد في Google Drive
+    drive_pdf_link = db.Column(db.String(500), nullable=True)  # رابط ملف PDF
+    drive_images_links = db.Column(db.Text, nullable=True)  # روابط الصور (JSON)
+    drive_upload_status = db.Column(db.String(20), nullable=True)  # success, failed, pending
+    drive_uploaded_at = db.Column(db.DateTime, nullable=True)  # تاريخ الرفع
     
     # العلاقات
     vehicle = db.relationship('Vehicle', backref=db.backref('external_safety_checks', cascade='all, delete-orphan'))
