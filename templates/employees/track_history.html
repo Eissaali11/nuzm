@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تتبع تحركات {{ employee.name }}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #1e1b4b 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+            backdrop-filter: blur(10px);
+            padding: 25px 30px;
+            border-radius: 20px;
+            margin-bottom: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+        
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .employee-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .employee-avatar {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #818cf8 0%, #a78bfa 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            font-weight: 700;
+            color: white;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 25px rgba(129, 140, 248, 0.4);
+        }
+        
+        .employee-avatar img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        
+        .employee-details h1 {
+            color: white;
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+        
+        .employee-details p {
+            color: #c7d2fe;
+            font-size: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .back-btn {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 12px;
+            font-family: 'Cairo';
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+            text-decoration: none;
+        }
+        
+        .back-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(99, 102, 241, 0.6);
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+        }
+        
+        .stat-icon {
+            font-size: 35px;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #818cf8, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .stat-value {
+            font-size: 26px;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 13px;
+            color: #c7d2fe;
+        }
+        
+        .map-container {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            margin-bottom: 25px;
+        }
+        
+        #map {
+            height: 650px;
+            border-radius: 16px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .timeline {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        
+        .timeline h2 {
+            color: white;
+            font-size: 22px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .timeline-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 18px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            border-right: 4px solid #818cf8;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .timeline-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(-5px);
+        }
+        
+        .timeline-item.with-vehicle {
+            border-right-color: #f59e0b;
+        }
+        
+        .timeline-time {
+            color: #c7d2fe;
+            font-size: 13px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .timeline-details {
+            color: white;
+            font-size: 14px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .timeline-detail-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .vehicle-badge {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 2px 10px rgba(245, 158, 11, 0.3);
+        }
+        
+        .speed-badge {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #c7d2fe;
+        }
+        
+        .empty-state i {
+            font-size: 80px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+        
+        .empty-state h3 {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: white;
+        }
+        
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #818cf8, #a78bfa);
+            border-radius: 4px;
+        }
+        
+        .leaflet-popup-content-wrapper {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .leaflet-popup-tip {
+            background: #f8fafc;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-content">
+                <div class="employee-info">
+                    <div class="employee-avatar">
+                        {% if employee.profile_image %}
+                        <img src="{{ employee.profile_image }}" alt="{{ employee.name }}">
+                        {% else %}
+                        {{ employee.name[0] if employee.name else 'M' }}
+                        {% endif %}
+                    </div>
+                    <div class="employee-details">
+                        <h1>{{ employee.name }}</h1>
+                        <p>
+                            <i class="fas fa-id-card"></i>
+                            رقم الموظف: {{ employee.employee_id }}
+                            {% if employee.departments %}
+                            <span style="margin: 0 8px;">•</span>
+                            <i class="fas fa-building"></i>
+                            {{ employee.departments[0].name }}
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+                <a href="{{ url_for('employees.tracking') }}" class="back-btn">
+                    <i class="fas fa-arrow-right"></i>
+                    العودة للتتبع
+                </a>
+            </div>
+        </div>
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-map-marked-alt"></i></div>
+                <div class="stat-value" id="totalPoints">{{ locations|length }}</div>
+                <div class="stat-label">نقطة تتبع</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-route"></i></div>
+                <div class="stat-value" id="totalDistance">0 كم</div>
+                <div class="stat-label">المسافة المقطوعة</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-tachometer-alt"></i></div>
+                <div class="stat-value" id="maxSpeed">0 كم/س</div>
+                <div class="stat-label">أقصى سرعة</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-car"></i></div>
+                <div class="stat-value" id="withVehicle">0</div>
+                <div class="stat-label">على سيارة</div>
+            </div>
+        </div>
+        
+        <div class="map-container">
+            <div id="map"></div>
+        </div>
+        
+        <div class="timeline">
+            <h2><i class="fas fa-clock"></i> سجل التحركات (24 ساعة)</h2>
+            {% if locations %}
+                <div id="timelineItems">
+                    {% for loc in locations %}
+                    <div class="timeline-item {% if loc.vehicle_id %}with-vehicle{% endif %}" onclick="focusLocation({{ loop.index0 }})">
+                        <div class="timeline-time">
+                            <i class="fas fa-clock"></i>
+                            {{ loc.recorded_at }}
+                        </div>
+                        <div class="timeline-details">
+                            <div class="timeline-detail-item">
+                                <i class="fas fa-map-marker-alt"></i>
+                                <span>{{ "%.6f"|format(loc.latitude) }}, {{ "%.6f"|format(loc.longitude) }}</span>
+                            </div>
+                            {% if loc.speed and loc.speed > 0 %}
+                            <span class="speed-badge">
+                                <i class="fas fa-tachometer-alt"></i> {{ "%.1f"|format(loc.speed) }} كم/س
+                            </span>
+                            {% endif %}
+                            {% if loc.vehicle %}
+                            <span class="vehicle-badge">
+                                <i class="fas fa-car"></i>
+                                {{ loc.vehicle.plate_number }} - {{ loc.vehicle.make }} {{ loc.vehicle.model }}
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-map-marked-alt"></i>
+                    <h3>لا توجد بيانات تتبع</h3>
+                    <p>لم يتم تسجيل أي تحركات للموظف خلال آخر 24 ساعة</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        const locations = {{ locations|tojson }};
+        const employeeName = "{{ employee.name }}";
+        
+        const map = L.map('map').setView([24.7136, 46.6753], 11);
+        
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap',
+            maxZoom: 19
+        }).addTo(map);
+        
+        if (locations && locations.length > 0) {
+            const pathCoordinates = locations.map(loc => [loc.latitude, loc.longitude]);
+            
+            const polyline = L.polyline(pathCoordinates, {
+                color: '#818cf8',
+                weight: 4,
+                opacity: 0.8,
+                smoothFactor: 1,
+                lineCap: 'round',
+                lineJoin: 'round'
+            }).addTo(map);
+            
+            map.fitBounds(polyline.getBounds(), { padding: [50, 50] });
+            
+            let maxSpeed = 0;
+            let totalDistance = 0;
+            let vehicleCount = 0;
+            
+            locations.forEach((loc, index) => {
+                if (loc.speed > maxSpeed) {
+                    maxSpeed = loc.speed;
+                }
+                
+                if (loc.vehicle_id) {
+                    vehicleCount++;
+                }
+                
+                if (index > 0) {
+                    const prev = locations[index - 1];
+                    const distance = calculateDistance(
+                        prev.latitude, prev.longitude,
+                        loc.latitude, loc.longitude
+                    );
+                    totalDistance += distance;
+                }
+                
+                const hasVehicle = loc.vehicle_id !== null;
+                const iconHtml = hasVehicle ? 
+                    '<i class="fas fa-car" style="font-size: 24px; color: #f59e0b;"></i>' :
+                    '<i class="fas fa-walking" style="font-size: 20px; color: #10b981;"></i>';
+                
+                const markerIcon = L.divIcon({
+                    className: 'custom-marker',
+                    html: `
+                        <div style="
+                            width: 40px;
+                            height: 40px;
+                            background: white;
+                            border-radius: 50%;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+                            border: 3px solid ${hasVehicle ? '#f59e0b' : '#10b981'};
+                        ">
+                            ${iconHtml}
+                        </div>
+                    `,
+                    iconSize: [40, 40],
+                    iconAnchor: [20, 20]
+                });
+                
+                const marker = L.marker([loc.latitude, loc.longitude], {
+                    icon: markerIcon
+                }).addTo(map);
+                
+                let popupContent = `
+                    <div style="text-align: center; font-family: 'Cairo', sans-serif; min-width: 220px; padding: 10px;">
+                        <h4 style="margin: 0 0 10px 0; color: #1e1b4b; font-weight: 700;">${employeeName}</h4>
+                        <p style="margin: 5px 0; color: #4b5563; font-size: 13px;">
+                            <strong>الوقت:</strong> ${loc.recorded_at}
+                        </p>
+                `;
+                
+                if (loc.speed > 0) {
+                    popupContent += `
+                        <p style="margin: 5px 0; color: #4b5563; font-size: 13px;">
+                            <strong>السرعة:</strong> ${loc.speed.toFixed(1)} كم/س
+                        </p>
+                    `;
+                }
+                
+                if (loc.vehicle) {
+                    popupContent += `
+                        <div style="margin-top: 10px; padding: 8px; background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-radius: 8px;">
+                            <p style="margin: 0; color: #92400e; font-weight: 600; font-size: 13px;">
+                                <i class="fas fa-car"></i> ${loc.vehicle.plate_number}
+                            </p>
+                            <p style="margin: 3px 0 0 0; color: #92400e; font-size: 12px;">
+                                ${loc.vehicle.make} ${loc.vehicle.model}
+                            </p>
+                        </div>
+                    `;
+                }
+                
+                popupContent += '</div>';
+                marker.bindPopup(popupContent);
+                
+                if (index === 0) {
+                    const startIcon = L.divIcon({
+                        className: 'start-marker',
+                        html: '<div style="background: #10b981; color: white; padding: 5px 10px; border-radius: 8px; font-family: Cairo; font-weight: 700; font-size: 12px; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);">البداية</div>',
+                        iconAnchor: [0, -15]
+                    });
+                    L.marker([loc.latitude, loc.longitude], { icon: startIcon }).addTo(map);
+                }
+                
+                if (index === locations.length - 1) {
+                    const endIcon = L.divIcon({
+                        className: 'end-marker',
+                        html: '<div style="background: #ef4444; color: white; padding: 5px 10px; border-radius: 8px; font-family: Cairo; font-weight: 700; font-size: 12px; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);">النهاية</div>',
+                        iconAnchor: [0, -15]
+                    });
+                    L.marker([loc.latitude, loc.longitude], { icon: endIcon }).addTo(map);
+                }
+            });
+            
+            document.getElementById('maxSpeed').textContent = maxSpeed.toFixed(1) + ' كم/س';
+            document.getElementById('totalDistance').textContent = totalDistance.toFixed(2) + ' كم';
+            document.getElementById('withVehicle').textContent = vehicleCount;
+        }
+        
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371;
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                      Math.sin(dLon/2) * Math.sin(dLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c;
+        }
+        
+        function focusLocation(index) {
+            if (locations && locations[index]) {
+                const loc = locations[index];
+                map.setView([loc.latitude, loc.longitude], 16);
+            }
+        }
+    </script>
+</body>
+</html>

@@ -637,3 +637,41 @@ def make_all_users_admins_command():
         print(f"حدث خطأ أثناء تحديث الأدوار: {e}")
         print("تم التراجع عن كل التغييرات.")
 
+
+# وظيفة حذف البيانات القديمة (أقدم من 48 ساعة)
+def cleanup_old_location_data():
+    """حذف مواقع الموظفين الأقدم من 48 ساعة"""
+    with app.app_context():
+        from models import EmployeeLocation
+        from datetime import datetime, timedelta
+        
+        try:
+            cutoff_time = datetime.utcnow() - timedelta(hours=48)
+            old_locations = EmployeeLocation.query.filter(
+                EmployeeLocation.recorded_at < cutoff_time
+            ).delete()
+            
+            db.session.commit()
+            
+            if old_locations > 0:
+                logger.info(f"تم حذف {old_locations} موقع قديم")
+            
+            return old_locations
+        except Exception as e:
+            logger.error(f"خطأ في حذف البيانات القديمة: {str(e)}")
+            db.session.rollback()
+            return 0
+
+# تشغيل تنظيف البيانات عند بدء التطبيق وكل 6 ساعات
+import atexit
+from apscheduler.schedulers.background import BackgroundScheduler
+
+scheduler = BackgroundScheduler()
+scheduler.add_job(func=cleanup_old_location_data, trigger="interval", hours=6)
+scheduler.start()
+
+# تشغيل التنظيف عند بدء التطبيق
+cleanup_old_location_data()
+
+# إيقاف المجدول عند إيقاف التطبيق
+atexit.register(lambda: scheduler.shutdown())

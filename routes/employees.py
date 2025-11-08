@@ -1974,3 +1974,49 @@ def tracking():
     )
 
 
+
+
+@employees_bp.route('/<int:id>/track-history')
+@login_required
+def track_history(id):
+    """صفحة تتبع تحركات موظف واحد خلال 24 ساعة"""
+    from flask import jsonify
+    
+    employee = Employee.query.get_or_404(id)
+    
+    cutoff_time = datetime.utcnow() - timedelta(hours=24)
+    
+    locations = EmployeeLocation.query.filter(
+        EmployeeLocation.employee_id == id,
+        EmployeeLocation.recorded_at >= cutoff_time
+    ).order_by(EmployeeLocation.recorded_at.asc()).all()
+    
+    locations_data = []
+    for loc in locations:
+        loc_dict = {
+            'latitude': float(loc.latitude),
+            'longitude': float(loc.longitude),
+            'speed': float(loc.speed_kmh) if loc.speed_kmh else 0,
+            'vehicle_id': loc.vehicle_id,
+            'recorded_at': loc.recorded_at.strftime('%Y-%m-%d %H:%M:%S'),
+            'accuracy': float(loc.accuracy_m) if loc.accuracy_m else None
+        }
+        
+        if loc.vehicle_id and loc.vehicle:
+            loc_dict['vehicle'] = {
+                'id': loc.vehicle.id,
+                'plate_number': loc.vehicle.plate_number,
+                'make': loc.vehicle.make,
+                'model': loc.vehicle.model
+            }
+        
+        locations_data.append(loc_dict)
+    
+    departments = Department.query.all()
+    
+    return render_template(
+        'employees/track_history.html',
+        employee=employee,
+        locations=locations_data,
+        departments=departments
+    )

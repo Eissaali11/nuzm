@@ -827,7 +827,13 @@
                                     {% endif %}
                                     
                                     <div class="employee-info">
-                                        <div class="employee-name">{{ emp.name }}</div>
+                                        <div class="employee-name">
+                                            <a href="{{ url_for('employees.track_history', id=emp.id) }}" 
+                                               style="color: inherit; text-decoration: none; display: block;"
+                                               onclick="event.stopPropagation();">
+                                                {{ emp.name }}
+                                            </a>
+                                        </div>
                                         <div class="employee-id">{{ emp.employee_id }}</div>
                                     </div>
                                 </div>

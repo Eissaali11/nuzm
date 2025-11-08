@@ -194,6 +194,8 @@ class EmployeeLocation(db.Model):
     latitude = db.Column(db.Numeric(10, 8), nullable=False)  # خط العرض
     longitude = db.Column(db.Numeric(11, 8), nullable=False)  # خط الطول
     accuracy_m = db.Column(db.Numeric(6, 2), nullable=True)  # دقة الموقع بالأمتار
+    speed_kmh = db.Column(db.Numeric(6, 2), nullable=True)  # السرعة بالكيلومتر في الساعة
+    vehicle_id = db.Column(db.Integer, db.ForeignKey('vehicle.id', ondelete='SET NULL'), nullable=True)  # السيارة المرتبطة
     source = db.Column(db.String(50), default='android_app')  # مصدر الموقع
     recorded_at = db.Column(db.DateTime, nullable=False)  # وقت التسجيل من التطبيق
     received_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)  # وقت الاستلام
@@ -201,6 +203,9 @@ class EmployeeLocation(db.Model):
     
     # العلاقة مع الموظف
     employee = db.relationship('Employee', backref=db.backref('locations', lazy='dynamic', cascade='all, delete-orphan'))
+    
+    # العلاقة مع السيارة
+    vehicle = db.relationship('Vehicle', backref=db.backref('location_history', lazy='dynamic'))
     
     # فهرس مركب للأداء السريع
     __table_args__ = (
@@ -218,6 +223,8 @@ class EmployeeLocation(db.Model):
             'latitude': float(self.latitude) if self.latitude else None,
             'longitude': float(self.longitude) if self.longitude else None,
             'accuracy': float(self.accuracy_m) if self.accuracy_m else None,
+            'speed': float(self.speed_kmh) if self.speed_kmh else None,
+            'vehicle_id': self.vehicle_id,
             'source': self.source,
             'recorded_at': self.recorded_at.isoformat() if self.recorded_at else None,
             'received_at': self.received_at.isoformat() if self.received_at else None,
