@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, jsonify, flash, redirect, url_for
+from flask import Blueprint, render_template, request, jsonify, flash, redirect, url_for, send_file
 from flask_login import login_required, current_user
 from models import Geofence, GeofenceEvent, Employee, Department, Attendance, EmployeeLocation, db, employee_departments
 from datetime import datetime
@@ -560,3 +560,107 @@ def update_geofence(geofence_id):
             'success': False,
             'message': f'خطأ في التحديث: {str(e)}'
         }), 400
+
+
+@geofences_bp.route('/<int:geofence_id>/export-events')
+@login_required
+def export_events(geofence_id):
+    """تصدير بيانات الوصول والمغادرة لموظفي الدائرة"""
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
+    from io import BytesIO
+    
+    try:
+        geofence = Geofence.query.get_or_404(geofence_id)
+        
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "سجل الحضور والمغادرة"
+        
+        ws.right_to_left = True
+        
+        header_fill = PatternFill(start_color="4F46E5", end_color="4F46E5", fill_type="solid")
+        header_font = Font(name='Arial', size=12, bold=True, color="FFFFFF")
+        border = Border(
+            left=Side(style='thin'),
+            right=Side(style='thin'),
+            top=Side(style='thin'),
+            bottom=Side(style='thin')
+        )
+        
+        headers = ['الحالة الحالية', 'المسافة (م)', 'نوع الحدث', 'التاريخ والوقت', 'رقم الموظف', 'اسم الموظف', 'القسم', 'الدائرة']
+        
+        for col_num, header in enumerate(headers, 1):
+            cell = ws.cell(row=1, column=col_num)
+            cell.value = header
+            cell.fill = header_fill
+            cell.font = header_font
+            cell.alignment = Alignment(horizontal='center', vertical='center')
+            cell.border = border
+        
+        events = GeofenceEvent.query.filter_by(
+            geofence_id=geofence_id
+        ).order_by(GeofenceEvent.recorded_at.desc()).all()
+        
+        employees_inside = geofence.get_department_employees_inside()
+        inside_employee_ids = {emp['employee'].id for emp in employees_inside}
+        
+        row_num = 2
+        for event in events:
+            if not event.employee:
+                continue
+            
+            is_inside = event.employee_id in inside_employee_ids
+            status = '✓ موجود' if is_inside else '✗ غادر'
+            
+            event_type_map = {
+                'entry': 'دخول',
+                'exit': 'خروج',
+                'bulk_check_in': 'تسجيل جماعي',
+                'update': 'تحديث'
+            }
+            event_type = event_type_map.get(event.event_type, event.event_type)
+            
+            ws.cell(row=row_num, column=1, value=status)
+            ws.cell(row=row_num, column=2, value=event.distance_from_center if event.distance_from_center else '-')
+            ws.cell(row=row_num, column=3, value=event_type)
+            ws.cell(row=row_num, column=4, value=event.recorded_at.strftime('%Y-%m-%d %H:%M:%S') if event.recorded_at else '-')
+            ws.cell(row=row_num, column=5, value=event.employee.employee_id)
+            ws.cell(row=row_num, column=6, value=event.employee.name)
+            ws.cell(row=row_num, column=7, value=geofence.department.name if geofence.department else '-')
+            ws.cell(row=row_num, column=8, value=geofence.name)
+            
+            for col in range(1, 9):
+                cell = ws.cell(row=row_num, column=col)
+                cell.border = border
+                cell.alignment = Alignment(horizontal='center', vertical='center')
+                
+                if col == 1:
+                    if is_inside:
+                        cell.fill = PatternFill(start_color="D1FAE5", end_color="D1FAE5", fill_type="solid")
+                        cell.font = Font(color="065F46", bold=True)
+                    else:
+                        cell.fill = PatternFill(start_color="FEE2E2", end_color="FEE2E2", fill_type="solid")
+                        cell.font = Font(color="991B1B", bold=True)
+            
+            row_num += 1
+        
+        for col in range(1, 9):
+            ws.column_dimensions[ws.cell(row=1, column=col).column_letter].width = 18
+        
+        output = BytesIO()
+        wb.save(output)
+        output.seek(0)
+        
+        filename = f"تقرير_الحضور_{geofence.name}_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.xlsx"
+        
+        return send_file(
+            output,
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            as_attachment=True,
+            download_name=filename
+        )
+    
+    except Exception as e:
+        flash(f'خطأ في تصدير البيانات: {str(e)}', 'danger')
+        return redirect(url_for('geofences.view', geofence_id=geofence_id))
