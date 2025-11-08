@@ -96,19 +96,30 @@ def view(geofence_id):
         geofence_id=geofence_id
     ).order_by(GeofenceEvent.recorded_at.desc()).limit(50).all()
     
+    # جلب جميع موظفي القسم للإضافة
+    department_employees = Employee.query.join(employee_departments).filter(
+        employee_departments.c.department_id == geofence.department_id
+    ).all()
+    
+    # الموظفون المتاحون للربط (غير مرتبطين بالدائرة حالياً)
+    assigned_employee_ids = [emp.id for emp in geofence.assigned_employees]
+    available_employees = [emp for emp in department_employees if emp.id not in assigned_employee_ids]
+    
     return render_template(
         'geofences/view.html',
         geofence=geofence,
         employees_inside=employees_inside,
         all_employees=all_employees,
-        recent_events=recent_events
+        recent_events=recent_events,
+        assigned_employees=geofence.assigned_employees,
+        available_employees=available_employees
     )
 
 
 @geofences_bp.route('/<int:geofence_id>/bulk-check-in', methods=['POST'])
 @login_required
 def bulk_check_in(geofence_id):
-    """تسجيل حضور جماعي فقط لموظفي القسم المرتبط بالدائرة"""
+    """تسجيل حضور جماعي فقط لموظفي القسم المرتبط بالدائرة والموجودين داخل دوائرهم المخصصة"""
     try:
         geofence = Geofence.query.get_or_404(geofence_id)
         
@@ -123,10 +134,16 @@ def bulk_check_in(geofence_id):
         checked_in = []
         already_checked = []
         errors = []
+        not_assigned = []
         
         for emp_data in employees_inside:
             employee = emp_data['employee']
             location = emp_data['location']
+            
+            # التحقق من أن الموظف مرتبط بهذه الدائرة
+            if employee not in geofence.assigned_employees:
+                not_assigned.append(employee.name)
+                continue
             
             today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
             existing_attendance = Attendance.query.filter(
@@ -168,16 +185,24 @@ def bulk_check_in(geofence_id):
         
         db.session.commit()
         
+        message_parts = [f'تم تسجيل حضور {len(checked_in)} موظف']
+        if not_assigned:
+            message_parts.append(f'({len(not_assigned)} موظف غير مرتبط بهذه الدائرة)')
+        if already_checked:
+            message_parts.append(f'({len(already_checked)} تم تسجيلهم مسبقاً)')
+        
         return jsonify({
             'success': True,
             'department_name': geofence.department.name,
             'checked_in_count': len(checked_in),
             'already_checked_count': len(already_checked),
+            'not_assigned_count': len(not_assigned),
             'error_count': len(errors),
             'checked_in': checked_in,
             'already_checked': already_checked,
+            'not_assigned': not_assigned,
             'errors': errors,
-            'message': f'تم تسجيل حضور {len(checked_in)} موظف من قسم "{geofence.department.name}" بنجاح'
+            'message': ' '.join(message_parts)
         })
     
     except Exception as e:
@@ -416,6 +441,72 @@ def extract_google_maps_coords():
             }), 400
     
     except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'خطأ: {str(e)}'
+        }), 400
+
+
+@geofences_bp.route('/<int:geofence_id>/assign-employees', methods=['POST'])
+@login_required
+def assign_employees(geofence_id):
+    """ربط موظفين بدائرة جغرافية محددة"""
+    try:
+        geofence = Geofence.query.get_or_404(geofence_id)
+        data = request.get_json()
+        employee_ids = data.get('employee_ids', [])
+        
+        if not employee_ids:
+            return jsonify({
+                'success': False,
+                'message': 'الرجاء اختيار موظف واحد على الأقل'
+            }), 400
+        
+        # إضافة الموظفين إلى الدائرة
+        for employee_id in employee_ids:
+            employee = Employee.query.get(employee_id)
+            if employee and employee not in geofence.assigned_employees:
+                geofence.assigned_employees.append(employee)
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': f'تم ربط {len(employee_ids)} موظف بالدائرة بنجاح'
+        })
+    
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'message': f'خطأ في ربط الموظفين: {str(e)}'
+        }), 400
+
+
+@geofences_bp.route('/<int:geofence_id>/unassign-employee/<int:employee_id>', methods=['POST'])
+@login_required
+def unassign_employee(geofence_id, employee_id):
+    """إلغاء ربط موظف من دائرة جغرافية"""
+    try:
+        geofence = Geofence.query.get_or_404(geofence_id)
+        employee = Employee.query.get_or_404(employee_id)
+        
+        if employee in geofence.assigned_employees:
+            geofence.assigned_employees.remove(employee)
+            db.session.commit()
+            
+            return jsonify({
+                'success': True,
+                'message': 'تم إلغاء ربط الموظف من الدائرة'
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'message': 'الموظف غير مرتبط بهذه الدائرة'
+            }), 400
+    
+    except Exception as e:
+        db.session.rollback()
         return jsonify({
             'success': False,
             'message': f'خطأ: {str(e)}'
