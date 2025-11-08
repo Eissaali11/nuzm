@@ -12,6 +12,8 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
     
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap');
+        
         * {
             margin: 0;
             padding: 0;
@@ -19,42 +21,87 @@
         }
         
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
             min-height: 100vh;
             padding: 20px;
-            color: #2d3748;
+            color: #e0e7ff;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(99, 102, 241, 0.2) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
         }
         
         .page-container {
             max-width: 1800px;
             margin: 0 auto;
+            position: relative;
+            z-index: 1;
         }
         
         .header {
-            background: white;
-            border-radius: 16px;
-            padding: 25px 30px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 25px 35px;
             margin-bottom: 25px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            box-shadow: 
+                0 8px 32px rgba(31, 38, 135, 0.37),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
             display: flex;
             justify-content: space-between;
             align-items: center;
+            animation: slideDown 0.6s ease-out;
+        }
+        
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
         
         .header h1 {
-            color: #2d3748;
-            font-size: 28px;
-            font-weight: 700;
+            color: #ffffff;
+            font-size: 32px;
+            font-weight: 900;
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 15px;
             margin: 0;
+            text-shadow: 0 2px 10px rgba(99, 102, 241, 0.5);
         }
         
         .header h1 i {
-            color: #667eea;
-            font-size: 32px;
+            color: #818cf8;
+            font-size: 36px;
+            animation: pulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.1);
+            }
         }
         
         .header-actions {
@@ -66,59 +113,105 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
-            padding: 12px 24px;
-            border-radius: 10px;
-            font-weight: 600;
+            padding: 14px 28px;
+            border-radius: 16px;
+            font-weight: 700;
             text-decoration: none;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 
+                0 4px 15px rgba(102, 126, 234, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
             display: inline-flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s;
+        }
+        
+        .btn:hover::before {
+            left: 100%;
         }
         
         .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+        }
+        
+        .btn:active {
+            transform: translateY(-1px);
         }
         
         .btn-secondary {
-            background: white;
-            color: #667eea;
-            border: 2px solid #667eea;
+            background: linear-gradient(135deg, #4c1d95 0%, #5b21b6 100%);
+            border: 2px solid rgba(139, 92, 246, 0.5);
         }
         
         .btn-secondary:hover {
-            background: #f7fafc;
+            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.6);
         }
         
         .main-content {
             display: grid;
-            grid-template-columns: 1fr 400px;
+            grid-template-columns: 1fr 420px;
             gap: 25px;
+            animation: fadeIn 0.8s ease-out 0.2s both;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
         
         .map-container {
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            box-shadow: 
+                0 8px 32px rgba(31, 38, 135, 0.37),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
             overflow: hidden;
         }
         
         .map-header {
-            padding: 20px 25px;
-            border-bottom: 1px solid #e2e8f0;
+            padding: 25px 30px;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
         
         .map-header h2 {
-            font-size: 20px;
-            color: #2d3748;
-            font-weight: 600;
+            font-size: 22px;
+            color: #ffffff;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .map-header h2 i {
+            color: #818cf8;
         }
         
         #map {
@@ -132,16 +225,65 @@
             gap: 20px;
         }
         
+        .filter-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+        }
+        
+        .filter-card h3 {
+            color: #ffffff;
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .filter-card h3 i {
+            color: #818cf8;
+        }
+        
+        .filter-card select {
+            width: 100%;
+            padding: 12px 15px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            color: #ffffff;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .filter-card select:hover {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: #818cf8;
+        }
+        
+        .filter-card select option {
+            background: #1e1b4b;
+            color: #ffffff;
+        }
+        
         .geofences-list {
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
             overflow: hidden;
         }
         
         .list-header {
             padding: 20px 25px;
-            border-bottom: 1px solid #e2e8f0;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -149,107 +291,172 @@
         
         .list-header h3 {
             font-size: 18px;
-            color: #2d3748;
-            font-weight: 600;
+            color: #ffffff;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .list-header h3 i {
+            color: #818cf8;
+        }
+        
+        .badge {
+            background: linear-gradient(135deg, #818cf8 0%, #a78bfa 100%);
+            color: white;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 700;
+            box-shadow: 0 4px 15px rgba(129, 140, 248, 0.4);
         }
         
         .geofence-items {
-            max-height: calc(100vh - 400px);
+            max-height: calc(100vh - 450px);
             overflow-y: auto;
+        }
+        
+        .geofence-items::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .geofence-items::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        .geofence-items::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #818cf8 0%, #a78bfa 100%);
+            border-radius: 10px;
         }
         
         .geofence-item {
             padding: 20px 25px;
-            border-bottom: 1px solid #f7fafc;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
             transition: all 0.3s ease;
             cursor: pointer;
+            position: relative;
+        }
+        
+        .geofence-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(135deg, #818cf8 0%, #a78bfa 100%);
+            transform: scaleY(0);
+            transition: transform 0.3s ease;
         }
         
         .geofence-item:hover {
-            background: #f7fafc;
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateX(-5px);
+        }
+        
+        .geofence-item:hover::before {
+            transform: scaleY(1);
         }
         
         .geofence-item-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
         }
         
         .geofence-name {
-            font-weight: 600;
-            color: #2d3748;
-            font-size: 16px;
+            font-weight: 700;
+            color: #ffffff;
+            font-size: 17px;
         }
         
         .geofence-type {
-            background: #667eea;
+            background: linear-gradient(135deg, #818cf8 0%, #a78bfa 100%);
             color: white;
-            padding: 4px 12px;
+            padding: 5px 14px;
             border-radius: 12px;
             font-size: 12px;
-            font-weight: 600;
+            font-weight: 700;
+            box-shadow: 0 2px 10px rgba(129, 140, 248, 0.3);
         }
         
         .geofence-info {
             display: flex;
             flex-direction: column;
-            gap: 8px;
-            margin-bottom: 12px;
+            gap: 10px;
+            margin-bottom: 15px;
         }
         
         .info-item {
             display: flex;
             align-items: center;
-            gap: 8px;
-            color: #718096;
+            gap: 10px;
+            color: #c7d2fe;
             font-size: 14px;
+            font-weight: 500;
         }
         
         .info-item i {
-            width: 16px;
-            color: #667eea;
+            width: 18px;
+            color: #818cf8;
         }
         
         .geofence-actions {
             display: flex;
             gap: 8px;
-            padding-top: 12px;
-            border-top: 1px solid #f7fafc;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
         }
         
         .btn-small {
-            padding: 8px 16px;
+            padding: 10px 18px;
             font-size: 13px;
-            border-radius: 8px;
+            border-radius: 12px;
         }
         
         .btn-success {
-            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        }
+        
+        .btn-success:hover {
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5);
         }
         
         .btn-info {
-            background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        }
+        
+        .btn-info:hover {
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5);
         }
         
         .employees-count {
-            background: #f7fafc;
-            padding: 12px;
-            border-radius: 8px;
+            background: linear-gradient(135deg, rgba(129, 140, 248, 0.2) 0%, rgba(167, 139, 250, 0.2) 100%);
+            border: 1px solid rgba(129, 140, 248, 0.3);
+            padding: 15px;
+            border-radius: 12px;
             text-align: center;
-            margin-bottom: 12px;
+            margin-bottom: 15px;
         }
         
         .employees-count-number {
-            font-size: 24px;
-            font-weight: 700;
-            color: #667eea;
+            font-size: 28px;
+            font-weight: 900;
+            background: linear-gradient(135deg, #818cf8 0%, #a78bfa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
         
         .employees-count-label {
             font-size: 12px;
-            color: #718096;
-            margin-top: 4px;
+            color: #c7d2fe;
+            margin-top: 5px;
+            font-weight: 600;
         }
         
         .modal {
@@ -259,10 +466,12 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
             z-index: 10000;
             align-items: center;
             justify-content: center;
+            animation: fadeIn 0.3s ease;
         }
         
         .modal.active {
@@ -270,47 +479,71 @@
         }
         
         .modal-content {
-            background: white;
-            border-radius: 16px;
-            padding: 30px;
-            max-width: 500px;
+            background: linear-gradient(135deg, rgba(30, 27, 75, 0.95) 0%, rgba(24, 24, 62, 0.95) 100%);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 35px;
+            max-width: 550px;
             width: 90%;
             max-height: 90vh;
             overflow-y: auto;
+            box-shadow: 
+                0 20px 60px rgba(0, 0, 0, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            animation: slideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px) scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
         }
         
         .modal-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
         }
         
         .modal-header h3 {
-            font-size: 22px;
-            color: #2d3748;
-            font-weight: 700;
+            font-size: 24px;
+            color: #ffffff;
+            font-weight: 900;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .modal-header h3 i {
+            color: #818cf8;
         }
         
         .btn-close {
-            background: transparent;
+            background: rgba(255, 255, 255, 0.1);
             border: none;
             font-size: 24px;
-            color: #718096;
+            color: #ffffff;
             cursor: pointer;
             padding: 0;
-            width: 32px;
-            height: 32px;
+            width: 40px;
+            height: 40px;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 8px;
+            border-radius: 12px;
             transition: all 0.3s ease;
         }
         
         .btn-close:hover {
-            background: #f7fafc;
-            color: #2d3748;
+            background: rgba(239, 68, 68, 0.3);
+            transform: rotate(90deg);
         }
         
         .form-group {
@@ -319,9 +552,9 @@
         
         .form-group label {
             display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #2d3748;
+            margin-bottom: 10px;
+            font-weight: 700;
+            color: #ffffff;
             font-size: 14px;
         }
         
@@ -329,10 +562,13 @@
         .form-group select,
         .form-group textarea {
             width: 100%;
-            padding: 12px;
-            border: 2px solid #e2e8f0;
-            border-radius: 10px;
+            padding: 14px 16px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            color: #ffffff;
             font-size: 14px;
+            font-weight: 600;
             transition: all 0.3s ease;
         }
         
@@ -340,8 +576,14 @@
         .form-group select:focus,
         .form-group textarea:focus {
             outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            border-color: #818cf8;
+            background: rgba(255, 255, 255, 0.12);
+            box-shadow: 0 0 0 4px rgba(129, 140, 248, 0.2);
+        }
+        
+        .form-group select option {
+            background: #1e1b4b;
+            color: #ffffff;
         }
         
         .form-row {
@@ -351,63 +593,67 @@
         }
         
         .alert {
-            padding: 15px 20px;
-            border-radius: 10px;
+            padding: 16px 20px;
+            border-radius: 12px;
             margin-bottom: 20px;
             display: flex;
             align-items: center;
             gap: 12px;
             font-size: 14px;
+            font-weight: 600;
+            border: 1px solid;
         }
         
         .alert-success {
-            background: #c6f6d5;
-            color: #22543d;
-            border: 1px solid #9ae6b4;
+            background: rgba(16, 185, 129, 0.2);
+            color: #6ee7b7;
+            border-color: rgba(16, 185, 129, 0.3);
         }
         
         .alert-error {
-            background: #fed7d7;
-            color: #742a2a;
-            border: 1px solid #fc8181;
+            background: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+            border-color: rgba(239, 68, 68, 0.3);
         }
         
         .alert-info {
-            background: #bee3f8;
-            color: #2c5282;
-            border: 1px solid #90cdf4;
+            background: rgba(59, 130, 246, 0.2);
+            color: #93c5fd;
+            border-color: rgba(59, 130, 246, 0.3);
         }
         
         .color-picker-wrapper {
             display: flex;
-            gap: 10px;
+            gap: 12px;
             align-items: center;
         }
         
         .color-picker-wrapper input[type="color"] {
             width: 60px;
-            height: 45px;
-            border: none;
-            border-radius: 8px;
+            height: 50px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
             cursor: pointer;
         }
         
         .empty-state {
             text-align: center;
-            padding: 60px 20px;
-            color: #718096;
+            padding: 80px 20px;
+            color: #c7d2fe;
         }
         
         .empty-state i {
-            font-size: 64px;
-            color: #cbd5e0;
-            margin-bottom: 20px;
+            font-size: 80px;
+            color: #818cf8;
+            margin-bottom: 25px;
+            opacity: 0.5;
         }
         
         .empty-state h3 {
-            font-size: 18px;
-            color: #4a5568;
-            margin-bottom: 10px;
+            font-size: 20px;
+            color: #ffffff;
+            margin-bottom: 12px;
+            font-weight: 700;
         }
         
         @media (max-width: 1200px) {
@@ -447,7 +693,7 @@
                     <div>
                         <button class="btn btn-small btn-secondary" onclick="toggleMapView()">
                             <i class="fas fa-satellite"></i>
-                            <span id="mapViewText">عرض صورة القمر الصناعي</span>
+                            <span id="mapViewText">صورة القمر الصناعي</span>
                         </button>
                     </div>
                 </div>
@@ -455,15 +701,25 @@
             </div>
             
             <div class="sidebar">
+                <div class="filter-card">
+                    <h3><i class="fas fa-filter"></i> تصفية حسب القسم</h3>
+                    <select id="departmentFilter" onchange="filterByDepartment()">
+                        <option value="">جميع الأقسام</option>
+                        {% for dept in departments %}
+                        <option value="{{ dept.id }}">{{ dept.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
                 <div class="geofences-list">
                     <div class="list-header">
                         <h3><i class="fas fa-list"></i> الدوائر النشطة</h3>
-                        <span class="badge">{{ geofences_data|length }}</span>
+                        <span class="badge" id="geofencesCount">{{ geofences_data|length }}</span>
                     </div>
-                    <div class="geofence-items">
+                    <div class="geofence-items" id="geofencesList">
                         {% if geofences_data %}
                             {% for item in geofences_data %}
-                            <div class="geofence-item" data-geofence-id="{{ item.geofence.id }}">
+                            <div class="geofence-item" data-geofence-id="{{ item.geofence.id }}" data-department-id="{{ item.geofence.department_id }}">
                                 <div class="geofence-item-header">
                                     <span class="geofence-name">{{ item.geofence.name }}</span>
                                     <span class="geofence-type">{{ item.geofence.type }}</span>
@@ -472,11 +728,11 @@
                                 <div class="geofence-info">
                                     <div class="info-item">
                                         <i class="fas fa-building"></i>
-                                        <span>القسم: {{ item.geofence.department.name }}</span>
+                                        <span>{{ item.geofence.department.name }}</span>
                                     </div>
                                     <div class="info-item">
                                         <i class="fas fa-ruler-horizontal"></i>
-                                        <span>نصف القطر: {{ item.geofence.radius_meters }} متر</span>
+                                        <span>{{ item.geofence.radius_meters }} متر</span>
                                     </div>
                                 </div>
                                 
@@ -488,7 +744,7 @@
                                 <div class="geofence-actions">
                                     <button class="btn btn-small btn-success" onclick="bulkCheckIn({{ item.geofence.id }})">
                                         <i class="fas fa-check-circle"></i>
-                                        تسجيل حضور جماعي
+                                        تسجيل حضور
                                     </button>
                                     <button class="btn btn-small btn-info" onclick="viewGeofence({{ item.geofence.id }})">
                                         <i class="fas fa-eye"></i>
@@ -501,7 +757,7 @@
                             <div class="empty-state">
                                 <i class="fas fa-circle-notch"></i>
                                 <h3>لا توجد دوائر جغرافية</h3>
-                                <p>ابدأ بإضافة دائرة جديدة من الزر أعلاه</p>
+                                <p>ابدأ بإضافة دائرة جديدة</p>
                             </div>
                         {% endif %}
                     </div>
@@ -510,11 +766,11 @@
         </div>
     </div>
     
-    <!-- Modal إضافة دائرة جديدة -->
+    <!-- Modal إضافة دائرة -->
     <div id="createModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3><i class="fas fa-plus-circle"></i> إضافة دائرة جغرافية جديدة</h3>
+                <h3><i class="fas fa-plus-circle"></i> إضافة دائرة جديدة</h3>
                 <button class="btn-close" onclick="closeCreateModal()">×</button>
             </div>
             
@@ -522,13 +778,13 @@
             
             <form id="createForm" onsubmit="createGeofence(event)">
                 <div class="form-group">
-                    <label>اسم الدائرة <span style="color: red;">*</span></label>
+                    <label>اسم الدائرة <span style="color: #ef4444;">*</span></label>
                     <input type="text" name="name" required placeholder="مثال: مشروع برج المملكة">
                 </div>
                 
                 <div class="form-row">
                     <div class="form-group">
-                        <label>النوع <span style="color: red;">*</span></label>
+                        <label>النوع <span style="color: #ef4444;">*</span></label>
                         <select name="type" required>
                             <option value="project">مشروع</option>
                             <option value="office">مكتب</option>
@@ -538,7 +794,7 @@
                     </div>
                     
                     <div class="form-group">
-                        <label>القسم المرتبط <span style="color: red;">*</span></label>
+                        <label>القسم المرتبط <span style="color: #ef4444;">*</span></label>
                         <select name="department_id" required>
                             <option value="">-- اختر القسم --</option>
                             {% for dept in departments %}
@@ -549,26 +805,26 @@
                 </div>
                 
                 <div class="form-group">
-                    <label>نصف القطر (بالأمتار) <span style="color: red;">*</span></label>
+                    <label>نصف القطر (بالأمتار) <span style="color: #ef4444;">*</span></label>
                     <input type="number" name="radius" required min="50" max="10000" value="500">
                 </div>
                 
                 <div class="form-group">
                     <label>اللون</label>
                     <div class="color-picker-wrapper">
-                        <input type="color" name="color" value="#667eea">
-                        <span>اختر لون الدائرة على الخريطة</span>
+                        <input type="color" name="color" value="#818cf8">
+                        <span>اختر لون الدائرة</span>
                     </div>
                 </div>
                 
                 <div class="form-group">
                     <label>الوصف</label>
-                    <textarea name="description" rows="3" placeholder="وصف اختياري للدائرة"></textarea>
+                    <textarea name="description" rows="3" placeholder="وصف اختياري"></textarea>
                 </div>
                 
                 <div class="alert alert-info">
                     <i class="fas fa-info-circle"></i>
-                    <span>انقر على الخريطة لتحديد موقع الدائرة</span>
+                    <span>انقر على الخريطة لتحديد الموقع</span>
                 </div>
                 
                 <input type="hidden" name="latitude" id="latitude">
@@ -582,16 +838,13 @@
         </div>
     </div>
     
-    <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
     <script>
-        // تهيئة الخريطة
-        const map = L.map('map').setView([24.7136, 46.6753], 11); // الرياض
+        const map = L.map('map').setView([24.7136, 46.6753], 11);
         
-        // طبقات الخريطة
         const streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors',
+            attribution: '© OpenStreetMap',
             maxZoom: 19
         });
         
@@ -603,22 +856,20 @@
         streetLayer.addTo(map);
         let currentLayer = 'street';
         
-        // تبديل طبقة الخريطة
         function toggleMapView() {
             if (currentLayer === 'street') {
                 map.removeLayer(streetLayer);
                 satelliteLayer.addTo(map);
                 currentLayer = 'satellite';
-                document.getElementById('mapViewText').textContent = 'عرض الخريطة العادية';
+                document.getElementById('mapViewText').textContent = 'الخريطة العادية';
             } else {
                 map.removeLayer(satelliteLayer);
                 streetLayer.addTo(map);
                 currentLayer = 'street';
-                document.getElementById('mapViewText').textContent = 'عرض صورة القمر الصناعي';
+                document.getElementById('mapViewText').textContent = 'صورة القمر الصناعي';
             }
         }
         
-        // رسم الدوائر الموجودة
         const geofences = {{ geofences_data|tojson }};
         const circles = {};
         
@@ -627,17 +878,18 @@
             const circle = L.circle([geofence.center_latitude, geofence.center_longitude], {
                 color: geofence.color,
                 fillColor: geofence.color,
-                fillOpacity: 0.2,
-                radius: geofence.radius_meters
+                fillOpacity: 0.25,
+                radius: geofence.radius_meters,
+                weight: 3
             }).addTo(map);
             
             circle.bindPopup(`
-                <div style="text-align: center; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
-                    <h4 style="margin: 0 0 10px 0; color: #2d3748;">${geofence.name}</h4>
-                    <p style="margin: 5px 0;"><strong>القسم:</strong> ${geofence.department.name}</p>
-                    <p style="margin: 5px 0;"><strong>الموظفين داخل الدائرة:</strong> ${item.employees_count}</p>
-                    <button onclick="bulkCheckIn(${geofence.id})" style="margin-top: 10px; padding: 8px 16px; background: #667eea; color: white; border: none; border-radius: 8px; cursor: pointer;">
-                        تسجيل حضور جماعي
+                <div style="text-align: center; font-family: 'Cairo', sans-serif; min-width: 200px;">
+                    <h4 style="margin: 0 0 12px 0; color: #1e1b4b; font-weight: 700;">${geofence.name}</h4>
+                    <p style="margin: 6px 0; color: #4b5563;"><strong>القسم:</strong> ${geofence.department.name}</p>
+                    <p style="margin: 6px 0; color: #4b5563;"><strong>الموظفين:</strong> ${item.employees_count}</p>
+                    <button onclick="bulkCheckIn(${geofence.id})" style="margin-top: 12px; padding: 10px 20px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: 700;">
+                        <i class="fas fa-check-circle"></i> تسجيل حضور
                     </button>
                 </div>
             `);
@@ -645,33 +897,21 @@
             circles[geofence.id] = circle;
         });
         
-        // متغيرات لإنشاء دائرة جديدة
         let tempMarker = null;
         let tempCircle = null;
         
-        // عند فتح نافذة الإنشاء، تفعيل الاستماع للنقر على الخريطة
         function showCreateModal() {
             document.getElementById('createModal').classList.add('active');
-            
-            // إضافة مستمع للنقر على الخريطة
             map.on('click', onMapClick);
         }
         
         function closeCreateModal() {
             document.getElementById('createModal').classList.remove('active');
-            
-            // إزالة المستمع والعلامات المؤقتة
             map.off('click', onMapClick);
-            if (tempMarker) {
-                map.removeLayer(tempMarker);
-                tempMarker = null;
-            }
-            if (tempCircle) {
-                map.removeLayer(tempCircle);
-                tempCircle = null;
-            }
-            
-            // مسح النموذج
+            if (tempMarker) map.removeLayer(tempMarker);
+            if (tempCircle) map.removeLayer(tempCircle);
+            tempMarker = null;
+            tempCircle = null;
             document.getElementById('createForm').reset();
             document.getElementById('latitude').value = '';
             document.getElementById('longitude').value = '';
@@ -685,72 +925,54 @@
             document.getElementById('latitude').value = lat;
             document.getElementById('longitude').value = lng;
             
-            // إزالة العلامات القديمة
             if (tempMarker) map.removeLayer(tempMarker);
             if (tempCircle) map.removeLayer(tempCircle);
             
-            // إضافة علامة جديدة
             tempMarker = L.marker([lat, lng]).addTo(map);
             
-            // إضافة دائرة مؤقتة
             const radius = parseInt(document.querySelector('[name="radius"]').value) || 500;
-            const color = document.querySelector('[name="color"]').value || '#667eea';
+            const color = document.querySelector('[name="color"]').value || '#818cf8';
             
             tempCircle = L.circle([lat, lng], {
                 color: color,
                 fillColor: color,
-                fillOpacity: 0.2,
-                radius: radius
+                fillOpacity: 0.25,
+                radius: radius,
+                weight: 3
             }).addTo(map);
             
             showAlert('تم تحديد الموقع بنجاح!', 'success');
         }
         
-        // تحديث الدائرة عند تغيير نصف القطر أو اللون
-        document.querySelector('[name="radius"]').addEventListener('change', function() {
-            if (tempCircle) {
-                const lat = document.getElementById('latitude').value;
-                const lng = document.getElementById('longitude').value;
-                map.removeLayer(tempCircle);
-                
-                const radius = parseInt(this.value);
-                const color = document.querySelector('[name="color"]').value;
-                
-                tempCircle = L.circle([lat, lng], {
-                    color: color,
-                    fillColor: color,
-                    fillOpacity: 0.2,
-                    radius: radius
-                }).addTo(map);
-            }
-        });
+        document.querySelector('[name="radius"]').addEventListener('change', updateTempCircle);
+        document.querySelector('[name="color"]').addEventListener('change', updateTempCircle);
         
-        document.querySelector('[name="color"]').addEventListener('change', function() {
+        function updateTempCircle() {
             if (tempCircle) {
                 const lat = document.getElementById('latitude').value;
                 const lng = document.getElementById('longitude').value;
                 map.removeLayer(tempCircle);
                 
                 const radius = parseInt(document.querySelector('[name="radius"]').value);
-                const color = this.value;
+                const color = document.querySelector('[name="color"]').value;
                 
                 tempCircle = L.circle([lat, lng], {
                     color: color,
                     fillColor: color,
-                    fillOpacity: 0.2,
-                    radius: radius
+                    fillOpacity: 0.25,
+                    radius: radius,
+                    weight: 3
                 }).addTo(map);
             }
-        });
+        }
         
-        // إنشاء دائرة جديدة
         async function createGeofence(e) {
             e.preventDefault();
             
             const formData = new FormData(e.target);
             
             if (!formData.get('latitude') || !formData.get('longitude')) {
-                showAlert('يرجى تحديد موقع الدائرة على الخريطة أولاً', 'error');
+                showAlert('يرجى تحديد موقع الدائرة على الخريطة', 'error');
                 return;
             }
             
@@ -768,9 +990,7 @@
             try {
                 const response = await fetch('/employees/geofences/create', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify(data)
                 });
                 
@@ -778,22 +998,17 @@
                 
                 if (result.success) {
                     showAlert('تم إنشاء الدائرة بنجاح!', 'success');
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 1500);
+                    setTimeout(() => window.location.reload(), 1500);
                 } else {
-                    showAlert(result.message || 'حدث خطأ أثناء الإنشاء', 'error');
+                    showAlert(result.message || 'حدث خطأ', 'error');
                 }
             } catch (error) {
-                showAlert('حدث خطأ في الاتصال بالخادم', 'error');
+                showAlert('حدث خطأ في الاتصال', 'error');
             }
         }
         
-        // تسجيل حضور جماعي
         async function bulkCheckIn(geofenceId) {
-            if (!confirm('هل تريد تسجيل حضور جميع موظفي القسم الموجودين داخل الدائرة؟')) {
-                return;
-            }
+            if (!confirm('هل تريد تسجيل حضور جميع موظفي القسم الموجودين داخل الدائرة؟')) return;
             
             try {
                 const response = await fetch(`/employees/geofences/${geofenceId}/bulk-check-in`, {
@@ -805,19 +1020,17 @@
                 if (result.success) {
                     alert(`${result.message}\n\nتم التسجيل: ${result.checked_in_count}\nمسجل مسبقاً: ${result.already_checked_count}`);
                 } else {
-                    alert(result.message || 'حدث خطأ أثناء تسجيل الحضور');
+                    alert(result.message || 'حدث خطأ');
                 }
             } catch (error) {
-                alert('حدث خطأ في الاتصال بالخادم');
+                alert('حدث خطأ في الاتصال');
             }
         }
         
-        // عرض تفاصيل دائرة
         function viewGeofence(id) {
             window.location.href = `/employees/geofences/${id}`;
         }
         
-        // عرض رسالة تنبيه
         function showAlert(message, type) {
             const alertContainer = document.getElementById('alertContainer');
             const alertClass = type === 'success' ? 'alert-success' : (type === 'error' ? 'alert-error' : 'alert-info');
@@ -830,12 +1043,27 @@
                 </div>
             `;
             
-            setTimeout(() => {
-                alertContainer.innerHTML = '';
-            }, 5000);
+            setTimeout(() => alertContainer.innerHTML = '', 5000);
         }
         
-        // التركيز على دائرة عند النقر على عنصر القائمة
+        function filterByDepartment() {
+            const departmentId = document.getElementById('departmentFilter').value;
+            const items = document.querySelectorAll('.geofence-item');
+            let visibleCount = 0;
+            
+            items.forEach(item => {
+                const itemDeptId = item.getAttribute('data-department-id');
+                if (!departmentId || itemDeptId === departmentId) {
+                    item.style.display = 'block';
+                    visibleCount++;
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+            
+            document.getElementById('geofencesCount').textContent = visibleCount;
+        }
+        
         document.querySelectorAll('.geofence-item').forEach(item => {
             item.addEventListener('click', function(e) {
                 if (e.target.tagName !== 'BUTTON' && !e.target.closest('button')) {
