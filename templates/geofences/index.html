@@ -7,6 +7,7 @@
     
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
     
     <!-- Font Awesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
@@ -168,6 +169,7 @@
             grid-template-columns: 1fr 420px;
             gap: 25px;
             animation: fadeIn 0.8s ease-out 0.2s both;
+            position: relative;
         }
         
         @keyframes fadeIn {
@@ -190,6 +192,7 @@
                 0 8px 32px rgba(31, 38, 135, 0.37),
                 inset 0 1px 0 rgba(255, 255, 255, 0.1);
             overflow: hidden;
+            position: relative;
         }
         
         .map-header {
@@ -459,60 +462,50 @@
             font-weight: 600;
         }
         
-        .modal {
-            display: none;
+        /* لوحة إضافة دائرة جانبية */
+        .create-panel {
             position: fixed;
             top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 10000;
-            align-items: center;
-            justify-content: center;
-            animation: fadeIn 0.3s ease;
-        }
-        
-        .modal.active {
-            display: flex;
-        }
-        
-        .modal-content {
+            right: -550px;
+            width: 500px;
+            height: 100vh;
             background: linear-gradient(135deg, rgba(30, 27, 75, 0.98) 0%, rgba(24, 24, 62, 0.98) 100%);
             backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 24px;
-            padding: 35px;
-            max-width: 550px;
-            width: 90%;
-            max-height: 90vh;
+            border-left: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: -10px 0 50px rgba(0, 0, 0, 0.5);
+            z-index: 9999;
+            transition: right 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             overflow-y: auto;
-            pointer-events: auto;
-            box-shadow: 
-                0 20px 60px rgba(0, 0, 0, 0.5),
-                inset 0 1px 0 rgba(255, 255, 255, 0.1);
-            animation: slideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            padding: 30px;
         }
         
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(50px) scale(0.9);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-            }
+        .create-panel.active {
+            right: 0;
         }
         
-        .modal-header {
+        .create-panel::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .create-panel::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        .create-panel::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #818cf8 0%, #a78bfa 100%);
+            border-radius: 10px;
+        }
+        
+        .panel-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 25px;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
         
-        .modal-header h3 {
+        .panel-header h3 {
             font-size: 24px;
             color: #ffffff;
             font-weight: 900;
@@ -521,7 +514,7 @@
             gap: 12px;
         }
         
-        .modal-header h3 i {
+        .panel-header h3 i {
             color: #818cf8;
         }
         
@@ -656,6 +649,36 @@
             font-weight: 700;
         }
         
+        /* تخصيص عنصر البحث في الخريطة */
+        .leaflet-control-geocoder {
+            background: rgba(30, 27, 75, 0.95) !important;
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+            border-radius: 12px !important;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3) !important;
+        }
+        
+        .leaflet-control-geocoder-form input {
+            background: rgba(255, 255, 255, 0.1) !important;
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+            color: #ffffff !important;
+            padding: 10px !important;
+            border-radius: 8px !important;
+        }
+        
+        .leaflet-control-geocoder-alternatives {
+            background: rgba(30, 27, 75, 0.95) !important;
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        }
+        
+        .leaflet-control-geocoder-alternatives a {
+            color: #ffffff !important;
+            padding: 10px !important;
+        }
+        
+        .leaflet-control-geocoder-alternatives a:hover {
+            background: rgba(129, 140, 248, 0.3) !important;
+        }
+        
         @media (max-width: 1200px) {
             .main-content {
                 grid-template-columns: 1fr;
@@ -663,6 +686,11 @@
             
             .sidebar {
                 order: -1;
+            }
+            
+            .create-panel {
+                width: 100%;
+                right: -100%;
             }
         }
     </style>
@@ -679,7 +707,7 @@
                     <i class="fas fa-map-marker-alt"></i>
                     تتبع المواقع
                 </a>
-                <button class="btn" onclick="showCreateModal()">
+                <button class="btn" onclick="showCreatePanel()">
                     <i class="fas fa-plus"></i>
                     إضافة دائرة جديدة
                 </button>
@@ -766,79 +794,78 @@
         </div>
     </div>
     
-    <!-- Modal إضافة دائرة -->
-    <div id="createModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3><i class="fas fa-plus-circle"></i> إضافة دائرة جديدة</h3>
-                <button class="btn-close" onclick="closeCreateModal()">×</button>
+    <!-- لوحة إضافة دائرة جانبية -->
+    <div id="createPanel" class="create-panel">
+        <div class="panel-header">
+            <h3><i class="fas fa-plus-circle"></i> دائرة جديدة</h3>
+            <button class="btn-close" onclick="closeCreatePanel()">×</button>
+        </div>
+        
+        <div id="alertContainer"></div>
+        
+        <form id="createForm" onsubmit="createGeofence(event)">
+            <div class="form-group">
+                <label>اسم الدائرة <span style="color: #ef4444;">*</span></label>
+                <input type="text" name="name" required placeholder="مثال: مشروع برج المملكة">
             </div>
             
-            <div id="alertContainer"></div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>النوع <span style="color: #ef4444;">*</span></label>
+                    <select name="type" required>
+                        <option value="project">مشروع</option>
+                        <option value="office">مكتب</option>
+                        <option value="warehouse">مستودع</option>
+                        <option value="other">أخرى</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>القسم <span style="color: #ef4444;">*</span></label>
+                    <select name="department_id" required>
+                        <option value="">-- اختر --</option>
+                        {% for dept in departments %}
+                        <option value="{{ dept.id }}">{{ dept.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
             
-            <form id="createForm" onsubmit="createGeofence(event)">
-                <div class="form-group">
-                    <label>اسم الدائرة <span style="color: #ef4444;">*</span></label>
-                    <input type="text" name="name" required placeholder="مثال: مشروع برج المملكة">
+            <div class="form-group">
+                <label>نصف القطر (متر) <span style="color: #ef4444;">*</span></label>
+                <input type="number" name="radius" required min="50" max="10000" value="500">
+            </div>
+            
+            <div class="form-group">
+                <label>اللون</label>
+                <div class="color-picker-wrapper">
+                    <input type="color" name="color" value="#818cf8">
+                    <span>اختر اللون</span>
                 </div>
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>النوع <span style="color: #ef4444;">*</span></label>
-                        <select name="type" required>
-                            <option value="project">مشروع</option>
-                            <option value="office">مكتب</option>
-                            <option value="warehouse">مستودع</option>
-                            <option value="other">أخرى</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>القسم المرتبط <span style="color: #ef4444;">*</span></label>
-                        <select name="department_id" required>
-                            <option value="">-- اختر القسم --</option>
-                            {% for dept in departments %}
-                            <option value="{{ dept.id }}">{{ dept.name }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                </div>
-                
-                <div class="form-group">
-                    <label>نصف القطر (بالأمتار) <span style="color: #ef4444;">*</span></label>
-                    <input type="number" name="radius" required min="50" max="10000" value="500">
-                </div>
-                
-                <div class="form-group">
-                    <label>اللون</label>
-                    <div class="color-picker-wrapper">
-                        <input type="color" name="color" value="#818cf8">
-                        <span>اختر لون الدائرة</span>
-                    </div>
-                </div>
-                
-                <div class="form-group">
-                    <label>الوصف</label>
-                    <textarea name="description" rows="3" placeholder="وصف اختياري"></textarea>
-                </div>
-                
-                <div class="alert alert-info">
-                    <i class="fas fa-info-circle"></i>
-                    <span>انقر على الخريطة لتحديد الموقع</span>
-                </div>
-                
-                <input type="hidden" name="latitude" id="latitude">
-                <input type="hidden" name="longitude" id="longitude">
-                
-                <button type="submit" class="btn" style="width: 100%;">
-                    <i class="fas fa-save"></i>
-                    حفظ الدائرة
-                </button>
-            </form>
-        </div>
+            </div>
+            
+            <div class="form-group">
+                <label>الوصف</label>
+                <textarea name="description" rows="3" placeholder="وصف اختياري"></textarea>
+            </div>
+            
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i>
+                <span>ابحث في الخريطة أو انقر لتحديد الموقع</span>
+            </div>
+            
+            <input type="hidden" name="latitude" id="latitude">
+            <input type="hidden" name="longitude" id="longitude">
+            
+            <button type="submit" class="btn" style="width: 100%;">
+                <i class="fas fa-save"></i>
+                حفظ الدائرة
+            </button>
+        </form>
     </div>
     
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
     
     <script>
         const map = L.map('map').setView([24.7136, 46.6753], 11);
@@ -855,6 +882,40 @@
         
         streetLayer.addTo(map);
         let currentLayer = 'street';
+        
+        // إضافة أداة البحث الجغرافي
+        const geocoder = L.Control.geocoder({
+            defaultMarkGeocode: false,
+            placeholder: 'ابحث عن موقع...',
+            errorMessage: 'لم يتم العثور على نتائج'
+        }).addTo(map);
+        
+        geocoder.on('markgeocode', function(e) {
+            const latlng = e.geocode.center;
+            map.setView(latlng, 15);
+            
+            // تحديث الحقول وإضافة علامة
+            document.getElementById('latitude').value = latlng.lat;
+            document.getElementById('longitude').value = latlng.lng;
+            
+            if (tempMarker) map.removeLayer(tempMarker);
+            if (tempCircle) map.removeLayer(tempCircle);
+            
+            tempMarker = L.marker(latlng).addTo(map);
+            
+            const radius = parseInt(document.querySelector('[name="radius"]').value) || 500;
+            const color = document.querySelector('[name="color"]').value || '#818cf8';
+            
+            tempCircle = L.circle(latlng, {
+                color: color,
+                fillColor: color,
+                fillOpacity: 0.25,
+                radius: radius,
+                weight: 3
+            }).addTo(map);
+            
+            showAlert('تم تحديد الموقع: ' + e.geocode.name, 'success');
+        });
         
         function toggleMapView() {
             if (currentLayer === 'street') {
@@ -899,14 +960,17 @@
         
         let tempMarker = null;
         let tempCircle = null;
+        let mapClickEnabled = false;
         
-        function showCreateModal() {
-            document.getElementById('createModal').classList.add('active');
+        function showCreatePanel() {
+            document.getElementById('createPanel').classList.add('active');
+            mapClickEnabled = true;
             map.on('click', onMapClick);
         }
         
-        function closeCreateModal() {
-            document.getElementById('createModal').classList.remove('active');
+        function closeCreatePanel() {
+            document.getElementById('createPanel').classList.remove('active');
+            mapClickEnabled = false;
             map.off('click', onMapClick);
             if (tempMarker) map.removeLayer(tempMarker);
             if (tempCircle) map.removeLayer(tempCircle);
@@ -919,6 +983,8 @@
         }
         
         function onMapClick(e) {
+            if (!mapClickEnabled) return;
+            
             const lat = e.latlng.lat;
             const lng = e.latlng.lng;
             
