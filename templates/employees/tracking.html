@@ -810,10 +810,9 @@
                     </div>
                     <div class="employees-list" id="employeesList">
                         {% if employees %}
-                            {% for emp_data in employees %}
-                            {% set emp = emp_data.employee %}
-                            {% set location = emp_data.location %}
-                            {% set age_class = emp_data.age_class %}
+                            {% for emp in employees %}
+                            {% set location = employee_locations.get(emp.id) %}
+                            {% set age_class = location.color if location else 'gray' %}
                             
                             <div class="employee-card status-{{ age_class }}" 
                                  onclick="focusEmployee({{ emp.id }}, {% if location %}{{ location.latitude }}, {{ location.longitude }}{% else %}null, null{% endif %})"
@@ -844,7 +843,7 @@
                                     {% if location %}
                                     <div class="detail-item">
                                         <i class="fas fa-clock"></i>
-                                        <span>{{ emp_data.age_text }}</span>
+                                        <span>{{ location.status_text }}</span>
                                     </div>
                                     <div class="detail-item">
                                         <span class="status-badge active">
@@ -921,13 +920,13 @@
         
         const markers = {};
         const employees = {{ employees|tojson }};
+        const employeeLocations = {{ employee_locations|tojson }};
         
-        employees.forEach(empData => {
-            const emp = empData.employee;
-            const location = empData.location;
+        employees.forEach(emp => {
+            const location = employeeLocations[emp.id];
             
             if (location) {
-                const ageClass = empData.age_class;
+                const ageClass = location.color;
                 let markerColor = '#6b7280';
                 
                 if (ageClass === 'green') markerColor = '#10b981';
@@ -959,7 +958,7 @@
                         <h4 style="margin: 0 0 10px 0; color: #1e1b4b; font-weight: 700;">${emp.name}</h4>
                         <p style="margin: 5px 0; color: #4b5563;"><strong>الرقم الوظيفي:</strong> ${emp.employee_id}</p>
                         ${emp.departments && emp.departments.length > 0 ? `<p style="margin: 5px 0; color: #4b5563;"><strong>القسم:</strong> ${emp.departments[0].name}</p>` : ''}
-                        <p style="margin: 5px 0; color: #4b5563;"><strong>آخر تحديث:</strong> ${empData.age_text}</p>
+                        <p style="margin: 5px 0; color: #4b5563;"><strong>الحالة:</strong> ${location.status_text}</p>
                     </div>
                 `);
                 
@@ -985,9 +984,10 @@
         
         if (employees.length > 0) {
             const bounds = [];
-            employees.forEach(empData => {
-                if (empData.location) {
-                    bounds.push([empData.location.latitude, empData.location.longitude]);
+            employees.forEach(emp => {
+                const location = employeeLocations[emp.id];
+                if (location) {
+                    bounds.push([location.latitude, location.longitude]);
                 }
             });
             
