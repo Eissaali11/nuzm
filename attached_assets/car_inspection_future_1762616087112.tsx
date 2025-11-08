@@ -1,0 +1,374 @@
+import { Car, User, Calendar, Hash, MapPin, Briefcase, CreditCard, Sparkles, Camera } from "lucide-react";
+
+export default function App() {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-indigo-950 via-purple-950 to-slate-950 p-8 flex items-center justify-center relative overflow-hidden" dir="rtl">
+      {/* Animated background elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-20 right-20 w-96 h-96 bg-cyan-500/30 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-20 left-20 w-[500px] h-[500px] bg-purple-600/30 rounded-full blur-3xl animate-pulse" style={{animationDelay: '1s'}}></div>
+        <div className="absolute top-1/2 left-1/2 w-[450px] h-[450px] bg-blue-500/20 rounded-full blur-3xl animate-pulse" style={{animationDelay: '2s'}}></div>
+        <div className="absolute top-40 left-1/3 w-64 h-64 bg-pink-500/20 rounded-full blur-3xl animate-pulse" style={{animationDelay: '1.5s'}}></div>
+        
+        {/* Floating particles */}
+        <div className="absolute top-1/4 right-1/4 w-2 h-2 bg-cyan-400 rounded-full animate-ping" style={{animationDelay: '0.5s'}}></div>
+        <div className="absolute top-2/3 right-1/3 w-1 h-1 bg-purple-400 rounded-full animate-ping" style={{animationDelay: '1.2s'}}></div>
+        <div className="absolute top-1/3 left-1/4 w-2 h-2 bg-blue-400 rounded-full animate-ping" style={{animationDelay: '2s'}}></div>
+      </div>
+
+      <div className="w-full max-w-6xl relative z-10">
+        <div className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-2xl shadow-2xl border border-white/20 overflow-hidden rounded-3xl">
+          {/* Header with gradient */}
+          <div className="relative bg-gradient-to-l from-cyan-600 via-purple-700 to-indigo-800 p-8 overflow-hidden">
+            <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAxMCAwIEwgMCAwIDAgMTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS1vcGFjaXR5PSIwLjEiIHN0cm9rZS13aWR0aD0iMSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNncmlkKSIvPjwvc3ZnPg==')] opacity-20"></div>
+            
+            {/* Animated light beam */}
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-pulse" style={{animationDuration: '3s'}}></div>
+            
+            {/* Logo and Title */}
+            <div className="relative flex items-center justify-between">
+              <div className="flex items-center gap-6">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-cyan-400/50 blur-xl rounded-full animate-pulse"></div>
+                  <div className="relative bg-gradient-to-br from-white/20 to-white/5 backdrop-blur-md p-3 rounded-2xl shadow-2xl border-2 border-white/40">
+                    <img src="https://i.imgur.com/YqXK8Y2.png" alt="شعار نظم" className="w-16 h-16 rounded-xl object-contain" />
+                  </div>
+                </div>
+                
+                <div>
+                  <h1 className="text-4xl font-bold text-white mb-2 tracking-wide">فحص السيارة</h1>
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 bg-white/15 backdrop-blur-sm px-5 py-2 rounded-xl border border-white/30 shadow-lg">
+                      <Hash className="w-5 h-5 text-cyan-300" />
+                      <span className="text-white font-semibold">رقم اللوحة: B S N - 3230</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div>
+                <div className="bg-gradient-to-r from-emerald-400 to-green-500 hover:from-emerald-500 hover:to-green-600 border-0 px-8 py-3 text-xl font-bold shadow-lg shadow-emerald-500/50 rounded-full">
+                  ✓ موافق عليها
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-12 space-y-10 bg-gradient-to-br from-slate-900/95 to-indigo-950/95">
+            {/* قسم معلومات السيارة */}
+            <div className="space-y-6 border-2 border-cyan-400/40 rounded-3xl p-8 bg-gradient-to-br from-cyan-500/5 to-blue-600/5 backdrop-blur-sm shadow-2xl shadow-cyan-500/20 hover:shadow-cyan-500/40 transition-all duration-500">
+              <div className="flex items-center gap-4 mb-8">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-cyan-500/50 blur-xl rounded-full"></div>
+                  <div className="relative bg-gradient-to-br from-cyan-500 to-blue-600 p-4 rounded-2xl shadow-2xl shadow-cyan-500/50 transform hover:scale-110 transition-all duration-300">
+                    <Car className="w-7 h-7 text-white" />
+                  </div>
+                </div>
+                <h2 className="text-3xl font-bold bg-gradient-to-l from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent">معلومات السيارة</h2>
+                <div className="bg-gradient-to-r from-cyan-500 to-blue-600 border-0 px-5 py-2 shadow-lg shadow-cyan-500/30 rounded-full text-white">
+                  <Sparkles className="w-4 h-4 inline ml-1" />
+                  قسم أساسي
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-6">
+                {/* رقم اللوحة */}
+                <div className="space-y-3 group">
+                  <label className="flex items-center gap-2 text-cyan-300 font-semibold">
+                    <div className="bg-gradient-to-br from-cyan-500 to-blue-600 p-2 rounded-xl shadow-lg group-hover:shadow-cyan-500/50 transition-all duration-300">
+                      <Hash className="w-4 h-4 text-white" />
+                    </div>
+                    رقم اللوحة
+                  </label>
+                  <input 
+                    value="أ ب ج ١٢٣٤" 
+                    readOnly
+                    className="w-full h-14 px-4 border-2 border-white bg-white text-gray-900 rounded-xl focus:border-cyan-400 focus:ring-4 focus:ring-cyan-400/30 transition-all text-center shadow-lg hover:shadow-cyan-500/30 outline-none font-bold"
+                  />
+                </div>
+
+                {/* نوع السيارة */}
+                <div className="space-y-3 group">
+                  <label className="flex items-center gap-2 text-purple-300 font-semibold">
+                    <div className="bg-gradient-to-br from-purple-500 to-indigo-600 p-2 rounded-xl shadow-lg group-hover:shadow-purple-500/50 transition-all duration-300">
+                      <Car className="w-4 h-4 text-white" />
+                    </div>
+                    نوع السيارة
+                  </label>
+                  <input 
+                    value="تويوتا كامري ٢٠٢٣" 
+                    readOnly
+                    className="w-full h-14 px-4 border-2 border-white bg-white text-gray-900 rounded-xl focus:border-purple-400 focus:ring-4 focus:ring-purple-400/30 transition-all text-center shadow-lg hover:shadow-purple-500/30 outline-none font-bold"
+                  />
+                </div>
+
+                {/* المفوض الحالي */}
+                <div className="space-y-3 group">
+                  <label className="flex items-center gap-2 text-pink-300 font-semibold">
+                    <div className="bg-gradient-to-br from-pink-500 to-rose-600 p-2 rounded-xl shadow-lg group-hover:shadow-pink-500/50 transition-all duration-300">
+                      <CreditCard className="w-4 h-4 text-white" />
+                    </div>
+                    المفوض الحالي
+                  </label>
+                  <input 
+                    value="أحمد محمد العلي" 
+                    readOnly
+                    className="w-full h-14 px-4 border-2 border-white bg-white text-gray-900 rounded-xl focus:border-pink-400 focus:ring-4 focus:ring-pink-400/30 transition-all text-center shadow-lg hover:shadow-pink-500/30 outline-none font-bold"
+                  />
+                </div>
+
+                {/* تاريخ الفحص */}
+                <div className="space-y-3 group">
+                  <label className="flex items-center gap-2 text-blue-300 font-semibold">
+                    <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-2 rounded-xl shadow-lg group-hover:shadow-blue-500/50 transition-all duration-300">
+                      <Calendar className="w-4 h-4 text-white" />
+                    </div>
+                    تاريخ الفحص
+                  </label>
+                  <input 
+                    value="٧ نوفمبر ٢٠٢٥ - ١٠:٣٠ صباحاً" 
+                    readOnly
+                    className="w-full h-14 px-4 border-2 border-white bg-white text-gray-900 rounded-xl focus:border-blue-400 focus:ring-4 focus:ring-blue-400/30 transition-all text-center shadow-lg hover:shadow-blue-500/30 outline-none font-bold"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Separator with gradient */}
+            <div className="relative py-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full h-px bg-gradient-to-r from-transparent via-cyan-500/50 to-transparent"></div>
+              </div>
+              <div className="relative flex justify-center">
+                <div className="bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 px-8 py-2 rounded-full shadow-2xl shadow-purple-500/50">
+                  <div className="flex gap-2">
+                    <Sparkles className="w-5 h-5 text-white animate-pulse" />
+                    <Sparkles className="w-5 h-5 text-white animate-pulse" style={{animationDelay: '0.3s'}} />
+                    <Sparkles className="w-5 h-5 text-white animate-pulse" style={{animationDelay: '0.6s'}} />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* قسم معلومات السائق */}
+            <div className="space-y-6 border-2 border-purple-400/40 rounded-3xl p-8 bg-gradient-to-br from-purple-500/5 to-pink-600/5 backdrop-blur-sm shadow-2xl shadow-purple-500/20 hover:shadow-purple-500/40 transition-all duration-500">
+              <div className="flex items-center gap-4 mb-8">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-purple-500/50 blur-xl rounded-full"></div>
+                  <div className="relative bg-gradient-to-br from-purple-500 to-pink-600 p-4 rounded-2xl shadow-2xl shadow-purple-500/50 transform hover:scale-110 transition-all duration-300">
+                    <User className="w-7 h-7 text-white" />
+                  </div>
+                </div>
+                <h2 className="text-3xl font-bold bg-gradient-to-l from-purple-400 via-pink-400 to-rose-400 bg-clip-text text-transparent">معلومات السائق</h2>
+                <div className="bg-gradient-to-r from-purple-500 to-pink-600 border-0 px-5 py-2 shadow-lg shadow-purple-500/30 rounded-full text-white">
+                  <Sparkles className="w-4 h-4 inline ml-1" />
+                  معلومات شخصية
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-6">
+                {/* اسم السائق */}
+                <div className="space-y-3 group">
+                  <label className="flex items-center gap-2 text-emerald-300 font-semibold">
+                    <div className="bg-gradient-to-br from-emerald-500 to-teal-600 p-2 rounded-xl shadow-lg group-hover:shadow-emerald-500/50 transition-all duration-300">
+                      <User className="w-4 h-4 text-white" />
+                    </div>
+                    اسم السائق
+                  </label>
+                  <input 
+                    value="خالد بن عبدالله السعيد" 
+                    readOnly
+                    className="w-full h-14 px-4 border-2 border-white bg-white text-gray-900 rounded-xl focus:border-emerald-400 focus:ring-4 focus:ring-emerald-400/30 transition-all text-center shadow-lg hover:shadow-emerald-500/30 outline-none font-bold"
+                  />
+                </div>
+
+                {/* رقم الهوية */}
+                <div className="space-y-3 group">
+                  <label className="flex items-center gap-2 text-sky-300 font-semibold">
+                    <div className="bg-gradient-to-br from-sky-500 to-cyan-600 p-2 rounded-xl shadow-lg group-hover:shadow-sky-500/50 transition-all duration-300">
+                      <CreditCard className="w-4 h-4 text-white" />
+                    </div>
+                    رقم الهوية
+                  </label>
+                  <input 
+                    value="١٠٢٣٤٥٦٧٨٩" 
+                    readOnly
+                    className="w-full h-14 px-4 border-2 border-white bg-white text-gray-900 rounded-xl focus:border-sky-400 focus:ring-4 focus:ring-sky-400/30 transition-all text-center shadow-lg hover:shadow-sky-500/30 outline-none font-bold"
+                  />
+                </div>
+
+                {/* القسم */}
+                <div className="space-y-3 group">
+                  <label className="flex items-center gap-2 text-violet-300 font-semibold">
+                    <div className="bg-gradient-to-br from-violet-500 to-purple-600 p-2 rounded-xl shadow-lg group-hover:shadow-violet-500/50 transition-all duration-300">
+                      <Briefcase className="w-4 h-4 text-white" />
+                    </div>
+                    القسم
+                  </label>
+                  <input 
+                    value="النقل والمواصلات" 
+                    readOnly
+                    className="w-full h-14 px-4 border-2 border-white bg-white text-gray-900 rounded-xl focus:border-violet-400 focus:ring-4 focus:ring-violet-400/30 transition-all text-center shadow-lg hover:shadow-violet-500/30 outline-none font-bold"
+                  />
+                </div>
+
+                {/* المدينة */}
+                <div className="space-y-3 group">
+                  <label className="flex items-center gap-2 text-amber-300 font-semibold">
+                    <div className="bg-gradient-to-br from-amber-500 to-orange-600 p-2 rounded-xl shadow-lg group-hover:shadow-amber-500/50 transition-all duration-300">
+                      <MapPin className="w-4 h-4 text-white" />
+                    </div>
+                    المدينة
+                  </label>
+                  <input 
+                    value="الرياض" 
+                    readOnly
+                    className="w-full h-14 px-4 border-2 border-white bg-white text-gray-900 rounded-xl focus:border-amber-400 focus:ring-4 focus:ring-amber-400/30 transition-all text-center shadow-lg hover:shadow-amber-500/30 outline-none font-bold"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Separator with gradient */}
+            <div className="relative py-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full h-px bg-gradient-to-r from-transparent via-purple-500/50 to-transparent"></div>
+              </div>
+              <div className="relative flex justify-center">
+                <div className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 px-8 py-2 rounded-full shadow-2xl shadow-indigo-500/50">
+                  <div className="flex gap-2">
+                    <Sparkles className="w-5 h-5 text-white animate-pulse" />
+                    <Sparkles className="w-5 h-5 text-white animate-pulse" style={{animationDelay: '0.3s'}} />
+                    <Sparkles className="w-5 h-5 text-white animate-pulse" style={{animationDelay: '0.6s'}} />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* قسم الصور والملاحظات */}
+            <div className="space-y-6 mt-10">
+              <div className="flex items-center gap-4 mb-8">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-pink-500/50 blur-xl rounded-full"></div>
+                  <div className="relative bg-gradient-to-br from-pink-500 to-rose-600 p-4 rounded-2xl shadow-2xl shadow-pink-500/50 transform hover:scale-110 transition-all duration-300">
+                    <Camera className="w-7 h-7 text-white" />
+                  </div>
+                </div>
+                <h2 className="text-3xl font-bold bg-gradient-to-l from-pink-400 via-rose-400 to-red-400 bg-clip-text text-transparent">صور الفحص</h2>
+                <div className="bg-gradient-to-r from-pink-500 to-rose-600 border-0 px-5 py-2 shadow-lg shadow-pink-500/30 rounded-full text-white">
+                  <Sparkles className="w-4 h-4 inline ml-1" />
+                  التوثيق البصري
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-6">
+                {/* صورة 1 */}
+                <div className="overflow-hidden border-2 border-cyan-500/30 shadow-2xl hover:shadow-cyan-500/50 transition-all duration-500 group bg-gradient-to-br from-cyan-500/5 to-blue-600/5 backdrop-blur-sm rounded-2xl">
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-gradient-to-br from-cyan-400/30 to-blue-600/30 z-10 opacity-0 group-hover:opacity-100 transition-all duration-500"></div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-10"></div>
+                    <img
+                      src="https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?w=800&q=80"
+                      alt="صورة الفحص 1"
+                      className="w-full h-56 object-cover group-hover:scale-110 transition-transform duration-500"
+                    />
+                    <div className="absolute top-3 right-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white px-4 py-2 rounded-full text-sm z-20 shadow-lg font-bold">
+                      صورة ١
+                    </div>
+                  </div>
+                  <div className="p-5 bg-gradient-to-br from-cyan-900/50 to-blue-900/50 backdrop-blur-sm">
+                    <label className="text-cyan-300 mb-3 block font-semibold">ملاحظات:</label>
+                    <div className="border-2 border-cyan-400/50 rounded-xl p-3 bg-white/10 backdrop-blur-sm">
+                      <p className="text-white text-sm leading-relaxed">
+                        فحص شامل للجزء الأمامي من السيارة - الحالة جيدة
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* صورة 2 */}
+                <div className="overflow-hidden border-2 border-purple-500/30 shadow-2xl hover:shadow-purple-500/50 transition-all duration-500 group bg-gradient-to-br from-purple-500/5 to-indigo-600/5 backdrop-blur-sm rounded-2xl">
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-gradient-to-br from-purple-400/30 to-indigo-600/30 z-10 opacity-0 group-hover:opacity-100 transition-all duration-500"></div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-10"></div>
+                    <img
+                      src="https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=800&q=80"
+                      alt="صورة الفحص 2"
+                      className="w-full h-56 object-cover group-hover:scale-110 transition-transform duration-500"
+                    />
+                    <div className="absolute top-3 right-3 bg-gradient-to-r from-purple-500 to-indigo-600 text-white px-4 py-2 rounded-full text-sm z-20 shadow-lg font-bold">
+                      صورة ٢
+                    </div>
+                  </div>
+                  <div className="p-5 bg-gradient-to-br from-purple-900/50 to-indigo-900/50 backdrop-blur-sm">
+                    <label className="text-purple-300 mb-3 block font-semibold">ملاحظات:</label>
+                    <div className="border-2 border-purple-400/50 rounded-xl p-3 bg-white/10 backdrop-blur-sm">
+                      <p className="text-white text-sm leading-relaxed">
+                        المقدمة الأمامية بحالة ممتازة - لا توجد خدوش
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* صورة 3 */}
+                <div className="overflow-hidden border-2 border-pink-500/30 shadow-2xl hover:shadow-pink-500/50 transition-all duration-500 group bg-gradient-to-br from-pink-500/5 to-rose-600/5 backdrop-blur-sm rounded-2xl">
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-gradient-to-br from-pink-400/30 to-rose-600/30 z-10 opacity-0 group-hover:opacity-100 transition-all duration-500"></div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-10"></div>
+                    <img
+                      src="https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=800&q=80"
+                      alt="صورة الفحص 3"
+                      className="w-full h-56 object-cover group-hover:scale-110 transition-transform duration-500"
+                    />
+                    <div className="absolute top-3 right-3 bg-gradient-to-r from-pink-500 to-rose-600 text-white px-4 py-2 rounded-full text-sm z-20 shadow-lg font-bold">
+                      صورة ٣
+                    </div>
+                  </div>
+                  <div className="p-5 bg-gradient-to-br from-pink-900/50 to-rose-900/50 backdrop-blur-sm">
+                    <label className="text-pink-300 mb-3 block font-semibold">ملاحظات:</label>
+                    <div className="border-2 border-pink-400/50 rounded-xl p-3 bg-white/10 backdrop-blur-sm">
+                      <p className="text-white text-sm leading-relaxed">
+                        الداخلية نظيفة ومرتبة - جميع الأجهزة تعمل بكفاءة
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* صورة 4 */}
+                <div className="overflow-hidden border-2 border-emerald-500/30 shadow-2xl hover:shadow-emerald-500/50 transition-all duration-500 group bg-gradient-to-br from-emerald-500/5 to-teal-600/5 backdrop-blur-sm rounded-2xl">
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-gradient-to-br from-emerald-400/30 to-teal-600/30 z-10 opacity-0 group-hover:opacity-100 transition-all duration-500"></div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-10"></div>
+                    <img
+                      src="https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=800&q=80"
+                      alt="صورة الفحص 4"
+                      className="w-full h-56 object-cover group-hover:scale-110 transition-transform duration-500"
+                    />
+                    <div className="absolute top-3 right-3 bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-4 py-2 rounded-full text-sm z-20 shadow-lg font-bold">
+                      صورة ٤
+                    </div>
+                  </div>
+                  <div className="p-5 bg-gradient-to-br from-emerald-900/50 to-teal-900/50 backdrop-blur-sm">
+                    <label className="text-emerald-300 mb-3 block font-semibold">ملاحظات:</label>
+                    <div className="border-2 border-emerald-400/50 rounded-xl p-3 bg-white/10 backdrop-blur-sm">
+                      <p className="text-white text-sm leading-relaxed">
+                        الجزء الخلفي بحالة جيدة جداً - الإضاءة سليمة
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer decoration */}
+            <div className="flex justify-center gap-3 pt-10 pb-6">
+              <div className="w-3 h-3 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 shadow-lg shadow-cyan-500/50 animate-bounce"></div>
+              <div className="w-3 h-3 rounded-full bg-gradient-to-r from-purple-500 to-pink-600 shadow-lg shadow-purple-500/50 animate-bounce" style={{animationDelay: '0.1s'}}></div>
+              <div className="w-3 h-3 rounded-full bg-gradient-to-r from-pink-500 to-rose-600 shadow-lg shadow-pink-500/50 animate-bounce" style={{animationDelay: '0.2s'}}></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
