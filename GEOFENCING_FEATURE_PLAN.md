@@ -8,7 +8,7 @@
 
 ### ما هي الدوائر الجغرافية؟
 
-الدوائر الجغرافية (Geofencing) هي مناطق افتراضية يتم رسمها على الخريطة. عندما يدخل أو يخرج الموظف من هذه المنطقة، يتم تسجيل ذلك تلقائياً وإرسال إشعارات.
+الدوائر الجغرافية (Geofencing) هي مناطق افتراضية يتم رسمها على الخريطة. يمكن معرفة من هو داخل الدائرة ومن هو خارجها، مع إمكانية **تسجيل حضور جماعي** لجميع الموظفين داخل الدائرة بضغطة زر واحدة.
 
 ### مثال عملي:
 - **دائرة المشروع الأول**: نطاق 500 متر حول موقع المشروع
@@ -17,433 +17,412 @@
 
 ---
 
-## 🏗️ البنية المقترحة
+## 🎯 الميزات المطلوبة
 
-### 1. قاعدة البيانات
+### 1️⃣ رسم الدوائر على الخريطة
+- إنشاء دوائر بأحجام مختلفة (200-500-1000 متر)
+- تخصيص لون لكل دائرة
+- ربط الدائرة بقسم أو مشروع معين
+- تعيين موظفين محددين لكل دائرة
 
-#### جدول الدوائر الجغرافية
+### 2️⃣ الكشف التلقائي عن الموظفين داخل/خارج الدائرة
+- **✅ داخل الدائرة** (أخضر) - الموظف موجود داخل النطاق
+- **⚠️ خارج الدائرة** (أصفر) - الموظف خارج النطاق
+- **❌ بعيد جداً** (أحمر) - الموظف بعيد عن المنطقة
+
+### 3️⃣ سجل الأحداث (الدخول والخروج)
+- تسجيل تلقائي لوقت **دخول** الموظف للدائرة
+- تسجيل تلقائي لوقت **خروج** الموظف من الدائرة
+- حساب **مدة البقاء** داخل الدائرة
+- عرض تاريخ كامل للدخول والخروج
+
+### 4️⃣ **زر تسجيل الحضور الجماعي** ⭐ (الميزة الرئيسية)
+
+#### الفكرة:
+- في صفحة إدارة الدوائر، يظهر **زر كبير** بجانب كل دائرة
+- عند الضغط على الزر، يتم:
+  1. **الكشف عن جميع الموظفين داخل الدائرة حالياً**
+  2. **تسجيل حضور لهم جميعاً دفعة واحدة**
+  3. **عرض قائمة بأسماء من تم تسجيل حضورهم**
+
+#### مثال الواجهة:
+```
+┌─────────────────────────────────────────────────────────────┐
+│  دائرة: مشروع برج المملكة                                  │
+│  📍 الرياض - حي العليا                                     │
+│  👥 الموظفين داخل الدائرة: 8 موظفين                       │
+│                                                             │
+│  [✅ تسجيل حضور جماعي]  [📊 عرض السجل]  [⚙️ إعدادات]     │
+│                                                             │
+│  الموظفين الحاليين داخل الدائرة:                          │
+│  • أحمد محمد (مهندس) - ✅ داخل                            │
+│  • خالد علي (فني) - ✅ داخل                               │
+│  • فهد سعد (مشرف) - ✅ داخل                               │
+│  • ... (5 آخرين)                                          │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 5️⃣ الإشعارات
+- **إشعار عند الدخول/الخروج** (اختياري للمدير)
+- **تقرير يومي** بحركة الموظفين في الدوائر
+- **تنبيه للتأخير** إذا لم يصل موظف للدائرة في الوقت المحدد
+
+### 6️⃣ عرض صورة القمر الصناعي
+- زر لتبديل بين الخريطة العادية وصورة القمر الصناعي
+- استخدام **Mapbox Satellite** للحصول على صور واضحة
+- رؤية دقيقة للمباني والشوارع
+
+### 7️⃣ نسخ رابط الموقع للمشاركة
+- إنشاء **رابط مؤقت** لمشاركة موقع الدائرة
+- الرابط يفتح خريطة تفاعلية بدون الحاجة لتسجيل دخول
+- الرابط ينتهي بعد 24 ساعة للأمان
+
+### 8️⃣ عرض صور الموظفين على الخريطة
+- إذا كان للموظف صورة شخصية، تظهر على الخريطة
+- صورة دائرية صغيرة (64×64 بكسل)
+- صورة افتراضية للموظفين بدون صور
+
+---
+
+## 🏗️ البنية التقنية
+
+### قاعدة البيانات
+
+#### 1. جدول الدوائر (geofences)
 ```sql
 CREATE TABLE geofences (
     id SERIAL PRIMARY KEY,
-    name VARCHAR(200) NOT NULL,                    -- اسم الدائرة (مثل: "مشروع برج المملكة")
-    description TEXT,                               -- وصف الدائرة
-    center_latitude NUMERIC(10, 8) NOT NULL,       -- خط العرض للمركز
-    center_longitude NUMERIC(11, 8) NOT NULL,      -- خط الطول للمركز
-    radius_meters INTEGER NOT NULL,                -- نصف القطر بالأمتار
-    color VARCHAR(20) DEFAULT '#667eea',           -- لون الدائرة على الخريطة
-    is_active BOOLEAN DEFAULT TRUE,                -- هل الدائرة نشطة؟
-    notify_on_entry BOOLEAN DEFAULT TRUE,          -- إرسال إشعار عند الدخول؟
-    notify_on_exit BOOLEAN DEFAULT TRUE,           -- إرسال إشعار عند الخروج؟
-    created_by INTEGER REFERENCES users(id),       -- من أنشأ الدائرة
+    name VARCHAR(200) NOT NULL,                    -- اسم الدائرة
+    type VARCHAR(50) DEFAULT 'project',            -- نوع (project, office, warehouse)
+    description TEXT,                               -- وصف
+    center_latitude NUMERIC(9, 6) NOT NULL,        -- خط العرض
+    center_longitude NUMERIC(9, 6) NOT NULL,       -- خط الطول
+    radius_meters INTEGER NOT NULL,                -- نصف القطر
+    color VARCHAR(20) DEFAULT '#667eea',           -- لون الدائرة
+    is_active BOOLEAN DEFAULT TRUE,                -- هل نشطة؟
+    notify_on_entry BOOLEAN DEFAULT FALSE,         -- إشعار عند الدخول
+    notify_on_exit BOOLEAN DEFAULT FALSE,          -- إشعار عند الخروج
+    department_id INTEGER REFERENCES department(id),
+    project_id INTEGER,
+    created_by INTEGER REFERENCES users(id),
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW(),
     
-    -- علاقات
-    department_id INTEGER REFERENCES department(id),  -- ربط بقسم معين (اختياري)
-    project_id INTEGER,                               -- ربط بمشروع (اختياري)
-    
-    CONSTRAINT valid_radius CHECK (radius_meters > 0 AND radius_meters <= 10000)
+    CONSTRAINT valid_radius CHECK (radius_meters > 0 AND radius_meters <= 10000),
+    CONSTRAINT valid_type CHECK (type IN ('project', 'office', 'warehouse', 'other'))
 );
+```
 
--- جدول ربط الموظفين بالدوائر
-CREATE TABLE geofence_employees (
+#### 2. جدول الأعضاء (geofence_membership)
+```sql
+CREATE TABLE geofence_membership (
     id SERIAL PRIMARY KEY,
     geofence_id INTEGER REFERENCES geofences(id) ON DELETE CASCADE,
     employee_id INTEGER REFERENCES employee(id) ON DELETE CASCADE,
-    assigned_at TIMESTAMP DEFAULT NOW(),
+    active_from TIMESTAMP DEFAULT NOW(),
+    active_to TIMESTAMP,
+    priority INTEGER DEFAULT 1,                    -- الأولوية عند التداخل
     assigned_by INTEGER REFERENCES users(id),
+    assigned_at TIMESTAMP DEFAULT NOW(),
     
     UNIQUE(geofence_id, employee_id)
 );
+```
 
--- جدول تتبع الدخول والخروج
+#### 3. جدول الأحداث (geofence_events)
+```sql
 CREATE TABLE geofence_events (
     id SERIAL PRIMARY KEY,
     geofence_id INTEGER REFERENCES geofences(id) ON DELETE CASCADE,
     employee_id INTEGER REFERENCES employee(id) ON DELETE CASCADE,
-    event_type VARCHAR(20) NOT NULL,               -- 'enter' أو 'exit'
-    location_latitude NUMERIC(10, 8) NOT NULL,
-    location_longitude NUMERIC(11, 8) NOT NULL,
-    distance_from_center INTEGER,                   -- المسافة من المركز بالأمتار
-    event_time TIMESTAMP DEFAULT NOW(),
+    event_type VARCHAR(30) NOT NULL,               -- enter, exit, bulk_check_in
+    location_latitude NUMERIC(9, 6),
+    location_longitude NUMERIC(9, 6),
+    distance_from_center INTEGER,
+    recorded_at TIMESTAMP DEFAULT NOW(),
+    processed_at TIMESTAMP,
+    source VARCHAR(20) DEFAULT 'auto',             -- auto, manual, bulk
+    attendance_id INTEGER REFERENCES attendance(id),
     notes TEXT,
     
-    CONSTRAINT valid_event_type CHECK (event_type IN ('enter', 'exit'))
+    CONSTRAINT valid_event_type CHECK (
+        event_type IN ('enter', 'exit', 'bulk_check_in')
+    )
 );
+```
 
--- فهارس للأداء
+#### الفهارس للأداء:
+```sql
 CREATE INDEX idx_geofence_active ON geofences(is_active);
-CREATE INDEX idx_geofence_events_employee ON geofence_events(employee_id, event_time DESC);
-CREATE INDEX idx_geofence_events_geofence ON geofence_events(geofence_id, event_time DESC);
+CREATE INDEX idx_geofence_membership_employee ON geofence_membership(employee_id);
+CREATE INDEX idx_geofence_events_time ON geofence_events(recorded_at DESC);
+CREATE INDEX idx_geofence_events_employee ON geofence_events(employee_id, recorded_at DESC);
 ```
 
 ---
 
-## 🎨 واجهة المستخدم
+## 💻 التنفيذ المقترح
 
-### 1. صفحة إدارة الدوائر (`/employees/geofences`)
-
-#### المكونات:
-- **خريطة تفاعلية**: لرسم وتحرير الدوائر
-- **قائمة الدوائر**: عرض جميع الدوائر المُنشأة
-- **نموذج إضافة/تعديل**: لإنشاء دوائر جديدة
-
-#### الميزات:
-```
-┌─────────────────────────────────────────────────────────┐
-│  إدارة الدوائر الجغرافية                              │
-├─────────────────────────────────────────────────────────┤
-│                                                         │
-│  [خريطة تفاعلية - 70%]        [قائمة الدوائر - 30%]  │
-│  • رسم دائرة جديدة             • مشروع برج المملكة    │
-│  • تحرير الدوائر               • المكتب الرئيسي       │
-│  • معاينة الموظفين داخلها      • مستودع الشمال       │
-│                                                         │
-│  [+ إضافة دائرة جديدة]                                │
-└─────────────────────────────────────────────────────────┘
-```
-
-### 2. صفحة التتبع المُحسّنة
-
-#### إضافات جديدة:
-- **عرض الدوائر على الخريطة**: كدوائر شفافة ملونة
-- **حالة الموظف داخل الدائرة**: 
-  - ✅ داخل الدائرة (أخضر)
-  - ⚠️ خارج الدائرة (أصفر)
-  - ❌ بعيد جداً (أحمر)
-
----
-
-## 💻 الكود المقترح
-
-### 1. نموذج البيانات (Models)
+### 1. Models في Flask
 
 ```python
-# في models.py
-
 class Geofence(db.Model):
-    """دائرة جغرافية لتتبع الموظفين"""
+    """دائرة جغرافية"""
     __tablename__ = 'geofences'
     
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(200), nullable=False)
+    type = db.Column(db.String(50), default='project')
     description = db.Column(db.Text)
-    center_latitude = db.Column(db.Numeric(10, 8), nullable=False)
-    center_longitude = db.Column(db.Numeric(11, 8), nullable=False)
+    center_latitude = db.Column(db.Numeric(9, 6), nullable=False)
+    center_longitude = db.Column(db.Numeric(9, 6), nullable=False)
     radius_meters = db.Column(db.Integer, nullable=False)
     color = db.Column(db.String(20), default='#667eea')
     is_active = db.Column(db.Boolean, default=True)
-    notify_on_entry = db.Column(db.Boolean, default=True)
-    notify_on_exit = db.Column(db.Boolean, default=True)
+    notify_on_entry = db.Column(db.Boolean, default=False)
+    notify_on_exit = db.Column(db.Boolean, default=False)
+    department_id = db.Column(db.Integer, db.ForeignKey('department.id'))
     created_by = db.Column(db.Integer, db.ForeignKey('users.id'))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    department_id = db.Column(db.Integer, db.ForeignKey('department.id'))
     
     # العلاقات
-    employees = db.relationship('Employee', secondary='geofence_employees', backref='geofences')
+    members = db.relationship('GeofenceMembership', backref='geofence', cascade='all, delete-orphan')
     events = db.relationship('GeofenceEvent', backref='geofence', cascade='all, delete-orphan')
     
-    def is_location_inside(self, latitude, longitude):
-        """التحقق من وجود نقطة داخل الدائرة"""
+    def get_employees_inside(self):
+        """جلب جميع الموظفين داخل الدائرة حالياً"""
+        from models import Employee, EmployeeLocation
+        
+        employees_inside = []
+        
+        # جلب أعضاء الدائرة النشطين
+        active_members = GeofenceMembership.query.filter_by(
+            geofence_id=self.id
+        ).filter(
+            (GeofenceMembership.active_to.is_(None)) | 
+            (GeofenceMembership.active_to > datetime.utcnow())
+        ).all()
+        
+        for membership in active_members:
+            employee = membership.employee
+            
+            # جلب آخر موقع للموظف
+            latest_location = EmployeeLocation.query.filter_by(
+                employee_id=employee.id
+            ).order_by(EmployeeLocation.recorded_at.desc()).first()
+            
+            if latest_location:
+                # التحقق من وجوده داخل الدائرة
+                distance = self.calculate_distance(
+                    latest_location.latitude,
+                    latest_location.longitude
+                )
+                
+                if distance <= self.radius_meters:
+                    employees_inside.append({
+                        'employee': employee,
+                        'location': latest_location,
+                        'distance': distance
+                    })
+        
+        return employees_inside
+    
+    def calculate_distance(self, lat, lon):
+        """حساب المسافة من مركز الدائرة"""
         from math import radians, sin, cos, sqrt, atan2
         
-        # حساب المسافة باستخدام Haversine formula
         R = 6371000  # نصف قطر الأرض بالأمتار
         
         lat1 = radians(float(self.center_latitude))
-        lat2 = radians(latitude)
-        delta_lat = radians(latitude - float(self.center_latitude))
-        delta_lon = radians(longitude - float(self.center_longitude))
+        lon1 = radians(float(self.center_longitude))
+        lat2 = radians(lat)
+        lon2 = radians(lon)
         
-        a = sin(delta_lat/2)**2 + cos(lat1) * cos(lat2) * sin(delta_lon/2)**2
-        c = 2 * atan2(sqrt(a), sqrt(1-a))
-        distance = R * c
+        dlat = lat2 - lat1
+        dlon = lon2 - lon1
         
-        return distance <= self.radius_meters
-    
-    def get_distance(self, latitude, longitude):
-        """حساب المسافة من المركز"""
-        from math import radians, sin, cos, sqrt, atan2
-        
-        R = 6371000
-        lat1 = radians(float(self.center_latitude))
-        lat2 = radians(latitude)
-        delta_lat = radians(latitude - float(self.center_latitude))
-        delta_lon = radians(longitude - float(self.center_longitude))
-        
-        a = sin(delta_lat/2)**2 + cos(lat1) * cos(lat2) * sin(delta_lon/2)**2
+        a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
         c = 2 * atan2(sqrt(a), sqrt(1-a))
         
         return R * c
 
 
+class GeofenceMembership(db.Model):
+    """عضوية موظف في دائرة"""
+    __tablename__ = 'geofence_membership'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    geofence_id = db.Column(db.Integer, db.ForeignKey('geofences.id', ondelete='CASCADE'))
+    employee_id = db.Column(db.Integer, db.ForeignKey('employee.id', ondelete='CASCADE'))
+    active_from = db.Column(db.DateTime, default=datetime.utcnow)
+    active_to = db.Column(db.DateTime)
+    priority = db.Column(db.Integer, default=1)
+    assigned_by = db.Column(db.Integer, db.ForeignKey('users.id'))
+    assigned_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # العلاقات
+    employee = db.relationship('Employee', backref='geofence_memberships')
+
+
 class GeofenceEvent(db.Model):
-    """سجل دخول وخروج الموظفين من الدوائر"""
+    """حدث دخول/خروج"""
     __tablename__ = 'geofence_events'
     
     id = db.Column(db.Integer, primary_key=True)
     geofence_id = db.Column(db.Integer, db.ForeignKey('geofences.id', ondelete='CASCADE'))
     employee_id = db.Column(db.Integer, db.ForeignKey('employee.id', ondelete='CASCADE'))
-    event_type = db.Column(db.String(20), nullable=False)  # 'enter' or 'exit'
-    location_latitude = db.Column(db.Numeric(10, 8), nullable=False)
-    location_longitude = db.Column(db.Numeric(11, 8), nullable=False)
+    event_type = db.Column(db.String(30), nullable=False)
+    location_latitude = db.Column(db.Numeric(9, 6))
+    location_longitude = db.Column(db.Numeric(9, 6))
     distance_from_center = db.Column(db.Integer)
-    event_time = db.Column(db.DateTime, default=datetime.utcnow)
+    recorded_at = db.Column(db.DateTime, default=datetime.utcnow)
+    processed_at = db.Column(db.DateTime)
+    source = db.Column(db.String(20), default='auto')
+    attendance_id = db.Column(db.Integer, db.ForeignKey('attendance.id'))
     notes = db.Column(db.Text)
     
     # العلاقات
     employee = db.relationship('Employee', backref='geofence_events')
-
-
-# جدول ربط
-geofence_employees = db.Table('geofence_employees',
-    db.Column('id', db.Integer, primary_key=True),
-    db.Column('geofence_id', db.Integer, db.ForeignKey('geofences.id', ondelete='CASCADE')),
-    db.Column('employee_id', db.Integer, db.ForeignKey('employee.id', ondelete='CASCADE')),
-    db.Column('assigned_at', db.DateTime, default=datetime.utcnow),
-    db.Column('assigned_by', db.Integer, db.ForeignKey('users.id'))
-)
 ```
 
-### 2. معالجة المواقع الواردة
+### 2. Route لتسجيل الحضور الجماعي
 
 ```python
-# في routes/api_external.py
-
-def process_geofence_events(employee, latitude, longitude):
-    """
-    معالجة أحداث الدوائر الجغرافية عند استلام موقع جديد
-    """
-    # جلب جميع الدوائر النشطة المرتبطة بالموظف
-    active_geofences = Geofence.query.filter(
-        Geofence.is_active == True,
-        Geofence.employees.contains(employee)
-    ).all()
+@geofences_bp.route('/<int:geofence_id>/bulk-check-in', methods=['POST'])
+@login_required
+def bulk_check_in(geofence_id):
+    """تسجيل حضور جماعي لجميع الموظفين داخل الدائرة"""
     
-    for geofence in active_geofences:
-        is_inside = geofence.is_location_inside(latitude, longitude)
-        distance = geofence.get_distance(latitude, longitude)
+    geofence = Geofence.query.get_or_404(geofence_id)
+    
+    # جلب الموظفين داخل الدائرة
+    employees_inside = geofence.get_employees_inside()
+    
+    if not employees_inside:
+        return jsonify({
+            'success': False,
+            'message': 'لا يوجد موظفين داخل الدائرة حالياً'
+        })
+    
+    checked_in = []
+    already_checked = []
+    errors = []
+    
+    for emp_data in employees_inside:
+        employee = emp_data['employee']
+        location = emp_data['location']
         
-        # جلب آخر حدث للموظف في هذه الدائرة
-        last_event = GeofenceEvent.query.filter_by(
-            geofence_id=geofence.id,
-            employee_id=employee.id
-        ).order_by(GeofenceEvent.event_time.desc()).first()
+        # التحقق من عدم وجود حضور مسجل اليوم
+        today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+        existing_attendance = Attendance.query.filter(
+            Attendance.employee_id == employee.id,
+            Attendance.check_in_time >= today_start
+        ).first()
         
-        # تحديد نوع الحدث
-        event_type = None
+        if existing_attendance:
+            already_checked.append(employee.name)
+            continue
         
-        if is_inside:
-            # داخل الدائرة
-            if not last_event or last_event.event_type == 'exit':
-                # دخول جديد
-                event_type = 'enter'
-        else:
-            # خارج الدائرة
-            if last_event and last_event.event_type == 'enter':
-                # خروج جديد
-                event_type = 'exit'
-        
-        # تسجيل الحدث
-        if event_type:
+        try:
+            # تسجيل الحضور
+            attendance = Attendance(
+                employee_id=employee.id,
+                check_in_time=datetime.utcnow(),
+                status='present',
+                notes=f'تسجيل جماعي من دائرة: {geofence.name}'
+            )
+            db.session.add(attendance)
+            
+            # تسجيل حدث في الدائرة
             event = GeofenceEvent(
                 geofence_id=geofence.id,
                 employee_id=employee.id,
-                event_type=event_type,
-                location_latitude=latitude,
-                location_longitude=longitude,
-                distance_from_center=int(distance),
-                notes=f'تم الكشف تلقائياً'
+                event_type='bulk_check_in',
+                location_latitude=location.latitude,
+                location_longitude=location.longitude,
+                distance_from_center=int(emp_data['distance']),
+                source='bulk',
+                attendance_id=attendance.id,
+                notes=f'تسجيل جماعي بواسطة {current_user.username}'
             )
             db.session.add(event)
             
-            # إرسال إشعار (اختياري)
-            if (event_type == 'enter' and geofence.notify_on_entry) or \
-               (event_type == 'exit' and geofence.notify_on_exit):
-                send_geofence_notification(employee, geofence, event_type)
-    
-    db.session.commit()
-
-
-def send_geofence_notification(employee, geofence, event_type):
-    """
-    إرسال إشعار عند دخول أو خروج من دائرة
-    """
-    # يمكن استخدام SendGrid أو Twilio لإرسال الإشعارات
-    message = f"الموظف {employee.name} "
-    if event_type == 'enter':
-        message += f"دخل إلى {geofence.name}"
-    else:
-        message += f"خرج من {geofence.name}"
-    
-    # TODO: تنفيذ إرسال الإشعار
-    logger.info(f"إشعار: {message}")
-```
-
-### 3. Routes للدوائر
-
-```python
-# في routes/geofences.py (ملف جديد)
-
-from flask import Blueprint, render_template, request, jsonify
-from models import Geofence, GeofenceEvent, Employee, db
-from flask_login import login_required, current_user
-
-geofences_bp = Blueprint('geofences', __name__)
-
-@geofences_bp.route('/')
-@login_required
-def index():
-    """صفحة إدارة الدوائر الجغرافية"""
-    if current_user.role != 'admin':
-        flash('هذه الصفحة متاحة للمديرين فقط', 'danger')
-        return redirect(url_for('dashboard.index'))
-    
-    geofences = Geofence.query.all()
-    return render_template('geofences/index.html', geofences=geofences)
-
-
-@geofences_bp.route('/create', methods=['POST'])
-@login_required
-def create():
-    """إنشاء دائرة جديدة"""
-    data = request.get_json()
-    
-    geofence = Geofence(
-        name=data['name'],
-        description=data.get('description'),
-        center_latitude=data['latitude'],
-        center_longitude=data['longitude'],
-        radius_meters=data['radius'],
-        color=data.get('color', '#667eea'),
-        created_by=current_user.id
-    )
-    
-    db.session.add(geofence)
-    db.session.commit()
-    
-    return jsonify({
-        'success': True,
-        'geofence_id': geofence.id,
-        'message': 'تم إنشاء الدائرة بنجاح'
-    })
-
-
-@geofences_bp.route('/<int:id>/employees', methods=['POST'])
-@login_required
-def assign_employees(id):
-    """ربط موظفين بدائرة"""
-    geofence = Geofence.query.get_or_404(id)
-    employee_ids = request.get_json().get('employee_ids', [])
-    
-    employees = Employee.query.filter(Employee.id.in_(employee_ids)).all()
-    geofence.employees = employees
+            checked_in.append(employee.name)
+            
+        except Exception as e:
+            errors.append(f'{employee.name}: {str(e)}')
     
     db.session.commit()
     
     return jsonify({
         'success': True,
-        'message': f'تم ربط {len(employees)} موظف بالدائرة'
-    })
-
-
-@geofences_bp.route('/<int:id>/events')
-@login_required
-def get_events(id):
-    """جلب أحداث دائرة معينة"""
-    geofence = Geofence.query.get_or_404(id)
-    
-    events = GeofenceEvent.query.filter_by(
-        geofence_id=id
-    ).order_by(GeofenceEvent.event_time.desc()).limit(100).all()
-    
-    return jsonify({
-        'success': True,
-        'events': [{
-            'employee_name': event.employee.name,
-            'event_type': event.event_type,
-            'event_time': event.event_time.isoformat(),
-            'distance': event.distance_from_center
-        } for event in events]
+        'checked_in_count': len(checked_in),
+        'already_checked_count': len(already_checked),
+        'error_count': len(errors),
+        'checked_in': checked_in,
+        'already_checked': already_checked,
+        'errors': errors,
+        'message': f'تم تسجيل حضور {len(checked_in)} موظف بنجاح'
     })
 ```
 
 ---
 
-## 📊 الميزات المتقدمة
+## 🗓️ خطة التنفيذ
 
-### 1. الإحصائيات والتقارير
-- كم ساعة قضى الموظف داخل الدائرة؟
-- متى دخل ومتى خرج؟
-- كم مرة زار الموقع في الشهر؟
-
-### 2. الإشعارات الذكية
-- إشعار فوري عند دخول/خروج موظف
-- تقرير يومي عن الحضور في المواقع
-- تنبيه إذا لم يصل موظف للموقع في الوقت المحدد
-
-### 3. التكامل مع الحضور
-- ربط دخول الدائرة بتسجيل الحضور تلقائياً
-- ربط خروج الدائرة بتسجيل الانصراف
-
----
-
-## 🎯 خطة التنفيذ
-
-### المرحلة 1: البنية الأساسية (أسبوع 1)
-- [x] إنشاء جداول قاعدة البيانات
+### **المرحلة 1: البنية الأساسية** (أسبوع 1)
+- [ ] إنشاء الجداول الثلاثة في قاعدة البيانات
 - [ ] إنشاء Models في Flask
-- [ ] إنشاء Routes الأساسية
+- [ ] إنشاء Routes الأساسية للدوائر
 
-### المرحلة 2: الواجهة (أسبوع 2)
+### **المرحلة 2: المعالجة التلقائية** (أسبوع 2)
+- [ ] كشف تلقائي للدخول/الخروج
+- [ ] تسجيل الأحداث في الجدول
+- [ ] حساب المسافات بكفاءة (Haversine)
+
+### **المرحلة 3: الواجهة والخريطة** (أسبوع 3)
 - [ ] صفحة إدارة الدوائر
-- [ ] رسم الدوائر على الخريطة
-- [ ] تحديث صفحة التتبع لعرض الدوائر
+- [ ] رسم الدوائر على الخريطة (Leaflet.js)
+- [ ] عرض الموظفين داخل/خارج الدائرة
+- [ ] **زر تسجيل الحضور الجماعي** ⭐
+- [ ] عرض صور الموظفين على الخريطة
+- [ ] تبديل صورة القمر الصناعي (Mapbox Satellite)
 
-### المرحلة 3: المعالجة التلقائية (أسبوع 3)
-- [ ] كشف الدخول/الخروج تلقائياً
-- [ ] تسجيل الأحداث
-- [ ] إرسال الإشعارات
-
-### المرحلة 4: التحسينات (أسبوع 4)
+### **المرحلة 4: الميزات الإضافية** (أسبوع 4)
+- [ ] روابط المشاركة المؤقتة
+- [ ] الإشعارات (اختيارية)
 - [ ] التقارير والإحصائيات
-- [ ] التكامل مع نظام الحضور
-- [ ] الإشعارات المتقدمة
+- [ ] سجل الدخول والخروج التاريخي
 
 ---
 
 ## 💡 ملاحظات مهمة
 
+### الفرق الأساسي: تسجيل يدوي بدلاً من تلقائي
+
+#### ❌ **ما لن نفعله:**
+- تسجيل حضور تلقائي عند دخول الموظف
+- تسجيل انصراف تلقائي عند الخروج
+
+#### ✅ **ما سنفعله:**
+- كشف تلقائي لمن هو داخل/خارج الدائرة
+- تسجيل أحداث الدخول/الخروج للتتبع فقط
+- **زر يدوي** لتسجيل حضور جميع من هم داخل الدائرة
+- المدير يضغط الزر متى ما أراد تسجيل الحضور
+
+### الأمان والخصوصية:
+- موافقة الموظف على التتبع
+- تشفير البيانات
+- حذف البيانات القديمة بعد 6 أشهر
+
 ### الأداء:
-- استخدام حساب المسافة فقط للموظفين المرتبطين بالدائرة
-- تخزين الأحداث في cache لتقليل الاستعلامات
-
-### الخصوصية:
-- التأكد من موافقة الموظف على التتبع
-- حفظ البيانات بشكل آمن ومشفر
-- إمكانية حذف البيانات القديمة
-
-### الدقة:
-- الأخذ بعين الاعتبار دقة GPS (accuracy)
-- تجاهل المواقع ذات الدقة المنخفضة
-- إضافة هامش خطأ للدوائر
+- Cache لمراكز الدوائر
+- حساب المسافات فقط عند الحاجة
+- تجميع علامات الموظفين على الخريطة
 
 ---
 
-## 📞 الأسئلة الشائعة
-
-### س: كم دائرة يمكن إنشاؤها؟
-ج: لا يوجد حد أقصى، لكن يُنصح بعدم تجاوز 50 دائرة نشطة لكل موظف للحفاظ على الأداء.
-
-### س: هل يمكن تداخل الدوائر؟
-ج: نعم، يمكن للموظف أن يكون داخل عدة دوائر في نفس الوقت.
-
-### س: ماذا لو كان GPS غير دقيق؟
-ج: يتم تجاهل المواقع ذات دقة أقل من 50 متر تلقائياً.
-
----
-
-**تاريخ الإنشاء**: 07 نوفمبر 2025  
-**الإصدار**: 1.0  
-**الحالة**: مقترح - في انتظار الموافقة
+**تاريخ التحديث**: 08 نوفمبر 2025  
+**الإصدار**: 2.0  
+**الحالة**: جاهز للتنفيذ ✅
