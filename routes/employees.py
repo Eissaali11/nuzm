@@ -1932,7 +1932,7 @@ def tracking():
                 employee_locations[emp.id] = {
                     'latitude': latest_location.latitude,
                     'longitude': latest_location.longitude,
-                    'accuracy': latest_location.accuracy,
+                    'accuracy': getattr(latest_location, 'accuracy', None), 
                     'recorded_at': latest_location.recorded_at,
                     'age_hours': age_hours,
                     'color': color,
