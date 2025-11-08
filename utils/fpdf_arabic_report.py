@@ -81,25 +81,30 @@ class ProfessionalArabicPDF(FPDF):
         if txt is None or txt == '':
             return ''
         
-        # تخطي المعالجة لغير النصوص
+        # تحويل إلى نص إذا لم يكن نصاً
         if not isinstance(txt, str):
-            return str(txt)
+            txt = str(txt)
         
-        # تخطي معالجة الأرقام والتواريخ والأحرف الإنجليزية فقط
-        if txt.replace('.', '', 1).replace(',', '', 1).replace('-', '', 1).isdigit() or all(c.isdigit() or c in '/-:. ' for c in txt):
+        # تخطي النصوص الفارغة بعد التحويل
+        if not txt or txt.strip() == '':
+            return ''
+        
+        # فحص إذا كان النص يحتوي على أحرف عربية
+        has_arabic = any('\u0600' <= c <= '\u06FF' or '\u0750' <= c <= '\u077F' for c in txt)
+        
+        # إذا لم يكن هناك أحرف عربية، أرجع النص كما هو
+        if not has_arabic:
             return txt
         
-        # إذا كان النص إنجليزي فقط، لا نحتاج معالجة
-        if all(ord(c) < 256 for c in txt):
-            return txt
-        
+        # معالجة النصوص التي تحتوي على عربي
         try:
-            # إعادة تشكيل النص العربي وتحويله إلى النمط المناسب للعرض
+            # إعادة تشكيل النص العربي أولاً
             reshaped_text = arabic_reshaper.reshape(txt)
+            # ثم تطبيق bidirectional algorithm
             bidi_text = get_display(reshaped_text)
             return bidi_text
         except Exception as e:
-            print(f"خطأ في معالجة النص العربي: {e}")
+            # في حالة الخطأ، أرجع النص كما هو
             return txt
     
     def cell(self, w=0, h=0, txt='', border=0, ln=0, align='', fill=False, link=''):
@@ -187,8 +192,9 @@ class ProfessionalArabicPDF(FPDF):
             self.set_fill_color(r, g, b)
             self.rect(0, i * stripe_height, 210, stripe_height + 0.5, 'F')
         
-        # إضافة عناصر زخرفية
-        self.set_fill_color(255, 255, 255, 10)
+        # إضافة عناصر زخرفية (خطوط بيضاء خفيفة)
+        self.set_draw_color(255, 255, 255)
+        self.set_line_width(0.2)
         for i in range(0, 220, 25):
             self.line(i, 0, i+10, 60)
         
@@ -813,8 +819,8 @@ def generate_safety_check_report_pdf(safety_check):
             logo_path = path
             break
     
-    # رسم إطار مميز للشعار
-    pdf.set_fill_color(255, 255, 255, 20)
+    # رسم إطار مميز للشعار (خلفية بيضاء خفيفة)
+    pdf.set_fill_color(240, 245, 255)
     pdf.rect(13, 8, 44, 44, 'F')
     pdf.set_draw_color(255, 255, 255)
     pdf.set_line_width(2)
@@ -858,7 +864,7 @@ def generate_safety_check_report_pdf(safety_check):
     
     # Badge لرقم اللوحة
     plate_number = safety_check.vehicle_plate_number or 'غير محدد'
-    pdf.set_fill_color(*pdf.colors['white'], 30)
+    pdf.set_fill_color(240, 245, 255)
     pdf.rect(80, 28, 50, 10, 'F')
     pdf.set_draw_color(255, 255, 255)
     pdf.set_line_width(0.5)
@@ -903,47 +909,53 @@ def generate_safety_check_report_pdf(safety_check):
     
     # رسم بطاقة بإطار ملون متدرج
     current_y = pdf.get_y()
+    box_height = len(vehicle_info) * 12 + 8
     
     # خلفية فاتحة للبطاقة
-    pdf.set_fill_color(245, 250, 255)
-    pdf.rect(15, current_y, 180, len(vehicle_info) * 10 + 6, 'F')
+    pdf.set_fill_color(248, 250, 252)
+    pdf.rect(20, current_y, 170, box_height, 'F')
     
     # إطار متدرج للبطاقة
     pdf.set_draw_color(*pdf.colors['cyan'])
-    pdf.set_line_width(1)
-    pdf.rect(15, current_y, 180, len(vehicle_info) * 10 + 6)
+    pdf.set_line_width(0.8)
+    pdf.rect(20, current_y, 170, box_height)
     
-    pdf.set_y(current_y + 3)
+    pdf.set_y(current_y + 5)
     
     for i, info in enumerate(vehicle_info):
         field_color = info[2]
         
-        pdf.set_x(18)
+        # خط رفيع بين الحقول
+        if i > 0:
+            y_pos = pdf.get_y() - 1
+            pdf.set_draw_color(220, 220, 220)
+            pdf.set_line_width(0.2)
+            pdf.line(25, y_pos, 185, y_pos)
+        
+        pdf.set_x(25)
         
         # أيقونة ملونة صغيرة
         pdf.set_fill_color(*pdf.colors[field_color])
-        pdf.rect(20, pdf.get_y() + 1, 3, 6, 'F')
+        pdf.rect(25, pdf.get_y() + 2, 2, 6, 'F')
         
         # العنوان
-        pdf.set_x(26)
+        pdf.set_x(30)
         if pdf.fonts_available:
             pdf.set_font('Tajawal', 'B', 11)
         else:
             pdf.set_font('Arial', 'B', 11)
-        pdf.set_color('text_dark')
-        pdf.cell(70, 8, info[0], 0, 0, 'R')
+        pdf.set_text_color(60, 60, 60)
+        pdf.cell(60, 10, info[0], 0, 0, 'R')
         
         # القيمة
         if pdf.fonts_available:
-            pdf.set_font('Amiri', '', 12)
+            pdf.set_font('Tajawal', '', 11)
         else:
-            pdf.set_font('Arial', '', 12)
-        pdf.set_color(field_color)
-        pdf.cell(86, 8, info[1], 0, 1, 'R')
-        
-        pdf.ln(2)
+            pdf.set_font('Arial', '', 11)
+        pdf.set_text_color(*pdf.colors[field_color])
+        pdf.cell(95, 10, info[1], 0, 1, 'R')
     
-    pdf.ln(6)
+    pdf.ln(8)
     
     # فاصل زخرفي
     pdf.draw_decorative_separator('cyan', 'purple', 'pink')
@@ -961,47 +973,53 @@ def generate_safety_check_report_pdf(safety_check):
     
     # رسم بطاقة بإطار ملون متدرج
     current_y = pdf.get_y()
+    box_height = len(driver_info) * 12 + 8
     
     # خلفية فاتحة للبطاقة
-    pdf.set_fill_color(250, 245, 255)
-    pdf.rect(15, current_y, 180, len(driver_info) * 10 + 6, 'F')
+    pdf.set_fill_color(252, 248, 255)
+    pdf.rect(20, current_y, 170, box_height, 'F')
     
     # إطار متدرج للبطاقة
     pdf.set_draw_color(*pdf.colors['purple'])
-    pdf.set_line_width(1)
-    pdf.rect(15, current_y, 180, len(driver_info) * 10 + 6)
+    pdf.set_line_width(0.8)
+    pdf.rect(20, current_y, 170, box_height)
     
-    pdf.set_y(current_y + 3)
+    pdf.set_y(current_y + 5)
     
     for i, info in enumerate(driver_info):
         field_color = info[2]
         
-        pdf.set_x(18)
+        # خط رفيع بين الحقول
+        if i > 0:
+            y_pos = pdf.get_y() - 1
+            pdf.set_draw_color(220, 220, 220)
+            pdf.set_line_width(0.2)
+            pdf.line(25, y_pos, 185, y_pos)
+        
+        pdf.set_x(25)
         
         # أيقونة ملونة صغيرة
         pdf.set_fill_color(*pdf.colors[field_color])
-        pdf.rect(20, pdf.get_y() + 1, 3, 6, 'F')
+        pdf.rect(25, pdf.get_y() + 2, 2, 6, 'F')
         
         # العنوان
-        pdf.set_x(26)
+        pdf.set_x(30)
         if pdf.fonts_available:
             pdf.set_font('Tajawal', 'B', 11)
         else:
             pdf.set_font('Arial', 'B', 11)
-        pdf.set_color('text_dark')
-        pdf.cell(70, 8, info[0], 0, 0, 'R')
+        pdf.set_text_color(60, 60, 60)
+        pdf.cell(60, 10, info[0], 0, 0, 'R')
         
         # القيمة
         if pdf.fonts_available:
-            pdf.set_font('Amiri', '', 12)
+            pdf.set_font('Tajawal', '', 11)
         else:
-            pdf.set_font('Arial', '', 12)
-        pdf.set_color(field_color)
-        pdf.cell(86, 8, info[1], 0, 1, 'R')
-        
-        pdf.ln(2)
+            pdf.set_font('Arial', '', 11)
+        pdf.set_text_color(*pdf.colors[field_color])
+        pdf.cell(95, 10, info[1], 0, 1, 'R')
     
-    pdf.ln(6)
+    pdf.ln(8)
     
     # فاصل زخرفي
     pdf.draw_decorative_separator('purple', 'indigo', 'pink')
@@ -1012,27 +1030,34 @@ def generate_safety_check_report_pdf(safety_check):
         
         current_y = pdf.get_y()
         
+        # حساب ارتفاع الملاحظات
+        notes_height = max(35, min(60, len(safety_check.notes) / 4))
+        
         # خلفية متدرجة للملاحظات
-        pdf.set_fill_color(235, 245, 255)
-        pdf.rect(15, current_y, 180, 30, 'F')
+        pdf.set_fill_color(245, 250, 255)
+        pdf.rect(20, current_y, 170, notes_height, 'F')
         
         # إطار ملون
         pdf.set_draw_color(*pdf.colors['blue'])
-        pdf.set_line_width(1)
-        pdf.rect(15, current_y, 180, 30)
+        pdf.set_line_width(0.8)
+        pdf.rect(20, current_y, 170, notes_height)
         
-        # شريط جانبي
-        pdf.set_fill_color(*pdf.colors['blue_light'])
-        pdf.rect(15, current_y, 5, 30, 'F')
+        # أيقونة التنبيه
+        pdf.set_fill_color(*pdf.colors['blue'])
+        pdf.rect(25, current_y + 4, 2, 6, 'F')
         
+        # النص
+        pdf.set_xy(30, current_y + 5)
         if pdf.fonts_available:
-            pdf.set_font('Amiri', '', 11)
+            pdf.set_font('Tajawal', '', 10)
         else:
-            pdf.set_font('Arial', '', 11)
-        pdf.set_color('text_dark')
-        pdf.set_xy(22, current_y + 5)
-        pdf.multi_cell(168, 6, safety_check.notes, 0, 'R')
-        pdf.ln(5)
+            pdf.set_font('Arial', '', 10)
+        pdf.set_text_color(60, 60, 60)
+        
+        # تقسيم الملاحظات لأسطر متعددة
+        pdf.multi_cell(155, 5, safety_check.notes, 0, 'R')
+        
+        pdf.ln(10)
         
         # فاصل زخرفي
         pdf.draw_decorative_separator('blue', 'cyan', 'purple')
@@ -1073,8 +1098,9 @@ def generate_safety_check_report_pdf(safety_check):
                     
                     current_y = pdf.get_y()
                     
-                    # خلفية العنوان
-                    pdf.set_fill_color(*pdf.colors[image_color], 20)
+                    # خلفية العنوان (لون فاتح جداً)
+                    r, g, b = pdf.colors[image_color]
+                    pdf.set_fill_color(int(r + (255-r)*0.85), int(g + (255-g)*0.85), int(b + (255-b)*0.85))
                     pdf.rect(15, current_y, 180, 12, 'F')
                     
                     # Badge رقم الصورة
@@ -1136,8 +1162,8 @@ def generate_safety_check_report_pdf(safety_check):
                     pdf.rect(x_position - padding, y_position - padding, 
                             final_width + 2*padding, final_height + 2*padding)
                     
-                    # ظل خفيف
-                    pdf.set_fill_color(200, 200, 200, 30)
+                    # ظل خفيف (رمادي فاتح جداً)
+                    pdf.set_fill_color(235, 235, 235)
                     pdf.rect(x_position - padding + 2, y_position - padding + 2, 
                             final_width + 2*padding, final_height + 2*padding, 'F')
                     
@@ -1199,7 +1225,10 @@ def generate_safety_check_report_pdf(safety_check):
     # حفظ PDF إلى buffer
     pdf_buffer = io.BytesIO()
     try:
-        pdf_content = pdf.output(dest='S').encode('latin1')
+        # في fpdf2 الحديث، output يعيد bytearray مباشرة
+        pdf_content = pdf.output(dest='S')
+        if isinstance(pdf_content, str):
+            pdf_content = pdf_content.encode('latin1')
         pdf_buffer.write(pdf_content)
         pdf_buffer.seek(0)
         return pdf_buffer
