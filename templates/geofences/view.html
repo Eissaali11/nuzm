@@ -178,6 +178,205 @@
             background: linear-gradient(135deg, #10b981 0%, #059669 100%);
         }
         
+        .btn-sm {
+            padding: 8px 16px;
+            font-size: 14px;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+            animation: modalFadeIn 0.3s ease-out;
+        }
+        
+        @keyframes modalFadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+        
+        .modal-content {
+            background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 24px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 85vh;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            animation: modalSlideUp 0.4s ease-out;
+        }
+        
+        @keyframes modalSlideUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .modal-header {
+            padding: 25px 30px;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.3) 0%, rgba(139, 92, 246, 0.3) 100%);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-header h2 {
+            color: #ffffff;
+            font-size: 24px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .modal-header h2 i {
+            color: #818cf8;
+        }
+        
+        .close-btn {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            color: #ef4444;
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .close-btn:hover {
+            background: rgba(239, 68, 68, 0.4);
+            transform: rotate(90deg);
+        }
+        
+        .modal-body {
+            padding: 30px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        
+        .modal-body::-webkit-scrollbar {
+            width: 10px;
+        }
+        
+        .modal-body::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        .modal-body::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #818cf8 0%, #a78bfa 100%);
+            border-radius: 10px;
+        }
+        
+        .employees-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+        }
+        
+        .employee-card {
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .employee-card input[type="checkbox"] {
+            position: absolute;
+            opacity: 0;
+            cursor: pointer;
+        }
+        
+        .employee-card .card-content {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 20px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            position: relative;
+        }
+        
+        .employee-card:hover .card-content {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(129, 140, 248, 0.5);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(129, 140, 248, 0.3);
+        }
+        
+        .employee-card input:checked + .card-content {
+            background: linear-gradient(135deg, rgba(129, 140, 248, 0.2) 0%, rgba(167, 139, 250, 0.2) 100%);
+            border-color: #818cf8;
+            box-shadow: 0 0 20px rgba(129, 140, 248, 0.4);
+        }
+        
+        .employee-card .emp-photo {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            object-fit: cover;
+            flex-shrink: 0;
+        }
+        
+        .employee-card .emp-details {
+            flex: 1;
+        }
+        
+        .employee-card .emp-name {
+            color: #ffffff;
+            font-weight: 700;
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+        
+        .employee-card .emp-id {
+            color: #c7d2fe;
+            font-size: 13px;
+        }
+        
+        .employee-card .check-icon {
+            color: #10b981;
+            font-size: 24px;
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+        
+        .employee-card input:checked + .card-content .check-icon {
+            opacity: 1;
+            transform: scale(1.2);
+        }
+        
+        .modal-footer {
+            padding: 20px 30px;
+            background: rgba(255, 255, 255, 0.03);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            gap: 15px;
+            justify-content: flex-end;
+        }
+        
         .main-content {
             display: grid;
             grid-template-columns: 2fr 1fr;
@@ -448,6 +647,11 @@
                     </div>
                     
                     <div class="stat-item">
+                        <span class="stat-label">الموظفين المرتبطين</span>
+                        <span class="stat-value">{{ assigned_employees|length }}</span>
+                    </div>
+                    
+                    <div class="stat-item">
                         <span class="stat-label">إجمالي الموظفين بالداخل</span>
                         <span class="stat-value">{{ all_employees|length }}</span>
                     </div>
@@ -455,6 +659,56 @@
                     <div class="stat-item">
                         <span class="stat-label">نصف القطر</span>
                         <span class="stat-value">{{ geofence.radius_meters }}</span>
+                    </div>
+                </div>
+                
+                <div class="employees-card">
+                    <div class="card-header">
+                        <h2>
+                            <i class="fas fa-user-check"></i> 
+                            الموظفين المرتبطين
+                            <span class="badge" style="margin-right: auto;">{{ assigned_employees|length }}</span>
+                        </h2>
+                        {% if available_employees %}
+                        <button class="btn btn-primary btn-sm" onclick="showAssignModal()" style="margin-right: 10px;">
+                            <i class="fas fa-plus"></i> ربط موظف
+                        </button>
+                        {% endif %}
+                    </div>
+                    <div class="employees-list">
+                        {% if assigned_employees %}
+                            {% for emp in assigned_employees %}
+                            <div class="employee-item">
+                                {% if emp.profile_image %}
+                                <img src="{{ emp.profile_image }}" alt="{{ emp.name }}" class="employee-photo">
+                                {% else %}
+                                <div class="employee-photo" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 18px;">
+                                    {{ emp.name[0] if emp.name else 'M' }}
+                                </div>
+                                {% endif %}
+                                
+                                <div class="employee-info">
+                                    <div class="employee-name">{{ emp.name }}</div>
+                                    <div class="employee-id">{{ emp.employee_id }}</div>
+                                </div>
+                                
+                                <button class="btn btn-danger btn-sm" onclick="unassignEmployee({{ emp.id }}, '{{ emp.name }}')" style="margin-right: auto;">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="empty-state">
+                                <i class="fas fa-user-slash"></i>
+                                <h3>لا يوجد موظفين مرتبطين</h3>
+                                <p>لم يتم ربط أي موظف بهذه الدائرة بعد</p>
+                                {% if available_employees %}
+                                <button class="btn btn-primary" onclick="showAssignModal()" style="margin-top: 15px;">
+                                    <i class="fas fa-plus"></i> ربط موظف الآن
+                                </button>
+                                {% endif %}
+                            </div>
+                        {% endif %}
                     </div>
                 </div>
                 
@@ -495,6 +749,61 @@
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+    
+    <!-- Modal لربط الموظفين -->
+    <div id="assignModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-user-plus"></i> ربط موظفين بالدائرة</h2>
+                <button class="close-btn" onclick="closeAssignModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="modal-body">
+                {% if available_employees %}
+                <div class="employees-grid">
+                    {% for emp in available_employees %}
+                    <label class="employee-card">
+                        <input type="checkbox" class="employee-checkbox" value="{{ emp.id }}" onchange="toggleEmployee(this, {{ emp.id }})">
+                        <div class="card-content">
+                            {% if emp.profile_image %}
+                            <img src="{{ emp.profile_image }}" alt="{{ emp.name }}" class="emp-photo">
+                            {% else %}
+                            <div class="emp-photo" style="background: linear-gradient(135deg, #818cf8 0%, #a78bfa 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 20px;">
+                                {{ emp.name[0] if emp.name else 'M' }}
+                            </div>
+                            {% endif %}
+                            <div class="emp-details">
+                                <div class="emp-name">{{ emp.name }}</div>
+                                <div class="emp-id">{{ emp.employee_id }}</div>
+                            </div>
+                            <i class="fas fa-check-circle check-icon"></i>
+                        </div>
+                    </label>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-users-slash"></i>
+                    <h3>لا يوجد موظفين متاحين</h3>
+                    <p>جميع موظفي هذا القسم مرتبطين بالدائرة بالفعل</p>
+                </div>
+                {% endif %}
+            </div>
+            
+            {% if available_employees %}
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeAssignModal()">
+                    <i class="fas fa-times"></i> إلغاء
+                </button>
+                <button id="assignBtn" class="btn btn-primary" onclick="assignSelectedEmployees()" disabled>
+                    <i class="fas fa-check"></i> ربط الموظفين
+                </button>
+            </div>
+            {% endif %}
         </div>
     </div>
     
@@ -557,6 +866,85 @@
             </div>
         `);
         {% endfor %}
+        
+        function showAssignModal() {
+            const modal = document.getElementById('assignModal');
+            modal.style.display = 'flex';
+        }
+        
+        function closeAssignModal() {
+            const modal = document.getElementById('assignModal');
+            modal.style.display = 'none';
+        }
+        
+        function toggleEmployee(checkbox, employeeId) {
+            const selectedIds = Array.from(document.querySelectorAll('.employee-checkbox:checked')).map(cb => parseInt(cb.value));
+            document.getElementById('assignBtn').disabled = selectedIds.length === 0;
+        }
+        
+        async function assignSelectedEmployees() {
+            const selectedIds = Array.from(document.querySelectorAll('.employee-checkbox:checked')).map(cb => parseInt(cb.value));
+            
+            if (selectedIds.length === 0) {
+                alert('الرجاء اختيار موظف واحد على الأقل');
+                return;
+            }
+            
+            const assignBtn = document.getElementById('assignBtn');
+            assignBtn.disabled = true;
+            assignBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الربط...';
+            
+            try {
+                const response = await fetch(`/employees/geofences/${geofence.id}/assign-employees`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ employee_ids: selectedIds })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert(data.message);
+                    location.reload();
+                } else {
+                    alert('خطأ: ' + data.message);
+                    assignBtn.disabled = false;
+                    assignBtn.innerHTML = '<i class="fas fa-check"></i> ربط الموظفين';
+                }
+            } catch (error) {
+                alert('حدث خطأ في الاتصال');
+                assignBtn.disabled = false;
+                assignBtn.innerHTML = '<i class="fas fa-check"></i> ربط الموظفين';
+            }
+        }
+        
+        async function unassignEmployee(employeeId, employeeName) {
+            if (!confirm(`هل أنت متأكد من إلغاء ربط الموظف "${employeeName}" من هذه الدائرة؟`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/employees/geofences/${geofence.id}/unassign-employee/${employeeId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert(data.message);
+                    location.reload();
+                } else {
+                    alert('خطأ: ' + data.message);
+                }
+            } catch (error) {
+                alert('حدث خطأ في الاتصال');
+            }
+        }
         
         function editGeofence() {
             if (confirm('ميزة التعديل ستكون متاحة قريباً. هل تريد العودة إلى قائمة الدوائر؟')) {
