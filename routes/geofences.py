@@ -588,7 +588,7 @@ def export_events(geofence_id):
             bottom=Side(style='thin')
         )
         
-        headers = ['الحالة الحالية', 'المسافة (م)', 'نوع الحدث', 'التاريخ والوقت', 'رقم الموظف', 'اسم الموظف', 'القسم', 'الدائرة']
+        headers = ['الحالة', 'نوع الحدث', 'التاريخ والوقت', 'رقم الموظف', 'اسم الموظف', 'القسم', 'الدائرة']
         
         for col_num, header in enumerate(headers, 1):
             cell = ws.cell(row=1, column=col_num)
@@ -598,39 +598,55 @@ def export_events(geofence_id):
             cell.alignment = Alignment(horizontal='center', vertical='center')
             cell.border = border
         
-        events = GeofenceEvent.query.filter_by(
-            geofence_id=geofence_id
-        ).order_by(GeofenceEvent.recorded_at.desc()).all()
-        
         employees_inside = geofence.get_department_employees_inside()
         inside_employee_ids = {emp['employee'].id for emp in employees_inside}
         
+        all_assigned_employees = geofence.assigned_employees
+        
+        today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+        
         row_num = 2
-        for event in events:
-            if not event.employee:
-                continue
+        for employee in all_assigned_employees:
+            is_inside = employee.id in inside_employee_ids
             
-            is_inside = event.employee_id in inside_employee_ids
-            status = '✓ موجود' if is_inside else '✗ غادر'
+            last_event = GeofenceEvent.query.filter_by(
+                geofence_id=geofence_id,
+                employee_id=employee.id
+            ).filter(
+                GeofenceEvent.recorded_at >= today_start
+            ).order_by(GeofenceEvent.recorded_at.desc()).first()
             
-            event_type_map = {
-                'entry': 'دخول',
-                'exit': 'خروج',
-                'bulk_check_in': 'تسجيل جماعي',
-                'update': 'تحديث'
-            }
-            event_type = event_type_map.get(event.event_type, event.event_type)
+            if is_inside:
+                status = 'موجود داخل الدائرة'
+                event_type = last_event.event_type if last_event else 'حضور'
+                event_time = last_event.recorded_at.strftime('%Y-%m-%d %H:%M:%S') if last_event else '-'
+                
+                event_type_map = {
+                    'entry': 'دخول',
+                    'exit': 'خروج',
+                    'bulk_check_in': 'تسجيل جماعي',
+                    'update': 'تحديث'
+                }
+                event_type = event_type_map.get(event_type, event_type)
+            else:
+                if last_event:
+                    status = 'خارج الدائرة'
+                    event_type = 'غادر'
+                    event_time = last_event.recorded_at.strftime('%Y-%m-%d %H:%M:%S')
+                else:
+                    status = 'خارج الحضور'
+                    event_type = 'غائب'
+                    event_time = '-'
             
             ws.cell(row=row_num, column=1, value=status)
-            ws.cell(row=row_num, column=2, value=event.distance_from_center if event.distance_from_center else '-')
-            ws.cell(row=row_num, column=3, value=event_type)
-            ws.cell(row=row_num, column=4, value=event.recorded_at.strftime('%Y-%m-%d %H:%M:%S') if event.recorded_at else '-')
-            ws.cell(row=row_num, column=5, value=event.employee.employee_id)
-            ws.cell(row=row_num, column=6, value=event.employee.name)
-            ws.cell(row=row_num, column=7, value=geofence.department.name if geofence.department else '-')
-            ws.cell(row=row_num, column=8, value=geofence.name)
+            ws.cell(row=row_num, column=2, value=event_type)
+            ws.cell(row=row_num, column=3, value=event_time)
+            ws.cell(row=row_num, column=4, value=employee.employee_id)
+            ws.cell(row=row_num, column=5, value=employee.name)
+            ws.cell(row=row_num, column=6, value=geofence.department.name if geofence.department else '-')
+            ws.cell(row=row_num, column=7, value=geofence.name)
             
-            for col in range(1, 9):
+            for col in range(1, 8):
                 cell = ws.cell(row=row_num, column=col)
                 cell.border = border
                 cell.alignment = Alignment(horizontal='center', vertical='center')
@@ -639,14 +655,17 @@ def export_events(geofence_id):
                     if is_inside:
                         cell.fill = PatternFill(start_color="D1FAE5", end_color="D1FAE5", fill_type="solid")
                         cell.font = Font(color="065F46", bold=True)
-                    else:
+                    elif status == 'خارج الحضور':
                         cell.fill = PatternFill(start_color="FEE2E2", end_color="FEE2E2", fill_type="solid")
                         cell.font = Font(color="991B1B", bold=True)
+                    else:
+                        cell.fill = PatternFill(start_color="FEF3C7", end_color="FEF3C7", fill_type="solid")
+                        cell.font = Font(color="92400E", bold=True)
             
             row_num += 1
         
-        for col in range(1, 9):
-            ws.column_dimensions[ws.cell(row=1, column=col).column_letter].width = 18
+        for col in range(1, 8):
+            ws.column_dimensions[ws.cell(row=1, column=col).column_letter].width = 20
         
         output = BytesIO()
         wb.save(output)
