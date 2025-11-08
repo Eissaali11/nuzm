@@ -20,15 +20,16 @@
 3. اختر **"Production Deployment"**
 4. انتظر حتى تكتمل عملية النشر
 
-#### ب. الحصول على الدومين الدائم:
-بعد النشر، ستحصل على رابط دائم بالصيغة:
+#### ب. الدومين الدائم لنظام نُظم:
+
+**الدومين المخصص (الأساسي):**
 ```
-https://your-project-name.replit.app
+http://nuzum.site
 ```
 
-**مثال:**
+**دومين Replit (البديل):**
 ```
-https://nuzum-hr-system.replit.app
+https://eissahr.replit.app
 ```
 
 ---
@@ -41,8 +42,8 @@ https://nuzum-hr-system.replit.app
 
 ```dart
 class ApiConfig {
-  /// 🔗 ضع هنا الدومين الدائم الخاص بك
-  static const String baseUrl = 'https://nuzum-hr-system.replit.app';
+  /// 🔗 الدومين المخصص لنظام نُظم
+  static const String baseUrl = 'http://nuzum.site';
   
   /// 🔑 مفتاح API من لوحة التحكم
   static const String apiKey = 'test_location_key_2025';
@@ -51,7 +52,7 @@ class ApiConfig {
 }
 ```
 
-#### ج. استبدل `your-project-name` باسم مشروعك الفعلي
+#### ج. ملاحظة: تم تعيين الدومين مسبقاً
 
 ---
 
@@ -77,7 +78,12 @@ void testApiConnection() async {
 
 افتح الرابط التالي في المتصفح:
 ```
-https://your-project-name.replit.app/api/external/test
+http://nuzum.site/api/external/test
+```
+
+أو الدومين البديل:
+```
+https://eissahr.replit.app/api/external/test
 ```
 
 **الاستجابة المتوقعة:**
@@ -112,7 +118,7 @@ https://your-project-name.replit.app/api/external/test
 android {
     defaultConfig {
         buildConfigField "String", "API_KEY", "\"your_secure_key_here_2025\""
-        buildConfigField "String", "BASE_URL", "\"https://nuzum-hr-system.replit.app\""
+        buildConfigField "String", "BASE_URL", "\"http://nuzum.site\""
     }
 }
 ```
@@ -122,7 +128,7 @@ android {
 class ApiConfig {
   static const String baseUrl = String.fromEnvironment(
     'BASE_URL',
-    defaultValue: 'https://nuzum-hr-system.replit.app',
+    defaultValue: 'http://nuzum.site',
   );
   
   static const String apiKey = String.fromEnvironment(

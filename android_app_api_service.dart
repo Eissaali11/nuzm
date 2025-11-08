@@ -17,10 +17,10 @@ class MyHttpOverrides extends HttpOverrides {
 
 /// إعدادات API - قم بتعديل هذه القيم فقط
 class ApiConfig {
-  /// 🔗 الدومين الدائم لتطبيقك على Replit
-  /// احصل عليه من: Settings > Domains في مشروعك على Replit
-  /// الصيغة: https://اسم-المشروع.replit.app
-  static const String baseUrl = 'https://your-project-name.replit.app';
+  /// 🔗 الدومين الدائم للنظام
+  /// الدومين الأساسي: http://nuzum.site
+  /// الدومين البديل: https://eissahr.replit.app
+  static const String baseUrl = 'http://nuzum.site';
   
   /// 🔑 مفتاح API - احصل عليه من لوحة التحكم
   /// الموقع: Secrets في Replit (LOCATION_API_KEY)
