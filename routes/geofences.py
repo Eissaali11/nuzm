@@ -2,6 +2,8 @@ from flask import Blueprint, render_template, request, jsonify, flash, redirect,
 from flask_login import login_required, current_user
 from models import Geofence, GeofenceEvent, Employee, Department, Attendance, EmployeeLocation, db, employee_departments
 from datetime import datetime
+import re
+import requests
 
 geofences_bp = Blueprint('geofences', __name__, url_prefix='/employees/geofences')
 
@@ -343,4 +345,78 @@ def delete(geofence_id):
         return jsonify({
             'success': False,
             'message': f'خطأ في الحذف: {str(e)}'
+        }), 400
+
+
+@geofences_bp.route('/extract-google-maps-coords', methods=['POST'])
+@login_required
+def extract_google_maps_coords():
+    """استخراج الإحداثيات من روابط Google Maps (بما في ذلك الروابط المختصرة)"""
+    try:
+        data = request.get_json()
+        url = data.get('url', '').strip()
+        
+        if not url:
+            return jsonify({
+                'success': False,
+                'message': 'الرجاء إدخال رابط Google Maps'
+            }), 400
+        
+        # إذا كان الرابط مختصر (goo.gl أو maps.app.goo.gl)، نحتاج لفتحه للحصول على الرابط الكامل
+        if 'goo.gl' in url or 'maps.app.goo.gl' in url:
+            try:
+                # إرسال طلب للحصول على الرابط الكامل بعد إعادة التوجيه
+                response = requests.get(url, allow_redirects=True, timeout=10)
+                url = response.url  # الرابط الكامل بعد إعادة التوجيه
+            except Exception as e:
+                return jsonify({
+                    'success': False,
+                    'message': f'فشل فتح الرابط المختصر: {str(e)}'
+                }), 400
+        
+        # استخراج الإحداثيات من الرابط
+        coords = None
+        
+        # نمط 1: !3d/!4d (الأكثر دقة - موقع العلامة)
+        match = re.search(r'!3d(-?\d+\.?\d*)!4d(-?\d+\.?\d*)', url)
+        if match:
+            coords = {
+                'lat': float(match.group(1)),
+                'lng': float(match.group(2))
+            }
+        
+        # نمط 2: @ (مركز الخريطة)
+        if not coords:
+            match = re.search(r'@(-?\d+\.\d+),(-?\d+\.\d+)', url)
+            if match:
+                coords = {
+                    'lat': float(match.group(1)),
+                    'lng': float(match.group(2))
+                }
+        
+        # نمط 3: ?q= أو ll= (روابط قصيرة)
+        if not coords:
+            match = re.search(r'[?&](q|ll)=(-?\d+\.?\d*),(-?\d+\.?\d*)', url)
+            if match:
+                coords = {
+                    'lat': float(match.group(2)),
+                    'lng': float(match.group(3))
+                }
+        
+        if coords:
+            return jsonify({
+                'success': True,
+                'coords': coords,
+                'full_url': url
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'message': 'لم يتم العثور على إحداثيات في الرابط'
+            }), 400
+    
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'خطأ: {str(e)}'
         }), 400

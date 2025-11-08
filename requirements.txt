@@ -80,3 +80,4 @@ sendgrid
 pillow-heif
 replit-object-storage
 requests
+requests

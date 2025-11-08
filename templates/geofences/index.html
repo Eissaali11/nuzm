@@ -1020,7 +1020,7 @@
         }
         
         // دالة البحث عن الموقع من رابط Google Maps
-        function searchGoogleMapsUrl() {
+        async function searchGoogleMapsUrl() {
             const input = document.getElementById('googleMapsUrl');
             const url = input.value.trim();
             
@@ -1029,11 +1029,32 @@
                 return;
             }
             
-            const coords = extractGoogleMapsCoordinates(url);
+            // محاولة استخراج الإحداثيات محلياً أولاً (للروابط الكاملة)
+            let coords = extractGoogleMapsCoordinates(url);
             
+            // إذا لم ينجح، استخدم الـ API (للروابط المختصرة)
             if (!coords) {
-                alert('❌ لم يتم العثور على إحداثيات في الرابط\n\nتأكد من نسخ الرابط كاملاً من Google Maps');
-                return;
+                try {
+                    const response = await fetch('/employees/geofences/extract-google-maps-coords', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ url: url })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        coords = data.coords;
+                    } else {
+                        alert('❌ ' + data.message + '\n\nتأكد من نسخ الرابط كاملاً من Google Maps');
+                        return;
+                    }
+                } catch (error) {
+                    alert('❌ حدث خطأ في معالجة الرابط\n\n' + error.message);
+                    return;
+                }
             }
             
             // الانتقال إلى الموقع في الخريطة
