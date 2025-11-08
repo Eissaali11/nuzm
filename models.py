@@ -16,6 +16,13 @@ employee_departments = db.Table('employee_departments',
     db.Column('department_id', db.Integer, db.ForeignKey('department.id', ondelete='CASCADE'), primary_key=True)
 )
 
+# جدول الربط بين الموظفين والدوائر الجغرافية - يسمح لكل موظف أن يكون له دوائر محددة
+employee_geofences = db.Table('employee_geofences',
+    db.Column('employee_id', db.Integer, db.ForeignKey('employee.id', ondelete='CASCADE'), primary_key=True),
+    db.Column('geofence_id', db.Integer, db.ForeignKey('geofences.id', ondelete='CASCADE'), primary_key=True),
+    db.Column('assigned_at', db.DateTime, default=datetime.utcnow)
+)
+
 # جدول الربط بين المركبات والمستخدمين - يسمح لأكثر من مستخدم الوصول للمركبة الواحدة
 vehicle_user_access = db.Table('vehicle_user_access',
     db.Column('vehicle_id', db.Integer, db.ForeignKey('vehicle.id', ondelete='CASCADE'), primary_key=True),
@@ -149,7 +156,8 @@ class Employee(db.Model):
         }
     
     # Relationships
-    departments = db.relationship('Department', secondary=employee_departments, back_populates='employees') 
+    departments = db.relationship('Department', secondary=employee_departments, back_populates='employees')
+    assigned_geofences = db.relationship('Geofence', secondary=employee_geofences, back_populates='assigned_employees')
     attendances = db.relationship('Attendance', back_populates='employee', cascade='all, delete-orphan')
     salaries = db.relationship('Salary', back_populates='employee', cascade='all, delete-orphan')
     documents = db.relationship('Document', back_populates='employee', cascade='all, delete-orphan')
@@ -2124,6 +2132,7 @@ class Geofence(db.Model):
     
     department = db.relationship('Department', backref='geofences')
     events = db.relationship('GeofenceEvent', backref='geofence', cascade='all, delete-orphan')
+    assigned_employees = db.relationship('Employee', secondary=employee_geofences, back_populates='assigned_geofences')
     
     def get_department_employees_inside(self):
         """جلب موظفي القسم المرتبط الموجودين داخل الدائرة فقط"""
