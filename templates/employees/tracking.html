@@ -875,6 +875,33 @@
         </div>
     </div>
     
+    <!-- نافذة مشاركة الموقع -->
+    <div id="shareModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(8px); z-index: 10000; justify-content: center; align-items: center; animation: fadeIn 0.3s ease;">
+        <div id="shareModalContent" style="background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); padding: 35px; border-radius: 24px; max-width: 450px; width: 90%; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4); position: relative; animation: slideUp 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);">
+            <!-- المحتوى سيتم تعبئته ديناميكياً -->
+        </div>
+        <div onclick="closeShareModal()" style="position: absolute; top: 20px; right: 20px; background: rgba(255, 255, 255, 0.9); width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);">
+            <i class="fas fa-times" style="font-size: 20px; color: #1e1b4b;"></i>
+        </div>
+    </div>
+    
+    <style>
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideUp {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        #shareModal button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3) !important;
+        }
+    </style>
+    
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
     
@@ -954,11 +981,16 @@
                 }).addTo(map);
                 
                 marker.bindPopup(`
-                    <div style="text-align: center; font-family: 'Cairo', sans-serif; min-width: 200px;">
+                    <div style="text-align: center; font-family: 'Cairo', sans-serif; min-width: 220px;">
                         <h4 style="margin: 0 0 10px 0; color: #1e1b4b; font-weight: 700;">${emp.name}</h4>
                         <p style="margin: 5px 0; color: #4b5563;"><strong>الرقم الوظيفي:</strong> ${emp.employee_id}</p>
                         ${emp.departments && emp.departments.length > 0 ? `<p style="margin: 5px 0; color: #4b5563;"><strong>القسم:</strong> ${emp.departments[0].name}</p>` : ''}
                         <p style="margin: 5px 0; color: #4b5563;"><strong>الحالة:</strong> ${location.status_text}</p>
+                        <div style="margin-top: 15px; display: flex; gap: 8px; justify-content: center;">
+                            <button onclick="shareLocation(${location.latitude}, ${location.longitude}, '${emp.name}')" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-family: 'Cairo'; font-weight: 600; font-size: 13px; display: flex; align-items: center; gap: 6px; transition: all 0.3s ease;">
+                                <i class="fas fa-share-alt"></i> مشاركة الموقع
+                            </button>
+                        </div>
                     </div>
                 `);
                 
@@ -994,6 +1026,111 @@
             if (bounds.length > 0) {
                 map.fitBounds(bounds, { padding: [50, 50] });
             }
+        }
+        
+        // دالة مشاركة الموقع
+        function shareLocation(lat, lng, employeeName) {
+            const modal = document.getElementById('shareModal');
+            modal.style.display = 'flex';
+            
+            // إعداد الروابط
+            const googleMapsUrl = `https://www.google.com/maps?q=${lat},${lng}`;
+            const locationText = `موقع ${employeeName}: ${lat}, ${lng}`;
+            const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(locationText + '\n' + googleMapsUrl)}`;
+            
+            // تحديث محتوى النافذة
+            document.getElementById('shareModalContent').innerHTML = `
+                <h3 style="margin: 0 0 20px 0; color: #1e1b4b; font-size: 22px; font-weight: 700;">مشاركة موقع ${employeeName}</h3>
+                
+                <div style="display: grid; gap: 12px;">
+                    <button onclick="window.open('${googleMapsUrl}', '_blank')" style="background: linear-gradient(135deg, #ea4335 0%, #d32f2f 100%); color: white; border: none; padding: 14px 20px; border-radius: 12px; cursor: pointer; font-family: 'Cairo'; font-weight: 600; font-size: 15px; display: flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(234, 67, 53, 0.3);">
+                        <i class="fab fa-google" style="font-size: 20px;"></i>
+                        <span>فتح في خرائط Google</span>
+                    </button>
+                    
+                    <button onclick="window.open('${whatsappUrl}', '_blank')" style="background: linear-gradient(135deg, #25D366 0%, #128C7E 100%); color: white; border: none; padding: 14px 20px; border-radius: 12px; cursor: pointer; font-family: 'Cairo'; font-weight: 600; font-size: 15px; display: flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);">
+                        <i class="fab fa-whatsapp" style="font-size: 20px;"></i>
+                        <span>مشاركة عبر واتساب</span>
+                    </button>
+                    
+                    <button onclick="copyLocation('${lat}', '${lng}', '${employeeName}')" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 14px 20px; border-radius: 12px; cursor: pointer; font-family: 'Cairo'; font-weight: 600; font-size: 15px; display: flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);">
+                        <i class="fas fa-copy" style="font-size: 18px;"></i>
+                        <span>نسخ الموقع</span>
+                    </button>
+                    
+                    <button onclick="copyCoordinates('${lat}', '${lng}')" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; border: none; padding: 14px 20px; border-radius: 12px; cursor: pointer; font-family: 'Cairo'; font-weight: 600; font-size: 15px; display: flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(240, 147, 251, 0.3);">
+                        <i class="fas fa-map-marker-alt" style="font-size: 18px;"></i>
+                        <span>نسخ الإحداثيات</span>
+                    </button>
+                </div>
+            `;
+        }
+        
+        function copyLocation(lat, lng, employeeName) {
+            const googleMapsUrl = `https://www.google.com/maps?q=${lat},${lng}`;
+            const text = `موقع ${employeeName}: ${googleMapsUrl}`;
+            
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('تم نسخ الموقع بنجاح!');
+            }).catch(err => {
+                console.error('خطأ في النسخ:', err);
+                showToast('حدث خطأ أثناء النسخ', 'error');
+            });
+        }
+        
+        function copyCoordinates(lat, lng) {
+            const text = `${lat}, ${lng}`;
+            
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('تم نسخ الإحداثيات بنجاح!');
+            }).catch(err => {
+                console.error('خطأ في النسخ:', err);
+                showToast('حدث خطأ أثناء النسخ', 'error');
+            });
+        }
+        
+        function closeShareModal() {
+            const modal = document.getElementById('shareModal');
+            modal.style.display = 'none';
+        }
+        
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            const bgColor = type === 'success' ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
+            
+            toast.style.cssText = `
+                position: fixed;
+                top: 20px;
+                left: 50%;
+                transform: translateX(-50%) translateY(-100px);
+                background: ${bgColor};
+                color: white;
+                padding: 16px 24px;
+                border-radius: 12px;
+                font-family: 'Cairo';
+                font-weight: 600;
+                font-size: 15px;
+                box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+                z-index: 100000;
+                transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            `;
+            
+            toast.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>${message}`;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.transform = 'translateX(-50%) translateY(0)';
+            }, 100);
+            
+            setTimeout(() => {
+                toast.style.transform = 'translateX(-50%) translateY(-100px)';
+                setTimeout(() => {
+                    document.body.removeChild(toast);
+                }, 500);
+            }, 2500);
         }
         
         // تحديث تلقائي كل 30 ثانية
