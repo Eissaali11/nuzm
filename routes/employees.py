@@ -1904,40 +1904,50 @@ def tracking():
             )
         )
     
-    employees = query.all()
+    # جلب جميع الموظفين
+    all_employees = query.all()
     
-    # جلب آخر موقع لكل موظف
+    # جلب آخر موقع لكل موظف وترتيبهم
     employee_locations = {}
-    for emp in employees:
+    employees_with_location = []
+    employees_without_location = []
+    
+    for emp in all_employees:
         # جلب أحدث موقع للموظف باستخدام employee.id
         latest_location = EmployeeLocation.query.filter_by(
             employee_id=emp.id
         ).order_by(EmployeeLocation.recorded_at.desc()).first()
         
         if latest_location:
-                # حساب عمر الموقع بالساعات
-                age_hours = (datetime.utcnow() - latest_location.recorded_at).total_seconds() / 3600
-                
-                # تحديد اللون حسب عمر الموقع
-                if age_hours < 1:
-                    color = 'green'
-                    status_text = 'نشط'
-                elif age_hours < 6:
-                    color = 'orange'
-                    status_text = 'متوسط'
-                else:
-                    color = 'red'
-                    status_text = 'قديم'
-                
-                employee_locations[emp.id] = {
-                    'latitude': latest_location.latitude,
-                    'longitude': latest_location.longitude,
-                    'accuracy': getattr(latest_location, 'accuracy', None), 
-                    'recorded_at': latest_location.recorded_at,
-                    'age_hours': age_hours,
-                    'color': color,
-                    'status_text': status_text
-                }
+            # حساب عمر الموقع بالساعات
+            age_hours = (datetime.utcnow() - latest_location.recorded_at).total_seconds() / 3600
+            
+            # تحديد اللون حسب عمر الموقع
+            if age_hours < 1:
+                color = 'green'
+                status_text = 'نشط'
+            elif age_hours < 6:
+                color = 'orange'
+                status_text = 'متوسط'
+            else:
+                color = 'red'
+                status_text = 'قديم'
+            
+            employee_locations[emp.id] = {
+                'latitude': latest_location.latitude,
+                'longitude': latest_location.longitude,
+                'accuracy': getattr(latest_location, 'accuracy_m', None), 
+                'recorded_at': latest_location.recorded_at,
+                'age_hours': age_hours,
+                'color': color,
+                'status_text': status_text
+            }
+            employees_with_location.append(emp)
+        else:
+            employees_without_location.append(emp)
+    
+    # ترتيب: الموظفون الذين لديهم موقع أولاً
+    employees = employees_with_location + employees_without_location
     
     # جلب جميع الأقسام للفلترة
     departments = Department.query.all()
