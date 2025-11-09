@@ -2547,6 +2547,49 @@ class EmployeeLiability(db.Model):
         return f'<EmployeeLiability #{self.id} - {self.liability_type.value} - {self.remaining_amount}>'
 
 
+class InstallmentStatus(enum.Enum):
+    """حالات الأقساط"""
+    PENDING = 'pending'
+    PAID = 'paid'
+    OVERDUE = 'overdue'
+    CANCELLED = 'cancelled'
+
+
+class LiabilityInstallment(db.Model):
+    """أقساط الالتزامات المالية - جدولة الدفعات"""
+    __tablename__ = 'liability_installments'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    liability_id = db.Column(db.Integer, db.ForeignKey('employee_liabilities.id', ondelete='CASCADE'), nullable=False, index=True)
+    
+    installment_number = db.Column(db.Integer, nullable=False)
+    amount = db.Column(db.Numeric(10, 2), nullable=False)
+    due_date = db.Column(db.Date, nullable=False, index=True)
+    
+    paid_amount = db.Column(db.Numeric(10, 2), default=0)
+    status = db.Column(db.Enum(InstallmentStatus), nullable=False, default=InstallmentStatus.PENDING, index=True)
+    
+    paid_date = db.Column(db.DateTime)
+    payment_reference = db.Column(db.String(100))
+    notes = db.Column(db.Text)
+    
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    __table_args__ = (
+        db.CheckConstraint('amount > 0', name='check_installment_amount_positive'),
+        db.CheckConstraint('paid_amount >= 0', name='check_installment_paid_positive'),
+        db.UniqueConstraint('liability_id', 'installment_number', name='unique_liability_installment'),
+        db.Index('idx_liability_status', 'liability_id', 'status'),
+        db.Index('idx_due_date_status', 'due_date', 'status'),
+    )
+    
+    liability = db.relationship('EmployeeLiability', backref=db.backref('installments', lazy='dynamic', order_by='LiabilityInstallment.installment_number'))
+    
+    def __repr__(self):
+        return f'<LiabilityInstallment #{self.id} - Installment {self.installment_number} - {self.amount}>'
+
+
 class RequestNotification(db.Model):
     """إشعارات الطلبات للموظفين"""
     __tablename__ = 'request_notifications'
