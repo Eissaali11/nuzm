@@ -215,12 +215,12 @@
     
     /* الجدول المحسّن */
     .records-table {
-        background: rgba(255, 255, 255, 0.03);
+        background: rgba(30, 35, 40, 0.95);
         backdrop-filter: blur(20px);
         border-radius: 20px;
         overflow: hidden;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        border: 1px solid rgba(102, 126, 234, 0.3);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
     }
     
     .records-table thead {
@@ -250,18 +250,26 @@
     .records-table tbody tr {
         transition: all 0.3s ease;
         border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        background: transparent;
     }
     
     .records-table tbody tr:hover {
-        background: linear-gradient(90deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.08) 100%);
+        background: linear-gradient(90deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%);
         transform: translateX(-5px);
     }
     
     .records-table tbody td {
         padding: 18px 15px;
-        color: rgba(255, 255, 255, 0.9);
+        color: rgba(255, 255, 255, 0.95);
         vertical-align: middle;
         border: none;
+    }
+    
+    .table {
+        color: rgba(255, 255, 255, 0.9);
+        --bs-table-bg: transparent;
+        --bs-table-striped-bg: transparent;
+        --bs-table-hover-bg: transparent;
     }
     
     /* الشارات المحسّنة */
