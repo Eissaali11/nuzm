@@ -20,6 +20,7 @@ class GoogleDriveService:
         self.credentials = self._load_credentials()
         self.access_token = None
         self.root_folder_id = None  # مجلد "نُظم" الرئيسي
+        self.shared_drive_id = "1sePOW03BZfjkybt8p8s7D3413gJzYhL_"  # Shared Drive ID
         
     def _load_credentials(self) -> Optional[Dict]:
         """تحميل بيانات الاعتماد من المتغيرات البيئية أو ملف"""
@@ -85,11 +86,16 @@ class GoogleDriveService:
             if parent_id:
                 query += f" and '{parent_id}' in parents"
             else:
-                query += " and 'root' in parents"
+                query += f" and '{self.shared_drive_id}' in parents"
             
             search_url = "https://www.googleapis.com/drive/v3/files"
             headers = {"Authorization": f"Bearer {self.access_token}"}
-            params = {"q": query, "fields": "files(id, name)"}
+            params = {
+                "q": query, 
+                "fields": "files(id, name)",
+                "supportsAllDrives": "true",
+                "includeItemsFromAllDrives": "true"
+            }
             
             response = requests.get(search_url, headers=headers, params=params)
             
@@ -105,9 +111,11 @@ class GoogleDriveService:
             }
             if parent_id:
                 metadata['parents'] = [parent_id]
+            else:
+                metadata['parents'] = [self.shared_drive_id]
             
             create_response = requests.post(
-                search_url,
+                f"{search_url}?supportsAllDrives=true",
                 headers={
                     **headers,
                     'Content-Type': 'application/json'
@@ -126,11 +134,11 @@ class GoogleDriveService:
         return None
     
     def get_root_folder(self) -> Optional[str]:
-        """الحصول على مجلد "نُظم" الرئيسي"""
+        """الحصول على Shared Drive ID كمجلد رئيسي"""
         if self.root_folder_id:
             return self.root_folder_id
         
-        self.root_folder_id = self._get_or_create_folder("نُظم")
+        self.root_folder_id = self.shared_drive_id
         return self.root_folder_id
     
     def upload_file(self, file_path: str, folder_id: str, custom_name: Optional[str] = None) -> Optional[Dict]:
@@ -161,7 +169,7 @@ class GoogleDriveService:
             headers = {"Authorization": f"Bearer {self.access_token}"}
             
             response = requests.post(
-                "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,webViewLink,webContentLink",
+                "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,webViewLink,webContentLink&supportsAllDrives=true",
                 headers=headers,
                 files=files
             )
