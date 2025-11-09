@@ -4,6 +4,7 @@
 
 {% block extra_css %}
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-polylinedecorator@1.6.0/dist/leaflet.polylineDecorator.css" />
     
     <style>
         /* فرض التصميم المستقبلي الداكن */
@@ -159,9 +160,13 @@
         }
         
         #map {
-            height: 650px;
+            height: 750px;
             border-radius: 16px;
             box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .leaflet-container {
+            font-family: 'Cairo', sans-serif;
         }
         
         .timeline {
@@ -402,42 +407,69 @@
     </div>
     
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-polylinedecorator@1.6.0/dist/leaflet.polylineDecorator.js"></script>
     <script>
         const locations = {{ locations|tojson }};
         const employeeName = "{{ employee.name }}";
         
-        const map = L.map('map').setView([24.7136, 46.6753], 11);
+        const map = L.map('map', {
+            zoomControl: true,
+            preferCanvas: true,
+            renderer: L.canvas()
+        }).setView([24.7136, 46.6753], 13);
         
         const streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap',
-            maxZoom: 19
+            maxZoom: 20,
+            minZoom: 3
         });
         
         const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
             attribution: 'Tiles © Esri',
-            maxZoom: 19
+            maxZoom: 20,
+            minZoom: 3
         });
+        
+        const hybridLayer = L.layerGroup([
+            L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                maxZoom: 20,
+                minZoom: 3
+            }),
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 20,
+                minZoom: 3,
+                opacity: 0.3
+            })
+        ]);
         
         streetLayer.addTo(map);
         
         const baseMaps = {
             "خريطة الشوارع": streetLayer,
-            "خريطة القمر الصناعي": satelliteLayer
+            "خريطة القمر الصناعي": satelliteLayer,
+            "خريطة هجينة": hybridLayer
         };
         
         L.control.layers(baseMaps).addTo(map);
         
-        async function drawRoutedPath(coordinates) {
+        L.control.scale({
+            metric: true,
+            imperial: false,
+            position: 'bottomleft'
+        }).addTo(map);
+        
+        async function drawRoutedPath(coordinates, speeds) {
             if (coordinates.length < 2) return null;
             
-            const MAX_POINTS_PER_REQUEST = 100;
+            const MAX_POINTS_PER_REQUEST = 25;
             const allRouteCoordinates = [];
+            const routeSegments = [];
             
             for (let i = 0; i < coordinates.length - 1; i += MAX_POINTS_PER_REQUEST - 1) {
                 const chunk = coordinates.slice(i, Math.min(i + MAX_POINTS_PER_REQUEST, coordinates.length));
                 
                 const coordString = chunk.map(coord => `${coord[1]},${coord[0]}`).join(';');
-                const url = `https://router.project-osrm.org/route/v1/driving/${coordString}?overview=full&geometries=geojson`;
+                const url = `https://router.project-osrm.org/route/v1/driving/${coordString}?overview=full&geometries=geojson&steps=true`;
                 
                 try {
                     const response = await fetch(url);
@@ -454,39 +486,80 @@
                     allRouteCoordinates.push(...chunk);
                 }
                 
-                await new Promise(resolve => setTimeout(resolve, 100));
+                await new Promise(resolve => setTimeout(resolve, 150));
             }
             
-            return L.polyline(allRouteCoordinates, {
+            const mainPolyline = L.polyline(allRouteCoordinates, {
                 color: '#818cf8',
-                weight: 4,
-                opacity: 0.8,
-                smoothFactor: 1,
+                weight: 6,
+                opacity: 0.9,
+                smoothFactor: 0.5,
                 lineCap: 'round',
                 lineJoin: 'round'
             });
+            
+            const outlinePolyline = L.polyline(allRouteCoordinates, {
+                color: '#312e81',
+                weight: 9,
+                opacity: 0.5,
+                smoothFactor: 0.5,
+                lineCap: 'round',
+                lineJoin: 'round'
+            });
+            
+            const arrowDecorator = L.polylineDecorator(mainPolyline, {
+                patterns: [
+                    {
+                        offset: '10%',
+                        repeat: 80,
+                        symbol: L.Symbol.arrowHead({
+                            pixelSize: 12,
+                            polygon: false,
+                            pathOptions: {
+                                stroke: true,
+                                weight: 3,
+                                color: '#a78bfa',
+                                fillOpacity: 1
+                            }
+                        })
+                    }
+                ]
+            });
+            
+            return {
+                outline: outlinePolyline,
+                main: mainPolyline,
+                arrows: arrowDecorator
+            };
         }
         
         if (locations && locations.length > 0) {
             const pathCoordinates = locations.map(loc => [loc.latitude, loc.longitude]);
+            const speeds = locations.map(loc => loc.speed || 0);
             
             const loadingDiv = document.createElement('div');
             loadingDiv.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(30, 27, 75, 0.95); color: white; padding: 20px 40px; border-radius: 15px; font-family: Cairo; font-size: 16px; font-weight: 600; z-index: 9999; box-shadow: 0 8px 32px rgba(0,0,0,0.4);';
-            loadingDiv.innerHTML = '<i class="fas fa-route" style="margin-left: 10px;"></i>جاري رسم المسار على الطرق...';
+            loadingDiv.innerHTML = '<i class="fas fa-route" style="margin-left: 10px;"></i>جاري رسم المسار بدقة عالية على الطرق...';
             document.body.appendChild(loadingDiv);
             
             let maxSpeed = 0;
             let totalDistance = 0;
             let vehicleCount = 0;
             
-            drawRoutedPath(pathCoordinates).then(polyline => {
+            drawRoutedPath(pathCoordinates, speeds).then(result => {
                 document.body.removeChild(loadingDiv);
                 
-                if (polyline) {
-                    polyline.addTo(map);
-                    map.fitBounds(polyline.getBounds(), { padding: [50, 50] });
+                if (result) {
+                    result.outline.addTo(map);
+                    result.main.addTo(map);
+                    result.arrows.addTo(map);
                     
-                    const routeCoords = polyline.getLatLngs();
+                    map.fitBounds(result.main.getBounds(), { 
+                        padding: [80, 80],
+                        maxZoom: 16
+                    });
+                    
+                    const routeCoords = result.main.getLatLngs();
                     let routeDistance = 0;
                     for (let i = 1; i < routeCoords.length; i++) {
                         routeDistance += calculateDistance(
@@ -499,24 +572,55 @@
                         document.getElementById('totalDistance').textContent = totalDistance.toFixed(2) + ' كم';
                     }
                 } else {
+                    const fallbackOutline = L.polyline(pathCoordinates, {
+                        color: '#312e81',
+                        weight: 9,
+                        opacity: 0.5,
+                        smoothFactor: 0.5,
+                        lineCap: 'round',
+                        lineJoin: 'round'
+                    }).addTo(map);
+                    
                     const fallbackPolyline = L.polyline(pathCoordinates, {
                         color: '#818cf8',
-                        weight: 4,
-                        opacity: 0.8,
-                        smoothFactor: 1
+                        weight: 6,
+                        opacity: 0.9,
+                        smoothFactor: 0.5,
+                        lineCap: 'round',
+                        lineJoin: 'round'
                     }).addTo(map);
-                    map.fitBounds(fallbackPolyline.getBounds(), { padding: [50, 50] });
+                    
+                    map.fitBounds(fallbackPolyline.getBounds(), { 
+                        padding: [80, 80],
+                        maxZoom: 16
+                    });
                 }
             }).catch(error => {
                 console.error('خطأ في رسم المسار:', error);
                 document.body.removeChild(loadingDiv);
+                
+                const fallbackOutline = L.polyline(pathCoordinates, {
+                    color: '#312e81',
+                    weight: 9,
+                    opacity: 0.5,
+                    smoothFactor: 0.5,
+                    lineCap: 'round',
+                    lineJoin: 'round'
+                }).addTo(map);
+                
                 const fallbackPolyline = L.polyline(pathCoordinates, {
                     color: '#818cf8',
-                    weight: 4,
-                    opacity: 0.8,
-                    smoothFactor: 1
+                    weight: 6,
+                    opacity: 0.9,
+                    smoothFactor: 0.5,
+                    lineCap: 'round',
+                    lineJoin: 'round'
                 }).addTo(map);
-                map.fitBounds(fallbackPolyline.getBounds(), { padding: [50, 50] });
+                
+                map.fitBounds(fallbackPolyline.getBounds(), { 
+                    padding: [80, 80],
+                    maxZoom: 16
+                });
             });
             
             locations.forEach((loc, index) => {
@@ -637,7 +741,10 @@
         function focusLocation(index) {
             if (locations && locations[index]) {
                 const loc = locations[index];
-                map.setView([loc.latitude, loc.longitude], 16);
+                map.setView([loc.latitude, loc.longitude], 18, {
+                    animate: true,
+                    duration: 0.5
+                });
             }
         }
     </script>
