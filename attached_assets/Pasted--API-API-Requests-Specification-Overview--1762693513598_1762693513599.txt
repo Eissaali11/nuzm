@@ -1,0 +1,542 @@
+# 📋 مواصفات طلبات API - API Requests Specification
+
+## 📌 نظرة عامة - Overview
+
+هذا المستند يحتوي على المواصفات الكاملة لطلبات API المطلوبة لتطبيق Nuzum Tracker. جميع الطلبات تستخدم طريقة `POST` مع `Content-Type: application/json`.
+
+This document contains the complete specifications for API requests required for the Nuzum Tracker application. All requests use `POST` method with `Content-Type: application/json`.
+
+---
+
+## 🔐 المصادقة - Authentication
+
+جميع الطلبات تتطلب:
+- `api_key`: مفتاح API الخاص بالموظف
+- `job_number`: الرقم الوظيفي للموظف
+
+All requests require:
+- `api_key`: Employee's API key
+- `job_number`: Employee's job number
+
+### 📤 Body الأساسي - Base Request Body
+
+```json
+{
+  "api_key": "string",
+  "job_number": "string"
+}
+```
+
+---
+
+## 1️⃣ 👤 API: جلب بيانات الموظف - Get Employee Profile
+
+### 📍 Endpoint
+```
+POST /api/employee/profile
+```
+
+### 📤 Request Body
+```json
+{
+  "api_key": "string",
+  "job_number": "string"
+}
+```
+
+### ✅ Success Response (200 OK)
+```json
+{
+  "success": true,
+  "message": "تم جلب البيانات بنجاح",
+  "data": {
+    "job_number": "12345",
+    "name": "أحمد محمد علي",
+    "name_en": "Ahmed Mohammed Ali",
+    "department": "التسليم",
+    "department_en": "Delivery",
+    "position": "سائق",
+    "position_en": "Driver",
+    "phone": "+966501234567",
+    "email": "ahmed@example.com",
+    "hire_date": "2020-01-15T00:00:00Z",
+    "is_driver": true,
+    "photos": {
+      "personal": "https://example.com/photos/personal/12345.jpg",
+      "id": "https://example.com/photos/id/12345.jpg",
+      "license": "https://example.com/photos/license/12345.jpg"
+    },
+    "address": "الرياض، حي النخيل",
+    "national_id": "1234567890"
+  }
+}
+```
+
+### 📋 Data Model - Employee
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `job_number` | string | ✅ | الرقم الوظيفي |
+| `name` | string | ✅ | الاسم بالعربية |
+| `name_en` | string | ❌ | الاسم بالإنجليزية |
+| `department` | string | ✅ | القسم بالعربية |
+| `department_en` | string | ❌ | القسم بالإنجليزية |
+| `position` | string | ✅ | المنصب بالعربية |
+| `position_en` | string | ❌ | المنصب بالإنجليزية |
+| `phone` | string | ❌ | رقم الهاتف |
+| `email` | string | ❌ | البريد الإلكتروني |
+| `hire_date` | datetime (ISO 8601) | ✅ | تاريخ التوظيف |
+| `is_driver` | boolean | ✅ | هل هو سائق؟ |
+| `photos` | object | ❌ | صور الموظف (انظر أدناه) |
+| `address` | string | ❌ | العنوان |
+| `national_id` | string | ❌ | رقم الهوية الوطنية |
+
+### 📸 Photos Object
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `personal` | string (URL) | ❌ | رابط الصورة الشخصية |
+| `id` | string (URL) | ❌ | رابط صورة الهوية |
+| `license` | string (URL) | ❌ | رابط صورة الرخصة (مطلوب إذا كان `is_driver: true`) |
+
+### ❌ Error Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| 400 | Bad Request - بيانات غير صحيحة |
+| 401 | Unauthorized - مفتاح API غير صحيح |
+| 404 | Not Found - الموظف غير موجود |
+| 500 | Internal Server Error |
+| 503 | Service Unavailable - الخدمة غير متاحة حالياً |
+
+---
+
+## 2️⃣ 📅 API: جلب الحضور - Get Attendance
+
+### 📍 Endpoint
+```
+POST /api/employee/attendance
+```
+
+### 📤 Request Body
+```json
+{
+  "api_key": "string",
+  "job_number": "string",
+  "start_date": "2024-01-01",  // Optional - YYYY-MM-DD
+  "end_date": "2024-01-31"      // Optional - YYYY-MM-DD
+}
+```
+
+**ملاحظات:**
+- إذا لم يتم إرسال `start_date` و `end_date`، يتم إرجاع جميع سجلات الحضور
+- إذا تم إرسال `start_date` فقط، يتم إرجاع السجلات من هذا التاريخ حتى الآن
+- إذا تم إرسال `end_date` فقط، يتم إرجاع السجلات من البداية حتى هذا التاريخ
+
+### ✅ Success Response (200 OK)
+```json
+{
+  "success": true,
+  "message": "تم جلب البيانات بنجاح",
+  "data": [
+    {
+      "date": "2024-01-15T00:00:00Z",
+      "check_in": "08:00:00",
+      "check_out": "17:00:00",
+      "status": "present",
+      "hours_worked": 8.5,
+      "late_minutes": 0,
+      "early_leave_minutes": 0,
+      "notes": "حضور عادي"
+    },
+    {
+      "date": "2024-01-16T00:00:00Z",
+      "check_in": "08:30:00",
+      "check_out": "17:00:00",
+      "status": "late",
+      "hours_worked": 8.0,
+      "late_minutes": 30,
+      "early_leave_minutes": 0,
+      "notes": "تأخر 30 دقيقة"
+    },
+    {
+      "date": "2024-01-17T00:00:00Z",
+      "check_in": null,
+      "check_out": null,
+      "status": "absent",
+      "hours_worked": 0.0,
+      "late_minutes": 0,
+      "early_leave_minutes": 0,
+      "notes": "غياب"
+    },
+    {
+      "date": "2024-01-18T00:00:00Z",
+      "check_in": "08:00:00",
+      "check_out": "15:00:00",
+      "status": "early_leave",
+      "hours_worked": 7.0,
+      "late_minutes": 0,
+      "early_leave_minutes": 120,
+      "notes": "خروج مبكر"
+    },
+    {
+      "date": "2024-01-19T00:00:00Z",
+      "check_in": null,
+      "check_out": null,
+      "status": "holiday",
+      "hours_worked": 0.0,
+      "late_minutes": 0,
+      "early_leave_minutes": 0,
+      "notes": "إجازة رسمية"
+    }
+  ]
+}
+```
+
+### 📋 Data Model - Attendance
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `date` | datetime (ISO 8601) | ✅ | تاريخ الحضور |
+| `check_in` | string (HH:mm:ss) | ❌ | وقت الدخول |
+| `check_out` | string (HH:mm:ss) | ❌ | وقت الخروج |
+| `status` | string | ✅ | حالة الحضور (انظر أدناه) |
+| `hours_worked` | number | ✅ | ✅ | عدد ساعات العمل |
+| `late_minutes` | integer | ✅ | عدد دقائق التأخير |
+| `early_leave_minutes` | integer | ✅ | عدد دقائق الخروج المبكر |
+| `notes` | string | ❌ | ملاحظات |
+
+### 📊 Attendance Status Values
+
+| Value | Description | Arabic |
+|-------|-------------|--------|
+| `present` | حاضر | حاضر |
+| `absent` | غائب | غائب |
+| `late` | متأخر | متأخر |
+| `early_leave` | خروج مبكر | خروج مبكر |
+| `holiday` | إجازة | إجازة |
+
+### ❌ Error Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| 400 | Bad Request - تنسيق التاريخ غير صحيح |
+| 401 | Unauthorized - مفتاح API غير صحيح |
+| 500 | Internal Server Error |
+| 503 | Service Unavailable - الخدمة غير متاحة حالياً |
+
+---
+
+## 3️⃣ 💰 API: جلب الرواتب - Get Salaries
+
+### 📍 Endpoint
+```
+POST /api/employee/salaries
+```
+
+### 📤 Request Body
+```json
+{
+  "api_key": "string",
+  "job_number": "string",
+  "start_date": "2024-01-01",  // Optional - YYYY-MM-DD
+  "end_date": "2024-12-31"      // Optional - YYYY-MM-DD
+}
+```
+
+**ملاحظات:**
+- إذا لم يتم إرسال `start_date` و `end_date`، يتم إرجاع جميع الرواتب
+- `start_date` و `end_date` اختياريان ويمكن إرسال أحدهما فقط
+
+### ✅ Success Response (200 OK)
+```json
+{
+  "success": true,
+  "message": "تم جلب البيانات بنجاح",
+  "data": [
+    {
+      "salary_id": "SAL-2024-01",
+      "month": "2024-01",
+      "amount": 5000.00,
+      "currency": "SAR",
+      "paid_date": "2024-02-05T00:00:00Z",
+      "status": "paid",
+      "details": {
+        "base_salary": 4000.00,
+        "allowances": 500.00,
+        "deductions": 0.00,
+        "bonuses": 300.00,
+        "overtime": 200.00,
+        "tax": 0.00
+      },
+      "notes": "راتب شهر يناير"
+    },
+    {
+      "salary_id": "SAL-2024-02",
+      "month": "2024-02",
+      "amount": 5200.00,
+      "currency": "SAR",
+      "paid_date": null,
+      "status": "pending",
+      "details": {
+        "base_salary": 4000.00,
+        "allowances": 600.00,
+        "deductions": 0.00,
+        "bonuses": 400.00,
+        "overtime": 200.00,
+        "tax": 0.00
+      },
+      "notes": "راتب شهر فبراير - قيد المعالجة"
+    }
+  ]
+}
+```
+
+### 📋 Data Model - Salary
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `salary_id` | string | ✅ | معرف الراتب الفريد |
+| `month` | string (YYYY-MM) | ✅ | الشهر (تنسيق: YYYY-MM) |
+| `amount` | number (decimal) | ✅ | المبلغ الإجمالي |
+| `currency` | string | ✅ | العملة (افتراضي: SAR) |
+| `paid_date` | datetime (ISO 8601) | ❌ | تاريخ الدفع (null إذا لم يتم الدفع) |
+| `status` | string | ✅ | حالة الراتب (انظر أدناه) |
+| `details` | object | ✅ | تفاصيل الراتب (انظر أدناه) |
+| `notes` | string | ❌ | ملاحظات |
+
+### 💵 Salary Status Values
+
+| Value | Description | Arabic |
+|-------|-------------|--------|
+| `paid` | مدفوع | مدفوع |
+| `pending` | معلق | معلق |
+| `cancelled` | ملغي | ملغي |
+
+### 📊 Salary Details Object
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `base_salary` | number (decimal) | ✅ | الراتب الأساسي |
+| `allowances` | number (decimal) | ✅ | البدلات |
+| `deductions` | number (decimal) | ✅ | الخصومات |
+| `bonuses` | number (decimal) | ✅ | المكافآت |
+| `overtime` | number (decimal) | ✅ | ساعات إضافية |
+| `tax` | number (decimal) | ✅ | الضرائب |
+
+**ملاحظة:** `amount` = `base_salary` + `allowances` + `bonuses` + `overtime` - `deductions` - `tax`
+
+### ❌ Error Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| 400 | Bad Request - تنسيق التاريخ غير صحيح |
+| 401 | Unauthorized - مفتاح API غير صحيح |
+| 500 | Internal Server Error |
+| 503 | Service Unavailable - الخدمة غير متاحة حالياً |
+
+---
+
+## 4️⃣ 🚗 API: جلب السيارات - Get Cars
+
+### 📍 Endpoint
+```
+POST /api/employee/cars
+```
+
+### 📤 Request Body
+```json
+{
+  "api_key": "string",
+  "job_number": "string"
+}
+```
+
+### ✅ Success Response (200 OK)
+```json
+{
+  "success": true,
+  "message": "تم جلب البيانات بنجاح",
+  "data": [
+    {
+      "car_id": "CAR-001",
+      "plate_number": "أ ب ج 1234",
+      "plate_number_en": "ABC 1234",
+      "model": "تويوتا كامري",
+      "model_en": "Toyota Camry",
+      "color": "أبيض",
+      "color_en": "White",
+      "status": "active",
+      "assigned_date": "2023-06-01T00:00:00Z",
+      "unassigned_date": null,
+      "photo": "https://example.com/photos/cars/CAR-001.jpg",
+      "notes": "سيارة التسليم الرئيسية"
+    },
+    {
+      "car_id": "CAR-002",
+      "plate_number": "د ه و 5678",
+      "plate_number_en": "DEF 5678",
+      "model": "هوندا أكورد",
+      "model_en": "Honda Accord",
+      "color": "أسود",
+      "color_en": "Black",
+      "status": "maintenance",
+      "assigned_date": "2023-08-15T00:00:00Z",
+      "unassigned_date": null,
+      "photo": "https://example.com/photos/cars/CAR-002.jpg",
+      "notes": "في الصيانة"
+    },
+    {
+      "car_id": "CAR-003",
+      "plate_number": "ز ح ط 9012",
+      "plate_number_en": "GHI 9012",
+      "model": "نيسان ألتيما",
+      "model_en": "Nissan Altima",
+      "color": "فضي",
+      "color_en": "Silver",
+      "status": "retired",
+      "assigned_date": "2022-01-10T00:00:00Z",
+      "unassigned_date": "2023-12-31T00:00:00Z",
+      "photo": "https://example.com/photos/cars/CAR-003.jpg",
+      "notes": "تم إيقاف الخدمة"
+    }
+  ]
+}
+```
+
+### 📋 Data Model - Car
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `car_id` | string | ✅ | معرف السيارة الفريد |
+| `plate_number` | string | ✅ | رقم اللوحة بالعربية |
+| `plate_number_en` | string | ❌ | رقم اللوحة بالإنجليزية |
+| `model` | string | ✅ | الموديل بالعربية |
+| `model_en` | string | ❌ | الموديل بالإنجليزية |
+| `color` | string | ✅ | اللون بالعربية |
+| `color_en` | string | ❌ | اللون بالإنجليزية |
+| `status` | string | ✅ | حالة السيارة (انظر أدناه) |
+| `assigned_date` | datetime (ISO 8601) | ✅ | تاريخ التعيين |
+| `unassigned_date` | datetime (ISO 8601) | ❌ | تاريخ إلغاء التعيين (null إذا كانت نشطة) |
+| `photo` | string (URL) | ❌ | رابط صورة السيارة |
+| `notes` | string | ❌ | ملاحظات |
+
+### 🚦 Car Status Values
+
+| Value | Description | Arabic |
+|-------|-------------|--------|
+| `active` | نشط | نشط |
+| `maintenance` | صيانة | صيانة |
+| `retired` | متقاعد | متقاعد |
+
+### ❌ Error Responses
+
+| Status Code | Description |
+|-------------|-------------|
+| 400 | Bad Request - بيانات غير صحيحة |
+| 401 | Unauthorized - مفتاح API غير صحيح |
+| 500 | Internal Server Error |
+| 503 | Service Unavailable - الخدمة غير متاحة حالياً |
+
+---
+
+## 5️⃣ 📦 API: جلب العمليات - Get Operations (Optional)
+
+### 📍 Endpoint
+```
+POST /api/employee/operations
+```
+
+### 📤 Request Body
+```json
+{
+  "api_key": "string",
+  "job_number": "string",
+  "start_date": "2024-01-01",  // Optional - YYYY-MM-DD
+  "end_date": "2024-01-31",     // Optional - YYYY-MM-DD
+  "type": "delivery"             // Optional: "delivery", "pickup", or "all"
+}
+```
+
+### ✅ Success Response (200 OK)
+```json
+{
+  "success": true,
+  "message": "تم جلب البيانات بنجاح",
+  "data": [
+    {
+      "operation_id": "OP-2024-001",
+      "type": "delivery",
+      "date": "2024-01-15T10:30:00Z",
+      "customer_name": "محمد أحمد",
+      "customer_phone": "+966501234567",
+      "address": "الرياض، حي النخيل، شارع الملك فهد",
+      "status": "completed",
+      "notes": "تم التسليم بنجاح"
+    }
+  ]
+}
+```
+
+---
+
+## 🔄 معالجة الأخطاء - Error Handling
+
+### 📋 Response Format للأخطاء
+
+```json
+{
+  "success": false,
+  "message": "رسالة الخطأ بالعربية",
+  "error": "Error details in English"
+}
+```
+
+### 📊 Status Codes
+
+| Code | Description | Action |
+|------|-------------|--------|
+| 200 | OK - نجح الطلب | ✅ استخدم البيانات |
+| 400 | Bad Request - بيانات غير صحيحة | ⚠️ تحقق من البيانات المرسلة |
+| 401 | Unauthorized - غير مصرح | 🔐 تحقق من `api_key` و `job_number` |
+| 403 | Forbidden - غير مسموح | 🚫 لا توجد صلاحية |
+| 404 | Not Found - غير موجود | 🔍 تحقق من الـ endpoint |
+| 500 | Internal Server Error | ⚠️ خطأ في السيرفر - حاول مرة أخرى |
+| 503 | Service Unavailable | ⏳ الخدمة غير متاحة - حاول لاحقاً |
+| 504 | Gateway Timeout | ⏱️ انتهت مهلة الاتصال - حاول مرة أخرى |
+
+---
+
+## ⏱️ Timeout & Performance
+
+- **Timeout**: 30 ثانية لكل طلب
+- **Content-Type**: `application/json; charset=UTF-8`
+- **Encoding**: UTF-8
+
+---
+
+## 📝 ملاحظات مهمة - Important Notes
+
+1. **التواريخ**: جميع التواريخ يجب أن تكون بتنسيق ISO 8601 (YYYY-MM-DDTHH:mm:ssZ)
+2. **الأرقام**: جميع الأرقام العشرية يجب أن تكون بـ decimal precision (مثال: 5000.00)
+3. **الصور**: جميع روابط الصور يجب أن تكون URLs كاملة (https://...)
+4. **اللغة**: النصوص العربية مطلوبة، الإنجليزية اختيارية
+5. **Null Values**: الحقول الاختيارية يمكن أن تكون `null` أو غير موجودة في JSON
+
+---
+
+## 🧪 أمثلة على الطلبات - Request Examples
+
+### مثال 1: جلب بيانات الموظف
+```bash
+curl -X POST https://api.example.com/api/employee/profile \
+  -H "Content-Type: application/json" \
+  -d '{
+    "api_key": "abc123xyz",
+    "job_number": "12345"
+  }'
+```
+
+### مثال 2: جلب الحضور لشهر معين
+```bash
+curl
