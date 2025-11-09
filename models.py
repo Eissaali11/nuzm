@@ -2267,3 +2267,313 @@ class GeofenceEvent(db.Model):
     def __repr__(self):
         return f'<GeofenceEvent {self.event_type} - {self.employee_id}>'
 
+
+# ============================================================================
+# نظام طلبات الموظفين (Employee Requests System)
+# ============================================================================
+
+class RequestType(enum.Enum):
+    """أنواع الطلبات"""
+    INVOICE = 'invoice'
+    CAR_WASH = 'car_wash'
+    CAR_INSPECTION = 'car_inspection'
+    ADVANCE_PAYMENT = 'advance_payment'
+
+
+class RequestStatus(enum.Enum):
+    """حالات الطلبات"""
+    PENDING = 'pending'
+    APPROVED = 'approved'
+    REJECTED = 'rejected'
+    COMPLETED = 'completed'
+    CLOSED = 'closed'
+
+
+class MediaType(enum.Enum):
+    """أنواع الصور لطلبات غسيل السيارات"""
+    PLATE = 'plate'
+    FRONT = 'front'
+    BACK = 'back'
+    RIGHT = 'right'
+    LEFT = 'left'
+
+
+class FileType(enum.Enum):
+    """أنواع الملفات للفحص"""
+    IMAGE = 'image'
+    VIDEO = 'video'
+
+
+class LiabilityType(enum.Enum):
+    """أنواع الالتزامات المالية"""
+    DAMAGE = 'damage'
+    DEBT = 'debt'
+    ADVANCE_REPAYMENT = 'advance_repayment'
+    OTHER = 'other'
+
+
+class LiabilityStatus(enum.Enum):
+    """حالات الالتزامات المالية"""
+    ACTIVE = 'active'
+    PAID = 'paid'
+    CANCELLED = 'cancelled'
+
+
+class EmployeeRequest(db.Model):
+    """الطلبات الرئيسية للموظفين - جدول مركزي لجميع أنواع الطلبات"""
+    __tablename__ = 'employee_requests'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    employee_id = db.Column(db.Integer, db.ForeignKey('employee.id', ondelete='CASCADE'), nullable=False, index=True)
+    request_type = db.Column(db.Enum(RequestType), nullable=False, index=True)
+    status = db.Column(db.Enum(RequestStatus), nullable=False, default=RequestStatus.PENDING, index=True)
+    title = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text)
+    amount = db.Column(db.Numeric(10, 2))
+    
+    google_drive_folder_id = db.Column(db.String(255))
+    google_drive_folder_url = db.Column(db.Text)
+    
+    reviewed_by = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='SET NULL'))
+    reviewed_at = db.Column(db.DateTime)
+    admin_notes = db.Column(db.Text)
+    
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    deleted_at = db.Column(db.DateTime)
+    
+    __table_args__ = (
+        db.Index('idx_employee_status', 'employee_id', 'status'),
+        db.Index('idx_type_status', 'request_type', 'status'),
+    )
+    
+    employee = db.relationship('Employee', backref=db.backref('requests', lazy='dynamic'))
+    reviewer = db.relationship('User', foreign_keys=[reviewed_by])
+    
+    invoice_data = db.relationship('InvoiceRequest', back_populates='request', uselist=False, cascade='all, delete-orphan')
+    advance_data = db.relationship('AdvancePaymentRequest', back_populates='request', uselist=False, cascade='all, delete-orphan')
+    car_wash_data = db.relationship('CarWashRequest', back_populates='request', uselist=False, cascade='all, delete-orphan')
+    inspection_data = db.relationship('CarInspectionRequest', back_populates='request', uselist=False, cascade='all, delete-orphan')
+    
+    notifications = db.relationship('RequestNotification', back_populates='request', cascade='all, delete-orphan')
+    
+    def __repr__(self):
+        return f'<EmployeeRequest #{self.id} - {self.request_type.value} - {self.status.value}>'
+
+
+class InvoiceRequest(db.Model):
+    """طلبات الفواتير - بيانات خاصة بالفواتير"""
+    __tablename__ = 'invoice_requests'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    request_id = db.Column(db.Integer, db.ForeignKey('employee_requests.id', ondelete='CASCADE'), unique=True, nullable=False)
+    
+    vendor_name = db.Column(db.String(200), nullable=False)
+    invoice_date = db.Column(db.Date)
+    
+    drive_file_id = db.Column(db.String(255), unique=True)
+    drive_view_url = db.Column(db.Text)
+    drive_download_url = db.Column(db.Text)
+    file_size = db.Column(db.BigInteger)
+    
+    payment_method = db.Column(db.String(20))
+    payment_date = db.Column(db.Date)
+    payment_reference = db.Column(db.String(100))
+    
+    request = db.relationship('EmployeeRequest', back_populates='invoice_data')
+    
+    def __repr__(self):
+        return f'<InvoiceRequest #{self.id} - {self.vendor_name}>'
+
+
+class AdvancePaymentRequest(db.Model):
+    """طلبات السلف - بيانات خاصة بالسلف"""
+    __tablename__ = 'advance_payment_requests'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    request_id = db.Column(db.Integer, db.ForeignKey('employee_requests.id', ondelete='CASCADE'), unique=True, nullable=False)
+    
+    employee_name = db.Column(db.String(100), nullable=False)
+    employee_number = db.Column(db.String(20), nullable=False)
+    national_id = db.Column(db.String(20), nullable=False)
+    job_title = db.Column(db.String(100), nullable=False)
+    department_name = db.Column(db.String(100), nullable=False)
+    snapshot_created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    requested_amount = db.Column(db.Numeric(10, 2), nullable=False)
+    reason = db.Column(db.Text)
+    installments = db.Column(db.Integer)
+    installment_amount = db.Column(db.Numeric(10, 2))
+    
+    disbursement_method = db.Column(db.String(20))
+    disbursement_date = db.Column(db.Date)
+    disbursement_reference = db.Column(db.String(100))
+    
+    repayment_status = db.Column(db.String(20), default='pending')
+    repaid_amount = db.Column(db.Numeric(10, 2), default=0)
+    remaining_amount = db.Column(db.Numeric(10, 2))
+    
+    request = db.relationship('EmployeeRequest', back_populates='advance_data')
+    
+    def __repr__(self):
+        return f'<AdvancePaymentRequest #{self.id} - {self.employee_name} - {self.requested_amount}>'
+
+
+class CarWashRequest(db.Model):
+    """طلبات غسيل السيارات"""
+    __tablename__ = 'car_wash_requests'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    request_id = db.Column(db.Integer, db.ForeignKey('employee_requests.id', ondelete='CASCADE'), unique=True, nullable=False)
+    vehicle_id = db.Column(db.Integer, db.ForeignKey('vehicle.id', ondelete='SET NULL'))
+    
+    service_type = db.Column(db.String(50), nullable=False)
+    scheduled_date = db.Column(db.Date)
+    
+    request = db.relationship('EmployeeRequest', back_populates='car_wash_data')
+    vehicle = db.relationship('Vehicle')
+    media_files = db.relationship('CarWashMedia', back_populates='wash_request', cascade='all, delete-orphan')
+    
+    def __repr__(self):
+        return f'<CarWashRequest #{self.id} - {self.service_type}>'
+
+
+class CarWashMedia(db.Model):
+    """ملفات الصور لطلبات غسيل السيارات - 5 صور لكل طلب"""
+    __tablename__ = 'car_wash_media'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    wash_request_id = db.Column(db.Integer, db.ForeignKey('car_wash_requests.id', ondelete='CASCADE'), nullable=False, index=True)
+    
+    media_type = db.Column(db.Enum(MediaType), nullable=False)
+    drive_file_id = db.Column(db.String(255), unique=True)
+    drive_view_url = db.Column(db.Text)
+    file_size = db.Column(db.BigInteger)
+    
+    uploaded_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    __table_args__ = (
+        db.UniqueConstraint('wash_request_id', 'media_type', name='uq_wash_media_type'),
+    )
+    
+    wash_request = db.relationship('CarWashRequest', back_populates='media_files')
+    
+    def __repr__(self):
+        return f'<CarWashMedia #{self.id} - {self.media_type.value}>'
+
+
+class CarInspectionRequest(db.Model):
+    """طلبات فحص وتوثيق السيارات"""
+    __tablename__ = 'car_inspection_requests'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    request_id = db.Column(db.Integer, db.ForeignKey('employee_requests.id', ondelete='CASCADE'), unique=True, nullable=False)
+    vehicle_id = db.Column(db.Integer, db.ForeignKey('vehicle.id', ondelete='SET NULL'))
+    
+    inspection_type = db.Column(db.String(50), nullable=False)
+    inspection_date = db.Column(db.Date, default=date.today)
+    
+    request = db.relationship('EmployeeRequest', back_populates='inspection_data')
+    vehicle = db.relationship('Vehicle')
+    media_files = db.relationship('CarInspectionMedia', back_populates='inspection_request', cascade='all, delete-orphan')
+    
+    def __repr__(self):
+        return f'<CarInspectionRequest #{self.id} - {self.inspection_type}>'
+
+
+class CarInspectionMedia(db.Model):
+    """ملفات الصور والفيديوهات لطلبات الفحص - متعددة"""
+    __tablename__ = 'car_inspection_media'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    inspection_request_id = db.Column(db.Integer, db.ForeignKey('car_inspection_requests.id', ondelete='CASCADE'), nullable=False, index=True)
+    
+    file_type = db.Column(db.Enum(FileType), nullable=False)
+    original_filename = db.Column(db.String(255))
+    
+    drive_file_id = db.Column(db.String(255), unique=True)
+    drive_view_url = db.Column(db.Text)
+    drive_download_url = db.Column(db.Text)
+    
+    file_size = db.Column(db.BigInteger)
+    video_duration = db.Column(db.Integer)
+    mime_type = db.Column(db.String(100))
+    
+    upload_status = db.Column(db.String(20), default='uploading')
+    upload_progress = db.Column(db.Integer, default=0)
+    
+    uploaded_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    inspection_request = db.relationship('CarInspectionRequest', back_populates='media_files')
+    
+    def __repr__(self):
+        return f'<CarInspectionMedia #{self.id} - {self.file_type.value}>'
+
+
+class EmployeeLiability(db.Model):
+    """الالتزامات المالية للموظفين - تلفيات، ديون، سداد سلف"""
+    __tablename__ = 'employee_liabilities'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    employee_id = db.Column(db.Integer, db.ForeignKey('employee.id', ondelete='CASCADE'), nullable=False, index=True)
+    
+    liability_type = db.Column(db.Enum(LiabilityType), nullable=False, index=True)
+    amount = db.Column(db.Numeric(10, 2), nullable=False)
+    paid_amount = db.Column(db.Numeric(10, 2), default=0)
+    remaining_amount = db.Column(db.Numeric(10, 2), nullable=False)
+    
+    description = db.Column(db.Text, nullable=False)
+    reference_type = db.Column(db.String(50))
+    employee_request_id = db.Column(db.Integer, db.ForeignKey('employee_requests.id', ondelete='SET NULL'))
+    
+    status = db.Column(db.Enum(LiabilityStatus), nullable=False, default=LiabilityStatus.ACTIVE, index=True)
+    
+    created_by = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='SET NULL'))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    due_date = db.Column(db.Date)
+    notes = db.Column(db.Text)
+    
+    __table_args__ = (
+        db.CheckConstraint('remaining_amount >= 0', name='check_remaining_positive'),
+        db.CheckConstraint('paid_amount >= 0', name='check_paid_positive'),
+        db.Index('idx_liability_employee_status', 'employee_id', 'status'),
+    )
+    
+    employee = db.relationship('Employee', backref=db.backref('liabilities', lazy='dynamic'))
+    request = db.relationship('EmployeeRequest', backref='liabilities')
+    creator = db.relationship('User', foreign_keys=[created_by])
+    
+    def __repr__(self):
+        return f'<EmployeeLiability #{self.id} - {self.liability_type.value} - {self.remaining_amount}>'
+
+
+class RequestNotification(db.Model):
+    """إشعارات الطلبات للموظفين"""
+    __tablename__ = 'request_notifications'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    request_id = db.Column(db.Integer, db.ForeignKey('employee_requests.id', ondelete='CASCADE'), nullable=False, index=True)
+    employee_id = db.Column(db.Integer, db.ForeignKey('employee.id', ondelete='CASCADE'), nullable=False, index=True)
+    
+    notification_type = db.Column(db.String(50), nullable=False, index=True)
+    title_ar = db.Column(db.String(200), nullable=False)
+    message_ar = db.Column(db.Text, nullable=False)
+    
+    is_read = db.Column(db.Boolean, default=False, index=True)
+    is_sent_to_app = db.Column(db.Boolean, default=False)
+    
+    sent_at = db.Column(db.DateTime, default=datetime.utcnow)
+    read_at = db.Column(db.DateTime)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    __table_args__ = (
+        db.Index('idx_request_type', 'request_id', 'notification_type'),
+        db.Index('idx_employee_read', 'employee_id', 'is_read'),
+    )
+    
+    request = db.relationship('EmployeeRequest', back_populates='notifications')
+    employee = db.relationship('Employee', backref=db.backref('request_notifications', lazy='dynamic'))
+    
+    def __repr__(self):
+        return f'<RequestNotification #{self.id} - {self.notification_type}>'
+
