@@ -111,13 +111,12 @@ def approve_request(request_id):
     if admin_notes:
         emp_request.admin_notes = admin_notes
     
-    notification = RequestNotification(
-        request_id=request_id,
-        user_id=emp_request.employee.user_id if emp_request.employee.user_id else None,
-        title='تمت الموافقة على طلبك',
-        message=f'تمت الموافقة على طلب {emp_request.get_type_display()}',
-        notification_type='APPROVED'
-    )
+    notification = RequestNotification()
+    notification.request_id = request_id
+    notification.employee_id = emp_request.employee_id
+    notification.title_ar = 'تمت الموافقة على طلبك'
+    notification.message_ar = f'تمت الموافقة على طلب {emp_request.get_type_display()}'
+    notification.notification_type = 'APPROVED'
     db.session.add(notification)
     
     db.session.commit()
@@ -147,13 +146,12 @@ def reject_request(request_id):
     emp_request.approved_at = datetime.utcnow()
     emp_request.rejection_reason = rejection_reason
     
-    notification = RequestNotification(
-        request_id=request_id,
-        user_id=emp_request.employee.user_id if emp_request.employee.user_id else None,
-        title='تم رفض طلبك',
-        message=f'تم رفض طلب {emp_request.get_type_display()}: {rejection_reason}',
-        notification_type='REJECTED'
-    )
+    notification = RequestNotification()
+    notification.request_id = request_id
+    notification.employee_id = emp_request.employee_id
+    notification.title_ar = 'تم رفض طلبك'
+    notification.message_ar = f'تم رفض طلب {emp_request.get_type_display()}: {rejection_reason}'
+    notification.notification_type = 'REJECTED'
     db.session.add(notification)
     
     db.session.commit()

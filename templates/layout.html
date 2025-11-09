@@ -495,6 +495,63 @@
                                 </a>
                             </li>
                             
+                            {# طلبات الموظفين #}
+                            {% if current_user.role == UserRole.ADMIN %}
+                            <li class="nav-item mb-1">
+                                <a
+                                    href="#employeeRequestsSubmenu"
+                                    data-bs-toggle="collapse"
+                                    class="nav-link nav-link-custom {% if '/employee-requests' in request.path %}active{% endif %}"
+                                    aria-expanded="false"
+                                >
+                                    <i class="fas fa-file-alt me-2"></i>
+                                    <span>طلبات الموظفين</span>
+                                    <i class="fas fa-chevron-down ms-auto"></i>
+                                </a>
+                                <ul
+                                    class="collapse {% if '/employee-requests' in request.path %}show{% endif %} list-unstyled ps-4"
+                                    id="employeeRequestsSubmenu"
+                                >
+                                    <li class="nav-item mb-1">
+                                        <a
+                                            href="{{ url_for('employee_requests.index') }}"
+                                            class="nav-link nav-link-custom {% if request.path == url_for('employee_requests.index') %}active{% endif %}"
+                                        >
+                                            <i class="fas fa-list me-2"></i>
+                                            <span>جميع الطلبات</span>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item mb-1">
+                                        <a
+                                            href="{{ url_for('employee_requests.invoices') }}"
+                                            class="nav-link nav-link-custom {% if '/employee-requests/invoices' in request.path %}active{% endif %}"
+                                        >
+                                            <i class="fas fa-file-invoice me-2"></i>
+                                            <span>الفواتير</span>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item mb-1">
+                                        <a
+                                            href="{{ url_for('employee_requests.advance_payments') }}"
+                                            class="nav-link nav-link-custom {% if '/employee-requests/advance-payments' in request.path %}active{% endif %}"
+                                        >
+                                            <i class="fas fa-money-bill-wave me-2"></i>
+                                            <span>السلف المالية</span>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item mb-1">
+                                        <a
+                                            href="{{ url_for('employee_requests.liabilities') }}"
+                                            class="nav-link nav-link-custom {% if '/employee-requests/liabilities' in request.path %}active{% endif %}"
+                                        >
+                                            <i class="fas fa-exclamation-triangle me-2"></i>
+                                            <span>الالتزامات المالية</span>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+                            {% endif %}
+                            
                             {# إدارة العقارات المستأجرة #}
                             {% if current_user.role == UserRole.ADMIN %}
                             <li class="nav-item mb-1">
