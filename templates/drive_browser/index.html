@@ -1,211 +1,575 @@
 {% extends "layout.html" %}
 
-{% block title %}مستعرض ملفات Google Drive{% endblock %}
+{% block title %}متابعة عمليات Google Drive{% endblock %}
 
 {% block content %}
 <style>
+    :root {
+        --gradient-purple: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --gradient-green: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        --gradient-red: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        --gradient-blue: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        --gradient-orange: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        --gradient-cyan: linear-gradient(135deg, #30cfd0 0%, #330867 100%);
+        --shadow-glow: 0 8px 32px rgba(102, 126, 234, 0.3);
+        --shadow-glow-hover: 0 12px 48px rgba(102, 126, 234, 0.5);
+    }
+    
+    /* رأس الصفحة بتصميم مستقبلي */
+    .page-header {
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%);
+        backdrop-filter: blur(20px);
+        border-radius: 25px;
+        padding: 35px;
+        margin-bottom: 30px;
+        border: 1px solid rgba(102, 126, 234, 0.2);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(circle, rgba(102, 126, 234, 0.15) 0%, transparent 70%);
+        border-radius: 50%;
+        animation: pulse 4s ease-in-out infinite;
+    }
+    
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); opacity: 0.5; }
+        50% { transform: scale(1.2); opacity: 0.8; }
+    }
+    
+    .page-header h2 {
+        font-size: 2.5rem;
+        font-weight: 800;
+        background: var(--gradient-purple);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 10px;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .page-header p {
+        font-size: 1.1rem;
+        color: rgba(255, 255, 255, 0.7);
+        position: relative;
+        z-index: 1;
+    }
+    
+    /* بطاقات الإحصائيات المحسّنة */
     .stats-card {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border-radius: 15px;
-        padding: 25px;
-        color: white;
+        background: rgba(255, 255, 255, 0.03);
+        backdrop-filter: blur(20px);
+        border-radius: 20px;
+        padding: 30px 25px;
         margin-bottom: 20px;
-        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
-        transition: all 0.3s ease;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        position: relative;
+        overflow: hidden;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .stats-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        opacity: 0;
+        transition: opacity 0.4s ease;
+        z-index: 0;
+    }
+    
+    .stats-card.purple::before {
+        background: var(--gradient-purple);
+    }
+    
+    .stats-card.green::before {
+        background: var(--gradient-green);
+    }
+    
+    .stats-card.red::before {
+        background: var(--gradient-red);
+    }
+    
+    .stats-card.blue::before {
+        background: var(--gradient-blue);
     }
     
     .stats-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 15px 40px rgba(102, 126, 234, 0.4);
+        transform: translateY(-8px) scale(1.02);
+        border-color: rgba(255, 255, 255, 0.3);
+        box-shadow: var(--shadow-glow-hover);
     }
     
-    .stats-card.success {
-        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    .stats-card:hover::before {
+        opacity: 0.15;
     }
     
-    .stats-card.warning {
-        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    .stats-icon {
+        width: 70px;
+        height: 70px;
+        border-radius: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 20px;
+        font-size: 2rem;
+        position: relative;
+        z-index: 1;
     }
     
-    .stats-card.info {
-        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    .stats-card.purple .stats-icon {
+        background: var(--gradient-purple);
+        box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+    }
+    
+    .stats-card.green .stats-icon {
+        background: var(--gradient-green);
+        box-shadow: 0 8px 24px rgba(17, 153, 142, 0.4);
+    }
+    
+    .stats-card.red .stats-icon {
+        background: var(--gradient-red);
+        box-shadow: 0 8px 24px rgba(240, 147, 251, 0.4);
+    }
+    
+    .stats-card.blue .stats-icon {
+        background: var(--gradient-blue);
+        box-shadow: 0 8px 24px rgba(79, 172, 254, 0.4);
     }
     
     .stats-number {
-        font-size: 3rem;
-        font-weight: 700;
-        margin-bottom: 10px;
+        font-size: 3.5rem;
+        font-weight: 900;
+        margin-bottom: 8px;
+        background: linear-gradient(135deg, #ffffff 0%, rgba(255, 255, 255, 0.7) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        position: relative;
+        z-index: 1;
+        line-height: 1;
     }
     
     .stats-label {
-        font-size: 1.1rem;
-        opacity: 0.9;
-    }
-    
-    .filter-card {
-        background: rgba(255, 255, 255, 0.05);
-        backdrop-filter: blur(10px);
-        border-radius: 15px;
-        padding: 25px;
-        margin-bottom: 25px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-    }
-    
-    .records-table {
-        background: white;
-        border-radius: 15px;
-        overflow: hidden;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-    }
-    
-    .record-row {
-        transition: all 0.3s ease;
-        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-    }
-    
-    .record-row:hover {
-        background: linear-gradient(90deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
-        transform: scale(1.01);
-    }
-    
-    .status-badge {
-        padding: 5px 15px;
-        border-radius: 20px;
-        font-size: 0.85rem;
+        font-size: 1rem;
+        color: rgba(255, 255, 255, 0.8);
         font-weight: 600;
+        position: relative;
+        z-index: 1;
+    }
+    
+    /* بطاقة التصفية المحسّنة */
+    .filter-card {
+        background: rgba(255, 255, 255, 0.03);
+        backdrop-filter: blur(20px);
+        border-radius: 20px;
+        padding: 30px;
+        margin-bottom: 30px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    }
+    
+    .filter-card .form-label {
+        color: rgba(255, 255, 255, 0.9);
+        font-weight: 600;
+        margin-bottom: 10px;
+        font-size: 0.95rem;
+    }
+    
+    .filter-card .form-control,
+    .filter-card .form-select {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        color: white;
+        border-radius: 12px;
+        padding: 12px 15px;
+        transition: all 0.3s ease;
+    }
+    
+    .filter-card .form-control:focus,
+    .filter-card .form-select:focus {
+        background: rgba(255, 255, 255, 0.08);
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+        color: white;
+    }
+    
+    .filter-card .form-control::placeholder {
+        color: rgba(255, 255, 255, 0.4);
+    }
+    
+    .filter-card .form-select option {
+        background: #2c3034;
+        color: white;
+    }
+    
+    /* الجدول المحسّن */
+    .records-table {
+        background: rgba(255, 255, 255, 0.03);
+        backdrop-filter: blur(20px);
+        border-radius: 20px;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    }
+    
+    .records-table thead {
+        background: var(--gradient-purple);
+        position: relative;
+    }
+    
+    .records-table thead::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+    }
+    
+    .records-table thead th {
+        color: white;
+        font-weight: 700;
+        padding: 18px 15px;
+        border: none;
+        font-size: 0.95rem;
+        letter-spacing: 0.3px;
+    }
+    
+    .records-table tbody tr {
+        transition: all 0.3s ease;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    
+    .records-table tbody tr:hover {
+        background: linear-gradient(90deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.08) 100%);
+        transform: translateX(-5px);
+    }
+    
+    .records-table tbody td {
+        padding: 18px 15px;
+        color: rgba(255, 255, 255, 0.9);
+        vertical-align: middle;
+        border: none;
+    }
+    
+    /* الشارات المحسّنة */
+    .status-badge {
+        padding: 8px 18px;
+        border-radius: 25px;
+        font-size: 0.85rem;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        transition: all 0.3s ease;
+    }
+    
+    .status-badge:hover {
+        transform: scale(1.05);
     }
     
     .status-success {
-        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        background: var(--gradient-green);
         color: white;
     }
     
     .status-failed {
-        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        background: var(--gradient-red);
         color: white;
     }
     
     .status-pending {
-        background: linear-gradient(135deg, #ffd89b 0%, #19547b 100%);
+        background: var(--gradient-orange);
         color: white;
     }
     
     .type-badge {
-        padding: 5px 15px;
-        border-radius: 20px;
+        padding: 8px 18px;
+        border-radius: 25px;
         font-size: 0.85rem;
-        font-weight: 600;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        font-weight: 700;
+        background: var(--gradient-purple);
         color: white;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        transition: all 0.3s ease;
     }
     
+    .type-badge:hover {
+        transform: scale(1.05);
+    }
+    
+    /* أزرار الإجراءات */
     .action-btn {
-        padding: 8px 16px;
-        border-radius: 8px;
+        padding: 10px 20px;
+        border-radius: 12px;
         font-size: 0.9rem;
-        transition: all 0.3s ease;
+        font-weight: 600;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         border: none;
         color: white;
         text-decoration: none;
-        display: inline-block;
-        margin: 2px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin: 3px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     }
     
     .action-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        transform: translateY(-3px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
         color: white;
+    }
+    
+    .action-btn:active {
+        transform: translateY(-1px);
     }
     
     .btn-drive {
         background: linear-gradient(135deg, #4285f4 0%, #34a853 100%);
     }
     
-    .btn-retry {
-        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    .btn-drive:hover {
+        box-shadow: 0 8px 24px rgba(66, 133, 244, 0.4);
     }
     
+    .btn-retry {
+        background: var(--gradient-red);
+    }
+    
+    .btn-retry:hover {
+        box-shadow: 0 8px 24px rgba(240, 147, 251, 0.4);
+    }
+    
+    /* أزرار البحث */
+    .btn-search {
+        background: var(--gradient-purple);
+        border: none;
+        color: white;
+        padding: 12px 25px;
+        border-radius: 12px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+    
+    .btn-search:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(102, 126, 234, 0.5);
+        color: white;
+    }
+    
+    .btn-reset {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: rgba(255, 255, 255, 0.8);
+        padding: 12px 25px;
+        border-radius: 12px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-reset:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: rgba(255, 255, 255, 0.3);
+        color: white;
+        transform: translateY(-2px);
+    }
+    
+    /* الترقيم */
     .pagination {
         margin-top: 30px;
+        gap: 5px;
     }
     
     .page-link {
-        border-radius: 8px;
-        margin: 0 3px;
-        color: #667eea;
-        border: 1px solid rgba(102, 126, 234, 0.3);
+        border-radius: 12px;
+        margin: 0;
+        color: rgba(255, 255, 255, 0.8);
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 10px 16px;
+        font-weight: 600;
+        transition: all 0.3s ease;
     }
     
     .page-link:hover {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: var(--gradient-purple);
         color: white;
-        border-color: #667eea;
+        border-color: transparent;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
     }
     
     .page-item.active .page-link {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border-color: #667eea;
+        background: var(--gradient-purple);
+        border-color: transparent;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+    
+    .page-item.disabled .page-link {
+        background: rgba(255, 255, 255, 0.02);
+        border-color: rgba(255, 255, 255, 0.05);
+        color: rgba(255, 255, 255, 0.3);
+    }
+    
+    /* رسالة عدم وجود سجلات */
+    .no-records {
+        padding: 60px 20px;
+        text-align: center;
+    }
+    
+    .no-records i {
+        font-size: 5rem;
+        background: var(--gradient-purple);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        opacity: 0.3;
+        margin-bottom: 20px;
+    }
+    
+    .no-records p {
+        color: rgba(255, 255, 255, 0.5);
+        font-size: 1.2rem;
+        font-weight: 600;
+    }
+    
+    /* أيقونات الملفات */
+    .file-icon {
+        font-size: 1.3rem;
+        margin: 0 3px;
+        transition: all 0.3s ease;
+    }
+    
+    .file-icon:hover {
+        transform: scale(1.2);
+    }
+    
+    .file-icon.pdf {
+        color: #dc3545;
+        filter: drop-shadow(0 2px 4px rgba(220, 53, 69, 0.3));
+    }
+    
+    .file-icon.image {
+        color: #0d6efd;
+        filter: drop-shadow(0 2px 4px rgba(13, 110, 253, 0.3));
+    }
+    
+    /* تحسينات الاستجابة */
+    @media (max-width: 768px) {
+        .page-header h2 {
+            font-size: 1.8rem;
+        }
+        
+        .stats-number {
+            font-size: 2.5rem;
+        }
+        
+        .stats-icon {
+            width: 60px;
+            height: 60px;
+            font-size: 1.5rem;
+        }
+        
+        .records-table {
+            font-size: 0.85rem;
+        }
+        
+        .action-btn {
+            padding: 8px 15px;
+            font-size: 0.8rem;
+        }
     }
 </style>
 
-<div class="container-fluid mt-4">
+<div class="container-fluid mt-4 px-4">
     <!-- رأس الصفحة -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <h2 class="text-white">
-                <i class="fab fa-google-drive me-3" style="color: #4285f4;"></i>
-                مستعرض ملفات Google Drive
-            </h2>
-            <p class="text-white-50">استعراض جميع البيانات والعمليات المرفوعة على Google Drive</p>
-        </div>
+    <div class="page-header">
+        <h2>
+            <i class="fab fa-google-drive me-3"></i>
+            متابعة عمليات Google Drive
+        </h2>
+        <p class="mb-0">
+            <i class="fas fa-chart-line me-2"></i>
+            استعراض شامل لجميع البيانات والعمليات المرفوعة على Google Drive
+        </p>
     </div>
 
-    <!-- الإحصائيات -->
+    <!-- بطاقات الإحصائيات -->
     <div class="row mb-4">
-        <div class="col-md-3">
-            <div class="stats-card">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card purple">
+                <div class="stats-icon">
+                    <i class="fas fa-folder-open"></i>
+                </div>
                 <div class="stats-number">{{ stats.total_operations }}</div>
                 <div class="stats-label">
-                    <i class="fas fa-folder me-2"></i>
+                    <i class="fas fa-database me-1"></i>
                     إجمالي العمليات
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="stats-card success">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card green">
+                <div class="stats-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
                 <div class="stats-number">{{ stats.successful_uploads }}</div>
                 <div class="stats-label">
-                    <i class="fas fa-check-circle me-2"></i>
+                    <i class="fas fa-cloud-upload-alt me-1"></i>
                     رفع ناجح
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="stats-card warning">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card red">
+                <div class="stats-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
                 <div class="stats-number">{{ stats.failed_uploads }}</div>
                 <div class="stats-label">
-                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <i class="fas fa-times-circle me-1"></i>
                     فشل في الرفع
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="stats-card info">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card blue">
+                <div class="stats-icon">
+                    <i class="fas fa-clock"></i>
+                </div>
                 <div class="stats-number">{{ stats.pending_uploads }}</div>
                 <div class="stats-label">
-                    <i class="fas fa-clock me-2"></i>
+                    <i class="fas fa-hourglass-half me-1"></i>
                     قيد الانتظار
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- التصفية والبحث -->
+    <!-- بطاقة التصفية والبحث -->
     <div class="filter-card">
         <form method="get" action="{{ url_for('drive_browser.browser') }}">
-            <div class="row">
-                <div class="col-md-3 mb-3">
-                    <label class="form-label text-white">
+            <div class="row g-3">
+                <div class="col-lg-3 col-md-6">
+                    <label class="form-label">
                         <i class="fas fa-building me-2"></i>
                         القسم
                     </label>
@@ -219,8 +583,8 @@
                     </select>
                 </div>
                 
-                <div class="col-md-3 mb-3">
-                    <label class="form-label text-white">
+                <div class="col-lg-3 col-md-6">
+                    <label class="form-label">
                         <i class="fas fa-car me-2"></i>
                         رقم اللوحة
                     </label>
@@ -229,8 +593,8 @@
                            placeholder="ابحث برقم اللوحة">
                 </div>
                 
-                <div class="col-md-3 mb-3">
-                    <label class="form-label text-white">
+                <div class="col-lg-3 col-md-6">
+                    <label class="form-label">
                         <i class="fas fa-user me-2"></i>
                         اسم الموظف
                     </label>
@@ -239,9 +603,9 @@
                            placeholder="ابحث باسم الموظف">
                 </div>
                 
-                <div class="col-md-3 mb-3">
-                    <label class="form-label text-white">
-                        <i class="fas fa-filter me-2"></i>
+                <div class="col-lg-3 col-md-6">
+                    <label class="form-label">
+                        <i class="fas fa-info-circle me-2"></i>
                         الحالة
                     </label>
                     <select name="status" class="form-select">
@@ -252,27 +616,27 @@
                     </select>
                 </div>
                 
-                <div class="col-md-3 mb-3">
-                    <label class="form-label text-white">
-                        <i class="fas fa-calendar me-2"></i>
+                <div class="col-lg-3 col-md-6">
+                    <label class="form-label">
+                        <i class="fas fa-calendar-alt me-2"></i>
                         من تاريخ
                     </label>
                     <input type="date" name="date_from" class="form-control" 
                            value="{{ request.args.get('date_from', '') }}">
                 </div>
                 
-                <div class="col-md-3 mb-3">
-                    <label class="form-label text-white">
-                        <i class="fas fa-calendar me-2"></i>
+                <div class="col-lg-3 col-md-6">
+                    <label class="form-label">
+                        <i class="fas fa-calendar-check me-2"></i>
                         إلى تاريخ
                     </label>
                     <input type="date" name="date_to" class="form-control" 
                            value="{{ request.args.get('date_to', '') }}">
                 </div>
                 
-                <div class="col-md-3 mb-3">
-                    <label class="form-label text-white">
-                        <i class="fas fa-list me-2"></i>
+                <div class="col-lg-3 col-md-6">
+                    <label class="form-label">
+                        <i class="fas fa-list-ul me-2"></i>
                         نوع الطلب
                     </label>
                     <select name="request_type" class="form-select">
@@ -284,14 +648,13 @@
                     </select>
                 </div>
                 
-                <div class="col-md-3 mb-3 d-flex align-items-end">
-                    <button type="submit" class="btn btn-primary me-2 w-100">
+                <div class="col-lg-3 col-md-6 d-flex align-items-end">
+                    <button type="submit" class="btn btn-search me-2 flex-fill">
                         <i class="fas fa-search me-2"></i>
                         بحث
                     </button>
-                    <a href="{{ url_for('drive_browser.browser') }}" class="btn btn-secondary">
+                    <a href="{{ url_for('drive_browser.browser') }}" class="btn btn-reset">
                         <i class="fas fa-redo me-2"></i>
-                        إعادة
                     </a>
                 </div>
             </div>
@@ -302,34 +665,36 @@
     <div class="records-table">
         <div class="table-responsive">
             <table class="table table-hover mb-0">
-                <thead style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                <thead>
                     <tr>
-                        <th>#</th>
-                        <th>نوع العملية</th>
+                        <th style="width: 60px;">#</th>
+                        <th style="width: 150px;">نوع العملية</th>
                         <th>الكيان</th>
                         <th>القسم</th>
-                        <th>التاريخ</th>
-                        <th>الملفات</th>
-                        <th>الحالة</th>
-                        <th>الإجراءات</th>
+                        <th style="width: 130px;">التاريخ</th>
+                        <th style="width: 100px;">الملفات</th>
+                        <th style="width: 120px;">الحالة</th>
+                        <th style="width: 200px;">الإجراءات</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% if records %}
                         {% for record in records %}
-                        <tr class="record-row">
-                            <td>{{ loop.index + (page - 1) * per_page }}</td>
+                        <tr>
+                            <td>
+                                <strong>{{ loop.index + (page - 1) * per_page }}</strong>
+                            </td>
                             <td>
                                 <span class="type-badge">
-                                    <i class="fas fa-tag me-1"></i>
+                                    <i class="fas fa-tag"></i>
                                     {{ record.type_ar }}
                                 </span>
                             </td>
                             <td>
-                                <strong>{{ record.entity_name }}</strong>
+                                <strong style="color: rgba(255, 255, 255, 0.95);">{{ record.entity_name }}</strong>
                             </td>
                             <td>
-                                <i class="fas fa-building me-1 text-muted"></i>
+                                <i class="fas fa-building me-2 text-muted"></i>
                                 {{ record.department }}
                             </td>
                             <td>
@@ -337,55 +702,61 @@
                                 {{ record.date.strftime('%Y-%m-%d') if record.date else 'غير محدد' }}
                             </td>
                             <td>
-                                {% if record.has_pdf %}
-                                <i class="far fa-file-pdf text-danger me-1"></i>
-                                {% endif %}
-                                {% if record.images_count > 0 %}
-                                <i class="far fa-images text-primary me-1"></i>
-                                <small>({{ record.images_count }})</small>
-                                {% endif %}
-                                {% if not record.has_pdf and record.images_count == 0 %}
-                                <span class="text-muted">-</span>
-                                {% endif %}
+                                <div class="d-flex gap-1">
+                                    {% if record.has_pdf %}
+                                    <i class="far fa-file-pdf file-icon pdf" title="PDF"></i>
+                                    {% endif %}
+                                    {% if record.images_count > 0 %}
+                                    <i class="far fa-images file-icon image" title="{{ record.images_count }} صورة"></i>
+                                    <small class="text-white-50">({{ record.images_count }})</small>
+                                    {% endif %}
+                                    {% if not record.has_pdf and record.images_count == 0 %}
+                                    <span class="text-muted">-</span>
+                                    {% endif %}
+                                </div>
                             </td>
                             <td>
                                 {% if record.status == 'success' %}
                                 <span class="status-badge status-success">
-                                    <i class="fas fa-check me-1"></i>
+                                    <i class="fas fa-check"></i>
                                     ناجح
                                 </span>
                                 {% elif record.status == 'failed' %}
                                 <span class="status-badge status-failed">
-                                    <i class="fas fa-times me-1"></i>
+                                    <i class="fas fa-times"></i>
                                     فاشل
                                 </span>
                                 {% else %}
                                 <span class="status-badge status-pending">
-                                    <i class="fas fa-clock me-1"></i>
+                                    <i class="fas fa-clock"></i>
                                     انتظار
                                 </span>
                                 {% endif %}
                             </td>
                             <td>
-                                <a href="{{ record.folder_url }}" target="_blank" class="action-btn btn-drive">
-                                    <i class="fab fa-google-drive me-1"></i>
-                                    فتح
-                                </a>
-                                {% if record.status == 'failed' and record.type != 'employee_request' %}
-                                <a href="{{ url_for('drive_browser.retry_upload', record_type=record.type, record_id=record.id) }}" 
-                                   class="action-btn btn-retry">
-                                    <i class="fas fa-redo me-1"></i>
-                                    إعادة
-                                </a>
-                                {% endif %}
+                                <div class="d-flex flex-wrap gap-1">
+                                    <a href="{{ record.folder_url }}" target="_blank" class="action-btn btn-drive">
+                                        <i class="fab fa-google-drive"></i>
+                                        فتح
+                                    </a>
+                                    {% if record.status == 'failed' and record.type != 'employee_request' %}
+                                    <a href="{{ url_for('drive_browser.retry_upload', record_type=record.type, record_id=record.id) }}" 
+                                       class="action-btn btn-retry">
+                                        <i class="fas fa-redo"></i>
+                                        إعادة
+                                    </a>
+                                    {% endif %}
+                                </div>
                             </td>
                         </tr>
                         {% endfor %}
                     {% else %}
                         <tr>
-                            <td colspan="8" class="text-center py-5">
-                                <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>
-                                <p class="text-muted">لا توجد سجلات متوفرة</p>
+                            <td colspan="8">
+                                <div class="no-records">
+                                    <i class="fas fa-folder-open"></i>
+                                    <p>لا توجد سجلات متوفرة</p>
+                                </div>
                             </td>
                         </tr>
                     {% endif %}
@@ -395,7 +766,7 @@
         
         <!-- الترقيم -->
         {% if total_pages > 1 %}
-        <div class="p-3">
+        <div class="p-4">
             <nav aria-label="Page navigation">
                 <ul class="pagination justify-content-center mb-0">
                     <li class="page-item {% if page == 1 %}disabled{% endif %}">
@@ -423,7 +794,8 @@
                     </li>
                 </ul>
             </nav>
-            <p class="text-center text-muted mt-3 mb-0">
+            <p class="text-center text-white-50 mt-3 mb-0" style="font-size: 0.95rem; font-weight: 600;">
+                <i class="fas fa-info-circle me-2"></i>
                 عرض {{ records|length }} من أصل {{ total }} سجل
             </p>
         </div>
