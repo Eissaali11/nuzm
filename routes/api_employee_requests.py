@@ -20,7 +20,10 @@ import uuid
 
 api_employee_requests = Blueprint('api_employee_requests', __name__, url_prefix='/api/v1')
 
-SECRET_KEY = os.environ.get('SESSION_SECRET', 'your-secret-key-here')
+SECRET_KEY = os.environ.get('SESSION_SECRET')
+if not SECRET_KEY:
+    raise RuntimeError("SESSION_SECRET environment variable is required for JWT authentication")
+
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'heic', 'mp4', 'mov', 'avi', 'pdf'}
 MAX_FILE_SIZE = 500 * 1024 * 1024
 
