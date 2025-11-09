@@ -48,7 +48,7 @@ def index():
         page=page, per_page=per_page, error_out=False
     )
     
-    employees = Employee.query.filter_by(company_id=current_user.company_id).all()
+    employees = Employee.query.all()
     
     stats = {
         'total': EmployeeRequest.query.count(),
