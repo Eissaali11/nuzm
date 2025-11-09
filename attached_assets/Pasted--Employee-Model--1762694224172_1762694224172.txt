@@ -1,0 +1,120 @@
+/// ============================================
+/// 👤 نموذج الموظف - Employee Model
+/// ============================================
+class Employee {
+  final String jobNumber;
+  final String name;
+  final String? nameEn;
+  final String? nationalId;
+  final DateTime? birthDate;
+  final DateTime? hireDate;
+  final String? nationality;
+  final DateTime? residenceExpiryDate;
+  final String? sponsorName;
+  final String? absherPhone;
+  final String department;
+  final String? departmentEn;
+  final String section;
+  final String? sectionEn;
+  final String position;
+  final String? positionEn;
+  final String? phone;
+  final String? email;
+  final bool isDriver;
+  final EmployeePhotos? photos;
+  final String? address;
+
+  Employee({
+    required this.jobNumber,
+    required this.name,
+    this.nameEn,
+    this.nationalId,
+    this.birthDate,
+    this.hireDate,
+    this.nationality,
+    this.residenceExpiryDate,
+    this.sponsorName,
+    this.absherPhone,
+    required this.department,
+    this.departmentEn,
+    required this.section,
+    this.sectionEn,
+    required this.position,
+    this.positionEn,
+    this.phone,
+    this.email,
+    required this.isDriver,
+    this.photos,
+    this.address,
+  });
+
+  factory Employee.fromJson(Map<String, dynamic> json) {
+    return Employee(
+      jobNumber: json['job_number'] ?? '',
+      name: json['name'] ?? '',
+      nameEn: json['name_en'],
+      department: json['department'] ?? '',
+      departmentEn: json['department_en'],
+      position: json['position'] ?? '',
+      positionEn: json['position_en'],
+      phone: json['phone'],
+      email: json['email'],
+      hireDate: DateTime.parse(json['hire_date'] ?? DateTime.now().toIso8601String()),
+      isDriver: json['is_driver'] ?? false,
+      photos: json['photos'] != null ? EmployeePhotos.fromJson(json['photos']) : null,
+      address: json['address'],
+      nationalId: json['national_id'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'job_number': jobNumber,
+      'name': name,
+      'name_en': nameEn,
+      'department': department,
+      'department_en': departmentEn,
+      'position': position,
+      'position_en': positionEn,
+      'phone': phone,
+      'email': email,
+      'hire_date': hireDate.toIso8601String(),
+      'is_driver': isDriver,
+      'photos': photos?.toJson(),
+      'address': address,
+      'national_id': nationalId,
+    };
+  }
+}
+
+/// ============================================
+/// 📸 صور الموظف - Employee Photos
+/// ============================================
+class EmployeePhotos {
+  final String? personal;
+  final String? id;
+  final String? license;
+
+  EmployeePhotos({
+    this.personal,
+    this.id,
+    this.license,
+  });
+
+  factory EmployeePhotos.fromJson(Map<String, dynamic> json) {
+    return EmployeePhotos(
+      personal: json['personal'],
+      id: json['id'],
+      license: json['license'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'personal': personal,
+      'id': id,
+      'license': license,
+    };
+  }
+}
+

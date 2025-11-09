@@ -1,0 +1,589 @@
+# 📋 مواصفات طلب API الشامل للموظف
+## Complete Employee API Request Specification
+
+---
+
+## 📌 نظرة عامة - Overview
+
+هذا المستند يوضح مواصفات طلب API واحد شامل لجلب جميع معلومات الموظف في طلب واحد.
+
+This document specifies a comprehensive API request to fetch all employee information in a single request.
+
+---
+
+## 🔗 معلومات الاتصال - Connection Details
+
+### Base URL
+```
+https://d72f2aef-918c-4148-9723-15870f8c7cf6-00-2c1ygyxvqoldk.riker.replit.dev
+```
+
+### Endpoint
+```
+POST /api/external/employee-complete-profile
+```
+
+### Headers
+```json
+{
+  "Content-Type": "application/json; charset=UTF-8"
+}
+```
+
+---
+
+## 📤 Request Body - جسم الطلب
+
+### Required Fields - الحقول المطلوبة
+```json
+{
+  "api_key": "string (required)",
+  "job_number": "string (required)"
+}
+```
+
+### Optional Fields - الحقول الاختيارية
+```json
+{
+  "start_date": "YYYY-MM-DD (optional - للحضور والرواتب)",
+  "end_date": "YYYY-MM-DD (optional - للحضور والرواتب)",
+  "month": "YYYY-MM (optional - للحضور الشهري)"
+}
+```
+
+### Example Request - مثال على الطلب
+```json
+{
+  "api_key": "test_location_key_2025",
+  "job_number": "12345",
+  "month": "2025-01"
+}
+```
+
+---
+
+## 📥 Response Structure - هيكل الاستجابة
+
+### Success Response (200) - استجابة نجاح
+```json
+{
+  "success": true,
+  "message": "تم جلب البيانات بنجاح",
+  "data": {
+    "employee": {
+      "job_number": "string",
+      "name": "string (Arabic)",
+      "name_en": "string (English)",
+      "national_id": "string",
+      "birth_date": "YYYY-MM-DD (nullable)",
+      "hire_date": "YYYY-MM-DD (nullable)",
+      "nationality": "string",
+      "residence_expiry_date": "YYYY-MM-DD (nullable)",
+      "sponsor_name": "string (nullable)",
+      "absher_phone": "string (nullable)",
+      "department": "string (Arabic)",
+      "department_en": "string (English, nullable)",
+      "section": "string (Arabic)",
+      "section_en": "string (English, nullable)",
+      "position": "string (Arabic)",
+      "position_en": "string (English, nullable)",
+      "phone": "string (nullable)",
+      "email": "string (nullable)",
+      "address": "string (nullable)",
+      "is_driver": boolean,
+      "photos": {
+        "personal": "string (URL, nullable)",
+        "id": "string (URL, nullable)",
+        "license": "string (URL, nullable - if is_driver is true)"
+      }
+    },
+    "current_car": {
+      "car_id": "string",
+      "plate_number": "string",
+      "plate_number_en": "string (nullable)",
+      "model": "string",
+      "model_en": "string (nullable)",
+      "color": "string",
+      "color_en": "string (nullable)",
+      "status": "active|maintenance|retired",
+      "assigned_date": "YYYY-MM-DDTHH:mm:ss",
+      "photo": "string (URL, nullable)",
+      "notes": "string (nullable)"
+    },
+    "previous_cars": [
+      {
+        "car_id": "string",
+        "plate_number": "string",
+        "plate_number_en": "string (nullable)",
+        "model": "string",
+        "model_en": "string (nullable)",
+        "color": "string",
+        "color_en": "string (nullable)",
+        "status": "active|maintenance|retired",
+        "assigned_date": "YYYY-MM-DDTHH:mm:ss",
+        "unassigned_date": "YYYY-MM-DDTHH:mm:ss (nullable)",
+        "photo": "string (URL, nullable)",
+        "notes": "string (nullable)"
+      }
+    ],
+    "attendance": [
+      {
+        "date": "YYYY-MM-DD",
+        "check_in": "HH:mm (nullable)",
+        "check_out": "HH:mm (nullable)",
+        "status": "present|absent|late|early_leave|holiday",
+        "hours_worked": number,
+        "late_minutes": number,
+        "early_leave_minutes": number,
+        "notes": "string (nullable)"
+      }
+    ],
+    "salaries": [
+      {
+        "salary_id": "string",
+        "month": "YYYY-MM",
+        "amount": number,
+        "currency": "string (default: SAR)",
+        "paid_date": "YYYY-MM-DDTHH:mm:ss (nullable)",
+        "status": "paid|pending|cancelled",
+        "details": {
+          "base_salary": number,
+          "allowances": number,
+          "deductions": number,
+          "bonuses": number,
+          "overtime": number,
+          "tax": number
+        },
+        "notes": "string (nullable)"
+      }
+    ],
+    "operations": [
+      {
+        "operation_id": "string",
+        "type": "delivery|pickup",
+        "date": "YYYY-MM-DDTHH:mm:ss",
+        "car_id": "string",
+        "car_plate_number": "string",
+        "client_name": "string",
+        "client_phone": "string (nullable)",
+        "address": "string",
+        "status": "completed|in_progress|cancelled",
+        "notes": "string (nullable)"
+      }
+    ],
+    "statistics": {
+      "attendance": {
+        "total_days": number,
+        "present_days": number,
+        "absent_days": number,
+        "late_days": number,
+        "early_leave_days": number,
+        "total_hours": number,
+        "attendance_rate": number (percentage)
+      },
+      "salaries": {
+        "total_salaries": number,
+        "total_amount": number,
+        "average_amount": number,
+        "last_salary": number,
+        "last_paid_date": "YYYY-MM-DDTHH:mm:ss (nullable)"
+      },
+      "cars": {
+        "current_car": boolean,
+        "total_cars": number,
+        "active_cars": number,
+        "maintenance_cars": number,
+        "retired_cars": number
+      },
+      "operations": {
+        "total_operations": number,
+        "delivery_count": number,
+        "pickup_count": number,
+        "completed_count": number
+      }
+    }
+  }
+}
+```
+
+---
+
+## 📋 تفاصيل الحقول - Field Details
+
+### 1. Employee Information - معلومات الموظف
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `job_number` | string | ✅ | الرقم الوظيفي |
+| `name` | string | ✅ | الاسم بالعربية |
+| `name_en` | string | ❌ | الاسم بالإنجليزية |
+| `national_id` | string | ❌ | رقم الهوية الوطنية |
+| `birth_date` | date | ❌ | تاريخ الميلاد (YYYY-MM-DD) |
+| `hire_date` | date | ❌ | تاريخ التوظيف (YYYY-MM-DD) |
+| `nationality` | string | ❌ | الجنسية |
+| `residence_expiry_date` | date | ❌ | تاريخ انتهاء الإقامة (YYYY-MM-DD) |
+| `sponsor_name` | string | ❌ | اسم الكفيل |
+| `absher_phone` | string | ❌ | رقم جوال أبشر الشخصي |
+| `department` | string | ✅ | الدائرة (بالعربية) |
+| `department_en` | string | ❌ | الدائرة (بالإنجليزية) |
+| `section` | string | ✅ | القسم (بالعربية) |
+| `section_en` | string | ❌ | القسم (بالإنجليزية) |
+| `position` | string | ✅ | المسمى الوظيفي (بالعربية) |
+| `position_en` | string | ❌ | المسمى الوظيفي (بالإنجليزية) |
+| `phone` | string | ❌ | رقم الجوال |
+| `email` | string | ❌ | البريد الإلكتروني |
+| `address` | string | ❌ | العنوان |
+| `is_driver` | boolean | ✅ | هل هو سائق؟ |
+| `photos.personal` | string (URL) | ❌ | رابط الصورة الشخصية |
+| `photos.id` | string (URL) | ❌ | رابط صورة الهوية |
+| `photos.license` | string (URL) | ❌ | رابط صورة الرخصة (إذا كان سائق) |
+
+### 2. Current Car - السيارة الحالية
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `car_id` | string | ✅ | معرف السيارة |
+| `plate_number` | string | ✅ | رقم اللوحة (عربي) |
+| `plate_number_en` | string | ❌ | رقم اللوحة (إنجليزي) |
+| `model` | string | ✅ | الموديل |
+| `model_en` | string | ❌ | الموديل (إنجليزي) |
+| `color` | string | ✅ | اللون |
+| `color_en` | string | ❌ | اللون (إنجليزي) |
+| `status` | enum | ✅ | الحالة: active, maintenance, retired |
+| `assigned_date` | datetime | ✅ | تاريخ الربط |
+| `photo` | string (URL) | ❌ | صورة السيارة |
+| `notes` | string | ❌ | ملاحظات |
+
+### 3. Previous Cars - السيارات السابقة
+
+نفس هيكل Current Car مع إضافة:
+- `unassigned_date`: تاريخ إلغاء الربط
+
+### 4. Attendance - الحضور
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `date` | date | ✅ | التاريخ |
+| `check_in` | time | ❌ | وقت الدخول (HH:mm) |
+| `check_out` | time | ❌ | وقت الخروج (HH:mm) |
+| `status` | enum | ✅ | الحالة: present, absent, late, early_leave, holiday |
+| `hours_worked` | number | ✅ | عدد ساعات العمل |
+| `late_minutes` | number | ✅ | دقائق التأخير |
+| `early_leave_minutes` | number | ✅ | دقائق الخروج المبكر |
+| `notes` | string | ❌ | ملاحظات |
+
+### 5. Salaries - الرواتب
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `salary_id` | string | ✅ | معرف الراتب |
+| `month` | string | ✅ | الشهر (YYYY-MM) |
+| `amount` | number | ✅ | المبلغ الإجمالي |
+| `currency` | string | ✅ | العملة (افتراضي: SAR) |
+| `paid_date` | datetime | ❌ | تاريخ الدفع |
+| `status` | enum | ✅ | الحالة: paid, pending, cancelled |
+| `details.base_salary` | number | ✅ | الراتب الأساسي |
+| `details.allowances` | number | ✅ | البدلات |
+| `details.deductions` | number | ✅ | الخصومات |
+| `details.bonuses` | number | ✅ | المكافآت |
+| `details.overtime` | number | ✅ | ساعات إضافية |
+| `details.tax` | number | ✅ | الضرائب |
+| `notes` | string | ❌ | ملاحظات |
+
+### 6. Operations - العمليات
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `operation_id` | string | ✅ | معرف العملية |
+| `type` | enum | ✅ | النوع: delivery, pickup |
+| `date` | datetime | ✅ | التاريخ والوقت |
+| `car_id` | string | ✅ | معرف السيارة |
+| `car_plate_number` | string | ✅ | رقم لوحة السيارة |
+| `client_name` | string | ✅ | اسم العميل |
+| `client_phone` | string | ❌ | رقم جوال العميل |
+| `address` | string | ✅ | العنوان |
+| `status` | enum | ✅ | الحالة: completed, in_progress, cancelled |
+| `notes` | string | ❌ | ملاحظات |
+
+### 7. Statistics - الإحصائيات
+
+#### Attendance Statistics
+- `total_days`: إجمالي الأيام
+- `present_days`: أيام الحضور
+- `absent_days`: أيام الغياب
+- `late_days`: أيام التأخير
+- `early_leave_days`: أيام الخروج المبكر
+- `total_hours`: إجمالي الساعات
+- `attendance_rate`: نسبة الحضور (%)
+
+#### Salary Statistics
+- `total_salaries`: عدد الرواتب
+- `total_amount`: إجمالي المبلغ
+- `average_amount`: متوسط الراتب
+- `last_salary`: آخر راتب
+- `last_paid_date`: تاريخ آخر دفع
+
+#### Car Statistics
+- `current_car`: هل يوجد سيارة حالية؟
+- `total_cars`: إجمالي السيارات
+- `active_cars`: السيارات النشطة
+- `maintenance_cars`: السيارات في الصيانة
+- `retired_cars`: السيارات المتقاعدة
+
+#### Operations Statistics
+- `total_operations`: إجمالي العمليات
+- `delivery_count`: عدد عمليات التسليم
+- `pickup_count`: عدد عمليات الاستلام
+- `completed_count`: عدد العمليات المكتملة
+
+---
+
+## ❌ Error Responses - استجابات الأخطاء
+
+### 400 Bad Request
+```json
+{
+  "success": false,
+  "message": "طلب غير صحيح",
+  "error": "Missing required field: job_number"
+}
+```
+
+### 401 Unauthorized
+```json
+{
+  "success": false,
+  "message": "غير مصرح. يرجى التحقق من المفتاح",
+  "error": "Invalid API key"
+}
+```
+
+### 404 Not Found
+```json
+{
+  "success": false,
+  "message": "الموظف غير موجود",
+  "error": "Employee not found"
+}
+```
+
+### 500 Internal Server Error
+```json
+{
+  "success": false,
+  "message": "خطأ في السيرفر",
+  "error": "Internal server error"
+}
+```
+
+### 503 Service Unavailable
+```json
+{
+  "success": false,
+  "message": "الخدمة غير متاحة حالياً. يرجى المحاولة لاحقاً",
+  "error": "Service Unavailable"
+}
+```
+
+---
+
+## 📝 Example Complete Response - مثال على الاستجابة الكاملة
+
+```json
+{
+  "success": true,
+  "message": "تم جلب البيانات بنجاح",
+  "data": {
+    "employee": {
+      "job_number": "12345",
+      "name": "أحمد محمد العلي",
+      "name_en": "Ahmed Mohammed Al-Ali",
+      "national_id": "1234567890",
+      "birth_date": "1990-05-15",
+      "hire_date": "2020-01-10",
+      "nationality": "سعودي",
+      "residence_expiry_date": "2026-12-31",
+      "sponsor_name": "شركة نزوم للتجارة",
+      "absher_phone": "0501234567",
+      "department": "الدائرة التقنية",
+      "department_en": "Technical Department",
+      "section": "قسم التطوير",
+      "section_en": "Development Section",
+      "position": "مطور تطبيقات",
+      "position_en": "Application Developer",
+      "phone": "0501234567",
+      "email": "ahmed@example.com",
+      "address": "الرياض، حي النخيل",
+      "is_driver": true,
+      "photos": {
+        "personal": "https://example.com/photos/personal/12345.jpg",
+        "id": "https://example.com/photos/id/12345.jpg",
+        "license": "https://example.com/photos/license/12345.jpg"
+      }
+    },
+    "current_car": {
+      "car_id": "CAR001",
+      "plate_number": "أ ب ج 1234",
+      "plate_number_en": "ABC 1234",
+      "model": "تويوتا كامري",
+      "model_en": "Toyota Camry",
+      "color": "أبيض",
+      "color_en": "White",
+      "status": "active",
+      "assigned_date": "2024-01-15T08:00:00",
+      "photo": "https://example.com/cars/CAR001.jpg",
+      "notes": "سيارة جديدة"
+    },
+    "previous_cars": [
+      {
+        "car_id": "CAR002",
+        "plate_number": "د هـ و 5678",
+        "plate_number_en": "DEF 5678",
+        "model": "هوندا أكورد",
+        "model_en": "Honda Accord",
+        "color": "أسود",
+        "color_en": "Black",
+        "status": "retired",
+        "assigned_date": "2022-01-01T08:00:00",
+        "unassigned_date": "2024-01-14T17:00:00",
+        "photo": null,
+        "notes": "تم استبدالها"
+      }
+    ],
+    "attendance": [
+      {
+        "date": "2025-01-15",
+        "check_in": "08:00",
+        "check_out": "17:00",
+        "status": "present",
+        "hours_worked": 8.0,
+        "late_minutes": 0,
+        "early_leave_minutes": 0,
+        "notes": null
+      },
+      {
+        "date": "2025-01-16",
+        "check_in": "08:15",
+        "check_out": "17:00",
+        "status": "late",
+        "hours_worked": 7.75,
+        "late_minutes": 15,
+        "early_leave_minutes": 0,
+        "notes": "تأخير بسبب الزحام"
+      }
+    ],
+    "salaries": [
+      {
+        "salary_id": "SAL001",
+        "month": "2025-01",
+        "amount": 15000.00,
+        "currency": "SAR",
+        "paid_date": "2025-01-05T10:00:00",
+        "status": "paid",
+        "details": {
+          "base_salary": 12000.00,
+          "allowances": 2000.00,
+          "deductions": 500.00,
+          "bonuses": 1000.00,
+          "overtime": 500.00,
+          "tax": 0.00
+        },
+        "notes": null
+      }
+    ],
+    "operations": [
+      {
+        "operation_id": "OP001",
+        "type": "delivery",
+        "date": "2025-01-15T10:30:00",
+        "car_id": "CAR001",
+        "car_plate_number": "أ ب ج 1234",
+        "client_name": "محمد أحمد",
+        "client_phone": "0509876543",
+        "address": "الرياض، حي العليا",
+        "status": "completed",
+        "notes": "تم التسليم بنجاح"
+      },
+      {
+        "operation_id": "OP002",
+        "type": "pickup",
+        "date": "2025-01-16T14:00:00",
+        "car_id": "CAR001",
+        "car_plate_number": "أ ب ج 1234",
+        "client_name": "فاطمة علي",
+        "client_phone": "0551234567",
+        "address": "الرياض، حي النرجس",
+        "status": "completed",
+        "notes": null
+      }
+    ],
+    "statistics": {
+      "attendance": {
+        "total_days": 22,
+        "present_days": 20,
+        "absent_days": 1,
+        "late_days": 1,
+        "early_leave_days": 0,
+        "total_hours": 158.5,
+        "attendance_rate": 90.91
+      },
+      "salaries": {
+        "total_salaries": 12,
+        "total_amount": 180000.00,
+        "average_amount": 15000.00,
+        "last_salary": 15000.00,
+        "last_paid_date": "2025-01-05T10:00:00"
+      },
+      "cars": {
+        "current_car": true,
+        "total_cars": 2,
+        "active_cars": 1,
+        "maintenance_cars": 0,
+        "retired_cars": 1
+      },
+      "operations": {
+        "total_operations": 45,
+        "delivery_count": 25,
+        "pickup_count": 20,
+        "completed_count": 43
+      }
+    }
+  }
+}
+```
+
+---
+
+## 🔧 Implementation Notes - ملاحظات التنفيذ
+
+### 1. Filtering - التصفية
+- إذا تم إرسال `month` (YYYY-MM)، يتم جلب الحضور والرواتب لذلك الشهر فقط
+- إذا تم إرسال `start_date` و `end_date`، يتم جلب البيانات في هذا النطاق
+- إذا لم يتم إرسال أي من الحقول أعلاه، يتم جلب آخر 30 يوم للحضور وآخر 12 شهر للرواتب
+
+### 2. Performance - الأداء
+- يجب أن يكون الاستجابة سريعة (أقل من 3 ثواني)
+- يمكن استخدام Caching للبيانات التي لا تتغير كثيراً
+- يمكن تقسيم الطلب إلى عدة طلبات أصغر إذا كان حجم البيانات كبير
+
+### 3. Security - الأمان
+- يجب التحقق من `api_key` في كل طلب
+- يجب التحقق من `job_number` والتأكد من أن الموظف موجود
+- يجب استخدام HTTPS فقط
+
+### 4. Error Handling - معالجة الأخطاء
+- يجب إرجاع رسائل خطأ واضحة بالعربية
+- يجب تسجيل جميع الأخطاء للتحليل
+- يجب إرجاع كود الحالة المناسب (200, 400, 401, 404, 500, 503)
+
+---
+
+## 📞 Support - الدعم
+
+للمساعدة أو الاستفسارات، يرجى التواصل مع فريق التطوير.
+
+For support or inquiries, please contact the development team.
+
+---
+
+**آخر تحديث - Last Updated:** 2025-01-XX
