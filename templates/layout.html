@@ -527,6 +527,17 @@
                                             <span>سجل العمليات الشامل</span>
                                         </a>
                                     </li>
+                                    <li class="nav-item mb-1">
+                                        <a
+                                            href="{{ url_for('drive_browser.browser') }}"
+                                            class="nav-link nav-link-custom {% if '/drive' in request.path %}active{% endif %}"
+                                        >
+                                            <i
+                                                class="fab fa-google-drive me-2"
+                                            ></i>
+                                            <span>مستعرض Google Drive</span>
+                                        </a>
+                                    </li>
                                         
                             {% if current_user.role == UserRole.ADMIN %}
                             <li class="nav-item mb-1">

@@ -1,0 +1,433 @@
+{% extends "base.html" %}
+
+{% block title %}مستعرض ملفات Google Drive{% endblock %}
+
+{% block content %}
+<style>
+    .stats-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 15px;
+        padding: 25px;
+        color: white;
+        margin-bottom: 20px;
+        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+        transition: all 0.3s ease;
+    }
+    
+    .stats-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 40px rgba(102, 126, 234, 0.4);
+    }
+    
+    .stats-card.success {
+        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    }
+    
+    .stats-card.warning {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+    
+    .stats-card.info {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+    
+    .stats-number {
+        font-size: 3rem;
+        font-weight: 700;
+        margin-bottom: 10px;
+    }
+    
+    .stats-label {
+        font-size: 1.1rem;
+        opacity: 0.9;
+    }
+    
+    .filter-card {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 25px;
+        margin-bottom: 25px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .records-table {
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+    
+    .record-row {
+        transition: all 0.3s ease;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    }
+    
+    .record-row:hover {
+        background: linear-gradient(90deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+        transform: scale(1.01);
+    }
+    
+    .status-badge {
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+    
+    .status-success {
+        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        color: white;
+    }
+    
+    .status-failed {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+    }
+    
+    .status-pending {
+        background: linear-gradient(135deg, #ffd89b 0%, #19547b 100%);
+        color: white;
+    }
+    
+    .type-badge {
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    
+    .action-btn {
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+        border: none;
+        color: white;
+        text-decoration: none;
+        display: inline-block;
+        margin: 2px;
+    }
+    
+    .action-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        color: white;
+    }
+    
+    .btn-drive {
+        background: linear-gradient(135deg, #4285f4 0%, #34a853 100%);
+    }
+    
+    .btn-retry {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+    
+    .pagination {
+        margin-top: 30px;
+    }
+    
+    .page-link {
+        border-radius: 8px;
+        margin: 0 3px;
+        color: #667eea;
+        border: 1px solid rgba(102, 126, 234, 0.3);
+    }
+    
+    .page-link:hover {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-color: #667eea;
+    }
+    
+    .page-item.active .page-link {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-color: #667eea;
+    }
+</style>
+
+<div class="container-fluid mt-4">
+    <!-- رأس الصفحة -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="text-white">
+                <i class="fab fa-google-drive me-3" style="color: #4285f4;"></i>
+                مستعرض ملفات Google Drive
+            </h2>
+            <p class="text-white-50">استعراض جميع البيانات والعمليات المرفوعة على Google Drive</p>
+        </div>
+    </div>
+
+    <!-- الإحصائيات -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-number">{{ stats.total_operations }}</div>
+                <div class="stats-label">
+                    <i class="fas fa-folder me-2"></i>
+                    إجمالي العمليات
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card success">
+                <div class="stats-number">{{ stats.successful_uploads }}</div>
+                <div class="stats-label">
+                    <i class="fas fa-check-circle me-2"></i>
+                    رفع ناجح
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card warning">
+                <div class="stats-number">{{ stats.failed_uploads }}</div>
+                <div class="stats-label">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    فشل في الرفع
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card info">
+                <div class="stats-number">{{ stats.pending_uploads }}</div>
+                <div class="stats-label">
+                    <i class="fas fa-clock me-2"></i>
+                    قيد الانتظار
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- التصفية والبحث -->
+    <div class="filter-card">
+        <form method="get" action="{{ url_for('drive_browser.browser') }}">
+            <div class="row">
+                <div class="col-md-3 mb-3">
+                    <label class="form-label text-white">
+                        <i class="fas fa-building me-2"></i>
+                        القسم
+                    </label>
+                    <select name="department_id" class="form-select">
+                        <option value="">جميع الأقسام</option>
+                        {% for dept in departments %}
+                        <option value="{{ dept.id }}" {% if filters.get('department_id') == dept.id %}selected{% endif %}>
+                            {{ dept.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="col-md-3 mb-3">
+                    <label class="form-label text-white">
+                        <i class="fas fa-car me-2"></i>
+                        رقم اللوحة
+                    </label>
+                    <input type="text" name="plate_number" class="form-control" 
+                           value="{{ filters.get('plate_number', '') }}" 
+                           placeholder="ابحث برقم اللوحة">
+                </div>
+                
+                <div class="col-md-3 mb-3">
+                    <label class="form-label text-white">
+                        <i class="fas fa-user me-2"></i>
+                        اسم الموظف
+                    </label>
+                    <input type="text" name="employee_name" class="form-control" 
+                           value="{{ filters.get('employee_name', '') }}" 
+                           placeholder="ابحث باسم الموظف">
+                </div>
+                
+                <div class="col-md-3 mb-3">
+                    <label class="form-label text-white">
+                        <i class="fas fa-filter me-2"></i>
+                        الحالة
+                    </label>
+                    <select name="status" class="form-select">
+                        <option value="">جميع الحالات</option>
+                        <option value="success" {% if filters.get('status') == 'success' %}selected{% endif %}>ناجح</option>
+                        <option value="failed" {% if filters.get('status') == 'failed' %}selected{% endif %}>فاشل</option>
+                        <option value="pending" {% if filters.get('status') == 'pending' %}selected{% endif %}>قيد الانتظار</option>
+                    </select>
+                </div>
+                
+                <div class="col-md-3 mb-3">
+                    <label class="form-label text-white">
+                        <i class="fas fa-calendar me-2"></i>
+                        من تاريخ
+                    </label>
+                    <input type="date" name="date_from" class="form-control" 
+                           value="{{ request.args.get('date_from', '') }}">
+                </div>
+                
+                <div class="col-md-3 mb-3">
+                    <label class="form-label text-white">
+                        <i class="fas fa-calendar me-2"></i>
+                        إلى تاريخ
+                    </label>
+                    <input type="date" name="date_to" class="form-control" 
+                           value="{{ request.args.get('date_to', '') }}">
+                </div>
+                
+                <div class="col-md-3 mb-3">
+                    <label class="form-label text-white">
+                        <i class="fas fa-list me-2"></i>
+                        نوع الطلب
+                    </label>
+                    <select name="request_type" class="form-select">
+                        <option value="">جميع الأنواع</option>
+                        <option value="invoice" {% if filters.get('request_type') == 'invoice' %}selected{% endif %}>فاتورة</option>
+                        <option value="car_wash" {% if filters.get('request_type') == 'car_wash' %}selected{% endif %}>غسيل سيارة</option>
+                        <option value="car_inspection" {% if filters.get('request_type') == 'car_inspection' %}selected{% endif %}>فحص وتوثيق</option>
+                        <option value="advance_payment" {% if filters.get('request_type') == 'advance_payment' %}selected{% endif %}>سلفة</option>
+                    </select>
+                </div>
+                
+                <div class="col-md-3 mb-3 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary me-2 w-100">
+                        <i class="fas fa-search me-2"></i>
+                        بحث
+                    </button>
+                    <a href="{{ url_for('drive_browser.browser') }}" class="btn btn-secondary">
+                        <i class="fas fa-redo me-2"></i>
+                        إعادة
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- جدول السجلات -->
+    <div class="records-table">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                    <tr>
+                        <th>#</th>
+                        <th>نوع العملية</th>
+                        <th>الكيان</th>
+                        <th>القسم</th>
+                        <th>التاريخ</th>
+                        <th>الملفات</th>
+                        <th>الحالة</th>
+                        <th>الإجراءات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if records %}
+                        {% for record in records %}
+                        <tr class="record-row">
+                            <td>{{ loop.index + (page - 1) * per_page }}</td>
+                            <td>
+                                <span class="type-badge">
+                                    <i class="fas fa-tag me-1"></i>
+                                    {{ record.type_ar }}
+                                </span>
+                            </td>
+                            <td>
+                                <strong>{{ record.entity_name }}</strong>
+                            </td>
+                            <td>
+                                <i class="fas fa-building me-1 text-muted"></i>
+                                {{ record.department }}
+                            </td>
+                            <td>
+                                <i class="far fa-calendar me-1 text-muted"></i>
+                                {{ record.date.strftime('%Y-%m-%d') if record.date else 'غير محدد' }}
+                            </td>
+                            <td>
+                                {% if record.has_pdf %}
+                                <i class="far fa-file-pdf text-danger me-1"></i>
+                                {% endif %}
+                                {% if record.images_count > 0 %}
+                                <i class="far fa-images text-primary me-1"></i>
+                                <small>({{ record.images_count }})</small>
+                                {% endif %}
+                                {% if not record.has_pdf and record.images_count == 0 %}
+                                <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if record.status == 'success' %}
+                                <span class="status-badge status-success">
+                                    <i class="fas fa-check me-1"></i>
+                                    ناجح
+                                </span>
+                                {% elif record.status == 'failed' %}
+                                <span class="status-badge status-failed">
+                                    <i class="fas fa-times me-1"></i>
+                                    فاشل
+                                </span>
+                                {% else %}
+                                <span class="status-badge status-pending">
+                                    <i class="fas fa-clock me-1"></i>
+                                    انتظار
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{{ record.folder_url }}" target="_blank" class="action-btn btn-drive">
+                                    <i class="fab fa-google-drive me-1"></i>
+                                    فتح
+                                </a>
+                                {% if record.status == 'failed' and record.type != 'employee_request' %}
+                                <a href="{{ url_for('drive_browser.retry_upload', record_type=record.type, record_id=record.id) }}" 
+                                   class="action-btn btn-retry">
+                                    <i class="fas fa-redo me-1"></i>
+                                    إعادة
+                                </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="8" class="text-center py-5">
+                                <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>
+                                <p class="text-muted">لا توجد سجلات متوفرة</p>
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- الترقيم -->
+        {% if total_pages > 1 %}
+        <div class="p-3">
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center mb-0">
+                    <li class="page-item {% if page == 1 %}disabled{% endif %}">
+                        <a class="page-link" href="{{ url_for('drive_browser.browser', page=page-1, **filters) }}">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </li>
+                    
+                    {% for p in range(1, total_pages + 1) %}
+                        {% if p == page or (p <= 3 and page <= 3) or (p >= total_pages - 2 and page >= total_pages - 2) or (p >= page - 1 and p <= page + 1) %}
+                        <li class="page-item {% if p == page %}active{% endif %}">
+                            <a class="page-link" href="{{ url_for('drive_browser.browser', page=p, **filters) }}">{{ p }}</a>
+                        </li>
+                        {% elif p == page - 2 or p == page + 2 %}
+                        <li class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    <li class="page-item {% if page == total_pages %}disabled{% endif %}">
+                        <a class="page-link" href="{{ url_for('drive_browser.browser', page=page+1, **filters) }}">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            <p class="text-center text-muted mt-3 mb-0">
+                عرض {{ records|length }} من أصل {{ total }} سجل
+            </p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

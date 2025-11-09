@@ -383,6 +383,7 @@ with app.app_context():
     from routes.google_drive_settings import google_drive_settings_bp
     from routes.employee_requests import employee_requests
     from routes.api_employee_requests import api_employee_requests
+    from routes.drive_browser import drive_browser_bp
 
     # تعطيل حماية CSRF لطرق معينة
     csrf.exempt(voicehub_bp)
@@ -429,6 +430,7 @@ with app.app_context():
     app.register_blueprint(geofences_bp)  # الدوائر الجغرافية
     app.register_blueprint(employee_requests)  # طلبات الموظفين
     app.register_blueprint(api_employee_requests)  # API طلبات الموظفين
+    app.register_blueprint(drive_browser_bp, url_prefix='/drive')  # مستعرض Google Drive
     
     # استيراد وتسجيل مسار صفحة الهبوط - مسار منفصل عن النظام
     from routes.landing import landing_bp
