@@ -158,13 +158,15 @@ class EmployeeFinanceService:
         last_salary = Salary.query.filter_by(employee_id=employee_id).order_by(
             Salary.year.desc(), Salary.month.desc()).first()
         
+        from models import RequestStatus
+        
         requests_stats = {
             'pending': EmployeeRequest.query.filter_by(
-                employee_id=employee_id, status='pending').count(),
+                employee_id=employee_id, status=RequestStatus.PENDING).count(),
             'approved': EmployeeRequest.query.filter_by(
-                employee_id=employee_id, status='approved').count(),
+                employee_id=employee_id, status=RequestStatus.APPROVED).count(),
             'rejected': EmployeeRequest.query.filter_by(
-                employee_id=employee_id, status='rejected').count()
+                employee_id=employee_id, status=RequestStatus.REJECTED).count()
         }
         
         next_installment = db.session.query(LiabilityInstallment).join(EmployeeLiability).filter(
@@ -175,7 +177,7 @@ class EmployeeFinanceService:
         total_earnings = db.session.query(func.coalesce(func.sum(Salary.net_salary), 0)).filter(
             Salary.employee_id == employee_id).scalar()
         
-        total_deductions = db.session.query(func.coalesce(func.sum(Salary.total_deductions), 0)).filter(
+        total_deductions = db.session.query(func.coalesce(func.sum(Salary.deductions), 0)).filter(
             Salary.employee_id == employee_id).scalar()
         
         current_balance = float(total_earnings or 0) - float(total_deductions or 0)
@@ -183,7 +185,7 @@ class EmployeeFinanceService:
         monthly_summary = None
         if last_salary:
             total_income = float(last_salary.net_salary or 0)
-            total_deductions_monthly = float(last_salary.total_deductions or 0)
+            total_deductions_monthly = float(last_salary.deductions or 0)
             
             monthly_installments = db.session.query(func.coalesce(func.sum(LiabilityInstallment.amount), 0)).join(
                 EmployeeLiability
