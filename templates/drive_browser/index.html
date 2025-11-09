@@ -215,7 +215,7 @@
     
     /* الجدول المحسّن */
     .records-table {
-        background: rgba(30, 35, 40, 0.95);
+        background: #1a1d21 !important;
         backdrop-filter: blur(20px);
         border-radius: 20px;
         overflow: hidden;
@@ -224,7 +224,7 @@
     }
     
     .records-table thead {
-        background: var(--gradient-purple);
+        background: var(--gradient-purple) !important;
         position: relative;
     }
     
@@ -239,37 +239,45 @@
     }
     
     .records-table thead th {
-        color: white;
+        color: white !important;
         font-weight: 700;
         padding: 18px 15px;
-        border: none;
+        border: none !important;
         font-size: 0.95rem;
         letter-spacing: 0.3px;
+        background: transparent !important;
     }
     
     .records-table tbody tr {
         transition: all 0.3s ease;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-        background: transparent;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+        background: #1a1d21 !important;
     }
     
     .records-table tbody tr:hover {
-        background: linear-gradient(90deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%);
+        background: linear-gradient(90deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%) !important;
         transform: translateX(-5px);
     }
     
     .records-table tbody td {
         padding: 18px 15px;
-        color: rgba(255, 255, 255, 0.95);
+        color: rgba(255, 255, 255, 0.95) !important;
         vertical-align: middle;
-        border: none;
+        border: none !important;
+        background: transparent !important;
     }
     
-    .table {
-        color: rgba(255, 255, 255, 0.9);
-        --bs-table-bg: transparent;
-        --bs-table-striped-bg: transparent;
-        --bs-table-hover-bg: transparent;
+    .records-table .table {
+        color: rgba(255, 255, 255, 0.9) !important;
+        --bs-table-bg: #1a1d21 !important;
+        --bs-table-striped-bg: #1a1d21 !important;
+        --bs-table-hover-bg: rgba(102, 126, 234, 0.1) !important;
+        --bs-table-color: rgba(255, 255, 255, 0.9) !important;
+        margin-bottom: 0;
+    }
+    
+    .records-table .table-responsive {
+        background: #1a1d21 !important;
     }
     
     /* الشارات المحسّنة */
