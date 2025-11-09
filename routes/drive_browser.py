@@ -88,9 +88,11 @@ def build_unified_records(filters=None, page=1, per_page=50):
         Vehicle.plate_number,
         Vehicle.make,
         Vehicle.model,
-        Department.name.label('department_name')
+        Department.name.label('department_name'),
+        Employee.name.label('employee_name')
     ).join(Vehicle, VehicleWorkshop.vehicle_id == Vehicle.id
     ).outerjoin(Department, Vehicle.department_id == Department.id
+    ).outerjoin(Employee, VehicleWorkshop.employee_id == Employee.id
     ).filter(VehicleWorkshop.drive_folder_id.isnot(None))
     
     if filters:
@@ -98,6 +100,8 @@ def build_unified_records(filters=None, page=1, per_page=50):
             workshop_query = workshop_query.filter(Vehicle.department_id == filters['department_id'])
         if filters.get('plate_number'):
             workshop_query = workshop_query.filter(Vehicle.plate_number.like(f"%{filters['plate_number']}%"))
+        if filters.get('employee_name'):
+            workshop_query = workshop_query.filter(Employee.name.ilike(f"%{filters['employee_name']}%"))
         if filters.get('date_from'):
             workshop_query = workshop_query.filter(VehicleWorkshop.entry_date >= filters['date_from'])
         if filters.get('date_to'):
@@ -139,7 +143,8 @@ def build_unified_records(filters=None, page=1, per_page=50):
         VehicleHandover.handover_date,
         VehicleHandover.handover_type,
         VehicleHandover.vehicle_plate_number,
-        Department.name.label('department_name')
+        Department.name.label('department_name'),
+        Employee.name.label('employee_name')
     ).outerjoin(Employee, VehicleHandover.employee_id == Employee.id
     ).outerjoin(Department, Employee.department_id == Department.id
     ).filter(VehicleHandover.drive_folder_id.isnot(None))
@@ -149,6 +154,8 @@ def build_unified_records(filters=None, page=1, per_page=50):
             handover_query = handover_query.filter(Employee.department_id == filters['department_id'])
         if filters.get('plate_number'):
             handover_query = handover_query.filter(VehicleHandover.vehicle_plate_number.like(f"%{filters['plate_number']}%"))
+        if filters.get('employee_name'):
+            handover_query = handover_query.filter(Employee.name.ilike(f"%{filters['employee_name']}%"))
         if filters.get('date_from'):
             handover_query = handover_query.filter(VehicleHandover.handover_date >= filters['date_from'])
         if filters.get('date_to'):
@@ -191,7 +198,8 @@ def build_unified_records(filters=None, page=1, per_page=50):
         VehicleExternalSafetyCheck.drive_uploaded_at,
         VehicleExternalSafetyCheck.inspection_date,
         VehicleExternalSafetyCheck.vehicle_plate_number,
-        Department.name.label('department_name')
+        Department.name.label('department_name'),
+        Employee.name.label('employee_name')
     ).outerjoin(Employee, VehicleExternalSafetyCheck.employee_id == Employee.id
     ).outerjoin(Department, Employee.department_id == Department.id
     ).filter(VehicleExternalSafetyCheck.drive_folder_id.isnot(None))
@@ -201,6 +209,8 @@ def build_unified_records(filters=None, page=1, per_page=50):
             safety_query = safety_query.filter(Employee.department_id == filters['department_id'])
         if filters.get('plate_number'):
             safety_query = safety_query.filter(VehicleExternalSafetyCheck.vehicle_plate_number.like(f"%{filters['plate_number']}%"))
+        if filters.get('employee_name'):
+            safety_query = safety_query.filter(Employee.name.ilike(f"%{filters['employee_name']}%"))
         if filters.get('date_from'):
             safety_query = safety_query.filter(VehicleExternalSafetyCheck.inspection_date >= filters['date_from'])
         if filters.get('date_to'):
