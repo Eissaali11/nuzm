@@ -300,11 +300,11 @@ class EmployeeFinanceService:
             return False, "لديك سلفة نشطة بالفعل، يجب سدادها أولاً"
         
         monthly_installment = requested_amount / installments
-        if employee.salary and monthly_installment > (float(employee.salary) * 0.4):
+        if employee.basic_salary and monthly_installment > (float(employee.basic_salary) * 0.4):
             return False, "قيمة القسط الشهري تتجاوز 40% من الراتب"
         
-        if employee.salary and requested_amount > (float(employee.salary) * 3):
-            max_advance = float(employee.salary) * 3
+        if employee.basic_salary and requested_amount > (float(employee.basic_salary) * 3):
+            max_advance = float(employee.basic_salary) * 3
             return False, f"الحد الأقصى للسلفة هو {max_advance:.2f} ريال (3 أضعاف الراتب)"
         
         return True, "صحيح"

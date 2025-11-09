@@ -1111,17 +1111,23 @@ def create_advance_payment_request(current_employee):
         db.session.add(new_request)
         db.session.flush()
         
+        monthly_installment = requested_amount / installments
+        
         advance_payment = AdvancePaymentRequest(
             request_id=new_request.id,
+            employee_name=current_employee.name,
+            employee_number=current_employee.employee_id,
+            national_id=current_employee.national_id,
+            job_title=current_employee.job_title or '',
+            department_name=current_employee.department.name if current_employee.department else '',
             requested_amount=requested_amount,
             installments=installments,
+            installment_amount=monthly_installment,
             reason=reason
         )
         
         db.session.add(advance_payment)
         db.session.commit()
-        
-        monthly_installment = requested_amount / installments
         
         return jsonify({
             'success': True,
