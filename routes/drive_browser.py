@@ -50,7 +50,7 @@ def get_drive_statistics():
     request_stats = db.session.query(
         func.count(EmployeeRequest.id).label('total'),
         func.max(EmployeeRequest.created_at).label('last_upload')
-    ).filter(EmployeeRequest.drive_folder_id.isnot(None)).first()
+    ).filter(EmployeeRequest.google_drive_folder_id.isnot(None)).first()
     
     stats['vehicles_count'] = (workshop_stats.total or 0) + (handover_stats.total or 0) + (safety_stats.total or 0)
     stats['requests_count'] = request_stats.total or 0
@@ -244,8 +244,8 @@ def build_unified_records(filters=None, page=1, per_page=50):
     
     request_query = db.session.query(
         EmployeeRequest.id,
-        EmployeeRequest.drive_folder_id,
-        EmployeeRequest.drive_folder_url,
+        EmployeeRequest.google_drive_folder_id,
+        EmployeeRequest.google_drive_folder_url,
         EmployeeRequest.request_type,
         EmployeeRequest.created_at,
         Employee.name.label('employee_name'),
@@ -253,7 +253,7 @@ def build_unified_records(filters=None, page=1, per_page=50):
         Department.name.label('department_name')
     ).join(Employee, EmployeeRequest.employee_id == Employee.id
     ).outerjoin(Department, Employee.department_id == Department.id
-    ).filter(EmployeeRequest.drive_folder_id.isnot(None))
+    ).filter(EmployeeRequest.google_drive_folder_id.isnot(None))
     
     if filters:
         if filters.get('department_id'):
@@ -282,8 +282,8 @@ def build_unified_records(filters=None, page=1, per_page=50):
             'entity_name': f"{row.employee_name} ({row.employee_number})",
             'department': row.department_name or 'غير محدد',
             'date': row.created_at,
-            'folder_id': row.drive_folder_id,
-            'folder_url': row.drive_folder_url or f"https://drive.google.com/drive/folders/{row.drive_folder_id}",
+            'folder_id': row.google_drive_folder_id,
+            'folder_url': row.google_drive_folder_url or f"https://drive.google.com/drive/folders/{row.google_drive_folder_id}",
             'pdf_link': None,
             'has_pdf': False,
             'images_count': 0,
