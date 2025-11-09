@@ -216,14 +216,27 @@ def get_requests(current_employee):
         page=page, per_page=per_page, error_out=False
     )
     
+    type_names = {
+        'INVOICE': 'فاتورة',
+        'CAR_WASH': 'غسيل سيارة',
+        'CAR_INSPECTION': 'فحص وتوثيق',
+        'ADVANCE_PAYMENT': 'سلفة مالية'
+    }
+    
+    status_names = {
+        'PENDING': 'قيد الانتظار',
+        'APPROVED': 'موافق عليها',
+        'REJECTED': 'مرفوضة'
+    }
+    
     requests_list = []
     for req in pagination.items:
         request_data = {
             'id': req.id,
             'type': req.request_type.name,
-            'type_display': req.get_type_display(),
+            'type_display': type_names.get(req.request_type.name, req.request_type.name),
             'status': req.status.name,
-            'status_display': req.get_status_display(),
+            'status_display': status_names.get(req.status.name, req.status.name),
             'title': req.title,
             'description': req.description,
             'amount': float(req.amount) if req.amount else None,
@@ -276,12 +289,25 @@ def get_request_details(current_employee, request_id):
             'message': 'الطلب غير موجود'
         }), 404
     
+    type_names = {
+        'INVOICE': 'فاتورة',
+        'CAR_WASH': 'غسيل سيارة',
+        'CAR_INSPECTION': 'فحص وتوثيق',
+        'ADVANCE_PAYMENT': 'سلفة مالية'
+    }
+    
+    status_names = {
+        'PENDING': 'قيد الانتظار',
+        'APPROVED': 'موافق عليها',
+        'REJECTED': 'مرفوضة'
+    }
+    
     request_data = {
         'id': emp_request.id,
         'type': emp_request.request_type.name,
-        'type_display': emp_request.get_type_display(),
+        'type_display': type_names.get(emp_request.request_type.name, emp_request.request_type.name),
         'status': emp_request.status.name,
-        'status_display': emp_request.get_status_display(),
+        'status_display': status_names.get(emp_request.status.name, emp_request.status.name),
         'title': emp_request.title,
         'description': emp_request.description,
         'amount': float(emp_request.amount) if emp_request.amount else None,
@@ -1439,5 +1465,107 @@ def create_car_inspection_request(current_employee):
         return jsonify({
             'success': False,
             'message': 'حدث خطأ أثناء إنشاء طلب الفحص',
+            'error': str(e)
+        }), 500
+
+
+@api_employee_requests.route('/employee/complete-profile', methods=['POST'])
+@token_required
+def get_employee_complete_profile_jwt(current_employee):
+    """
+    جلب الملف الشامل للموظف (محمي بـ JWT)
+    يتضمن جميع المعلومات: الموظف، السيارات، الحضور، الرواتب، العمليات، الإحصائيات
+    
+    Headers:
+        Authorization: Bearer {jwt_token}
+    
+    Request Body (Optional):
+        {
+            "month": "2025-01",  // شهر محدد
+            "start_date": "2025-01-01",  // أو تاريخ محدد
+            "end_date": "2025-01-31"
+        }
+    
+    Response:
+        {
+            "success": true,
+            "message": "تم جلب البيانات بنجاح",
+            "data": {
+                "employee": {...},
+                "current_car": {...},
+                "previous_cars": [...],
+                "attendance": [...],
+                "salaries": [...],
+                "operations": [...],
+                "statistics": {...}
+            }
+        }
+    """
+    try:
+        from routes.api_external import (
+            parse_date_filters, get_employee_data, get_vehicle_assignments,
+            get_attendance_records, get_salary_records, get_operations_records,
+            calculate_statistics
+        )
+        
+        # الحصول على البيانات (اختياري)
+        data = request.get_json() or {}
+        
+        # تحليل فلاتر التواريخ
+        try:
+            start_date, end_date = parse_date_filters(data)
+        except ValueError as e:
+            return jsonify({
+                'success': False,
+                'message': 'طلب غير صحيح',
+                'error': str(e)
+            }), 400
+        
+        # جلب معلومات الموظف
+        request_origin = request.host_url.rstrip('/')
+        employee_data = get_employee_data(current_employee, request_origin)
+        
+        # جلب السيارات
+        current_car, previous_cars = get_vehicle_assignments(current_employee.id)
+        
+        # جلب الحضور
+        attendance = get_attendance_records(current_employee.id, start_date, end_date)
+        
+        # جلب الرواتب
+        salaries = get_salary_records(current_employee.id, start_date, end_date)
+        
+        # جلب العمليات
+        operations = get_operations_records(current_employee.id)
+        
+        # حساب الإحصائيات
+        statistics = calculate_statistics(attendance, salaries, current_car, previous_cars, operations)
+        
+        # بناء الاستجابة
+        response_data = {
+            'employee': employee_data,
+            'current_car': current_car,
+            'previous_cars': previous_cars,
+            'attendance': attendance,
+            'salaries': salaries,
+            'operations': operations,
+            'statistics': statistics
+        }
+        
+        logger.info(f"✅ تم جلب الملف الشامل للموظف {current_employee.name} ({current_employee.employee_id}) عبر JWT")
+        
+        return jsonify({
+            'success': True,
+            'message': 'تم جلب البيانات بنجاح',
+            'data': response_data
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"خطأ في جلب الملف الشامل للموظف: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'message': 'خطأ في السيرفر',
             'error': str(e)
         }), 500

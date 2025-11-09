@@ -713,34 +713,27 @@ curl -X PUT https://eissahr.replit.app/api/v1/notifications/mark-all-read \
 
 ## 📊 5. بيانات الموظف (Employee Data)
 
-### 5.1 الملف الشامل للموظف
+### 5.1 الملف الشامل للموظف (موصى به - محمي بـ JWT)
 ```
-POST /api/external/employee-complete-profile
-```
-
-**Headers:**
-```
-Content-Type: application/json
+POST /api/v1/employee/complete-profile
 ```
 
-**Request Body:**
-```json
-{
-  "job_number": "5216",
-  "api_key": "your_api_key"
-}
-```
-
-**أو باستخدام JWT:**
-```json
-{
-  "job_number": "5216"
-}
-```
 **Headers:**
 ```
 Authorization: Bearer {jwt_token}
+Content-Type: application/json
 ```
+
+**Request Body (اختياري):**
+```json
+{
+  "month": "2025-01",
+  "start_date": "2025-01-01",
+  "end_date": "2025-01-31"
+}
+```
+
+**ملاحظة:** لا حاجة لإرسال `job_number` - يتم الحصول على بيانات الموظف تلقائياً من الـ JWT token.
 
 **Response:**
 ```json
@@ -796,17 +789,46 @@ Authorization: Bearer {jwt_token}
 
 **cURL Example:**
 ```bash
-curl -X POST https://eissahr.replit.app/api/external/employee-complete-profile \
+# الحصول على Token أولاً
+TOKEN=$(curl -s -X POST https://eissahr.replit.app/api/v1/auth/login \
   -H "Content-Type: application/json" \
-  -d '{
-    "job_number": "5216",
-    "api_key": "your_api_key"
-  }'
+  -d '{"employee_id":"5216","national_id":"1234567890"}' \
+  | jq -r '.token')
+
+# استدعاء الملف الشامل
+curl -X POST https://eissahr.replit.app/api/v1/employee/complete-profile \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{}'
 ```
 
 ---
 
-### 5.2 تحديث موقع الموظف (GPS)
+### 5.2 الملف الشامل للموظف (طريقة قديمة - غير موصى بها)
+```
+POST /api/external/employee-complete-profile
+```
+
+⚠️ **تحذير:** هذا الـ endpoint يستخدم API key ثابت وأقل أماناً. يُنصح باستخدام `/api/v1/employee/complete-profile` المحمي بـ JWT.
+
+**Headers:**
+```
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "job_number": "5216",
+  "api_key": "your_location_api_key"
+}
+```
+
+**Response:** نفس الاستجابة السابقة
+
+---
+
+### 5.3 تحديث موقع الموظف (GPS)
 ```
 POST /api/external/employee-location
 ```
