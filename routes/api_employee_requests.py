@@ -1174,19 +1174,32 @@ def create_invoice_request(current_employee):
         }
     }
     """
+    logger.info(f"📤 Create invoice request - Files: {list(request.files.keys())}, Form: {list(request.form.keys())}")
+    
     if not request.files or 'invoice_image' not in request.files:
+        logger.warning(f"❌ Invoice image missing - Available files: {list(request.files.keys())}")
         return jsonify({
             'success': False,
-            'message': 'صورة الفاتورة مطلوبة'
+            'message': 'صورة الفاتورة مطلوبة',
+            'debug': {
+                'received_files': list(request.files.keys()),
+                'expected': 'invoice_image'
+            }
         }), 400
     
     vendor_name = request.form.get('vendor_name')
     amount = request.form.get('amount')
     
     if not vendor_name or not amount:
+        logger.warning(f"❌ Missing fields - vendor_name: {vendor_name}, amount: {amount}")
         return jsonify({
             'success': False,
-            'message': 'اسم المورد والمبلغ مطلوبان'
+            'message': 'اسم المورد والمبلغ مطلوبان',
+            'debug': {
+                'vendor_name': vendor_name,
+                'amount': amount,
+                'received_form_fields': list(request.form.keys())
+            }
         }), 400
     
     invoice_image = request.files['invoice_image']
