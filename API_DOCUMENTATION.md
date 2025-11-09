@@ -445,3 +445,192 @@ API يوفر رسائل خطأ واضحة باللغة العربية:
 - استخدم مسار `/api/v1/health` للتحقق من حالة النظام
 - راجع رسائل الخطأ في الاستجابات
 - تأكد من صحة JWT token المستخدم
+
+---
+
+# External API - واجهة برمجية خارجية للتطبيقات
+
+## Employee Complete Profile API
+
+### نظرة عامة
+API مخصص لتطبيق Flutter لجلب جميع بيانات الموظف في طلب واحد.
+
+### Endpoint
+```
+POST /api/external/employee-complete-profile
+```
+
+### المصادقة
+يستخدم مفتاح API ثابت يُرسل في جسم الطلب (بدون JWT).
+
+### Request Body
+
+#### الحقول المطلوبة
+```json
+{
+  "api_key": "test_location_key_2025",
+  "job_number": "5216"
+}
+```
+
+#### فلاتر اختيارية
+
+**Option 1: فلترة بالشهر**
+```json
+{
+  "api_key": "test_location_key_2025",
+  "job_number": "5216",
+  "month": "2025-11"
+}
+```
+
+**Option 2: فلترة بمدى تاريخ**
+```json
+{
+  "api_key": "test_location_key_2025",
+  "job_number": "5216",
+  "start_date": "2025-10-01",
+  "end_date": "2025-10-31"
+}
+```
+
+### Response Format
+
+#### استجابة ناجحة (200)
+```json
+{
+  "success": true,
+  "message": "تم جلب البيانات بنجاح",
+  "data": {
+    "employee": {
+      "job_number": "5216",
+      "name": "Basil Alfateh",
+      "national_id": "1234567890",
+      "birth_date": "1990-01-01",
+      "hire_date": "2020-01-01",
+      "nationality": "Saudi",
+      "department": "IT Department",
+      "position": "Software Developer",
+      "phone": "+966501234567",
+      "email": "basil@example.com",
+      "is_driver": false,
+      "photos": {
+        "personal": "http://nuzum.site/static/uploads/profile.jpg",
+        "id": "http://nuzum.site/static/uploads/national_id.jpg",
+        "license": null
+      }
+    },
+    "current_car": {
+      "car_id": "123",
+      "plate_number": "ABC-1234",
+      "model": "Toyota Camry",
+      "color": "White",
+      "status": "available",
+      "assigned_date": "2025-01-15"
+    },
+    "previous_cars": [...],
+    "attendance": [
+      {
+        "date": "2025-11-08",
+        "check_in": "08:00",
+        "check_out": "17:00",
+        "status": "present",
+        "hours_worked": 9.0,
+        "notes": null
+      }
+    ],
+    "salaries": [
+      {
+        "salary_id": "SAL-2025-11",
+        "month": "2025-11",
+        "amount": 5000.0,
+        "currency": "SAR",
+        "status": "paid"
+      }
+    ],
+    "operations": [
+      {
+        "operation_id": "OP-789",
+        "type": "delivery",
+        "date": "2025-01-15T08:30:00",
+        "car_plate_number": "ABC-1234",
+        "status": "completed"
+      }
+    ],
+    "statistics": {
+      "attendance": {
+        "total_days": 30,
+        "present_days": 28,
+        "attendance_rate": 93.33
+      },
+      "salaries": {
+        "total_amount": 60000.0,
+        "average_amount": 5000.0
+      },
+      "cars": {
+        "current_car": true,
+        "total_cars": 3
+      },
+      "operations": {
+        "total_operations": 15,
+        "completed_count": 15
+      }
+    }
+  }
+}
+```
+
+#### استجابات الأخطاء
+
+**401 - Unauthorized**
+```json
+{
+  "success": false,
+  "message": "غير مصرح. يرجى التحقق من المفتاح",
+  "error": "Invalid API key"
+}
+```
+
+**404 - Not Found**
+```json
+{
+  "success": false,
+  "message": "الموظف غير موجود",
+  "error": "Employee not found"
+}
+```
+
+### قواعد الفلترة
+
+1. **month**: يأخذ أولوية على start_date/end_date
+2. **start_date, end_date**: يجب إرسالهما معاً
+3. **بدون فلترة**: آخر 30 يوم للحضور، آخر 12 شهر للرواتب
+
+### مثال Flutter/Dart
+
+```dart
+Future<Map<String, dynamic>> getEmployeeProfile({
+  required String jobNumber,
+  String? month,
+}) async {
+  final url = Uri.parse('http://nuzum.site/api/external/employee-complete-profile');
+  
+  final response = await http.post(
+    url,
+    headers: {'Content-Type': 'application/json'},
+    body: jsonEncode({
+      'api_key': 'test_location_key_2025',
+      'job_number': jobNumber,
+      if (month != null) 'month': month,
+    }),
+  );
+
+  return jsonDecode(response.body);
+}
+```
+
+### API Configuration
+
+- **Primary Domain**: `http://nuzum.site`
+- **Backup Domain**: `https://eissahr.replit.app`
+- **Test API Key**: `test_location_key_2025`
