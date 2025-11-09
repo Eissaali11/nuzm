@@ -995,3 +995,426 @@ def mark_all_notifications_read(current_employee):
             'message': 'حدث خطأ أثناء تحديث الإشعارات',
             'error': str(e)
         }), 500
+
+
+@api_employee_requests.route('/requests/create-advance-payment', methods=['POST'])
+@token_required
+def create_advance_payment_request(current_employee):
+    """
+    إنشاء طلب سلفة جديد مع validation محسّن
+    
+    Body:
+    {
+        "requested_amount": 5000.00,
+        "installments": 3,
+        "reason": "سبب الطلب (اختياري)"
+    }
+    
+    Response:
+    {
+        "success": true,
+        "message": "تم إنشاء طلب السلفة بنجاح",
+        "data": {
+            "request_id": 123,
+            "type": "advance_payment",
+            "status": "pending",
+            "requested_amount": 5000.00,
+            "installments": 3,
+            "monthly_installment": 1666.67
+        }
+    }
+    """
+    from services.employee_finance_service import EmployeeFinanceService
+    
+    data = request.get_json()
+    
+    if not data or not data.get('requested_amount') or not data.get('installments'):
+        return jsonify({
+            'success': False,
+            'message': 'المبلغ وعدد الأقساط مطلوبان'
+        }), 400
+    
+    requested_amount = float(data.get('requested_amount'))
+    installments = int(data.get('installments'))
+    reason = data.get('reason', '')
+    
+    is_valid, message = EmployeeFinanceService.validate_advance_payment_request(
+        current_employee.id,
+        requested_amount,
+        installments
+    )
+    
+    if not is_valid:
+        return jsonify({
+            'success': False,
+            'message': message
+        }), 400
+    
+    try:
+        new_request = EmployeeRequest(
+            employee_id=current_employee.id,
+            request_type=RequestType.ADVANCE_PAYMENT,
+            title=f"طلب سلفة - {requested_amount} ريال",
+            status=RequestStatus.PENDING,
+            amount=requested_amount
+        )
+        
+        db.session.add(new_request)
+        db.session.flush()
+        
+        advance_payment = AdvancePaymentRequest(
+            request_id=new_request.id,
+            requested_amount=requested_amount,
+            installments=installments,
+            reason=reason
+        )
+        
+        db.session.add(advance_payment)
+        db.session.commit()
+        
+        monthly_installment = requested_amount / installments
+        
+        return jsonify({
+            'success': True,
+            'message': 'تم إنشاء طلب السلفة بنجاح',
+            'data': {
+                'request_id': new_request.id,
+                'type': 'advance_payment',
+                'status': 'pending',
+                'requested_amount': requested_amount,
+                'installments': installments,
+                'monthly_installment': round(monthly_installment, 2)
+            }
+        }), 201
+        
+    except Exception as e:
+        logger.error(f"Error creating advance payment request for employee {current_employee.id}: {str(e)}")
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'message': 'حدث خطأ أثناء إنشاء الطلب',
+            'error': str(e)
+        }), 500
+
+
+@api_employee_requests.route('/requests/create-invoice', methods=['POST'])
+@token_required
+def create_invoice_request(current_employee):
+    """
+    رفع فاتورة مع صورة
+    
+    Form Data:
+    - vendor_name: اسم المورد
+    - amount: المبلغ
+    - invoice_image: ملف الصورة (JPEG/PNG/PDF)
+    
+    Response:
+    {
+        "success": true,
+        "message": "تم رفع الفاتورة بنجاح",
+        "data": {
+            "request_id": 124,
+            "type": "invoice",
+            "status": "pending"
+        }
+    }
+    """
+    if not request.files or 'invoice_image' not in request.files:
+        return jsonify({
+            'success': False,
+            'message': 'صورة الفاتورة مطلوبة'
+        }), 400
+    
+    vendor_name = request.form.get('vendor_name')
+    amount = request.form.get('amount')
+    
+    if not vendor_name or not amount:
+        return jsonify({
+            'success': False,
+            'message': 'اسم المورد والمبلغ مطلوبان'
+        }), 400
+    
+    invoice_image = request.files['invoice_image']
+    
+    if not allowed_file(invoice_image.filename):
+        return jsonify({
+            'success': False,
+            'message': 'نوع الملف غير مدعوم. استخدم: PNG, JPG, JPEG, PDF'
+        }), 400
+    
+    try:
+        new_request = EmployeeRequest(
+            employee_id=current_employee.id,
+            request_type=RequestType.INVOICE,
+            title=f"فاتورة - {vendor_name}",
+            status=RequestStatus.PENDING,
+            amount=float(amount)
+        )
+        
+        db.session.add(new_request)
+        db.session.flush()
+        
+        invoice_request = InvoiceRequest(
+            request_id=new_request.id,
+            vendor_name=vendor_name
+        )
+        
+        db.session.add(invoice_request)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'تم رفع الفاتورة بنجاح. استخدم endpoint /upload لرفع الصورة',
+            'data': {
+                'request_id': new_request.id,
+                'type': 'invoice',
+                'status': 'pending',
+                'vendor_name': vendor_name,
+                'amount': float(amount),
+                'upload_endpoint': f'/api/v1/requests/{new_request.id}/upload'
+            }
+        }), 201
+        
+    except Exception as e:
+        logger.error(f"Error creating invoice request for employee {current_employee.id}: {str(e)}")
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'message': 'حدث خطأ أثناء إنشاء طلب الفاتورة',
+            'error': str(e)
+        }), 500
+
+
+@api_employee_requests.route('/requests/create-car-wash', methods=['POST'])
+@token_required
+def create_car_wash_request(current_employee):
+    """
+    إنشاء طلب غسيل سيارة مع صور
+    
+    Form Data:
+    - vehicle_id: رقم السيارة
+    - service_type: نوع الخدمة (normal, polish, full_clean)
+    - requested_date: التاريخ المطلوب (اختياري)
+    - photo_plate: صورة اللوحة
+    - photo_front: صورة أمامية
+    - photo_back: صورة خلفية
+    - photo_right_side: صورة جانب أيمن
+    - photo_left_side: صورة جانب أيسر
+    - notes: ملاحظات (اختياري)
+    
+    Response:
+    {
+        "success": true,
+        "message": "تم إنشاء طلب الغسيل بنجاح",
+        "data": {
+            "request_id": 125,
+            "type": "car_wash",
+            "status": "pending"
+        }
+    }
+    """
+    vehicle_id = request.form.get('vehicle_id')
+    service_type = request.form.get('service_type')
+    
+    if not vehicle_id or not service_type:
+        return jsonify({
+            'success': False,
+            'message': 'رقم السيارة ونوع الخدمة مطلوبان'
+        }), 400
+    
+    valid_service_types = ['normal', 'polish', 'full_clean']
+    if service_type not in valid_service_types:
+        return jsonify({
+            'success': False,
+            'message': f'نوع الخدمة غير صحيح. الأنواع المتاحة: {", ".join(valid_service_types)}'
+        }), 400
+    
+    vehicle = Vehicle.query.get(vehicle_id)
+    if not vehicle:
+        return jsonify({
+            'success': False,
+            'message': 'السيارة غير موجودة'
+        }), 404
+    
+    try:
+        new_request = EmployeeRequest(
+            employee_id=current_employee.id,
+            request_type=RequestType.CAR_WASH,
+            title=f"طلب غسيل سيارة - {vehicle.plate_number}",
+            status=RequestStatus.PENDING
+        )
+        
+        db.session.add(new_request)
+        db.session.flush()
+        
+        requested_date_str = request.form.get('requested_date')
+        requested_date = datetime.strptime(requested_date_str, '%Y-%m-%d').date() if requested_date_str else None
+        
+        car_wash_request = CarWashRequest(
+            request_id=new_request.id,
+            vehicle_id=vehicle_id,
+            service_type=service_type,
+            requested_date=requested_date,
+            notes=request.form.get('notes', '')
+        )
+        
+        db.session.add(car_wash_request)
+        
+        required_photos = ['photo_plate', 'photo_front', 'photo_back', 'photo_right_side', 'photo_left_side']
+        upload_dir = os.path.join('static', 'uploads', 'car_wash')
+        os.makedirs(upload_dir, exist_ok=True)
+        
+        for photo_field in required_photos:
+            if photo_field in request.files:
+                photo_file = request.files[photo_field]
+                if photo_file and allowed_file(photo_file.filename):
+                    filename = secure_filename(photo_file.filename)
+                    file_ext = filename.rsplit('.', 1)[1].lower()
+                    unique_filename = f"wash_{new_request.id}_{photo_field}_{uuid.uuid4().hex[:8]}.{file_ext}"
+                    file_path = os.path.join(upload_dir, unique_filename)
+                    photo_file.save(file_path)
+                    
+                    media_type_map = {
+                        'photo_plate': MediaType.PLATE,
+                        'photo_front': MediaType.FRONT,
+                        'photo_back': MediaType.BACK,
+                        'photo_right_side': MediaType.RIGHT,
+                        'photo_left_side': MediaType.LEFT
+                    }
+                    
+                    car_wash_media = CarWashMedia(
+                        wash_request_id=car_wash_request.id,
+                        media_type=media_type_map[photo_field],
+                        file_path=file_path,
+                        original_filename=filename
+                    )
+                    db.session.add(car_wash_media)
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'تم إنشاء طلب الغسيل بنجاح',
+            'data': {
+                'request_id': new_request.id,
+                'type': 'car_wash',
+                'status': 'pending',
+                'vehicle_plate': vehicle.plate_number,
+                'service_type': service_type
+            }
+        }), 201
+        
+    except Exception as e:
+        logger.error(f"Error creating car wash request for employee {current_employee.id}: {str(e)}")
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'message': 'حدث خطأ أثناء إنشاء طلب الغسيل',
+            'error': str(e)
+        }), 500
+
+
+@api_employee_requests.route('/requests/create-car-inspection', methods=['POST'])
+@token_required
+def create_car_inspection_request(current_employee):
+    """
+    إنشاء طلب فحص وتوثيق سيارة
+    
+    Body:
+    {
+        "vehicle_id": 456,
+        "inspection_type": "delivery",  // 'delivery' or 'receipt'
+        "description": "وصف الفحص (اختياري)"
+    }
+    
+    Response:
+    {
+        "success": true,
+        "message": "تم إنشاء طلب الفحص بنجاح",
+        "data": {
+            "request_id": 126,
+            "type": "car_inspection",
+            "status": "pending",
+            "upload_instructions": {...}
+        }
+    }
+    """
+    data = request.get_json()
+    
+    if not data or not data.get('vehicle_id') or not data.get('inspection_type'):
+        return jsonify({
+            'success': False,
+            'message': 'رقم السيارة ونوع الفحص مطلوبان'
+        }), 400
+    
+    vehicle_id = data.get('vehicle_id')
+    inspection_type = data.get('inspection_type')
+    
+    if inspection_type not in ['delivery', 'receipt']:
+        return jsonify({
+            'success': False,
+            'message': 'نوع الفحص غير صحيح. الأنواع المتاحة: delivery, receipt'
+        }), 400
+    
+    vehicle = Vehicle.query.get(vehicle_id)
+    if not vehicle:
+        return jsonify({
+            'success': False,
+            'message': 'السيارة غير موجودة'
+        }), 404
+    
+    try:
+        inspection_type_ar = 'فحص تسليم' if inspection_type == 'delivery' else 'فحص استلام'
+        
+        new_request = EmployeeRequest(
+            employee_id=current_employee.id,
+            request_type=RequestType.CAR_INSPECTION,
+            title=f"{inspection_type_ar} - {vehicle.plate_number}",
+            status=RequestStatus.PENDING
+        )
+        
+        db.session.add(new_request)
+        db.session.flush()
+        
+        car_inspection_request = CarInspectionRequest(
+            request_id=new_request.id,
+            vehicle_id=vehicle_id,
+            inspection_type=inspection_type,
+            description=data.get('description', '')
+        )
+        
+        db.session.add(car_inspection_request)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'تم إنشاء طلب الفحص بنجاح',
+            'data': {
+                'request_id': new_request.id,
+                'type': 'car_inspection',
+                'status': 'pending',
+                'inspection_type': inspection_type,
+                'inspection_type_ar': inspection_type_ar,
+                'vehicle_plate': vehicle.plate_number,
+                'upload_instructions': {
+                    'max_images': 20,
+                    'max_videos': 3,
+                    'max_image_size_mb': 10,
+                    'max_video_size_mb': 500,
+                    'supported_formats': {
+                        'images': ['jpg', 'jpeg', 'png', 'heic'],
+                        'videos': ['mp4', 'mov']
+                    },
+                    'upload_endpoint': f'/api/v1/requests/{new_request.id}/upload'
+                }
+            }
+        }), 201
+        
+    except Exception as e:
+        logger.error(f"Error creating car inspection request for employee {current_employee.id}: {str(e)}")
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'message': 'حدث خطأ أثناء إنشاء طلب الفحص',
+            'error': str(e)
+        }), 500
