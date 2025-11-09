@@ -402,7 +402,6 @@
         </div>
     </div>
     
-    <script src="https://maps.googleapis.com/maps/api/js?key={{ api_key }}&language=ar&region=SA&libraries=geometry&callback=initMap" async defer></script>
     <script>
         const locations = {{ locations|tojson }};
         const employeeName = "{{ employee.name }}";
@@ -412,7 +411,7 @@
         let routePath;
         let infoWindows = [];
         
-        function initMap() {
+        window.initMap = function() {
             const defaultCenter = { lat: 24.7136, lng: 46.6753 };
             
             map = new google.maps.Map(document.getElementById('map'), {
@@ -670,4 +669,5 @@
             }
         }
     </script>
+    <script src="https://maps.googleapis.com/maps/api/js?key={{ api_key }}&language=ar&region=SA&libraries=geometry&callback=initMap" async defer></script>
 {% endblock %}
