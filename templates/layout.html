@@ -536,29 +536,20 @@
                                             <span>مستعرض Google Drive</span>
                                         </a>
                                     </li>
-                                        
-                            {% if current_user.role == UserRole.ADMIN %}
-                            <li class="nav-item mb-1">
-
-                                <a
-
-                                    href="{{ url_for('operations.operations_dashboard') }}"
-
-                                    class="nav-link nav-link-custom {% if '/operations' in request.path %}active{% endif %}"
-
-                                >
-
-                                    <i class="fas fa-wrench me-2"></i>
-
-                                    <span>ادارة العمليات</span>
-
-                                </a>
-
-                            </li>
-
-                            {% endif %}
                                 </ul>
                             </li>
+                            
+                            {% if current_user.role == UserRole.ADMIN %}
+                            <li class="nav-item mb-1">
+                                <a
+                                    href="{{ url_for('operations.operations_dashboard') }}"
+                                    class="nav-link nav-link-custom {% if '/operations' in request.path %}active{% endif %}"
+                                >
+                                    <i class="fas fa-wrench me-2"></i>
+                                    <span>ادارة العمليات</span>
+                                </a>
+                            </li>
+                            {% endif %}
                             
                             
                             {# إدارة العقارات المستأجرة #}
