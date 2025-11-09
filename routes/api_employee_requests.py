@@ -88,8 +88,8 @@ def login():
     
     Body:
     {
-        "employee_id": "EMP001",
-        "password": "password123"
+        "employee_id": "5216",
+        "national_id": "1234567890"
     }
     
     Response:
@@ -98,7 +98,7 @@ def login():
         "token": "eyJ0eXAiOiJKV1QiLCJhbGc...",
         "employee": {
             "id": 1,
-            "employee_id": "EMP001",
+            "employee_id": "5216",
             "name": "أحمد محمد",
             "email": "ahmad@example.com"
         }
@@ -106,24 +106,39 @@ def login():
     """
     data = request.get_json()
     
-    if not data or not data.get('employee_id') or not data.get('password'):
+    if not data or not data.get('employee_id') or not data.get('national_id'):
         return jsonify({
             'success': False,
-            'message': 'معرف الموظف وكلمة المرور مطلوبان'
+            'message': 'رقم الموظف ورقم الهوية مطلوبان'
         }), 400
     
-    employee = Employee.query.filter_by(employee_id=data['employee_id']).first()
+    from sqlalchemy import text
+    
+    try:
+        result = db.session.execute(text("""
+            SELECT id FROM employee 
+            WHERE national_id::text = :national_id 
+            AND employee_id::text = :employee_id
+            AND status = 'active'
+            LIMIT 1
+        """), {
+            'national_id': data['national_id'],
+            'employee_id': data['employee_id']
+        }).fetchone()
+        
+        employee = Employee.query.get(result[0]) if result else None
+        
+    except Exception as e:
+        logger.error(f"Database error during login: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': 'حدث خطأ أثناء تسجيل الدخول'
+        }), 500
     
     if not employee:
         return jsonify({
             'success': False,
-            'message': 'بيانات الدخول غير صحيحة'
-        }), 401
-    
-    if not employee.password_hash or not check_password_hash(employee.password_hash, data['password']):
-        return jsonify({
-            'success': False,
-            'message': 'بيانات الدخول غير صحيحة'
+            'message': 'بيانات الدخول غير صحيحة أو الحساب غير نشط'
         }), 401
     
     token = jwt.encode({
@@ -141,7 +156,9 @@ def login():
             'email': employee.email,
             'job_title': employee.job_title,
             'department': employee.department.name if employee.department else None,
-            'profile_image': employee.profile_image
+            'profile_image': employee.profile_image,
+            'mobile': employee.mobile,
+            'status': employee.status
         }
     }), 200
 

@@ -23,7 +23,7 @@ POST /api/v1/auth/login
 ```json
 {
   "employee_id": "5216",
-  "password": "your_password"
+  "national_id": "1234567890"
 }
 ```
 
@@ -37,10 +37,16 @@ POST /api/v1/auth/login
     "employee_id": "5216",
     "name": "اسم الموظف",
     "email": "email@example.com",
-    "department": "القسم"
+    "job_title": "المسمى الوظيفي",
+    "department": "القسم",
+    "mobile": "0501234567",
+    "status": "active",
+    "profile_image": "/static/uploads/profiles/image.jpg"
   }
 }
 ```
+
+**ملاحظة هامة:** النظام يستخدم `employee_id` (رقم الموظف) + `national_id` (رقم الهوية الوطنية) للمصادقة بدلاً من كلمة المرور.
 
 **cURL Example:**
 ```bash
@@ -48,7 +54,7 @@ curl -X POST https://eissahr.replit.app/api/v1/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "employee_id": "5216",
-    "password": "your_password"
+    "national_id": "1234567890"
   }'
 ```
 
