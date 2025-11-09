@@ -840,12 +840,12 @@ def get_notifications(current_employee):
     for notif in pagination.items:
         notifications_list.append({
             'id': notif.id,
-            'request_id': notif.request_id,
-            'title': notif.title_ar,
-            'message': notif.message_ar,
-            'type': notif.notification_type,
-            'is_read': notif.is_read,
-            'created_at': notif.created_at.isoformat()
+            'request_id': notif.request_id if notif.request_id else None,
+            'title': notif.title_ar if notif.title_ar else '',
+            'message': notif.message_ar if notif.message_ar else '',
+            'type': notif.notification_type if notif.notification_type else '',
+            'is_read': notif.is_read if notif.is_read is not None else False,
+            'created_at': notif.created_at.isoformat() if notif.created_at else datetime.utcnow().isoformat()
         })
     
     unread_count = RequestNotification.query.filter_by(

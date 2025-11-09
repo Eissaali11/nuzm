@@ -1,0 +1,38 @@
+estarted application in 3,666ms.
+I/flutter ( 6187): ✅ [Service] Service initialization (using geolocator directly)
+I/flutter ( 6187): 🔄 [NotificationsAPI] Trying primary URL: https://d72f2aef-918c-4148-9723-15870f8c7cf6-00-2c1ygyxvqoldk.riker.replit.dev/api/v1/notifications
+I/flutter ( 6187): 🔗 [EmployeeAPI] Trying primary URL: https://d72f2aef-918c-4148-9723-15870f8c7cf6-00-2c1ygyxvqoldk.riker.replit.dev/api/external/employee-complete-profile
+I/flutter ( 6187): 📊 [EmployeeAPI] Primary response status: 200
+I/flutter ( 6187): ✅ [EmployeeAPI] Successfully loaded data from primary URL
+I/flutter ( 6187): ✅ [MainNav] Data loaded successfully:
+I/flutter ( 6187):    - Employee: HUSSAM AL DAIN
+I/flutter ( 6187):    - Attendance: 25 records
+I/flutter ( 6187):    - Cars: 3 cars
+I/flutter ( 6187):    - Salaries: 6 records
+I/flutter ( 6187):    - Operations: 4 records
+I/flutter ( 6187): 🔄 [RequestsAPI] Trying primary URL: https://d72f2aef-918c-4148-9723-15870f8c7cf6-00-2c1ygyxvqoldk.riker.replit.dev/api/v1/requests
+I/flutter ( 6187): 🔄 [LiabilitiesAPI] Trying primary URL: https://d72f2aef-918c-4148-9723-15870f8c7cf6-00-2c1ygyxvqoldk.riker.replit.dev/api/v1/employee/liabilities
+I/flutter ( 6187): 🔄 [NotificationsAPI] Trying primary URL: https://d72f2aef-918c-4148-9723-15870f8c7cf6-00-2c1ygyxvqoldk.riker.replit.dev/api/v1/notifications
+I/flutter ( 6187): ! [Tracking] Tracking not configured (missing jobNumber or apiKey)
+I/flutter ( 6187): 🔗 [EmployeeAPI] Trying primary URL: https://d72f2aef-918c-4148-9723-15870f8c7cf6-00-2c1ygyxvqoldk.riker.replit.dev/api/external/employee-complete-profile
+I/flutter ( 6187): ❌ [NotificationsAPI] Get notifications error: type 'Null' is not a subtype of type 'String' in type cast
+I/flutter ( 6187): ✅ [Tracking] Location tracking stopped
+I/flutter ( 6187): 🌍 [Tracking] Starting continuous location tracking...
+E/FlutterGeolocator( 6187): Geolocator position updates stopped
+E/FlutterGeolocator( 6187): There is still another flutter engine connected, not stopping location service
+E/FlutterGeolocator( 6187): Geolocator position updates started
+I/flutter ( 6187): 📍 [Tracking] New position: Lat 26.325232, Lng 44.025193
+I/flutter ( 6187): 🛰️ [Tracking] Sending location: Lat 26.325232, Lng 44.025193
+I/flutter ( 6187): 📤 [SEND] Sending location to: https://d72f2aef-918c-4148-9723-15870f8c7cf6-00-2c1ygyxvqoldk.riker.replit.dev/api/external/employee-location
+I/flutter ( 6187): ❌ [NotificationsAPI] Get notifications error: type 'Null' is not a subtype of type 'String' in type cast
+I/flutter ( 6187): 📊 [EmployeeAPI] Primary response status: 200
+I/flutter ( 6187): ✅ [EmployeeAPI] Successfully loaded data from primary URL
+I/flutter ( 6187): ✅ [SEND] Location sent successfully!
+I/flutter ( 6187): ✅ [Tracking] Location sent successfully at ١٢:٥٣ ص
+I/flutter ( 6187): ✅ [Tracking] Location tracking started successfully
+I/flutter ( 6187): ✅ [Tracking] Location stream started
+I/flutter ( 6187): ❌ [LiabilitiesAPI] Get financial summary error: DioException [bad response]: This exception was thrown because the response has a status code of 500 and RequestOptions.validateStatus was configured to throw for this status code.
+I/flutter ( 6187): The status code of 500 has the following meaning: "Server error - the server failed to fulfil an apparently valid request"
+I/flutter ( 6187): Read more about status codes at https://developer.mozilla.org/en-US/docs/Web/HTTP/Status
+I/flutter ( 6187): In order to resolve this exception you typically have either to verify and fix your request code or you have to fix the server code.
+I/flutter ( 6187): 
