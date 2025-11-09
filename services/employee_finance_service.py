@@ -54,17 +54,31 @@ class EmployeeFinanceService:
         
         Returns:
             dict: بيانات الالتزامات مع الإحصائيات
+        
+        Raises:
+            ValueError: إذا كانت القيمة المدخلة لـ liability_type غير صالحة
         """
         query = EmployeeLiability.query.filter_by(employee_id=employee_id)
         
         if status_filter and status_filter != 'all':
+            valid_statuses = ['active', 'paid', 'cancelled']
+            if status_filter not in valid_statuses:
+                raise ValueError(f"حالة غير صالحة. القيم المسموح بها: {', '.join(valid_statuses)}")
+            
             if status_filter == 'active':
                 query = query.filter_by(status=LiabilityStatus.ACTIVE)
             elif status_filter == 'paid':
                 query = query.filter_by(status=LiabilityStatus.PAID)
+            elif status_filter == 'cancelled':
+                query = query.filter_by(status=LiabilityStatus.CANCELLED)
         
         if liability_type_filter:
-            query = query.filter_by(liability_type=LiabilityType(liability_type_filter))
+            try:
+                liability_type_enum = LiabilityType(liability_type_filter)
+                query = query.filter_by(liability_type=liability_type_enum)
+            except ValueError:
+                valid_types = [t.value for t in LiabilityType]
+                raise ValueError(f"نوع التزام غير صالح. القيم المسموح بها: {', '.join(valid_types)}")
         
         liabilities = query.order_by(EmployeeLiability.created_at.desc()).all()
         

@@ -370,6 +370,201 @@ curl -X GET https://eissahr.replit.app/api/v1/requests/types
 
 ---
 
+### 2.7 إنشاء طلب سلفة (Shortcut Endpoint)
+```
+POST /api/v1/requests/create-advance-payment
+```
+
+**Headers:**
+```
+Authorization: Bearer {jwt_token}
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "amount": 5000.00,
+  "reason": "احتياج شخصي",
+  "installments": 3
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "تم إنشاء طلب السلفة بنجاح",
+  "data": {
+    "request_id": 124,
+    "type": "advance_payment",
+    "status": "pending",
+    "amount": 5000.00
+  }
+}
+```
+
+**cURL Example:**
+```bash
+curl -X POST https://eissahr.replit.app/api/v1/requests/create-advance-payment \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "amount": 5000.00,
+    "reason": "احتياج شخصي",
+    "installments": 3
+  }'
+```
+
+---
+
+### 2.8 إنشاء طلب فاتورة (Shortcut Endpoint)
+```
+POST /api/v1/requests/create-invoice
+```
+
+**Headers:**
+```
+Authorization: Bearer {jwt_token}
+Content-Type: multipart/form-data
+```
+
+**Request Body (Form Data):**
+```
+vendor_name: اسم المورد (required)
+amount: 500.00 (required)
+invoice_image: file (required - PNG/JPG/PDF)
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "تم رفع الفاتورة بنجاح. استخدم endpoint /upload لرفع الصورة",
+  "data": {
+    "request_id": 125,
+    "type": "invoice",
+    "status": "pending",
+    "vendor_name": "مورد ABC",
+    "amount": 500.00,
+    "upload_endpoint": "/api/v1/requests/125/upload"
+  }
+}
+```
+
+**cURL Example:**
+```bash
+curl -X POST https://eissahr.replit.app/api/v1/requests/create-invoice \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -F "vendor_name=مورد ABC" \
+  -F "amount=500.00" \
+  -F "invoice_image=@/path/to/invoice.jpg"
+```
+
+**ملاحظة:** بعد إنشاء الطلب، استخدم `/api/v1/requests/{request_id}/upload` لرفع صورة الفاتورة.
+
+---
+
+### 2.9 إنشاء طلب غسيل سيارة (Shortcut Endpoint)
+```
+POST /api/v1/requests/create-car-wash
+```
+
+**Headers:**
+```
+Authorization: Bearer {jwt_token}
+Content-Type: multipart/form-data
+```
+
+**Request Body (Form Data):**
+```
+vehicle_id: 1 (required)
+service_type: "full_clean" (required)
+requested_date: "2025-11-15" (optional)
+notes: "ملاحظات إضافية" (optional)
+photo_plate: file (optional)
+photo_front: file (optional)
+photo_back: file (optional)
+photo_right_side: file (optional)
+photo_left_side: file (optional)
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "تم إنشاء طلب غسيل السيارة بنجاح",
+  "data": {
+    "request_id": 126,
+    "type": "car_wash",
+    "status": "pending",
+    "vehicle_plate": "ABC 123",
+    "service_type": "full_clean"
+  }
+}
+```
+
+**cURL Example:**
+```bash
+curl -X POST https://eissahr.replit.app/api/v1/requests/create-car-wash \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -F "vehicle_id=1" \
+  -F "service_type=full_clean" \
+  -F "requested_date=2025-11-15" \
+  -F "photo_plate=@/path/to/plate.jpg" \
+  -F "photo_front=@/path/to/front.jpg"
+```
+
+---
+
+### 2.10 إنشاء طلب فحص سيارة (Shortcut Endpoint)
+```
+POST /api/v1/requests/create-car-inspection
+```
+
+**Headers:**
+```
+Authorization: Bearer {jwt_token}
+Content-Type: multipart/form-data
+```
+
+**Request Body (Form Data):**
+```
+vehicle_id: 1 (required)
+inspection_type: "delivery" (required - delivery/return/periodic)
+description: "وصف الفحص" (optional)
+inspection_images: file[] (optional - multiple files)
+inspection_videos: file[] (optional - multiple files)
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "تم إنشاء طلب فحص السيارة بنجاح",
+  "data": {
+    "request_id": 127,
+    "type": "car_inspection",
+    "status": "pending",
+    "vehicle_plate": "ABC 123",
+    "inspection_type": "delivery"
+  }
+}
+```
+
+**cURL Example:**
+```bash
+curl -X POST https://eissahr.replit.app/api/v1/requests/create-car-inspection \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -F "vehicle_id=1" \
+  -F "inspection_type=delivery" \
+  -F "description=فحص قبل الاستلام" \
+  -F "inspection_images=@/path/to/img1.jpg" \
+  -F "inspection_images=@/path/to/img2.jpg"
+```
+
+---
+
 ## 🚗 3. المركبات (Vehicles)
 
 ### جلب قائمة المركبات المخصصة للموظف
@@ -476,6 +671,35 @@ Authorization: Bearer {jwt_token}
 **cURL Example:**
 ```bash
 curl -X PUT https://eissahr.replit.app/api/v1/notifications/1/read \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+---
+
+### 4.3 تحديد جميع الإشعارات كمقروءة
+```
+PUT /api/v1/notifications/mark-all-read
+```
+
+**Headers:**
+```
+Authorization: Bearer {jwt_token}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "تم تحديد جميع الإشعارات كمقروءة",
+  "data": {
+    "updated_count": 15
+  }
+}
+```
+
+**cURL Example:**
+```bash
+curl -X PUT https://eissahr.replit.app/api/v1/notifications/mark-all-read \
   -H "Authorization: Bearer YOUR_JWT_TOKEN"
 ```
 
@@ -691,6 +915,166 @@ GET /api/employees/nationality/stats
 ```
 
 **يحتاج تسجيل دخول Admin**
+
+---
+
+## 💰 8. الالتزامات المالية (Financial Liabilities)
+
+### 8.1 جلب قائمة الالتزامات المالية
+```
+GET /api/v1/employee/liabilities
+```
+
+**Headers:**
+```
+Authorization: Bearer {jwt_token}
+```
+
+**Query Parameters (Optional):**
+```
+?status=active          // الحالة: 'active', 'paid', 'cancelled', 'all' (default: 'all')
+?type=damage           // النوع: 'damage', 'debt', 'advance_repayment', 'other'
+?page=1                // رقم الصفحة (default: 1)
+?per_page=20           // عدد العناصر في الصفحة (default: 20)
+```
+
+**Status Values:**
+- `active`: التزامات نشطة (غير مدفوعة بالكامل)
+- `paid`: التزامات مدفوعة بالكامل
+- `cancelled`: التزامات ملغاة
+- `all`: جميع الالتزامات
+
+**Type Values:**
+- `damage`: تلفيات
+- `debt`: ديون
+- `advance_repayment`: سداد سلفة
+- `other`: أخرى
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "تم جلب الالتزامات المالية بنجاح",
+  "data": {
+    "liabilities": [
+      {
+        "id": 1,
+        "type": "advance_repayment",
+        "description": "استرجاع سلفة مالية",
+        "total_amount": 5000.00,
+        "paid_amount": 1000.00,
+        "remaining_amount": 4000.00,
+        "status": "active",
+        "created_at": "2025-01-15T10:30:00Z",
+        "installments": [
+          {
+            "id": 1,
+            "installment_number": 1,
+            "amount": 1000.00,
+            "due_date": "2025-02-01",
+            "paid_date": "2025-02-01",
+            "status": "paid"
+          },
+          {
+            "id": 2,
+            "installment_number": 2,
+            "amount": 1000.00,
+            "due_date": "2025-03-01",
+            "paid_date": null,
+            "status": "pending"
+          }
+        ]
+      }
+    ],
+    "summary": {
+      "total_liabilities": 3,
+      "total_amount": 15000.00,
+      "paid_amount": 3000.00,
+      "remaining_amount": 12000.00
+    },
+    "pagination": {
+      "current_page": 1,
+      "per_page": 20,
+      "total_pages": 1,
+      "total_count": 3
+    }
+  }
+}
+```
+
+**cURL Example:**
+```bash
+curl -X GET "https://eissahr.replit.app/api/v1/employee/liabilities?status=active" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+---
+
+### 8.2 جلب الملخص المالي الشامل
+```
+GET /api/v1/employee/financial-summary
+```
+
+**Headers:**
+```
+Authorization: Bearer {jwt_token}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "تم جلب الملخص المالي بنجاح",
+  "data": {
+    "liabilities": {
+      "total_active": 3,
+      "total_amount": 15000.00,
+      "paid_amount": 3000.00,
+      "remaining_amount": 12000.00,
+      "by_type": {
+        "advance_repayment": {
+          "count": 2,
+          "total": 10000.00,
+          "remaining": 8000.00
+        },
+        "damage": {
+          "count": 1,
+          "total": 5000.00,
+          "remaining": 4000.00
+        }
+      }
+    },
+    "requests": {
+      "total_requests": 25,
+      "pending_requests": 5,
+      "approved_requests": 15,
+      "rejected_requests": 3,
+      "completed_requests": 2,
+      "total_amount": 50000.00
+    },
+    "installments": {
+      "upcoming_installments": [
+        {
+          "liability_id": 1,
+          "installment_number": 2,
+          "amount": 1000.00,
+          "due_date": "2025-03-01",
+          "days_until_due": 15
+        }
+      ],
+      "overdue_installments": [],
+      "next_payment_date": "2025-03-01",
+      "next_payment_amount": 1000.00
+    }
+  }
+}
+```
+
+**cURL Example:**
+```bash
+curl -X GET https://eissahr.replit.app/api/v1/employee/financial-summary \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
 
 ---
 

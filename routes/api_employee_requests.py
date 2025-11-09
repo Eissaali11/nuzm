@@ -893,6 +893,12 @@ def get_employee_liabilities(current_employee):
             'success': True,
             'data': liabilities_data
         }), 200
+    
+    except ValueError as e:
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        }), 400
         
     except Exception as e:
         logger.error(f"Error fetching liabilities for employee {current_employee.id}: {str(e)}")
