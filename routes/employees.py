@@ -2222,6 +2222,17 @@ def track_history(id):
     
     employee = Employee.query.get_or_404(id)
     
+    employee_photo_url = None
+    if employee.profile_image:
+        if employee.profile_image.startswith('http'):
+            employee_photo_url = employee.profile_image
+        elif employee.profile_image.startswith('static/'):
+            employee_photo_url = url_for('static', filename=employee.profile_image.replace('static/', ''), _external=False)
+        elif employee.profile_image.startswith('uploads/'):
+            employee_photo_url = url_for('static', filename=employee.profile_image, _external=False)
+        else:
+            employee_photo_url = url_for('static', filename=f'uploads/{employee.profile_image}', _external=False)
+    
     cutoff_time = datetime.utcnow() - timedelta(hours=24)
     
     locations = EmployeeLocation.query.filter(
@@ -2255,6 +2266,7 @@ def track_history(id):
     return render_template(
         'employees/track_history.html',
         employee=employee,
+        employee_photo_url=employee_photo_url,
         locations=locations_data,
         departments=departments
     )

@@ -419,8 +419,8 @@
         <div class="map-container">
             <div id="map"></div>
             <div class="employee-map-badge">
-                {% if employee.profile_image %}
-                <img src="{{ employee.profile_image }}" alt="{{ employee.name }}">
+                {% if employee_photo_url %}
+                <img src="{{ employee_photo_url }}" alt="{{ employee.name }}">
                 {% else %}
                 <div class="placeholder-avatar">{{ employee.name[0] if employee.name else 'M' }}</div>
                 {% endif %}
@@ -736,7 +736,7 @@
                     icon: markerIcon
                 }).addTo(map);
                 
-                const employeePhoto = "{{ employee.profile_image or '' }}";
+                const employeePhoto = "{{ employee_photo_url or '' }}";
                 const employeeInitial = "{{ employee.name[0] if employee.name else 'M' }}";
                 
                 let photoHtml = '';
