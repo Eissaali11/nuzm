@@ -4,6 +4,14 @@
 
 {% block content %}
 <style>
+    /* فرض الخلفية الداكنة على كامل الصفحة */
+    body {
+        background-color: #212529 !important;
+    }
+    
+    .container-fluid {
+        background-color: #212529 !important;
+    }
     :root {
         --gradient-purple: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         --gradient-green: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
@@ -17,14 +25,15 @@
     
     /* رأس الصفحة بتصميم مستقبلي */
     .page-header {
-        background: linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%);
+        background: #2c3034 !important;
         backdrop-filter: blur(20px);
         border-radius: 25px;
         padding: 35px;
         margin-bottom: 30px;
-        border: 1px solid rgba(102, 126, 234, 0.2);
+        border: 1px solid rgba(102, 126, 234, 0.3);
         position: relative;
         overflow: hidden;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
     }
     
     .page-header::before {
@@ -65,15 +74,16 @@
     
     /* بطاقات الإحصائيات المحسّنة */
     .stats-card {
-        background: rgba(255, 255, 255, 0.03);
+        background: #2c3034 !important;
         backdrop-filter: blur(20px);
         border-radius: 20px;
         padding: 30px 25px;
         margin-bottom: 20px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(102, 126, 234, 0.3);
         position: relative;
         overflow: hidden;
         transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
     }
     
     .stats-card::before {
@@ -170,13 +180,13 @@
     
     /* بطاقة التصفية المحسّنة */
     .filter-card {
-        background: rgba(255, 255, 255, 0.03);
+        background: #2c3034 !important;
         backdrop-filter: blur(20px);
         border-radius: 20px;
         padding: 30px;
         margin-bottom: 30px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        border: 1px solid rgba(102, 126, 234, 0.3);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
     }
     
     .filter-card .form-label {
@@ -188,9 +198,9 @@
     
     .filter-card .form-control,
     .filter-card .form-select {
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.15);
-        color: white;
+        background: #343a40 !important;
+        border: 1px solid rgba(102, 126, 234, 0.3);
+        color: white !important;
         border-radius: 12px;
         padding: 12px 15px;
         transition: all 0.3s ease;
@@ -198,10 +208,10 @@
     
     .filter-card .form-control:focus,
     .filter-card .form-select:focus {
-        background: rgba(255, 255, 255, 0.08);
+        background: #3d4349 !important;
         border-color: #667eea;
-        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
-        color: white;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.25);
+        color: white !important;
     }
     
     .filter-card .form-control::placeholder {
