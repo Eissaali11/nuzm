@@ -111,11 +111,18 @@ def approve_request(request_id):
     if admin_notes:
         emp_request.admin_notes = admin_notes
     
+    type_names = {
+        'INVOICE': 'فاتورة',
+        'CAR_WASH': 'غسيل سيارة',
+        'CAR_INSPECTION': 'فحص وتوثيق',
+        'ADVANCE_PAYMENT': 'سلفة مالية'
+    }
+    
     notification = RequestNotification()
     notification.request_id = request_id
     notification.employee_id = emp_request.employee_id
     notification.title_ar = 'تمت الموافقة على طلبك'
-    notification.message_ar = f'تمت الموافقة على طلب {emp_request.get_type_display()}'
+    notification.message_ar = f'تمت الموافقة على طلب {type_names.get(emp_request.request_type.name, emp_request.request_type.name)}'
     notification.notification_type = 'APPROVED'
     db.session.add(notification)
     
@@ -146,11 +153,18 @@ def reject_request(request_id):
     emp_request.approved_at = datetime.utcnow()
     emp_request.rejection_reason = rejection_reason
     
+    type_names = {
+        'INVOICE': 'فاتورة',
+        'CAR_WASH': 'غسيل سيارة',
+        'CAR_INSPECTION': 'فحص وتوثيق',
+        'ADVANCE_PAYMENT': 'سلفة مالية'
+    }
+    
     notification = RequestNotification()
     notification.request_id = request_id
     notification.employee_id = emp_request.employee_id
     notification.title_ar = 'تم رفض طلبك'
-    notification.message_ar = f'تم رفض طلب {emp_request.get_type_display()}: {rejection_reason}'
+    notification.message_ar = f'تم رفض طلب {type_names.get(emp_request.request_type.name, emp_request.request_type.name)}: {rejection_reason}'
     notification.notification_type = 'REJECTED'
     db.session.add(notification)
     
