@@ -5,7 +5,7 @@ from models import (
     EmployeeRequest, Vehicle, Employee, Department
 )
 from datetime import datetime, timedelta
-from sqlalchemy import or_, and_, func
+from sqlalchemy import or_, and_, func, case
 import json
 
 drive_browser_bp = Blueprint('drive_browser', __name__)
@@ -25,25 +25,25 @@ def get_drive_statistics():
     
     workshop_stats = db.session.query(
         func.count(VehicleWorkshop.id).label('total'),
-        func.sum(func.case((VehicleWorkshop.drive_upload_status == 'success', 1), else_=0)).label('success'),
-        func.sum(func.case((VehicleWorkshop.drive_upload_status == 'failed', 1), else_=0)).label('failed'),
-        func.sum(func.case((VehicleWorkshop.drive_upload_status == 'pending', 1), else_=0)).label('pending'),
+        func.sum(case((VehicleWorkshop.drive_upload_status == 'success', 1), else_=0)).label('success'),
+        func.sum(case((VehicleWorkshop.drive_upload_status == 'failed', 1), else_=0)).label('failed'),
+        func.sum(case((VehicleWorkshop.drive_upload_status == 'pending', 1), else_=0)).label('pending'),
         func.max(VehicleWorkshop.drive_uploaded_at).label('last_upload')
     ).filter(VehicleWorkshop.drive_folder_id.isnot(None)).first()
     
     handover_stats = db.session.query(
         func.count(VehicleHandover.id).label('total'),
-        func.sum(func.case((VehicleHandover.drive_upload_status == 'success', 1), else_=0)).label('success'),
-        func.sum(func.case((VehicleHandover.drive_upload_status == 'failed', 1), else_=0)).label('failed'),
-        func.sum(func.case((VehicleHandover.drive_upload_status == 'pending', 1), else_=0)).label('pending'),
+        func.sum(case((VehicleHandover.drive_upload_status == 'success', 1), else_=0)).label('success'),
+        func.sum(case((VehicleHandover.drive_upload_status == 'failed', 1), else_=0)).label('failed'),
+        func.sum(case((VehicleHandover.drive_upload_status == 'pending', 1), else_=0)).label('pending'),
         func.max(VehicleHandover.drive_uploaded_at).label('last_upload')
     ).filter(VehicleHandover.drive_folder_id.isnot(None)).first()
     
     safety_stats = db.session.query(
         func.count(VehicleExternalSafetyCheck.id).label('total'),
-        func.sum(func.case((VehicleExternalSafetyCheck.drive_upload_status == 'success', 1), else_=0)).label('success'),
-        func.sum(func.case((VehicleExternalSafetyCheck.drive_upload_status == 'failed', 1), else_=0)).label('failed'),
-        func.sum(func.case((VehicleExternalSafetyCheck.drive_upload_status == 'pending', 1), else_=0)).label('pending'),
+        func.sum(case((VehicleExternalSafetyCheck.drive_upload_status == 'success', 1), else_=0)).label('success'),
+        func.sum(case((VehicleExternalSafetyCheck.drive_upload_status == 'failed', 1), else_=0)).label('failed'),
+        func.sum(case((VehicleExternalSafetyCheck.drive_upload_status == 'pending', 1), else_=0)).label('pending'),
         func.max(VehicleExternalSafetyCheck.drive_uploaded_at).label('last_upload')
     ).filter(VehicleExternalSafetyCheck.drive_folder_id.isnot(None)).first()
     
