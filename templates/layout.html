@@ -196,6 +196,32 @@
                                     <span>لوحة التحكم</span>
                                 </a>
                             </li>
+                            {% endif %} {# إحصائيات الموظفين متاحة لمن لديه
+                            صلاحية العرض على الموظفين #} {% if current_user.role
+                            == UserRole.ADMIN or
+                            current_user|check_module_access(Module.EMPLOYEES,
+                            Permission.VIEW) %}
+                            <li class="nav-item mb-1">
+                                <a
+                                    href="{{ url_for('dashboard.employee_stats') }}"
+                                    class="nav-link nav-link-custom {% if '/employee-stats' in request.path %}active{% endif %}"
+                                >
+                                    <i class="fas fa-chart-pie me-2"></i>
+                                    <span>إحصائيات الموظفين</span>
+                                </a>
+                            </li>
+                            {% endif %} {# التحقق من صلاحيات التقارير #} {% if
+                            current_user.role == UserRole.ADMIN or
+                            current_user|check_module_access(Module.REPORTS) %}
+                            <li class="nav-item mb-1">
+                                <a
+                                    href="{{ url_for('reports.index') }}"
+                                    class="nav-link nav-link-custom {% if '/reports' in request.path %}active{% endif %}"
+                                >
+                                    <i class="fas fa-chart-pie me-2"></i>
+                                    <span>التقارير</span>
+                                </a>
+                            </li>
                             {% endif %} {# التحقق من صلاحيات الموظفين #} {% if
                             current_user.role == UserRole.ADMIN or
                             current_user|check_module_access(Module.EMPLOYEES)
@@ -367,20 +393,6 @@
                                     <span>الأقسام</span>
                                 </a>
                             </li>
-                            {% endif %} {# إحصائيات الموظفين متاحة لمن لديه
-                            صلاحية العرض على الموظفين #} {% if current_user.role
-                            == UserRole.ADMIN or
-                            current_user|check_module_access(Module.EMPLOYEES,
-                            Permission.VIEW) %}
-                            <li class="nav-item mb-1">
-                                <a
-                                    href="{{ url_for('dashboard.employee_stats') }}"
-                                    class="nav-link nav-link-custom {% if '/employee-stats' in request.path %}active{% endif %}"
-                                >
-                                    <i class="fas fa-chart-pie me-2"></i>
-                                    <span>إحصائيات الموظفين</span>
-                                </a>
-                            </li>
                             {% endif %} {# التحقق من صلاحيات الحضور - يسمح
                             للمديرين وللمستخدمين الذين لديهم قسم مخصص #} {% if
                             current_user.role == UserRole.ADMIN or
@@ -537,18 +549,6 @@
 
                             {% endif %}
                                 </ul>
-                            </li>
-                            {% endif %} {# التحقق من صلاحيات التقارير #} {% if
-                            current_user.role == UserRole.ADMIN or
-                            current_user|check_module_access(Module.REPORTS) %}
-                            <li class="nav-item mb-1">
-                                <a
-                                    href="{{ url_for('reports.index') }}"
-                                    class="nav-link nav-link-custom {% if '/reports' in request.path %}active{% endif %}"
-                                >
-                                    <i class="fas fa-chart-pie me-2"></i>
-                                    <span>التقارير</span>
-                                </a>
                             </li>
                             
                             
