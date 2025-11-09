@@ -2251,14 +2251,12 @@ def track_history(id):
         locations_data.append(loc_dict)
     
     departments = Department.query.all()
-    api_key = os.environ.get('LOCATION_API_KEY', '')
     
     return render_template(
         'employees/track_history.html',
         employee=employee,
         locations=locations_data,
-        departments=departments,
-        api_key=api_key
+        departments=departments
     )
 
 
@@ -2806,50 +2804,3 @@ def export_track_history_excel(employee_id):
         as_attachment=True,
         download_name=filename
     )
-
-
-@employees_bp.route('/api/directions', methods=['POST'])
-@login_required
-def get_directions():
-    """Proxy endpoint لـ Google Directions API"""
-    import requests
-    from flask import request, jsonify, current_app
-    import json
-    
-    try:
-        data = request.get_json()
-        waypoints = data.get('waypoints', [])
-        
-        if not waypoints or len(waypoints) < 2:
-            return jsonify({'error': 'يجب توفير نقطتين على الأقل'}), 400
-        
-        api_key = os.environ.get('LOCATION_API_KEY')
-        if not api_key:
-            return jsonify({'error': 'API key غير متوفر'}), 503
-        
-        url = "https://maps.googleapis.com/maps/api/directions/json"
-        params = {
-            'origin': f"{waypoints[0]['lat']},{waypoints[0]['lng']}",
-            'destination': f"{waypoints[-1]['lat']},{waypoints[-1]['lng']}",
-            'mode': 'driving',
-            'language': 'ar',
-            'region': 'SA',
-            'key': api_key
-        }
-        
-        if len(waypoints) > 2:
-            middle_waypoints = waypoints[1:-1]
-            if len(middle_waypoints) <= 25:
-                params['waypoints'] = 'via:' + '|via:'.join([f"{wp['lat']},{wp['lng']}" for wp in middle_waypoints])
-        
-        response = requests.get(url, params=params, timeout=10)
-        result = response.json()
-        
-        if result.get('status') == 'OK':
-            return jsonify(result)
-        else:
-            return jsonify({'error': 'فشل الحصول على المسار', 'status': result.get('status')}), 500
-            
-    except Exception as e:
-        current_app.logger.error(f"Directions API error: {e}")
-        return jsonify({'error': 'خطأ في الخادم'}), 500

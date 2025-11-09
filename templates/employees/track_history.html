@@ -3,6 +3,8 @@
 {% block title %}تتبع تحركات {{ employee.name }}{% endblock %}
 
 {% block extra_css %}
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
     <style>
         /* فرض التصميم المستقبلي الداكن */
         body {
@@ -278,17 +280,14 @@
             border-radius: 4px;
         }
         
-        .gm-style-iw {
-            border-radius: 12px !important;
+        .leaflet-popup-content-wrapper {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
         }
         
-        .gm-style-iw-c {
-            border-radius: 12px !important;
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3) !important;
-        }
-        
-        .gm-style-iw-d {
-            overflow: auto !important;
+        .leaflet-popup-tip {
+            background: #f8fafc;
         }
     </style>
 {% endblock %}
@@ -402,131 +401,126 @@
         </div>
     </div>
     
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         const locations = {{ locations|tojson }};
         const employeeName = "{{ employee.name }}";
         
-        let map;
-        let markers = [];
-        let routePath;
-        let infoWindows = [];
+        const map = L.map('map').setView([24.7136, 46.6753], 11);
         
-        window.initMap = function() {
-            const defaultCenter = { lat: 24.7136, lng: 46.6753 };
+        const streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap',
+            maxZoom: 19
+        });
+        
+        const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles © Esri',
+            maxZoom: 19
+        });
+        
+        streetLayer.addTo(map);
+        
+        const baseMaps = {
+            "خريطة الشوارع": streetLayer,
+            "خريطة القمر الصناعي": satelliteLayer
+        };
+        
+        L.control.layers(baseMaps).addTo(map);
+        
+        async function drawRoutedPath(coordinates) {
+            if (coordinates.length < 2) return null;
             
-            map = new google.maps.Map(document.getElementById('map'), {
-                center: defaultCenter,
-                zoom: 11,
-                mapTypeId: 'roadmap',
-                mapTypeControl: true,
-                mapTypeControlOptions: {
-                    style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR,
-                    position: google.maps.ControlPosition.TOP_RIGHT,
-                    mapTypeIds: ['roadmap', 'satellite', 'hybrid']
-                },
-                streetViewControl: true,
-                fullscreenControl: true,
-                zoomControl: true,
-                styles: [
-                    {
-                        featureType: 'all',
-                        elementType: 'labels.text.fill',
-                        stylers: [{ color: '#2c2c2c' }]
+            const MAX_POINTS_PER_REQUEST = 100;
+            const allRouteCoordinates = [];
+            
+            for (let i = 0; i < coordinates.length - 1; i += MAX_POINTS_PER_REQUEST - 1) {
+                const chunk = coordinates.slice(i, Math.min(i + MAX_POINTS_PER_REQUEST, coordinates.length));
+                
+                const coordString = chunk.map(coord => `${coord[1]},${coord[0]}`).join(';');
+                const url = `https://router.project-osrm.org/route/v1/driving/${coordString}?overview=full&geometries=geojson`;
+                
+                try {
+                    const response = await fetch(url);
+                    const data = await response.json();
+                    
+                    if (data.code === 'Ok' && data.routes && data.routes.length > 0) {
+                        const routeCoords = data.routes[0].geometry.coordinates.map(coord => [coord[1], coord[0]]);
+                        allRouteCoordinates.push(...routeCoords);
+                    } else {
+                        allRouteCoordinates.push(...chunk);
                     }
-                ]
-            });
-            
-            if (!locations || locations.length === 0) {
-                return;
+                } catch (error) {
+                    console.warn('خطأ في جلب المسار، استخدام خط مباشر:', error);
+                    allRouteCoordinates.push(...chunk);
+                }
+                
+                await new Promise(resolve => setTimeout(resolve, 100));
             }
             
-            drawRoute();
+            return L.polyline(allRouteCoordinates, {
+                color: '#818cf8',
+                weight: 4,
+                opacity: 0.8,
+                smoothFactor: 1,
+                lineCap: 'round',
+                lineJoin: 'round'
+            });
         }
         
-        async function drawRoute() {
+        if (locations && locations.length > 0) {
+            const pathCoordinates = locations.map(loc => [loc.latitude, loc.longitude]);
+            
             const loadingDiv = document.createElement('div');
             loadingDiv.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(30, 27, 75, 0.95); color: white; padding: 20px 40px; border-radius: 15px; font-family: Cairo; font-size: 16px; font-weight: 600; z-index: 9999; box-shadow: 0 8px 32px rgba(0,0,0,0.4);';
-            loadingDiv.innerHTML = '<i class="fas fa-route" style="margin-left: 10px;"></i>جاري رسم المسار على الطرق الحقيقية...';
+            loadingDiv.innerHTML = '<i class="fas fa-route" style="margin-left: 10px;"></i>جاري رسم المسار على الطرق...';
             document.body.appendChild(loadingDiv);
             
-            const waypoints = locations.map(loc => ({
-                lat: loc.latitude,
-                lng: loc.longitude
-            }));
-            
-            try {
-                const response = await fetch('{{ url_for("employees.get_directions") }}', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ waypoints })
-                });
-                
-                const data = await response.json();
-                
-                if (data.status === 'OK' && data.routes && data.routes[0]) {
-                    const route = data.routes[0];
-                    const path = google.maps.geometry.encoding.decodePath(route.overview_polyline.points);
-                    
-                    routePath = new google.maps.Polyline({
-                        path: path,
-                        geodesic: true,
-                        strokeColor: '#818cf8',
-                        strokeOpacity: 0.8,
-                        strokeWeight: 4
-                    });
-                    
-                    routePath.setMap(map);
-                    
-                    const totalDistance = route.legs.reduce((sum, leg) => sum + leg.distance.value, 0) / 1000;
-                    document.getElementById('totalDistance').textContent = totalDistance.toFixed(2) + ' كم';
-                    
-                    const bounds = new google.maps.LatLngBounds();
-                    path.forEach(point => bounds.extend(point));
-                    map.fitBounds(bounds, { padding: 50 });
-                } else {
-                    drawFallbackRoute(waypoints);
-                }
-            } catch (error) {
-                console.error('خطأ في جلب المسار:', error);
-                drawFallbackRoute(waypoints);
-            } finally {
-                document.body.removeChild(loadingDiv);
-            }
-            
-            drawMarkers();
-        }
-        
-        function drawFallbackRoute(waypoints) {
-            let totalDistance = 0;
-            
-            for (let i = 1; i < waypoints.length; i++) {
-                const distance = calculateDistanceFromLatLng(waypoints[i-1], waypoints[i]);
-                totalDistance += distance;
-            }
-            
-            routePath = new google.maps.Polyline({
-                path: waypoints,
-                geodesic: true,
-                strokeColor: '#818cf8',
-                strokeOpacity: 0.8,
-                strokeWeight: 4
-            });
-            
-            routePath.setMap(map);
-            
-            document.getElementById('totalDistance').textContent = totalDistance.toFixed(2) + ' كم';
-            
-            const bounds = new google.maps.LatLngBounds();
-            waypoints.forEach(point => bounds.extend(point));
-            map.fitBounds(bounds, { padding: 50 });
-        }
-        
-        function drawMarkers() {
             let maxSpeed = 0;
+            let totalDistance = 0;
             let vehicleCount = 0;
             
+            drawRoutedPath(pathCoordinates).then(polyline => {
+                document.body.removeChild(loadingDiv);
+                
+                if (polyline) {
+                    polyline.addTo(map);
+                    map.fitBounds(polyline.getBounds(), { padding: [50, 50] });
+                    
+                    const routeCoords = polyline.getLatLngs();
+                    let routeDistance = 0;
+                    for (let i = 1; i < routeCoords.length; i++) {
+                        routeDistance += calculateDistance(
+                            routeCoords[i-1].lat, routeCoords[i-1].lng,
+                            routeCoords[i].lat, routeCoords[i].lng
+                        );
+                    }
+                    if (routeDistance > 0) {
+                        totalDistance = routeDistance;
+                        document.getElementById('totalDistance').textContent = totalDistance.toFixed(2) + ' كم';
+                    }
+                } else {
+                    const fallbackPolyline = L.polyline(pathCoordinates, {
+                        color: '#818cf8',
+                        weight: 4,
+                        opacity: 0.8,
+                        smoothFactor: 1
+                    }).addTo(map);
+                    map.fitBounds(fallbackPolyline.getBounds(), { padding: [50, 50] });
+                }
+            }).catch(error => {
+                console.error('خطأ في رسم المسار:', error);
+                document.body.removeChild(loadingDiv);
+                const fallbackPolyline = L.polyline(pathCoordinates, {
+                    color: '#818cf8',
+                    weight: 4,
+                    opacity: 0.8,
+                    smoothFactor: 1
+                }).addTo(map);
+                map.fitBounds(fallbackPolyline.getBounds(), { padding: [50, 50] });
+            });
+            
             locations.forEach((loc, index) => {
-                if (loc.speed && loc.speed > maxSpeed) {
+                if (loc.speed > maxSpeed) {
                     maxSpeed = loc.speed;
                 }
                 
@@ -534,33 +528,44 @@
                     vehicleCount++;
                 }
                 
-                const position = { lat: loc.latitude, lng: loc.longitude };
+                if (index > 0) {
+                    const prev = locations[index - 1];
+                    const distance = calculateDistance(
+                        prev.latitude, prev.longitude,
+                        loc.latitude, loc.longitude
+                    );
+                    totalDistance += distance;
+                }
+                
                 const hasVehicle = loc.vehicle_id !== null;
+                const iconHtml = hasVehicle ? 
+                    '<i class="fas fa-car" style="font-size: 24px; color: #f59e0b;"></i>' :
+                    '<i class="fas fa-walking" style="font-size: 20px; color: #10b981;"></i>';
                 
-                const iconUrl = hasVehicle 
-                    ? 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
-                        <svg width="40" height="40" xmlns="http://www.w3.org/2000/svg">
-                            <circle cx="20" cy="20" r="18" fill="white" stroke="#f59e0b" stroke-width="3"/>
-                            <text x="20" y="28" font-size="24" text-anchor="middle" fill="#f59e0b">🚗</text>
-                        </svg>
-                    `)
-                    : 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
-                        <svg width="40" height="40" xmlns="http://www.w3.org/2000/svg">
-                            <circle cx="20" cy="20" r="18" fill="white" stroke="#10b981" stroke-width="3"/>
-                            <text x="20" y="28" font-size="20" text-anchor="middle" fill="#10b981">🚶</text>
-                        </svg>
-                    `);
-                
-                const marker = new google.maps.Marker({
-                    position: position,
-                    map: map,
-                    icon: {
-                        url: iconUrl,
-                        scaledSize: new google.maps.Size(40, 40),
-                        anchor: new google.maps.Point(20, 20)
-                    },
-                    title: employeeName
+                const markerIcon = L.divIcon({
+                    className: 'custom-marker',
+                    html: `
+                        <div style="
+                            width: 40px;
+                            height: 40px;
+                            background: white;
+                            border-radius: 50%;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+                            border: 3px solid ${hasVehicle ? '#f59e0b' : '#10b981'};
+                        ">
+                            ${iconHtml}
+                        </div>
+                    `,
+                    iconSize: [40, 40],
+                    iconAnchor: [20, 20]
                 });
+                
+                const marker = L.marker([loc.latitude, loc.longitude], {
+                    icon: markerIcon
+                }).addTo(map);
                 
                 let popupContent = `
                     <div style="text-align: center; font-family: 'Cairo', sans-serif; min-width: 220px; padding: 10px;">
@@ -570,7 +575,7 @@
                         </p>
                 `;
                 
-                if (loc.speed && loc.speed > 0) {
+                if (loc.speed > 0) {
                     popupContent += `
                         <p style="margin: 5px 0; color: #4b5563; font-size: 13px;">
                             <strong>السرعة:</strong> ${loc.speed.toFixed(1)} كم/س
@@ -592,66 +597,38 @@
                 }
                 
                 popupContent += '</div>';
-                
-                const infoWindow = new google.maps.InfoWindow({
-                    content: popupContent
-                });
-                
-                marker.addListener('click', () => {
-                    infoWindows.forEach(iw => iw.close());
-                    infoWindow.open(map, marker);
-                });
-                
-                markers.push(marker);
-                infoWindows.push(infoWindow);
+                marker.bindPopup(popupContent);
                 
                 if (index === 0) {
-                    const startMarker = new google.maps.Marker({
-                        position: position,
-                        map: map,
-                        icon: {
-                            url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
-                                <svg width="80" height="30" xmlns="http://www.w3.org/2000/svg">
-                                    <rect x="0" y="0" width="80" height="30" rx="8" fill="#10b981"/>
-                                    <text x="40" y="20" font-size="14" font-weight="700" text-anchor="middle" fill="white" font-family="Cairo">البداية</text>
-                                </svg>
-                            `),
-                            scaledSize: new google.maps.Size(80, 30),
-                            anchor: new google.maps.Point(40, 45)
-                        },
-                        zIndex: 1000
+                    const startIcon = L.divIcon({
+                        className: 'start-marker',
+                        html: '<div style="background: #10b981; color: white; padding: 5px 10px; border-radius: 8px; font-family: Cairo; font-weight: 700; font-size: 12px; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);">البداية</div>',
+                        iconAnchor: [0, -15]
                     });
+                    L.marker([loc.latitude, loc.longitude], { icon: startIcon }).addTo(map);
                 }
                 
                 if (index === locations.length - 1) {
-                    const endMarker = new google.maps.Marker({
-                        position: position,
-                        map: map,
-                        icon: {
-                            url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
-                                <svg width="80" height="30" xmlns="http://www.w3.org/2000/svg">
-                                    <rect x="0" y="0" width="80" height="30" rx="8" fill="#ef4444"/>
-                                    <text x="40" y="20" font-size="14" font-weight="700" text-anchor="middle" fill="white" font-family="Cairo">النهاية</text>
-                                </svg>
-                            `),
-                            scaledSize: new google.maps.Size(80, 30),
-                            anchor: new google.maps.Point(40, 45)
-                        },
-                        zIndex: 1000
+                    const endIcon = L.divIcon({
+                        className: 'end-marker',
+                        html: '<div style="background: #ef4444; color: white; padding: 5px 10px; border-radius: 8px; font-family: Cairo; font-weight: 700; font-size: 12px; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);">النهاية</div>',
+                        iconAnchor: [0, -15]
                     });
+                    L.marker([loc.latitude, loc.longitude], { icon: endIcon }).addTo(map);
                 }
             });
             
             document.getElementById('maxSpeed').textContent = maxSpeed.toFixed(1) + ' كم/س';
+            document.getElementById('totalDistance').textContent = totalDistance.toFixed(2) + ' كم';
             document.getElementById('withVehicle').textContent = vehicleCount;
         }
         
-        function calculateDistanceFromLatLng(point1, point2) {
+        function calculateDistance(lat1, lon1, lat2, lon2) {
             const R = 6371;
-            const dLat = (point2.lat - point1.lat) * Math.PI / 180;
-            const dLon = (point2.lng - point1.lng) * Math.PI / 180;
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
             const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                      Math.cos(point1.lat * Math.PI / 180) * Math.cos(point2.lat * Math.PI / 180) *
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
                       Math.sin(dLon/2) * Math.sin(dLon/2);
             const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
             return R * c;
@@ -660,14 +637,8 @@
         function focusLocation(index) {
             if (locations && locations[index]) {
                 const loc = locations[index];
-                map.setCenter({ lat: loc.latitude, lng: loc.longitude });
-                map.setZoom(16);
-                
-                if (markers[index]) {
-                    google.maps.event.trigger(markers[index], 'click');
-                }
+                map.setView([loc.latitude, loc.longitude], 16);
             }
         }
     </script>
-    <script src="https://maps.googleapis.com/maps/api/js?key={{ api_key }}&language=ar&region=SA&libraries=geometry&callback=initMap" async defer></script>
 {% endblock %}
