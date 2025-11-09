@@ -4,12 +4,12 @@
 
 ### رابط API الرئيسي
 ```
-http://nuzum.site/api/external/employee-complete-profile
+https://d72f2aef-918c-4148-9723-15870f8c7cf6-00-2c1ygyxvqoldk.riker.replit.dev/api/external/employee-complete-profile
 ```
 
-### رابط احتياطي
+### رابط احتياطي (localhost للتطوير)
 ```
-https://eissahr.replit.app/api/external/employee-complete-profile
+http://localhost:5000/api/external/employee-complete-profile
 ```
 
 ### مفتاح API
@@ -44,8 +44,8 @@ import 'package:http/http.dart' as http;
 
 class EmployeeApiService {
   // الروابط
-  static const String primaryUrl = 'http://nuzum.site/api/external/employee-complete-profile';
-  static const String backupUrl = 'https://eissahr.replit.app/api/external/employee-complete-profile';
+  static const String primaryUrl = 'https://d72f2aef-918c-4148-9723-15870f8c7cf6-00-2c1ygyxvqoldk.riker.replit.dev/api/external/employee-complete-profile';
+  static const String backupUrl = 'http://localhost:5000/api/external/employee-complete-profile';
   static const String apiKey = 'test_location_key_2025';
   
   /// جلب بيانات الموظف الكاملة
@@ -222,8 +222,8 @@ try {
     "email": "basil@example.com",
     "is_driver": false,
     "photos": {
-      "personal": "http://nuzum.site/static/uploads/profile.jpg",
-      "id": "http://nuzum.site/static/uploads/national_id.jpg",
+      "personal": "https://d72f2aef-918c-4148-9723-15870f8c7cf6-00-2c1ygyxvqoldk.riker.replit.dev/static/uploads/profile.jpg",
+      "id": "https://d72f2aef-918c-4148-9723-15870f8c7cf6-00-2c1ygyxvqoldk.riker.replit.dev/static/uploads/national_id.jpg",
       "license": null
     }
   },
@@ -558,8 +558,14 @@ void testConnection() async {
 
 ## 📞 للدعم الفني
 
-- **الرابط الرئيسي**: http://nuzum.site
-- **الرابط الاحتياطي**: https://eissahr.replit.app
+- **رابط API**: https://d72f2aef-918c-4148-9723-15870f8c7cf6-00-2c1ygyxvqoldk.riker.replit.dev
 - **مفتاح API**: test_location_key_2025
+- **نقطة النهاية**: /api/external/employee-complete-profile
 
-**ملاحظة**: جميع البيانات حقيقية وليست وهمية. النظام جاهز للاستخدام الفوري! 🚀
+**ملاحظة مهمة**: 
+- جميع البيانات حقيقية وليست وهمية
+- النظام جاهز للاستخدام الفوري
+- تأكد من استخدام HTTPS وليس HTTP
+- الدومين الحالي للتطوير هو المذكور أعلاه
+
+🚀
