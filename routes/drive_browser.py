@@ -88,11 +88,9 @@ def build_unified_records(filters=None, page=1, per_page=50):
         Vehicle.plate_number,
         Vehicle.make,
         Vehicle.model,
-        Department.name.label('department_name'),
-        Employee.name.label('employee_name')
+        Department.name.label('department_name')
     ).join(Vehicle, VehicleWorkshop.vehicle_id == Vehicle.id
     ).outerjoin(Department, Vehicle.department_id == Department.id
-    ).outerjoin(Employee, VehicleWorkshop.employee_id == Employee.id
     ).filter(VehicleWorkshop.drive_folder_id.isnot(None))
     
     if filters:
@@ -100,8 +98,6 @@ def build_unified_records(filters=None, page=1, per_page=50):
             workshop_query = workshop_query.filter(Vehicle.department_id == filters['department_id'])
         if filters.get('plate_number'):
             workshop_query = workshop_query.filter(Vehicle.plate_number.like(f"%{filters['plate_number']}%"))
-        if filters.get('employee_name'):
-            workshop_query = workshop_query.filter(Employee.name.ilike(f"%{filters['employee_name']}%"))
         if filters.get('date_from'):
             workshop_query = workshop_query.filter(VehicleWorkshop.entry_date >= filters['date_from'])
         if filters.get('date_to'):
@@ -198,19 +194,19 @@ def build_unified_records(filters=None, page=1, per_page=50):
         VehicleExternalSafetyCheck.drive_uploaded_at,
         VehicleExternalSafetyCheck.inspection_date,
         VehicleExternalSafetyCheck.vehicle_plate_number,
-        Department.name.label('department_name'),
-        Employee.name.label('employee_name')
-    ).outerjoin(Employee, VehicleExternalSafetyCheck.employee_id == Employee.id
-    ).outerjoin(Department, Employee.department_id == Department.id
+        VehicleExternalSafetyCheck.driver_department,
+        VehicleExternalSafetyCheck.driver_name
     ).filter(VehicleExternalSafetyCheck.drive_folder_id.isnot(None))
     
     if filters:
         if filters.get('department_id'):
-            safety_query = safety_query.filter(Employee.department_id == filters['department_id'])
+            dept = Department.query.get(filters['department_id'])
+            if dept:
+                safety_query = safety_query.filter(VehicleExternalSafetyCheck.driver_department.ilike(f"%{dept.name}%"))
         if filters.get('plate_number'):
             safety_query = safety_query.filter(VehicleExternalSafetyCheck.vehicle_plate_number.like(f"%{filters['plate_number']}%"))
         if filters.get('employee_name'):
-            safety_query = safety_query.filter(Employee.name.ilike(f"%{filters['employee_name']}%"))
+            safety_query = safety_query.filter(VehicleExternalSafetyCheck.driver_name.ilike(f"%{filters['employee_name']}%"))
         if filters.get('date_from'):
             safety_query = safety_query.filter(VehicleExternalSafetyCheck.inspection_date >= filters['date_from'])
         if filters.get('date_to'):
@@ -230,8 +226,8 @@ def build_unified_records(filters=None, page=1, per_page=50):
             'id': row.id,
             'type': 'vehicle_safety',
             'type_ar': 'فحص سلامة',
-            'entity_name': row.vehicle_plate_number or 'غير محدد',
-            'department': row.department_name or 'غير محدد',
+            'entity_name': f"{row.vehicle_plate_number} - {row.driver_name}" if row.driver_name else row.vehicle_plate_number or 'غير محدد',
+            'department': row.driver_department or 'غير محدد',
             'date': row.inspection_date,
             'folder_id': row.drive_folder_id,
             'folder_url': f"https://drive.google.com/drive/folders/{row.drive_folder_id}",
