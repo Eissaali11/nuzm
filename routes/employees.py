@@ -2003,11 +2003,22 @@ def tracking():
                     if vehicle:
                         location_data['vehicle_name'] = vehicle.plate_number
         
+        photo_url = None
+        if emp.profile_image:
+            if emp.profile_image.startswith('http'):
+                photo_url = emp.profile_image
+            elif emp.profile_image.startswith('static/'):
+                photo_url = url_for('static', filename=emp.profile_image.replace('static/', ''), _external=False)
+            elif emp.profile_image.startswith('uploads/'):
+                photo_url = url_for('static', filename=emp.profile_image, _external=False)
+            else:
+                photo_url = url_for('static', filename=f'uploads/{emp.profile_image}', _external=False)
+        
         emp_dict = {
             'id': emp.id,
             'name': emp.name,
             'employee_number': emp.employee_id,
-            'photo_url': emp.profile_image,
+            'photo_url': photo_url,
             'department_name': dept_name
         }
         employees_data.append(emp_dict)

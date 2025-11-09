@@ -813,9 +813,9 @@
                              data-emp-id="{{ emp.id }}">
                             <div class="employee-header">
                                 {% if emp.photo_url %}
-                                <img src="{{ emp.photo_url }}" alt="{{ emp.name }}" class="employee-photo">
+                                <img src="{{ emp.photo_url }}" alt="{{ emp.name }}" class="employee-photo" onerror="this.src='{{ url_for('static', filename='uploads/employees/default_avatar.svg') }}'">
                                 {% else %}
-                                <img src="{{ url_for('static', filename='images/default-avatar.png') }}" alt="{{ emp.name }}" class="employee-photo">
+                                <img src="{{ url_for('static', filename='uploads/employees/default_avatar.svg') }}" alt="{{ emp.name }}" class="employee-photo">
                                 {% endif %}
                                 
                                 <div class="employee-info">
