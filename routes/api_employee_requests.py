@@ -854,3 +854,144 @@ def mark_notification_read(current_employee, notification_id):
         'success': True,
         'message': 'تم تعليم الإشعار كمقروء'
     }), 200
+
+
+@api_employee_requests.route('/employee/liabilities', methods=['GET'])
+@token_required
+def get_employee_liabilities(current_employee):
+    """
+    جلب الالتزامات المالية للموظف (سلف، ديون، تلفيات)
+    
+    Query Parameters:
+    - status: 'active', 'paid', 'all'
+    - type: 'advance_repayment', 'damage', 'debt', 'other'
+    
+    Response:
+    {
+        "success": true,
+        "data": {
+            "total_liabilities": 15000.00,
+            "active_liabilities": 10000.00,
+            "paid_liabilities": 5000.00,
+            "liabilities": [...]
+        }
+    }
+    """
+    from services.employee_finance_service import EmployeeFinanceService
+    
+    status_filter = request.args.get('status', 'all')
+    type_filter = request.args.get('type')
+    
+    try:
+        liabilities_data = EmployeeFinanceService.get_employee_liabilities(
+            current_employee.id,
+            status_filter=status_filter,
+            liability_type_filter=type_filter
+        )
+        
+        return jsonify({
+            'success': True,
+            'data': liabilities_data
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error fetching liabilities for employee {current_employee.id}: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': 'حدث خطأ أثناء جلب الالتزامات المالية',
+            'error': str(e)
+        }), 500
+
+
+@api_employee_requests.route('/employee/financial-summary', methods=['GET'])
+@token_required
+def get_employee_financial_summary(current_employee):
+    """
+    جلب الملخص المالي الشامل للموظف
+    
+    Response:
+    {
+        "success": true,
+        "data": {
+            "current_balance": 5000.00,
+            "total_earnings": 50000.00,
+            "total_deductions": 45000.00,
+            "active_liabilities": 10000.00,
+            "pending_requests": 3,
+            "last_salary": {...},
+            "upcoming_installment": {...},
+            "monthly_summary": {...}
+        }
+    }
+    """
+    from services.employee_finance_service import EmployeeFinanceService
+    
+    try:
+        summary = EmployeeFinanceService.get_financial_summary(current_employee.id)
+        
+        if not summary:
+            return jsonify({
+                'success': False,
+                'message': 'الموظف غير موجود'
+            }), 404
+        
+        return jsonify({
+            'success': True,
+            'data': summary
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error fetching financial summary for employee {current_employee.id}: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': 'حدث خطأ أثناء جلب الملخص المالي',
+            'error': str(e)
+        }), 500
+
+
+@api_employee_requests.route('/notifications/mark-all-read', methods=['PUT'])
+@token_required
+def mark_all_notifications_read(current_employee):
+    """
+    تحديد جميع الإشعارات كمقروءة
+    
+    Response:
+    {
+        "success": true,
+        "message": "تم تحديد جميع الإشعارات كمقروءة",
+        "data": {
+            "updated_count": 15
+        }
+    }
+    """
+    try:
+        unread_notifications = RequestNotification.query.filter_by(
+            employee_id=current_employee.id,
+            is_read=False
+        ).all()
+        
+        updated_count = len(unread_notifications)
+        
+        for notification in unread_notifications:
+            notification.is_read = True
+            notification.read_at = datetime.utcnow()
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'تم تحديد جميع الإشعارات كمقروءة',
+            'data': {
+                'updated_count': updated_count,
+                'unread_count': 0
+            }
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error marking all notifications as read for employee {current_employee.id}: {str(e)}")
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'message': 'حدث خطأ أثناء تحديث الإشعارات',
+            'error': str(e)
+        }), 500
