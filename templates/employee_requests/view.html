@@ -297,6 +297,26 @@
                 </div>
             </div>
             {% endif %}
+            
+            <div class="card shadow-lg mt-4">
+                <div class="card-header bg-gradient-danger text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-trash-alt me-2"></i>
+                        حذف الطلب
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted small mb-3">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        سيتم حذف الطلب نهائياً من قاعدة البيانات ولا يمكن استرجاعه
+                    </p>
+                    <form method="POST" action="{{ url_for('employee_requests.delete_request', request_id=emp_request.id) }}" onsubmit="return confirm('هل أنت متأكد من حذف هذا الطلب؟ لا يمكن التراجع عن هذا الإجراء.');">
+                        <button type="submit" class="btn btn-danger w-100">
+                            <i class="fas fa-trash-alt me-2"></i>حذف الطلب نهائياً
+                        </button>
+                    </form>
+                </div>
+            </div>
         </div>
     </div>
 </div>

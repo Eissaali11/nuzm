@@ -174,6 +174,27 @@ def reject_request(request_id):
     return redirect(url_for('employee_requests.view_request', request_id=request_id))
 
 
+@employee_requests.route('/<int:request_id>/delete', methods=['POST'])
+@login_required
+def delete_request(request_id):
+    if not check_access():
+        return jsonify({'success': False, 'message': 'ليس لديك صلاحية'}), 403
+    
+    emp_request = EmployeeRequest.query.get_or_404(request_id)
+    
+    try:
+        db.session.delete(emp_request)
+        db.session.commit()
+        
+        flash('تم حذف الطلب بنجاح', 'success')
+        return redirect(url_for('employee_requests.index'))
+        
+    except Exception as e:
+        db.session.rollback()
+        flash(f'حدث خطأ أثناء حذف الطلب: {str(e)}', 'error')
+        return redirect(url_for('employee_requests.view_request', request_id=request_id))
+
+
 @employee_requests.route('/advance-payments')
 @login_required
 def advance_payments():

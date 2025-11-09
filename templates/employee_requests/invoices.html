@@ -49,6 +49,7 @@
                             <th>اسم الموظف</th>
                             <th>المبلغ</th>
                             <th>المحل</th>
+                            <th>صورة الفاتورة</th>
                             <th>التاريخ</th>
                             <th>الحالة</th>
                             <th>الإجراءات</th>
@@ -61,8 +62,25 @@
                             <tr>
                                 <td>{{ req.id }}</td>
                                 <td>{{ req.employee.name if req.employee else 'غير محدد' }}</td>
-                                <td>{{ invoice.amount if invoice else 0 }} ريال</td>
-                                <td>{{ invoice.store_name if invoice and invoice.store_name else 'غير محدد' }}</td>
+                                <td>{{ req.amount if req.amount else (invoice.amount if invoice else 0) }} ريال</td>
+                                <td>{{ invoice.vendor_name if invoice and invoice.vendor_name else 'غير محدد' }}</td>
+                                <td>
+                                    {% if invoice and (invoice.drive_view_url or invoice.drive_download_url) %}
+                                        {% set img_url = invoice.drive_view_url or invoice.drive_download_url %}
+                                        <a href="{{ img_url }}" target="_blank" title="معاينة الفاتورة">
+                                            <img src="{{ img_url }}" 
+                                                 alt="صورة الفاتورة" 
+                                                 class="img-thumbnail" 
+                                                 style="max-width: 60px; max-height: 60px; cursor: pointer;"
+                                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';">
+                                            <i class="fas fa-file-invoice fa-2x text-muted" style="display: none;"></i>
+                                        </a>
+                                    {% else %}
+                                        <span class="text-muted small">
+                                            <i class="fas fa-exclamation-triangle"></i> لا توجد صورة
+                                        </span>
+                                    {% endif %}
+                                </td>
                                 <td>{{ req.created_at.strftime('%Y-%m-%d') }}</td>
                                 <td>
                                     {% if req.status == RequestStatus.PENDING %}
@@ -83,7 +101,7 @@
                             {% endfor %}
                         {% else %}
                             <tr>
-                                <td colspan="7" class="text-center text-muted py-4">
+                                <td colspan="8" class="text-center text-muted py-4">
                                     <i class="fas fa-inbox fa-3x mb-3 d-block"></i>
                                     لا توجد فواتير حالياً
                                 </td>
