@@ -1,11 +1,14 @@
 import os
 import jwt
+import logging
 from flask import Blueprint, request, jsonify, current_app
 from flask_login import current_user
 from werkzeug.security import check_password_hash
 from functools import wraps
 from datetime import datetime, timedelta
 from app import db
+
+logger = logging.getLogger(__name__)
 from models import (
     User, Employee, EmployeeRequest, InvoiceRequest, AdvancePaymentRequest,
     CarWashRequest, CarInspectionRequest, CarWashMedia, CarInspectionMedia,
@@ -453,15 +456,13 @@ def upload_files(current_employee, request_id):
     Response:
     {
         "success": true,
-        "uploaded_files": [
-            {
-                "filename": "image1.jpg",
-                "drive_url": "https://drive.google.com/..."
-            }
-        ],
+        "uploaded_files": [...],
+        "google_drive_folder_url": "https://drive.google.com/...",
         "message": "تم رفع 3 ملفات بنجاح"
     }
     """
+    import tempfile
+    
     emp_request = EmployeeRequest.query.filter_by(
         id=request_id,
         employee_id=current_employee.id
@@ -487,8 +488,46 @@ def upload_files(current_employee, request_id):
             'message': 'لا يوجد ملفات مرفقة'
         }), 400
     
-    uploaded_files = []
     drive_uploader = EmployeeRequestsDriveUploader()
+    
+    if not drive_uploader.is_available():
+        return jsonify({
+            'success': False,
+            'message': 'خدمة Google Drive غير متاحة حالياً'
+        }), 503
+    
+    type_map = {
+        RequestType.INVOICE: 'invoice',
+        RequestType.CAR_WASH: 'car_wash',
+        RequestType.CAR_INSPECTION: 'car_inspection',
+        RequestType.ADVANCE_PAYMENT: 'advance_payment'
+    }
+    
+    vehicle_number = None
+    if emp_request.request_type in [RequestType.CAR_WASH, RequestType.CAR_INSPECTION]:
+        if emp_request.request_type == RequestType.CAR_WASH and emp_request.car_wash_data and emp_request.car_wash_data.vehicle:
+            vehicle_number = emp_request.car_wash_data.vehicle.plate_number
+        elif emp_request.request_type == RequestType.CAR_INSPECTION and emp_request.inspection_data and emp_request.inspection_data.vehicle:
+            vehicle_number = emp_request.inspection_data.vehicle.plate_number
+    
+    folder_result = drive_uploader.create_request_folder(
+        request_type=type_map.get(emp_request.request_type, 'other'),
+        request_id=emp_request.id,
+        employee_name=current_employee.name,
+        vehicle_number=vehicle_number
+    )
+    
+    if not folder_result:
+        return jsonify({
+            'success': False,
+            'message': 'فشل إنشاء مجلد على Google Drive'
+        }), 500
+    
+    emp_request.google_drive_folder_id = folder_result['folder_id']
+    emp_request.google_drive_folder_url = folder_result['folder_url']
+    db.session.commit()
+    
+    uploaded_files = []
     
     for file in files:
         if not file.filename or file.filename == '':
@@ -500,69 +539,73 @@ def upload_files(current_employee, request_id):
         if '.' not in file.filename:
             continue
         
-        file_ext = file.filename.rsplit('.', 1)[1].lower()
-        file_type = 'image' if file_ext in ['png', 'jpg', 'jpeg', 'heic'] else 'video' if file_ext in ['mp4', 'mov', 'avi'] else 'document'
-        
+        temp_file = None
         try:
+            file_ext = file.filename.rsplit('.', 1)[1].lower()
+            
+            with tempfile.NamedTemporaryFile(delete=False, suffix=f'.{file_ext}') as temp_file:
+                file.save(temp_file.name)
+                temp_path = temp_file.name
+            
+            result = None
+            
             if emp_request.request_type == RequestType.INVOICE:
-                result = drive_uploader.upload_invoice_file(
-                    emp_request,
-                    file,
-                    current_employee.name
+                result = drive_uploader.upload_invoice_image(
+                    file_path=temp_path,
+                    folder_id=folder_result['folder_id'],
+                    custom_name=file.filename
                 )
                 
-                if result['success']:
+                if result:
                     invoice = emp_request.invoice_data
                     if invoice:
                         invoice.drive_file_id = result['file_id']
                         invoice.drive_view_url = result['view_url']
-                        invoice.drive_download_url = result['download_url']
-                        invoice.file_size = len(file.read())
-                        file.seek(0)
-                        
-                        uploaded_files.append({
-                            'filename': file.filename,
-                            'drive_url': result['view_url']
-                        })
+                        invoice.drive_download_url = result.get('download_url')
+                        invoice.file_size = result.get('file_size')
             
             elif emp_request.request_type == RequestType.CAR_WASH:
+                existing_count = len(emp_request.car_wash_data.media_files) if emp_request.car_wash_data else 0
                 media_types_order = [MediaType.PLATE, MediaType.FRONT, MediaType.BACK, MediaType.RIGHT, MediaType.LEFT]
-                existing_count = len(emp_request.car_wash_data.media_files)
                 
                 if existing_count < 5:
                     media_type = media_types_order[existing_count]
+                    images_dict = {media_type.value: temp_path}
                     
-                    result = drive_uploader.upload_car_wash_media(
-                        emp_request.car_wash_data,
-                        file,
-                        media_type.value,
-                        current_employee.name
+                    results = drive_uploader.upload_car_wash_images(
+                        images_dict=images_dict,
+                        folder_id=folder_result['folder_id']
                     )
                     
-                    if result['success']:
+                    result = results.get(media_type.value)
+                    
+                    if result:
                         media = CarWashMedia()
                         media.wash_request_id = emp_request.car_wash_data.id
                         media.media_type = media_type
                         media.drive_file_id = result['file_id']
                         media.drive_view_url = result['view_url']
+                        media.file_size = result.get('file_size')
                         db.session.add(media)
-                        
-                        uploaded_files.append({
-                            'filename': file.filename,
-                            'drive_url': result['view_url']
-                        })
             
             elif emp_request.request_type == RequestType.CAR_INSPECTION:
-                inspection_file_type = FileType.IMAGE if file_ext in ['png', 'jpg', 'jpeg', 'heic'] else FileType.VIDEO
+                is_video = file_ext in ['mp4', 'mov', 'avi']
+                inspection_file_type = FileType.VIDEO if is_video else FileType.IMAGE
                 
-                result = drive_uploader.upload_inspection_media(
-                    emp_request.inspection_data,
-                    file,
-                    inspection_file_type.value,
-                    current_employee.name
-                )
+                if is_video:
+                    result = drive_uploader.upload_large_video_resumable(
+                        file_path=temp_path,
+                        folder_id=folder_result['folder_id'],
+                        filename=file.filename
+                    )
+                else:
+                    results = drive_uploader.upload_inspection_images_batch(
+                        images_list=[temp_path],
+                        folder_id=folder_result['folder_id']
+                    )
+                    result = results[0] if results else None
                 
-                if result['success']:
+                if result:
                     media = CarInspectionMedia()
                     media.inspection_request_id = emp_request.inspection_data.id
                     media.file_type = inspection_file_type
@@ -570,23 +613,35 @@ def upload_files(current_employee, request_id):
                     media.drive_view_url = result['view_url']
                     media.drive_download_url = result.get('download_url')
                     media.original_filename = file.filename
+                    media.file_size = result.get('file_size')
+                    media.upload_status = 'completed'
+                    media.upload_progress = 100
                     db.session.add(media)
-                    
-                    uploaded_files.append({
-                        'filename': file.filename,
-                        'drive_url': result['view_url']
-                    })
+            
+            if result:
+                uploaded_files.append({
+                    'filename': file.filename,
+                    'drive_url': result['view_url'],
+                    'file_id': result['file_id']
+                })
         
         except Exception as e:
-            print(f"Error uploading file {file.filename}: {str(e)}")
+            logger.error(f"Error uploading file {file.filename}: {str(e)}")
             continue
+        finally:
+            if temp_file and os.path.exists(temp_path):
+                try:
+                    os.unlink(temp_path)
+                except:
+                    pass
     
     db.session.commit()
     
     return jsonify({
         'success': True,
         'uploaded_files': uploaded_files,
-        'message': f'تم رفع {len(uploaded_files)} ملف بنجاح'
+        'google_drive_folder_url': folder_result['folder_url'],
+        'message': f'تم رفع {len(uploaded_files)} ملف بنجاح إلى Google Drive'
     }), 200
 
 
