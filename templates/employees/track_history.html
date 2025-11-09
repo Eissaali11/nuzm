@@ -169,6 +169,60 @@
             font-family: 'Cairo', sans-serif;
         }
         
+        .employee-map-badge {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.95) 100%);
+            backdrop-filter: blur(10px);
+            padding: 15px;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border: 2px solid rgba(129, 140, 248, 0.3);
+            max-width: 280px;
+        }
+        
+        .employee-map-badge img {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #818cf8;
+            box-shadow: 0 4px 15px rgba(129, 140, 248, 0.4);
+        }
+        
+        .employee-map-badge .placeholder-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #818cf8 0%, #a78bfa 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: 700;
+            color: white;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 4px 15px rgba(129, 140, 248, 0.4);
+        }
+        
+        .employee-map-info h3 {
+            margin: 0 0 4px 0;
+            color: #1e1b4b;
+            font-size: 16px;
+            font-weight: 700;
+        }
+        
+        .employee-map-info p {
+            margin: 0;
+            color: #64748b;
+            font-size: 13px;
+        }
+        
         .timeline {
             background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
             backdrop-filter: blur(10px);
@@ -364,6 +418,17 @@
         
         <div class="map-container">
             <div id="map"></div>
+            <div class="employee-map-badge">
+                {% if employee.profile_image %}
+                <img src="{{ employee.profile_image }}" alt="{{ employee.name }}">
+                {% else %}
+                <div class="placeholder-avatar">{{ employee.name[0] if employee.name else 'M' }}</div>
+                {% endif %}
+                <div class="employee-map-info">
+                    <h3>{{ employee.name }}</h3>
+                    <p>{{ employee.employee_id }}</p>
+                </div>
+            </div>
         </div>
         
         <div class="timeline">
@@ -671,8 +736,19 @@
                     icon: markerIcon
                 }).addTo(map);
                 
+                const employeePhoto = "{{ employee.profile_image or '' }}";
+                const employeeInitial = "{{ employee.name[0] if employee.name else 'M' }}";
+                
+                let photoHtml = '';
+                if (employeePhoto) {
+                    photoHtml = `<img src="${employeePhoto}" alt="${employeeName}" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 3px solid #818cf8; margin-bottom: 10px; box-shadow: 0 4px 15px rgba(129, 140, 248, 0.4);">`;
+                } else {
+                    photoHtml = `<div style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #818cf8 0%, #a78bfa 100%); display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 700; color: white; margin: 0 auto 10px auto; border: 3px solid rgba(255, 255, 255, 0.3); box-shadow: 0 4px 15px rgba(129, 140, 248, 0.4);">${employeeInitial}</div>`;
+                }
+                
                 let popupContent = `
-                    <div style="text-align: center; font-family: 'Cairo', sans-serif; min-width: 220px; padding: 10px;">
+                    <div style="text-align: center; font-family: 'Cairo', sans-serif; min-width: 240px; padding: 15px;">
+                        ${photoHtml}
                         <h4 style="margin: 0 0 10px 0; color: #1e1b4b; font-weight: 700;">${employeeName}</h4>
                         <p style="margin: 5px 0; color: #4b5563; font-size: 13px;">
                             <strong>الوقت:</strong> ${loc.recorded_at}
