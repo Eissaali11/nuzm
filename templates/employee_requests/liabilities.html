@@ -1,0 +1,174 @@
+{% extends "layout.html" %}
+
+{% block title %}الالتزامات المالية{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2 class="mb-0">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    الالتزامات المالية
+                </h2>
+            </div>
+        </div>
+    </div>
+
+    <!-- إحصائيات -->
+    <div class="row mb-4">
+        <div class="col-md-6 mb-3">
+            <div class="card bg-gradient-danger text-white shadow-lg">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-0">التزامات غير مدفوعة</h6>
+                            <h3 class="mb-0 mt-2">{{ total_unpaid }}</h3>
+                        </div>
+                        <div class="display-4 opacity-50">
+                            <i class="fas fa-exclamation-circle"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 mb-3">
+            <div class="card bg-gradient-warning text-white shadow-lg">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-0">إجمالي المبلغ المستحق</h6>
+                            <h3 class="mb-0 mt-2">{{ "%.2f"|format(total_amount) }} ريال</h3>
+                        </div>
+                        <div class="display-4 opacity-50">
+                            <i class="fas fa-coins"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- فلاتر -->
+    <div class="card shadow-lg mb-4">
+        <div class="card-body">
+            <form method="GET" action="{{ url_for('employee_requests.liabilities') }}" class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">نوع الالتزام</label>
+                    <select name="type" class="form-select">
+                        <option value="">الكل</option>
+                        <option value="DAMAGE" {% if request.args.get('type') == 'DAMAGE' %}selected{% endif %}>تلفيات</option>
+                        <option value="DEBT" {% if request.args.get('type') == 'DEBT' %}selected{% endif %}>ديون</option>
+                        <option value="ADVANCE_PAYMENT" {% if request.args.get('type') == 'ADVANCE_PAYMENT' %}selected{% endif %}>سلفة</option>
+                        <option value="FINE" {% if request.args.get('type') == 'FINE' %}selected{% endif %}>غرامة</option>
+                    </select>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label">حالة الدفع</label>
+                    <select name="status" class="form-select">
+                        <option value="">الكل</option>
+                        <option value="ACTIVE" {% if request.args.get('status') == 'ACTIVE' %}selected{% endif %}>غير مدفوع</option>
+                        <option value="PAID" {% if request.args.get('status') == 'PAID' %}selected{% endif %}>مدفوع</option>
+                    </select>
+                </div>
+
+                <div class="col-md-4 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-search me-2"></i>بحث
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- جدول الالتزامات -->
+    <div class="card shadow-lg">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>اسم الموظف</th>
+                            <th>النوع</th>
+                            <th>المبلغ</th>
+                            <th>الوصف</th>
+                            <th>التاريخ</th>
+                            <th>الحالة</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if liabilities %}
+                            {% for liability in liabilities %}
+                            <tr>
+                                <td>{{ liability.id }}</td>
+                                <td>{{ liability.employee.name if liability.employee else 'غير محدد' }}</td>
+                                <td>
+                                    {% if liability.liability_type == 'DAMAGE' %}
+                                        <span class="badge bg-danger">تلفيات</span>
+                                    {% elif liability.liability_type == 'DEBT' %}
+                                        <span class="badge bg-warning">ديون</span>
+                                    {% elif liability.liability_type == 'ADVANCE_PAYMENT' %}
+                                        <span class="badge bg-info">سلفة</span>
+                                    {% elif liability.liability_type == 'FINE' %}
+                                        <span class="badge bg-dark">غرامة</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ "%.2f"|format(liability.amount) }} ريال</td>
+                                <td>{{ liability.description or 'لا يوجد وصف' }}</td>
+                                <td>{{ liability.created_at.strftime('%Y-%m-%d') }}</td>
+                                <td>
+                                    {% if liability.is_paid %}
+                                        <span class="badge bg-success">مدفوع</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">غير مدفوع</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="7" class="text-center text-muted py-4">
+                                    <i class="fas fa-inbox fa-3x mb-3 d-block"></i>
+                                    لا توجد التزامات حالياً
+                                </td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            {% if pagination.pages > 1 %}
+            <nav aria-label="Page navigation" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if pagination.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('employee_requests.liabilities', page=pagination.prev_num) }}">السابق</a>
+                    </li>
+                    {% endif %}
+
+                    {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+                        {% if page_num %}
+                            <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
+                                <a class="page-link" href="{{ url_for('employee_requests.liabilities', page=page_num) }}">{{ page_num }}</a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled"><span class="page-link">...</span></li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if pagination.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('employee_requests.liabilities', page=pagination.next_num) }}">التالي</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

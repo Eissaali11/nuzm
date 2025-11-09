@@ -1,0 +1,292 @@
+{% extends "layout.html" %}
+
+{% block title %}تفاصيل الطلب{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('employee_requests.index') }}">طلبات الموظفين</a></li>
+                    <li class="breadcrumb-item active">تفاصيل الطلب #{{ emp_request.id }}</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- معلومات الطلب الأساسية -->
+        <div class="col-md-8">
+            <div class="card shadow-lg mb-4">
+                <div class="card-header bg-gradient-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle me-2"></i>
+                        معلومات الطلب
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <strong>رقم الطلب:</strong>
+                            <p class="text-muted">#{{ emp_request.id }}</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <strong>اسم الموظف:</strong>
+                            <p class="text-muted">{{ emp_request.employee.name if emp_request.employee else 'غير محدد' }}</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <strong>نوع الطلب:</strong>
+                            <p>
+                                {% if emp_request.request_type == RequestType.INVOICE %}
+                                    <span class="badge bg-info">فاتورة</span>
+                                {% elif emp_request.request_type == RequestType.CAR_WASH %}
+                                    <span class="badge bg-primary">غسيل سيارة</span>
+                                {% elif emp_request.request_type == RequestType.CAR_INSPECTION %}
+                                    <span class="badge bg-warning">فحص وتوثيق</span>
+                                {% elif emp_request.request_type == RequestType.ADVANCE_PAYMENT %}
+                                    <span class="badge bg-success">سلفة مالية</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <strong>الحالة:</strong>
+                            <p>
+                                {% if emp_request.status == RequestStatus.PENDING %}
+                                    <span class="badge bg-warning">قيد الانتظار</span>
+                                {% elif emp_request.status == RequestStatus.APPROVED %}
+                                    <span class="badge bg-success">موافق عليها</span>
+                                {% elif emp_request.status == RequestStatus.REJECTED %}
+                                    <span class="badge bg-danger">مرفوضة</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <strong>تاريخ الإنشاء:</strong>
+                            <p class="text-muted">{{ emp_request.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                        </div>
+                        {% if emp_request.approved_at %}
+                        <div class="col-md-6 mb-3">
+                            <strong>تاريخ المعالجة:</strong>
+                            <p class="text-muted">{{ emp_request.approved_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                        </div>
+                        {% endif %}
+                        {% if emp_request.employee_notes %}
+                        <div class="col-12 mb-3">
+                            <strong>ملاحظات الموظف:</strong>
+                            <p class="text-muted">{{ emp_request.employee_notes }}</p>
+                        </div>
+                        {% endif %}
+                        {% if emp_request.admin_notes %}
+                        <div class="col-12 mb-3">
+                            <strong>ملاحظات الإدارة:</strong>
+                            <p class="text-muted">{{ emp_request.admin_notes }}</p>
+                        </div>
+                        {% endif %}
+                        {% if emp_request.rejection_reason %}
+                        <div class="col-12">
+                            <div class="alert alert-danger">
+                                <strong>سبب الرفض:</strong>
+                                <p class="mb-0">{{ emp_request.rejection_reason }}</p>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- تفاصيل خاصة بنوع الطلب -->
+            {% if specific_request %}
+            <div class="card shadow-lg">
+                <div class="card-header bg-gradient-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-file-invoice me-2"></i>
+                        تفاصيل إضافية
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if emp_request.request_type == RequestType.INVOICE %}
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <strong>المبلغ:</strong>
+                                <p class="text-muted">{{ specific_request.amount }} ريال</p>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <strong>اسم المحل:</strong>
+                                <p class="text-muted">{{ specific_request.store_name or 'غير محدد' }}</p>
+                            </div>
+                            {% if specific_request.invoice_image_url %}
+                            <div class="col-12">
+                                <strong>صورة الفاتورة:</strong>
+                                <div class="mt-2">
+                                    <a href="{{ specific_request.invoice_image_url }}" target="_blank" class="btn btn-sm btn-primary">
+                                        <i class="fas fa-external-link-alt me-2"></i>عرض الفاتورة
+                                    </a>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    {% elif emp_request.request_type == RequestType.CAR_WASH %}
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <strong>رقم لوحة السيارة:</strong>
+                                <p class="text-muted">{{ specific_request.vehicle_plate_number }}</p>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <strong>عدد الصور:</strong>
+                                <p class="text-muted">
+                                    {% if specific_request.images_urls %}
+                                        {{ specific_request.images_urls|length }} صورة
+                                    {% else %}
+                                        لا توجد صور
+                                    {% endif %}
+                                </p>
+                            </div>
+                            {% if specific_request.images_urls %}
+                            <div class="col-12">
+                                <strong>الصور:</strong>
+                                <div class="row mt-2">
+                                    {% for img_url in specific_request.images_urls %}
+                                    <div class="col-md-3 mb-2">
+                                        <a href="{{ img_url }}" target="_blank">
+                                            <img src="{{ img_url }}" class="img-thumbnail" alt="صورة">
+                                        </a>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    {% elif emp_request.request_type == RequestType.CAR_INSPECTION %}
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <strong>رقم لوحة السيارة:</strong>
+                                <p class="text-muted">{{ specific_request.vehicle_plate_number }}</p>
+                            </div>
+                            <div class="col-12 mb-3">
+                                <strong>الصور:</strong>
+                                {% if specific_request.images_urls %}
+                                <div class="row mt-2">
+                                    {% for img_url in specific_request.images_urls %}
+                                    <div class="col-md-3 mb-2">
+                                        <a href="{{ img_url }}" target="_blank">
+                                            <img src="{{ img_url }}" class="img-thumbnail" alt="صورة">
+                                        </a>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                {% else %}
+                                <p class="text-muted">لا توجد صور</p>
+                                {% endif %}
+                            </div>
+                            <div class="col-12">
+                                <strong>الفيديوهات:</strong>
+                                {% if specific_request.videos_urls %}
+                                <div class="row mt-2">
+                                    {% for video_url in specific_request.videos_urls %}
+                                    <div class="col-md-6 mb-2">
+                                        <a href="{{ video_url }}" target="_blank" class="btn btn-sm btn-info">
+                                            <i class="fas fa-video me-2"></i>عرض الفيديو {{ loop.index }}
+                                        </a>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                {% else %}
+                                <p class="text-muted">لا توجد فيديوهات</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% elif emp_request.request_type == RequestType.ADVANCE_PAYMENT %}
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <strong>المبلغ المطلوب:</strong>
+                                <p class="text-muted">{{ specific_request.amount }} ريال</p>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <strong>السبب:</strong>
+                                <p class="text-muted">{{ specific_request.reason or 'غير محدد' }}</p>
+                            </div>
+                            {% if specific_request.repayment_plan %}
+                            <div class="col-12">
+                                <strong>خطة السداد:</strong>
+                                <p class="text-muted">{{ specific_request.repayment_plan }}</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- إجراءات الموافقة/الرفض -->
+        <div class="col-md-4">
+            {% if emp_request.status == RequestStatus.PENDING %}
+            <div class="card shadow-lg mb-4">
+                <div class="card-header bg-gradient-success text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-check-circle me-2"></i>
+                        الموافقة
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('employee_requests.approve_request', request_id=emp_request.id) }}">
+                        <div class="mb-3">
+                            <label class="form-label">ملاحظات (اختياري)</label>
+                            <textarea name="admin_notes" class="form-control" rows="3"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-success w-100">
+                            <i class="fas fa-check me-2"></i>الموافقة على الطلب
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card shadow-lg">
+                <div class="card-header bg-gradient-danger text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-times-circle me-2"></i>
+                        الرفض
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('employee_requests.reject_request', request_id=emp_request.id) }}">
+                        <div class="mb-3">
+                            <label class="form-label">سبب الرفض <span class="text-danger">*</span></label>
+                            <textarea name="rejection_reason" class="form-control" rows="3" required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-danger w-100">
+                            <i class="fas fa-times me-2"></i>رفض الطلب
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% else %}
+            <div class="card shadow-lg">
+                <div class="card-header bg-gradient-secondary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle me-2"></i>
+                        حالة الطلب
+                    </h5>
+                </div>
+                <div class="card-body text-center">
+                    {% if emp_request.status == RequestStatus.APPROVED %}
+                        <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                        <h5>تمت الموافقة على الطلب</h5>
+                        {% if emp_request.approved_by %}
+                        <p class="text-muted">بواسطة: {{ emp_request.approved_by.username }}</p>
+                        {% endif %}
+                    {% elif emp_request.status == RequestStatus.REJECTED %}
+                        <i class="fas fa-times-circle fa-3x text-danger mb-3"></i>
+                        <h5>تم رفض الطلب</h5>
+                        {% if emp_request.approved_by %}
+                        <p class="text-muted">بواسطة: {{ emp_request.approved_by.username }}</p>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

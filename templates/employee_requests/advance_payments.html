@@ -1,0 +1,162 @@
+{% extends "layout.html" %}
+
+{% block title %}السلف المالية{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2 class="mb-0">
+                    <i class="fas fa-money-bill-wave me-2"></i>
+                    السلف المالية
+                </h2>
+            </div>
+        </div>
+    </div>
+
+    <!-- إحصائيات -->
+    <div class="row mb-4">
+        <div class="col-md-6 mb-3">
+            <div class="card bg-gradient-warning text-white shadow-lg">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-0">قيد الانتظار</h6>
+                            <h3 class="mb-0 mt-2">{{ total_pending }}</h3>
+                        </div>
+                        <div class="display-4 opacity-50">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 mb-3">
+            <div class="card bg-gradient-success text-white shadow-lg">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-0">موافق عليها</h6>
+                            <h3 class="mb-0 mt-2">{{ total_approved }}</h3>
+                        </div>
+                        <div class="display-4 opacity-50">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- فلتر الحالة -->
+    <div class="card shadow-lg mb-4">
+        <div class="card-body">
+            <form method="GET" action="{{ url_for('employee_requests.advance_payments') }}" class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">الحالة</label>
+                    <select name="status" class="form-select">
+                        <option value="">الكل</option>
+                        <option value="PENDING" {% if request.args.get('status') == 'PENDING' %}selected{% endif %}>قيد الانتظار</option>
+                        <option value="APPROVED" {% if request.args.get('status') == 'APPROVED' %}selected{% endif %}>موافق عليها</option>
+                        <option value="REJECTED" {% if request.args.get('status') == 'REJECTED' %}selected{% endif %}>مرفوضة</option>
+                    </select>
+                </div>
+
+                <div class="col-md-4 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-search me-2"></i>بحث
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- جدول السلف -->
+    <div class="card shadow-lg">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>اسم الموظف</th>
+                            <th>المبلغ</th>
+                            <th>السبب</th>
+                            <th>التاريخ</th>
+                            <th>الحالة</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if requests %}
+                            {% for req in requests %}
+                            {% set advance = req.advance_payment %}
+                            <tr>
+                                <td>{{ req.id }}</td>
+                                <td>{{ req.employee.name if req.employee else 'غير محدد' }}</td>
+                                <td>{{ advance.amount if advance else 0 }} ريال</td>
+                                <td>{{ advance.reason if advance and advance.reason else 'غير محدد' }}</td>
+                                <td>{{ req.created_at.strftime('%Y-%m-%d') }}</td>
+                                <td>
+                                    {% if req.status == RequestStatus.PENDING %}
+                                        <span class="badge bg-warning">قيد الانتظار</span>
+                                    {% elif req.status == RequestStatus.APPROVED %}
+                                        <span class="badge bg-success">موافق عليها</span>
+                                    {% elif req.status == RequestStatus.REJECTED %}
+                                        <span class="badge bg-danger">مرفوضة</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('employee_requests.view_request', request_id=req.id) }}" 
+                                       class="btn btn-sm btn-info">
+                                        <i class="fas fa-eye"></i> عرض
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="7" class="text-center text-muted py-4">
+                                    <i class="fas fa-inbox fa-3x mb-3 d-block"></i>
+                                    لا توجد سلف مالية حالياً
+                                </td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            {% if pagination.pages > 1 %}
+            <nav aria-label="Page navigation" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if pagination.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('employee_requests.advance_payments', page=pagination.prev_num) }}">السابق</a>
+                    </li>
+                    {% endif %}
+
+                    {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+                        {% if page_num %}
+                            <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
+                                <a class="page-link" href="{{ url_for('employee_requests.advance_payments', page=page_num) }}">{{ page_num }}</a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled"><span class="page-link">...</span></li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if pagination.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('employee_requests.advance_payments', page=pagination.next_num) }}">التالي</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
