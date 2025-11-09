@@ -95,12 +95,12 @@ class EmployeeFinanceService:
                 installments_data.append({
                     'id': inst.id,
                     'installment_number': inst.installment_number,
-                    'amount': float(inst.amount),
-                    'due_date': inst.due_date.isoformat(),
-                    'status': inst.status.value,
-                    'status_ar': EmployeeFinanceService.get_status_arabic(inst.status),
+                    'amount': float(inst.amount) if inst.amount else 0.0,
+                    'due_date': inst.due_date.isoformat() if inst.due_date else None,
+                    'status': inst.status.value if inst.status else 'pending',
+                    'status_ar': EmployeeFinanceService.get_status_arabic(inst.status) if inst.status else 'قيد الانتظار',
                     'paid_date': inst.paid_date.isoformat() if inst.paid_date else None,
-                    'paid_amount': float(inst.paid_amount)
+                    'paid_amount': float(inst.paid_amount) if inst.paid_amount else 0.0
                 })
             
             total_liabilities += liability.amount
@@ -114,21 +114,21 @@ class EmployeeFinanceService:
             
             result.append({
                 'id': liability.id,
-                'type': liability.liability_type.value,
-                'type_ar': EmployeeFinanceService.get_liability_type_arabic(liability.liability_type),
-                'total_amount': float(liability.amount),
-                'remaining_amount': float(liability.remaining_amount),
-                'paid_amount': float(liability.paid_amount),
-                'status': liability.status.value,
-                'status_ar': EmployeeFinanceService.get_status_arabic(liability.status),
-                'start_date': liability.created_at.date().isoformat(),
+                'type': liability.liability_type.value if liability.liability_type else 'other',
+                'type_ar': EmployeeFinanceService.get_liability_type_arabic(liability.liability_type) if liability.liability_type else 'أخرى',
+                'total_amount': float(liability.amount) if liability.amount else 0.0,
+                'remaining_amount': float(liability.remaining_amount) if liability.remaining_amount else 0.0,
+                'paid_amount': float(liability.paid_amount) if liability.paid_amount else 0.0,
+                'status': liability.status.value if liability.status else 'active',
+                'status_ar': EmployeeFinanceService.get_status_arabic(liability.status) if liability.status else 'نشط',
+                'start_date': liability.created_at.date().isoformat() if liability.created_at else datetime.now().date().isoformat(),
                 'due_date': liability.due_date.isoformat() if liability.due_date else None,
-                'description': liability.description,
+                'description': liability.description if liability.description else '',
                 'installments_total': len(installments_list),
                 'installments_paid': liability.installments.filter_by(status=InstallmentStatus.PAID).count(),
                 'installments': installments_data,
-                'next_due_date': next_installment.due_date.isoformat() if next_installment else None,
-                'next_due_amount': float(next_installment.amount) if next_installment else 0
+                'next_due_date': next_installment.due_date.isoformat() if next_installment and next_installment.due_date else None,
+                'next_due_amount': float(next_installment.amount) if next_installment and next_installment.amount else 0.0
             })
         
         return {
@@ -205,21 +205,21 @@ class EmployeeFinanceService:
             'current_balance': current_balance,
             'total_earnings': float(total_earnings or 0),
             'total_deductions': float(total_deductions or 0),
-            'active_liabilities': liabilities_data['active_liabilities'],
-            'paid_liabilities': liabilities_data['paid_liabilities'],
-            'pending_requests': requests_stats['pending'],
-            'approved_requests': requests_stats['approved'],
-            'rejected_requests': requests_stats['rejected'],
+            'active_liabilities': liabilities_data.get('active_liabilities', 0) if liabilities_data else 0,
+            'paid_liabilities': liabilities_data.get('paid_liabilities', 0) if liabilities_data else 0,
+            'pending_requests': requests_stats.get('pending', 0),
+            'approved_requests': requests_stats.get('approved', 0),
+            'rejected_requests': requests_stats.get('rejected', 0),
             'last_salary': {
-                'amount': float(last_salary.net_salary) if last_salary else 0,
-                'month': f"{last_salary.year}-{last_salary.month:02d}" if last_salary else None,
-                'paid_date': last_salary.created_at.isoformat() if last_salary else None
+                'amount': float(last_salary.net_salary) if last_salary and last_salary.net_salary else 0,
+                'month': f"{last_salary.year}-{last_salary.month:02d}" if last_salary and last_salary.year and last_salary.month else None,
+                'paid_date': last_salary.created_at.isoformat() if last_salary and last_salary.created_at else None
             } if last_salary else None,
             'upcoming_installment': {
-                'amount': float(next_installment.amount),
-                'due_date': next_installment.due_date.isoformat(),
-                'liability_type': next_installment.liability.liability_type.value,
-                'liability_type_ar': EmployeeFinanceService.get_liability_type_arabic(next_installment.liability.liability_type)
+                'amount': float(next_installment.amount) if next_installment.amount else 0,
+                'due_date': next_installment.due_date.isoformat() if next_installment.due_date else None,
+                'liability_type': next_installment.liability.liability_type.value if next_installment.liability and next_installment.liability.liability_type else 'other',
+                'liability_type_ar': EmployeeFinanceService.get_liability_type_arabic(next_installment.liability.liability_type) if next_installment.liability and next_installment.liability.liability_type else 'أخرى'
             } if next_installment else None,
             'monthly_summary': monthly_summary
         }
