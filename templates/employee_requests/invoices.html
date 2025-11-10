@@ -65,20 +65,32 @@
                                 <td>{{ req.amount if req.amount else (invoice.amount if invoice else 0) }} ريال</td>
                                 <td>{{ invoice.vendor_name if invoice and invoice.vendor_name else 'غير محدد' }}</td>
                                 <td>
-                                    {% if invoice and (invoice.drive_view_url or invoice.drive_download_url) %}
-                                        {% set img_url = invoice.drive_view_url or invoice.drive_download_url %}
-                                        <a href="{{ img_url }}" target="_blank" title="معاينة الفاتورة">
-                                            <img src="{{ img_url }}" 
-                                                 alt="صورة الفاتورة" 
-                                                 class="img-thumbnail" 
-                                                 style="max-width: 60px; max-height: 60px; cursor: pointer;"
-                                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';">
-                                            <i class="fas fa-file-invoice fa-2x text-muted" style="display: none;"></i>
-                                        </a>
+                                    {% if invoice %}
+                                        {% if invoice.drive_view_url or invoice.drive_download_url %}
+                                            {% set img_url = invoice.drive_view_url or invoice.drive_download_url %}
+                                            <a href="{{ img_url }}" target="_blank" title="معاينة الفاتورة">
+                                                <img src="{{ img_url }}" 
+                                                     alt="صورة الفاتورة" 
+                                                     class="img-thumbnail" 
+                                                     style="max-width: 60px; max-height: 60px; cursor: pointer;"
+                                                     onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';">
+                                                <i class="fas fa-file-invoice fa-2x text-muted" style="display: none;"></i>
+                                            </a>
+                                        {% elif invoice.local_image_path %}
+                                            {% set img_url = url_for('static', filename=invoice.local_image_path) %}
+                                            <a href="{{ img_url }}" target="_blank" title="معاينة الفاتورة">
+                                                <img src="{{ img_url }}" 
+                                                     alt="صورة الفاتورة" 
+                                                     class="img-thumbnail" 
+                                                     style="max-width: 60px; max-height: 60px; cursor: pointer;">
+                                            </a>
+                                        {% else %}
+                                            <span class="text-muted small">
+                                                <i class="fas fa-exclamation-triangle"></i> لا توجد صورة
+                                            </span>
+                                        {% endif %}
                                     {% else %}
-                                        <span class="text-muted small">
-                                            <i class="fas fa-exclamation-triangle"></i> لا توجد صورة
-                                        </span>
+                                        <span class="text-muted small">لا توجد بيانات</span>
                                     {% endif %}
                                 </td>
                                 <td>{{ req.created_at.strftime('%Y-%m-%d') }}</td>

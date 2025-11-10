@@ -2371,6 +2371,7 @@ class InvoiceRequest(db.Model):
     vendor_name = db.Column(db.String(200), nullable=False)
     invoice_date = db.Column(db.Date)
     
+    local_image_path = db.Column(db.String(512), nullable=True)
     drive_file_id = db.Column(db.String(255), unique=True)
     drive_view_url = db.Column(db.Text)
     drive_download_url = db.Column(db.Text)

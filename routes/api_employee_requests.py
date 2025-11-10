@@ -594,17 +594,31 @@ def upload_files(current_employee, request_id):
                 temp_path = temp_file.name
             
             result = None
+            local_path = None
             
             if emp_request.request_type == RequestType.INVOICE:
+                from werkzeug.utils import secure_filename
+                import shutil
+                
+                safe_filename = secure_filename(file.filename)
+                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                unique_filename = f"{timestamp}_{safe_filename}"
+                local_path = os.path.join('uploads', 'invoices', unique_filename)
+                full_path = os.path.join('static', local_path)
+                
+                os.makedirs(os.path.dirname(full_path), exist_ok=True)
+                shutil.copy(temp_path, full_path)
+                
                 result = drive_uploader.upload_invoice_image(
                     file_path=temp_path,
                     folder_id=folder_result['folder_id'],
                     custom_name=file.filename
                 )
                 
-                if result:
-                    invoice = emp_request.invoice_data
-                    if invoice:
+                invoice = emp_request.invoice_data
+                if invoice:
+                    invoice.local_image_path = local_path
+                    if result:
                         invoice.drive_file_id = result['file_id']
                         invoice.drive_view_url = result['view_url']
                         invoice.drive_download_url = result.get('download_url')
