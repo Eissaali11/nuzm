@@ -1,0 +1,36 @@
+I/flutter (32576): 📁 [RequestsAPI] Original file path: /data/user/0/com.example.nuzum_tracker/cache/scaled_IMG-20250930-WA0153.jpg
+I/flutter (32576): 📁 [RequestsAPI] Original file exists: true
+I/flutter (32576): 📁 [RequestsAPI] Original file size: 0.15 MB
+I/flutter (32576): 📁 [RequestsAPI] Compressed file path: /data/user/0/com.example.nuzum_tracker/cache/scaled_IMG-20250930-WA0153.jpg
+I/flutter (32576): 📁 [RequestsAPI] Compressed file exists: true
+I/flutter (32576): 📁 [RequestsAPI] Compressed file size: 0.15 MB
+I/flutter (32576): 📦 [RequestsAPI] MultipartFile created: invoice_1762780654283.jpg
+I/flutter (32576): 📦 [RequestsAPI] MultipartFile length: 152454 bytes
+I/flutter (32576): 🔄 [RequestsAPI] Trying specialized invoice path: /api/v1/requests/create-invoice
+I/flutter (32576): 📤 [RequestsAPI] Uploading invoice image: /data/user/0/com.example.nuzum_tracker/cache/scaled_IMG-20250930-WA0153.jpg
+I/flutter (32576): 📋 [RequestsAPI] Form data fields: vendor_name=vggg, amount=500.0
+I/flutter (32576): 📋 [RequestsAPI] Form data has invoice_image: true
+I/flutter (32576): 🚀 [RequestsAPI] Sending POST request to: /api/v1/requests/create-invoice
+I/flutter (32576): 📥 [RequestsAPI] Response status code: 201
+I/flutter (32576): 📥 [RequestsAPI] Response data: {data: {amount: 500.0, request_id: 25, status: pending, type: invoice, upload_endpoint: /api/v1/requests/25/upload, vendor_name: vggg}, message: تم رفع الفاتورة بنجاح. استخدم endpoint /upload لرفع الصورة, success: true}
+I/flutter (32576): ✅ [RequestsAPI] Response success: true
+I/flutter (32576): ✅ [RequestsAPI] Invoice uploaded successfully!
+I/flutter (32576): 🔄 [RequestsAPI] Trying primary URL: https://eissahr.replit.app/api/v1/requests
+I/IMM_LC  (32576): hsifw() - flag : 0
+I/IMM_LC  (32576): hsifw() - mService.hideSoftInput
+I/flutter (32576): 🛰️ [Tracking] Sending location: Lat 26.325393, Lng 44.025243
+I/flutter (32576): 📤 [SEND] Sending location to: https://eissahr.replit.app/api/external/employee-location
+I/flutter (32576): 📍 [SEND] Primary URL: https://eissahr.replit.app/api/external/employee-location
+I/flutter (32576): 📍 [SEND] Backup URL: https://d72f2aef-918c-4148-9723-15870f8c7cf6-00-2c1ygyxvqoldk.riker.replit.dev/api/external/employee-location
+I/flutter (32576): 📍 [SEND] Using: PRIMARY
+I/flutter (32576): 🔑 [SEND] Token added to request
+I/flutter (32576): 🛰️ [Tracking] Sending location: Lat 26.325393, Lng 44.025243
+I/flutter (32576): 📤 [SEND] Sending location to: https://eissahr.replit.app/api/external/employee-location
+I/flutter (32576): 📍 [SEND] Primary URL: https://eissahr.replit.app/api/external/employee-location
+I/flutter (32576): 📍 [SEND] Backup URL: https://d72f2aef-918c-4148-9723-15870f8c7cf6-00-2c1ygyxvqoldk.riker.replit.dev/api/external/employee-location
+I/flutter (32576): 📍 [SEND] Using: PRIMARY
+I/flutter (32576): 🔑 [SEND] Token added to request
+I/flutter (32576): ✅ [SEND] Location sent successfully!
+I/flutter (32576): ✅ [Tracking] Location sent successfully at ٠٤:١٧ م
+I/flutter (32576): ✅ [SEND] Location sent successfully!
+I/flutter (32576): ✅ [Tracking] Location sent successfully at ٠٤:١٧
