@@ -7,15 +7,18 @@
 Preferred communication style: Simple, everyday language.
 
 ## Recent Changes (November 10, 2025)
-- **Manual Drive Upload**: Added "رفع إلى Drive" button in employee requests list for manual upload to Google Drive. Includes endpoint `/employee-requests/<id>/upload-to-drive` with comprehensive logging and error handling.
+- **Manual Drive Upload Feature**: Added "رفع إلى Drive" button in employee requests list for manual upload to Google Drive. Includes endpoint `/employee-requests/<id>/upload-to-drive` with comprehensive logging, error handling, and validation that files exist before attempting upload.
+- **API File Upload Validation**: Enhanced `/api/v1/requests/create-invoice` with immediate file existence verification after saving. If file not found on disk, transaction is rolled back with clear error message.
 - **Drive Browser Enhancement**: Updated to display ALL employee requests regardless of Google Drive upload status. Added "Local File" links and "محلي فقط" status badges for requests stored only locally.
 - **N+1 Query Fix**: Optimized Drive Browser with left joins to eliminate N+1 query performance issues when loading employee request data.
 - **Enum Compatibility**: Fixed request_type and status field compatibility issues by using mixed-case comparison in request_type_names dictionary.
 - **LSP Error Fixes**: Resolved all 14 LSP typing errors in `routes/api_employee_requests.py` by migrating from constructor arguments to SQLAlchemy 2.0 pattern.
 - **Google Drive Configuration**: Updated Google Drive folder IDs to use regular folders. Root folder: `1sePOW03BZfjkybt8p8s7D3413gJzYhL_`, Requests folder: `1Qi9mcMu0i1dVUEyT3T1-C2JNfO2rmefr`.
-- **Known Issues**: 
-  - Service Account cannot upload to regular Google Drive folders (requires Shared Drive or OAuth delegation)
-  - Flutter app uploads create database records but files don't persist to disk (investigate file upload endpoint)
+- **Root Cause Analysis**:
+  - **Flask API works correctly**: Test confirmed request #36 successfully saved file to `static/uploads/invoices/` with proper validation
+  - **Flutter client issue**: Requests #30-34 created DB records but files never persisted to disk, indicating Flutter app either (a) doesn't send multipart/form-data properly, (b) calls wrong endpoint (`/requests` instead of `/requests/create-invoice`), or (c) has file path/storage issue
+  - **Google Drive Service Account limitation**: Cannot upload files to regular Google Drive folders (403 error: "Service Accounts do not have storage quota"). Requires migration to Shared Drive or OAuth delegation
+  - **Manual upload feature working**: Successfully detects missing files and returns appropriate error messages
 
 ## System Architecture
 ### Frontend Architecture
