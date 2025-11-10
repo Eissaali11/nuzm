@@ -1588,3 +1588,53 @@ def get_employee_complete_profile_jwt(current_employee):
             'message': 'خطأ في السيرفر',
             'error': str(e)
         }), 500
+
+
+@api_employee_requests.route('/requests/<int:request_id>', methods=['DELETE'])
+@token_required
+def delete_request(current_employee, request_id):
+    """
+    حذف طلب موظف
+    
+    DELETE /api/v1/requests/{request_id}
+    
+    Returns:
+        200: تم الحذف بنجاح
+        403: ليس لديك صلاحية
+        404: الطلب غير موجود
+    """
+    try:
+        emp_request = EmployeeRequest.query.get(request_id)
+        
+        if not emp_request:
+            return jsonify({
+                'success': False,
+                'message': 'الطلب غير موجود'
+            }), 404
+        
+        # التحقق من أن الطلب يخص الموظف الحالي
+        if emp_request.employee_id != current_employee.id:
+            return jsonify({
+                'success': False,
+                'message': 'ليس لديك صلاحية لحذف هذا الطلب'
+            }), 403
+        
+        # حذف الطلب
+        db.session.delete(emp_request)
+        db.session.commit()
+        
+        logger.info(f"✅ تم حذف الطلب #{request_id} بواسطة {current_employee.name}")
+        
+        return jsonify({
+            'success': True,
+            'message': 'تم حذف الطلب بنجاح'
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"خطأ في حذف الطلب: {str(e)}")
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'message': 'خطأ في السيرفر',
+            'error': str(e)
+        }), 500
