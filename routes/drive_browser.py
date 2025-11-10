@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from flask_login import login_required, current_user
 from models import (
     db, VehicleWorkshop, VehicleHandover, VehicleExternalSafetyCheck,
-    EmployeeRequest, Vehicle, Employee, Department
+    EmployeeRequest, Vehicle, Employee, Department, InvoiceRequest
 )
 from datetime import datetime, timedelta
 from sqlalchemy import or_, and_, func, case
@@ -243,13 +243,15 @@ def build_unified_records(filters=None, page=1, per_page=50):
         EmployeeRequest.google_drive_folder_id,
         EmployeeRequest.google_drive_folder_url,
         EmployeeRequest.request_type,
+        EmployeeRequest.status,
         EmployeeRequest.created_at,
         Employee.name.label('employee_name'),
         Employee.employee_id.label('employee_number'),
-        Department.name.label('department_name')
+        Department.name.label('department_name'),
+        InvoiceRequest.local_image_path.label('invoice_local_path')
     ).join(Employee, EmployeeRequest.employee_id == Employee.id
     ).outerjoin(Department, Employee.department_id == Department.id
-    ).filter(EmployeeRequest.google_drive_folder_id.isnot(None))
+    ).outerjoin(InvoiceRequest, InvoiceRequest.request_id == EmployeeRequest.id)
     
     if filters:
         if filters.get('department_id'):
@@ -264,27 +266,56 @@ def build_unified_records(filters=None, page=1, per_page=50):
             request_query = request_query.filter(EmployeeRequest.request_type == filters['request_type'])
     
     request_type_names = {
+        'INVOICE': 'فاتورة',
         'invoice': 'فاتورة',
+        'CAR_WASH': 'غسيل سيارة',
         'car_wash': 'غسيل سيارة',
+        'CAR_INSPECTION': 'فحص وتوثيق',
         'car_inspection': 'فحص وتوثيق',
+        'ADVANCE_PAYMENT': 'سلفة',
         'advance_payment': 'سلفة'
     }
     
+    request_status_names = {
+        'PENDING': 'قيد الانتظار',
+        'pending': 'قيد الانتظار',
+        'APPROVED': 'موافق عليها',
+        'approved': 'موافق عليها',
+        'REJECTED': 'مرفوضة',
+        'rejected': 'مرفوضة'
+    }
+    
     for row in request_query.all():
+        has_drive = bool(row.google_drive_folder_id)
+        drive_status = 'success' if has_drive else 'local_only'
+        
+        local_file_path = row.invoice_local_path if hasattr(row, 'invoice_local_path') else None
+        
+        folder_url = None
+        if row.google_drive_folder_url:
+            folder_url = row.google_drive_folder_url
+        elif row.google_drive_folder_id:
+            folder_url = f"https://drive.google.com/drive/folders/{row.google_drive_folder_id}"
+        
+        request_type_str = row.request_type if isinstance(row.request_type, str) else row.request_type.name
+        status_str = row.status if isinstance(row.status, str) else row.status.name
+        
         records.append({
             'id': row.id,
             'type': 'employee_request',
-            'type_ar': request_type_names.get(row.request_type, row.request_type),
+            'type_ar': request_type_names.get(request_type_str, request_type_str),
             'entity_name': f"{row.employee_name} ({row.employee_number})",
             'department': row.department_name or 'غير محدد',
             'date': row.created_at,
             'folder_id': row.google_drive_folder_id,
-            'folder_url': row.google_drive_folder_url or f"https://drive.google.com/drive/folders/{row.google_drive_folder_id}",
+            'folder_url': folder_url,
             'pdf_link': None,
             'has_pdf': False,
-            'images_count': 0,
-            'status': 'success',
-            'uploaded_at': row.created_at
+            'images_count': 1 if local_file_path else 0,
+            'status': drive_status,
+            'uploaded_at': row.created_at,
+            'local_file_path': local_file_path,
+            'request_status': request_status_names.get(status_str, status_str)
         })
     
     records.sort(key=lambda x: x['date'] if x['date'] else datetime.min, reverse=True)

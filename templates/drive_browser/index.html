@@ -322,6 +322,11 @@
         color: white;
     }
     
+    .status-local-only {
+        background: var(--gradient-cyan);
+        color: white;
+    }
+    
     .type-badge {
         padding: 8px 18px;
         border-radius: 25px;
@@ -752,6 +757,11 @@
                                     <i class="fas fa-times"></i>
                                     فاشل
                                 </span>
+                                {% elif record.status == 'local_only' %}
+                                <span class="status-badge status-local-only">
+                                    <i class="fas fa-hdd"></i>
+                                    محلي فقط
+                                </span>
                                 {% else %}
                                 <span class="status-badge status-pending">
                                     <i class="fas fa-clock"></i>
@@ -761,10 +771,18 @@
                             </td>
                             <td>
                                 <div class="d-flex flex-wrap gap-1">
+                                    {% if record.folder_url %}
                                     <a href="{{ record.folder_url }}" target="_blank" class="action-btn btn-drive">
                                         <i class="fab fa-google-drive"></i>
                                         فتح
                                     </a>
+                                    {% endif %}
+                                    {% if record.local_file_path %}
+                                    <a href="/static/{{ record.local_file_path }}" target="_blank" class="action-btn btn-success">
+                                        <i class="fas fa-image"></i>
+                                        الصورة المحلية
+                                    </a>
+                                    {% endif %}
                                     {% if record.status == 'failed' and record.type != 'employee_request' %}
                                     <a href="{{ url_for('drive_browser.retry_upload', record_type=record.type, record_id=record.id) }}" 
                                        class="action-btn btn-retry">
