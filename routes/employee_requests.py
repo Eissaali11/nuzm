@@ -92,6 +92,50 @@ def view_request(request_id):
                          RequestStatus=RequestStatus)
 
 
+@employee_requests.route('/<int:request_id>/edit', methods=['GET', 'POST'])
+@login_required
+def edit_request(request_id):
+    if not check_access():
+        flash('ليس لديك صلاحية الوصول إلى هذا القسم', 'error')
+        return redirect(url_for('dashboard'))
+    
+    emp_request = EmployeeRequest.query.get_or_404(request_id)
+    
+    if request.method == 'POST':
+        emp_request.title = request.form.get('title')
+        emp_request.description = request.form.get('description')
+        emp_request.amount = float(request.form.get('amount', 0))
+        
+        if emp_request.request_type == RequestType.INVOICE:
+            invoice = emp_request.invoice_data
+            if invoice:
+                invoice.vendor_name = request.form.get('vendor_name')
+        
+        try:
+            db.session.commit()
+            flash('تم تحديث الطلب بنجاح', 'success')
+            return redirect(url_for('employee_requests.view_request', request_id=request_id))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'حدث خطأ أثناء التحديث: {str(e)}', 'error')
+    
+    specific_request = None
+    if emp_request.request_type == RequestType.INVOICE:
+        specific_request = InvoiceRequest.query.filter_by(request_id=request_id).first()
+    elif emp_request.request_type == RequestType.CAR_WASH:
+        specific_request = CarWashRequest.query.filter_by(request_id=request_id).first()
+    elif emp_request.request_type == RequestType.CAR_INSPECTION:
+        specific_request = CarInspectionRequest.query.filter_by(request_id=request_id).first()
+    elif emp_request.request_type == RequestType.ADVANCE_PAYMENT:
+        specific_request = AdvancePaymentRequest.query.filter_by(request_id=request_id).first()
+    
+    return render_template('employee_requests/edit.html',
+                         emp_request=emp_request,
+                         specific_request=specific_request,
+                         RequestType=RequestType,
+                         RequestStatus=RequestStatus)
+
+
 @employee_requests.route('/<int:request_id>/approve', methods=['POST'])
 @login_required
 def approve_request(request_id):
@@ -174,25 +218,34 @@ def reject_request(request_id):
     return redirect(url_for('employee_requests.view_request', request_id=request_id))
 
 
-@employee_requests.route('/<int:request_id>/delete', methods=['POST'])
+@employee_requests.route('/delete/<int:request_id>', methods=['POST'])
 @login_required
 def delete_request(request_id):
     if not check_access():
         return jsonify({'success': False, 'message': 'ليس لديك صلاحية'}), 403
     
-    emp_request = EmployeeRequest.query.get_or_404(request_id)
+    emp_request = EmployeeRequest.query.get(request_id)
+    
+    if not emp_request:
+        return jsonify({'success': False, 'message': 'الطلب غير موجود'}), 404
     
     try:
         db.session.delete(emp_request)
         db.session.commit()
         
-        flash('تم حذف الطلب بنجاح', 'success')
-        return redirect(url_for('employee_requests.index'))
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': True, 'message': 'تم حذف الطلب بنجاح'})
+        else:
+            flash('تم حذف الطلب بنجاح', 'success')
+            return redirect(url_for('employee_requests.index'))
         
     except Exception as e:
         db.session.rollback()
-        flash(f'حدث خطأ أثناء حذف الطلب: {str(e)}', 'error')
-        return redirect(url_for('employee_requests.view_request', request_id=request_id))
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': False, 'message': f'حدث خطأ: {str(e)}'}), 500
+        else:
+            flash(f'حدث خطأ أثناء حذف الطلب: {str(e)}', 'error')
+            return redirect(url_for('employee_requests.view_request', request_id=request_id))
 
 
 @employee_requests.route('/advance-payments')
