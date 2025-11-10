@@ -41,10 +41,20 @@
     <!-- جدول الفواتير -->
     <div class="card shadow-lg">
         <div class="card-body">
+            <!-- أزرار الإجراءات الجماعية -->
+            <div class="mb-3 d-flex gap-2">
+                <button id="deleteSelectedBtn" class="btn btn-danger" onclick="deleteSelected()" style="display: none;">
+                    <i class="fas fa-trash me-2"></i>حذف المحدد (<span id="selectedCount">0</span>)
+                </button>
+            </div>
+
             <div class="table-responsive">
                 <table class="table table-hover">
                     <thead>
                         <tr>
+                            <th style="width: 40px;">
+                                <input type="checkbox" id="selectAll" onchange="toggleSelectAll()" class="form-check-input">
+                            </th>
                             <th>#</th>
                             <th>اسم الموظف</th>
                             <th>المبلغ</th>
@@ -60,6 +70,9 @@
                             {% for req in requests %}
                             {% set invoice = req.invoice %}
                             <tr>
+                                <td>
+                                    <input type="checkbox" class="form-check-input row-checkbox" value="{{ req.id }}" onchange="updateSelectedCount()">
+                                </td>
                                 <td>{{ req.id }}</td>
                                 <td>{{ req.employee.name if req.employee else 'غير محدد' }}</td>
                                 <td>{{ req.amount if req.amount else (invoice.amount if invoice else 0) }} ريال</td>
@@ -123,7 +136,7 @@
                             {% endfor %}
                         {% else %}
                             <tr>
-                                <td colspan="8" class="text-center text-muted py-4">
+                                <td colspan="9" class="text-center text-muted py-4">
                                     <i class="fas fa-inbox fa-3x mb-3 d-block"></i>
                                     لا توجد فواتير حالياً
                                 </td>
@@ -189,6 +202,78 @@ function deleteRequest(requestId) {
             alert('❌ حدث خطأ أثناء الحذف');
         });
     }
+}
+
+function toggleSelectAll() {
+    const selectAll = document.getElementById('selectAll');
+    const checkboxes = document.querySelectorAll('.row-checkbox');
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = selectAll.checked;
+    });
+    
+    updateSelectedCount();
+}
+
+function updateSelectedCount() {
+    const checkboxes = document.querySelectorAll('.row-checkbox:checked');
+    const count = checkboxes.length;
+    
+    document.getElementById('selectedCount').textContent = count;
+    
+    const deleteBtn = document.getElementById('deleteSelectedBtn');
+    if (count > 0) {
+        deleteBtn.style.display = 'block';
+    } else {
+        deleteBtn.style.display = 'none';
+    }
+    
+    // تحديث حالة "تحديد الكل"
+    const allCheckboxes = document.querySelectorAll('.row-checkbox');
+    const selectAll = document.getElementById('selectAll');
+    selectAll.checked = allCheckboxes.length > 0 && allCheckboxes.length === count;
+}
+
+function deleteSelected() {
+    const checkboxes = document.querySelectorAll('.row-checkbox:checked');
+    const ids = Array.from(checkboxes).map(cb => cb.value);
+    
+    if (ids.length === 0) {
+        alert('⚠️ الرجاء تحديد طلب واحد على الأقل');
+        return;
+    }
+    
+    if (!confirm(`هل أنت متأكد من حذف ${ids.length} طلب؟\nهذا الإجراء لا يمكن التراجع عنه.`)) {
+        return;
+    }
+    
+    let deletePromises = ids.map(id => {
+        return fetch(`/employee-requests/delete/${id}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+        }).then(response => response.json());
+    });
+    
+    Promise.all(deletePromises)
+        .then(results => {
+            const successCount = results.filter(r => r.success).length;
+            const failCount = results.length - successCount;
+            
+            if (failCount === 0) {
+                alert(`✅ تم حذف ${successCount} طلب بنجاح`);
+            } else {
+                alert(`⚠️ تم حذف ${successCount} طلب. فشل حذف ${failCount} طلب.`);
+            }
+            
+            location.reload();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('❌ حدث خطأ أثناء الحذف الجماعي');
+        });
 }
 </script>
 {% endblock %}
