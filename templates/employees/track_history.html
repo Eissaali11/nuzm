@@ -348,6 +348,67 @@
         .leaflet-popup-tip {
             background: #f8fafc;
         }
+        
+        /* أزرار تبديل الخرائط المخصصة */
+        .map-toggle-buttons {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .map-toggle-btn {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.95) 100%);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(129, 140, 248, 0.3);
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-family: 'Cairo';
+            font-weight: 600;
+            font-size: 14px;
+            color: #1e1b4b;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 180px;
+        }
+        
+        .map-toggle-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.3);
+            border-color: rgba(129, 140, 248, 0.6);
+        }
+        
+        .map-toggle-btn.active {
+            background: linear-gradient(135deg, #818cf8 0%, #a78bfa 100%);
+            color: white;
+            border-color: rgba(255, 255, 255, 0.3);
+            box-shadow: 0 4px 20px rgba(129, 140, 248, 0.5);
+        }
+        
+        .map-toggle-btn i {
+            font-size: 18px;
+        }
+        
+        /* تحسين أداة التحكم الافتراضية */
+        .leaflet-control-layers {
+            border-radius: 12px !important;
+            border: 2px solid rgba(129, 140, 248, 0.3) !important;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2) !important;
+        }
+        
+        .leaflet-control-layers-toggle {
+            background-color: white !important;
+            width: 40px !important;
+            height: 40px !important;
+            border-radius: 12px !important;
+        }
     </style>
 {% endblock %}
 
@@ -418,6 +479,23 @@
         
         <div class="map-container">
             <div id="map"></div>
+            
+            <!-- أزرار تبديل الخرائط -->
+            <div class="map-toggle-buttons">
+                <button class="map-toggle-btn active" onclick="switchMapLayer('street')" id="streetBtn">
+                    <i class="fas fa-map"></i>
+                    خريطة الشوارع
+                </button>
+                <button class="map-toggle-btn" onclick="switchMapLayer('satellite')" id="satelliteBtn">
+                    <i class="fas fa-satellite"></i>
+                    القمر الصناعي
+                </button>
+                <button class="map-toggle-btn" onclick="switchMapLayer('hybrid')" id="hybridBtn">
+                    <i class="fas fa-layer-group"></i>
+                    خريطة هجينة
+                </button>
+            </div>
+            
             <div class="employee-map-badge">
                 {% if employee_photo_url %}
                 <img src="{{ employee_photo_url }}" alt="{{ employee.name }}">
@@ -522,6 +600,37 @@
             imperial: false,
             position: 'bottomleft'
         }).addTo(map);
+        
+        // وظيفة تبديل طبقات الخريطة
+        let currentLayer = 'street';
+        
+        function switchMapLayer(layerType) {
+            // إزالة الطبقة الحالية
+            if (currentLayer === 'street') {
+                map.removeLayer(streetLayer);
+            } else if (currentLayer === 'satellite') {
+                map.removeLayer(satelliteLayer);
+            } else if (currentLayer === 'hybrid') {
+                map.removeLayer(hybridLayer);
+            }
+            
+            // إضافة الطبقة الجديدة
+            if (layerType === 'street') {
+                map.addLayer(streetLayer);
+            } else if (layerType === 'satellite') {
+                map.addLayer(satelliteLayer);
+            } else if (layerType === 'hybrid') {
+                map.addLayer(hybridLayer);
+            }
+            
+            currentLayer = layerType;
+            
+            // تحديث الأزرار
+            document.querySelectorAll('.map-toggle-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.getElementById(layerType + 'Btn').classList.add('active');
+        }
         
         async function drawRoutedPath(coordinates, speeds) {
             if (coordinates.length < 2) return null;
