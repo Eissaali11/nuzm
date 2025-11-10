@@ -1259,7 +1259,19 @@ def create_invoice_request(current_employee):
         os.makedirs(upload_folder, exist_ok=True)
         
         file_path = os.path.join(upload_folder, unique_filename)
+        logger.info(f"💾 حفظ الملف: {file_path}")
+        
+        # حفظ الملف على القرص
         invoice_image.save(file_path)
+        
+        # التحقق الفوري من وجود الملف
+        if not os.path.exists(file_path):
+            logger.error(f"❌ الملف لم يُحفظ على القرص: {file_path}")
+            db.session.rollback()
+            raise RuntimeError(f"Failed to save file to disk: {file_path}")
+        
+        file_size = os.path.getsize(file_path)
+        logger.info(f"✅ الملف تم حفظه بنجاح - الحجم: {file_size} bytes")
         
         # حفظ المسار في قاعدة البيانات
         relative_path = os.path.join('uploads', 'invoices', unique_filename)
