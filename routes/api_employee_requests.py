@@ -560,7 +560,7 @@ def upload_files(current_employee, request_id):
         request_type=type_map.get(emp_request.request_type, 'other'),
         request_id=emp_request.id,
         employee_name=current_employee.name,
-        vehicle_number=vehicle_number
+        vehicle_number=vehicle_number or ''
     )
     
     if not folder_result:
@@ -586,6 +586,7 @@ def upload_files(current_employee, request_id):
             continue
         
         temp_file = None
+        temp_path = None
         try:
             file_ext = file.filename.rsplit('.', 1)[1].lower()
             
@@ -689,7 +690,7 @@ def upload_files(current_employee, request_id):
             logger.error(f"Error uploading file {file.filename}: {str(e)}")
             continue
         finally:
-            if temp_file and os.path.exists(temp_path):
+            if temp_path and os.path.exists(temp_path):
                 try:
                     os.unlink(temp_path)
                 except:
@@ -1114,31 +1115,29 @@ def create_advance_payment_request(current_employee):
         }), 400
     
     try:
-        new_request = EmployeeRequest(
-            employee_id=current_employee.id,
-            request_type=RequestType.ADVANCE_PAYMENT,
-            title=f"طلب سلفة - {requested_amount} ريال",
-            status=RequestStatus.PENDING,
-            amount=requested_amount
-        )
+        new_request = EmployeeRequest()
+        new_request.employee_id = current_employee.id
+        new_request.request_type = RequestType.ADVANCE_PAYMENT
+        new_request.title = f"طلب سلفة - {requested_amount} ريال"
+        new_request.status = RequestStatus.PENDING
+        new_request.amount = requested_amount
         
         db.session.add(new_request)
         db.session.flush()
         
         monthly_installment = requested_amount / installments
         
-        advance_payment = AdvancePaymentRequest(
-            request_id=new_request.id,
-            employee_name=current_employee.name,
-            employee_number=current_employee.employee_id,
-            national_id=current_employee.national_id,
-            job_title=current_employee.job_title or '',
-            department_name=current_employee.department.name if current_employee.department else '',
-            requested_amount=requested_amount,
-            installments=installments,
-            installment_amount=monthly_installment,
-            reason=reason
-        )
+        advance_payment = AdvancePaymentRequest()
+        advance_payment.request_id = new_request.id
+        advance_payment.employee_name = current_employee.name
+        advance_payment.employee_number = current_employee.employee_id
+        advance_payment.national_id = current_employee.national_id
+        advance_payment.job_title = current_employee.job_title or ''
+        advance_payment.department_name = current_employee.department.name if current_employee.department else ''
+        advance_payment.requested_amount = requested_amount
+        advance_payment.installments = installments
+        advance_payment.installment_amount = monthly_installment
+        advance_payment.reason = reason
         
         db.session.add(advance_payment)
         db.session.commit()
@@ -1225,26 +1224,31 @@ def create_invoice_request(current_employee):
         }), 400
     
     try:
-        new_request = EmployeeRequest(
-            employee_id=current_employee.id,
-            request_type=RequestType.INVOICE,
-            title=f"فاتورة - {vendor_name}",
-            status=RequestStatus.PENDING,
-            amount=float(amount)
-        )
+        new_request = EmployeeRequest()
+        new_request.employee_id = current_employee.id
+        new_request.request_type = RequestType.INVOICE
+        new_request.title = f"فاتورة - {vendor_name}"
+        new_request.status = RequestStatus.PENDING
+        new_request.amount = float(amount)
         
         db.session.add(new_request)
         db.session.flush()
         
-        invoice_request = InvoiceRequest(
-            request_id=new_request.id,
-            vendor_name=vendor_name
-        )
+        invoice_request = InvoiceRequest()
+        invoice_request.request_id = new_request.id
+        invoice_request.vendor_name = vendor_name
         
         db.session.add(invoice_request)
         db.session.flush()
         
         # حفظ الصورة محلياً
+        if not invoice_image.filename:
+            db.session.rollback()
+            return jsonify({
+                'success': False,
+                'message': 'اسم الملف غير صالح'
+            }), 400
+        
         filename = secure_filename(invoice_image.filename)
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         unique_filename = f"{new_request.id}_{timestamp}_{filename}"
@@ -1340,12 +1344,11 @@ def create_car_wash_request(current_employee):
         }), 404
     
     try:
-        new_request = EmployeeRequest(
-            employee_id=current_employee.id,
-            request_type=RequestType.CAR_WASH,
-            title=f"طلب غسيل سيارة - {vehicle.plate_number}",
-            status=RequestStatus.PENDING
-        )
+        new_request = EmployeeRequest()
+        new_request.employee_id = current_employee.id
+        new_request.request_type = RequestType.CAR_WASH
+        new_request.title = f"طلب غسيل سيارة - {vehicle.plate_number}"
+        new_request.status = RequestStatus.PENDING
         
         db.session.add(new_request)
         db.session.flush()
@@ -1353,13 +1356,12 @@ def create_car_wash_request(current_employee):
         requested_date_str = request.form.get('requested_date')
         requested_date = datetime.strptime(requested_date_str, '%Y-%m-%d').date() if requested_date_str else None
         
-        car_wash_request = CarWashRequest(
-            request_id=new_request.id,
-            vehicle_id=vehicle_id,
-            service_type=service_type,
-            requested_date=requested_date,
-            notes=request.form.get('notes', '')
-        )
+        car_wash_request = CarWashRequest()
+        car_wash_request.request_id = new_request.id
+        car_wash_request.vehicle_id = vehicle_id
+        car_wash_request.service_type = service_type
+        car_wash_request.requested_date = requested_date
+        car_wash_request.notes = request.form.get('notes', '')
         
         db.session.add(car_wash_request)
         
@@ -1370,7 +1372,7 @@ def create_car_wash_request(current_employee):
         for photo_field in required_photos:
             if photo_field in request.files:
                 photo_file = request.files[photo_field]
-                if photo_file and allowed_file(photo_file.filename):
+                if photo_file and photo_file.filename and allowed_file(photo_file.filename):
                     filename = secure_filename(photo_file.filename)
                     file_ext = filename.rsplit('.', 1)[1].lower()
                     unique_filename = f"wash_{new_request.id}_{photo_field}_{uuid.uuid4().hex[:8]}.{file_ext}"
@@ -1385,12 +1387,11 @@ def create_car_wash_request(current_employee):
                         'photo_left_side': MediaType.LEFT
                     }
                     
-                    car_wash_media = CarWashMedia(
-                        wash_request_id=car_wash_request.id,
-                        media_type=media_type_map[photo_field],
-                        file_path=file_path,
-                        original_filename=filename
-                    )
+                    car_wash_media = CarWashMedia()
+                    car_wash_media.wash_request_id = car_wash_request.id
+                    car_wash_media.media_type = media_type_map[photo_field]
+                    car_wash_media.file_path = file_path
+                    car_wash_media.original_filename = filename
                     db.session.add(car_wash_media)
         
         db.session.commit()
@@ -1469,22 +1470,20 @@ def create_car_inspection_request(current_employee):
     try:
         inspection_type_ar = 'فحص تسليم' if inspection_type == 'delivery' else 'فحص استلام'
         
-        new_request = EmployeeRequest(
-            employee_id=current_employee.id,
-            request_type=RequestType.CAR_INSPECTION,
-            title=f"{inspection_type_ar} - {vehicle.plate_number}",
-            status=RequestStatus.PENDING
-        )
+        new_request = EmployeeRequest()
+        new_request.employee_id = current_employee.id
+        new_request.request_type = RequestType.CAR_INSPECTION
+        new_request.title = f"{inspection_type_ar} - {vehicle.plate_number}"
+        new_request.status = RequestStatus.PENDING
         
         db.session.add(new_request)
         db.session.flush()
         
-        car_inspection_request = CarInspectionRequest(
-            request_id=new_request.id,
-            vehicle_id=vehicle_id,
-            inspection_type=inspection_type,
-            description=data.get('description', '')
-        )
+        car_inspection_request = CarInspectionRequest()
+        car_inspection_request.request_id = new_request.id
+        car_inspection_request.vehicle_id = vehicle_id
+        car_inspection_request.inspection_type = inspection_type
+        car_inspection_request.description = data.get('description', '')
         
         db.session.add(car_inspection_request)
         db.session.commit()
