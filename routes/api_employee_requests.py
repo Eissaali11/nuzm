@@ -556,11 +556,13 @@ def upload_files(current_employee, request_id):
         elif emp_request.request_type == RequestType.CAR_INSPECTION and emp_request.inspection_data and emp_request.inspection_data.vehicle:
             vehicle_number = emp_request.inspection_data.vehicle.plate_number
     
+    vehicle_number_str = vehicle_number if vehicle_number else ''
+    
     folder_result = drive_uploader.create_request_folder(
         request_type=type_map.get(emp_request.request_type, 'other'),
         request_id=emp_request.id,
         employee_name=current_employee.name,
-        vehicle_number=vehicle_number or ''
+        vehicle_number=vehicle_number_str
     )
     
     if not folder_result:
@@ -1360,8 +1362,7 @@ def create_car_wash_request(current_employee):
         car_wash_request.request_id = new_request.id
         car_wash_request.vehicle_id = vehicle_id
         car_wash_request.service_type = service_type
-        car_wash_request.requested_date = requested_date
-        car_wash_request.notes = request.form.get('notes', '')
+        car_wash_request.scheduled_date = requested_date
         
         db.session.add(car_wash_request)
         
@@ -1390,8 +1391,6 @@ def create_car_wash_request(current_employee):
                     car_wash_media = CarWashMedia()
                     car_wash_media.wash_request_id = car_wash_request.id
                     car_wash_media.media_type = media_type_map[photo_field]
-                    car_wash_media.file_path = file_path
-                    car_wash_media.original_filename = filename
                     db.session.add(car_wash_media)
         
         db.session.commit()
@@ -1483,7 +1482,6 @@ def create_car_inspection_request(current_employee):
         car_inspection_request.request_id = new_request.id
         car_inspection_request.vehicle_id = vehicle_id
         car_inspection_request.inspection_type = inspection_type
-        car_inspection_request.description = data.get('description', '')
         
         db.session.add(car_inspection_request)
         db.session.commit()
