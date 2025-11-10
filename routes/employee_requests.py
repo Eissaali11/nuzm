@@ -421,7 +421,7 @@ def upload_to_drive(request_id):
             request_type=request_type_str,
             request_id=request_id,
             employee_name=employee_name,
-            vehicle_number=vehicle_number,
+            vehicle_number=vehicle_number or '',
             date=emp_request.created_at
         )
         
