@@ -4,7 +4,14 @@ API Endpoints الخارجية - بدون مصادقة
 """
 from flask import Blueprint, request, jsonify
 from datetime import datetime
-from models import Employee, EmployeeLocation, Geofence, GeofenceEvent, employee_departments, VehicleHandover, db
+from models import (
+    Employee, EmployeeLocation, Geofence, GeofenceEvent, employee_departments, 
+    VehicleHandover, db, Attendance, Salary, EmployeeRequest, EmployeeLiability,
+    Document, MobileDevice, SimCard, Department, Vehicle
+)
+from sqlalchemy import func, and_, or_, extract
+from sqlalchemy.orm import joinedload
+from datetime import date, timedelta
 import os
 import logging
 
@@ -737,4 +744,598 @@ def verify_employee(employee_id, national_id):
         return jsonify({
             'exists': False,
             'error': 'حدث خطأ في الخادم'
+        }), 500
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# دوال مساعدة لنقطة النهاية الشاملة
+# ═══════════════════════════════════════════════════════════════════════
+
+def safe_get(obj, attr, default=None):
+    """جلب آمن للبيانات مع معالجة القيم الفارغة"""
+    try:
+        value = getattr(obj, attr, default)
+        return value if value is not None else default
+    except:
+        return default
+
+
+def build_full_url(path):
+    """بناء رابط كامل للملفات"""
+    if not path:
+        return None
+    if path.startswith('http'):
+        return path
+    base_url = request.host_url.rstrip('/')
+    return f"{base_url}/{path.lstrip('/')}"
+
+
+def format_date(date_obj):
+    """تنسيق التاريخ بشكل آمن"""
+    if not date_obj:
+        return None
+    try:
+        return date_obj.strftime('%Y-%m-%d') if hasattr(date_obj, 'strftime') else str(date_obj)
+    except:
+        return None
+
+
+def format_datetime(datetime_obj):
+    """تنسيق التاريخ والوقت بشكل آمن"""
+    if not datetime_obj:
+        return None
+    try:
+        return datetime_obj.strftime('%Y-%m-%d %H:%M:%S') if hasattr(datetime_obj, 'strftime') else str(datetime_obj)
+    except:
+        return None
+
+
+@api_external_bp.route('/employee-profile/<employee_id>', methods=['GET'])
+def get_complete_employee_profile(employee_id):
+    """
+    جلب الملف الشخصي الكامل للموظف
+    
+    نقطة نهاية شاملة تعيد جميع بيانات الموظف في JSON واحد:
+    - البيانات الأساسية
+    - الحضور والغياب
+    - السيارات (الحالية + التاريخ)
+    - الرواتب
+    - الطلبات
+    - الذمم المالية
+    - الوثائق
+    - الأجهزة والعهدة
+    - الإحصائيات الشاملة
+    
+    استخدام:
+    GET /api/external/employee-profile/5216?api_key=YOUR_API_KEY
+    
+    يحتاج إلى API key للوصول
+    """
+    try:
+        # التحقق من مفتاح API
+        api_key = request.args.get('api_key')
+        if not api_key or api_key != LOCATION_API_KEY:
+            logger.warning(f"❌ محاولة وصول غير مصرح بها إلى employee-profile من {request.remote_addr}")
+            return jsonify({
+                'success': False,
+                'message': 'غير مصرح. يرجى التحقق من المفتاح',
+                'error': 'Invalid or missing API key'
+            }), 401
+        
+        # البحث عن الموظف باستخدام الرقم الوظيفي
+        employee = Employee.query.filter_by(employee_id=employee_id).first()
+        
+        if not employee:
+            logger.warning(f"❌ موظف غير موجود: {employee_id}")
+            return jsonify({
+                'success': False,
+                'message': 'الموظف غير موجود',
+                'error': 'Employee not found'
+            }), 404
+        
+        logger.info(f"🔍 جلب الملف الشامل للموظف: {employee.name} ({employee_id})")
+        
+        # ═══════════════════════════════════════════════════════════════
+        # القسم 1: البيانات الأساسية للموظف
+        # ═══════════════════════════════════════════════════════════════
+        
+        # جلب القسم
+        department = None
+        if employee.departments:
+            dept = employee.departments[0]
+            department = safe_get(dept, 'name')
+        
+        employee_data = {
+            'job_number': safe_get(employee, 'employee_id'),
+            'name': safe_get(employee, 'name', 'غير محدد'),
+            'national_id': safe_get(employee, 'national_id'),
+            'birth_date': format_date(safe_get(employee, 'birth_date')),
+            'nationality': safe_get(employee, 'nationality'),
+            'contract_type': safe_get(employee, 'contract_type'),
+            'employee_type': safe_get(employee, 'employee_type', 'regular'),
+            'status': safe_get(employee, 'status', 'active'),
+            'join_date': format_date(safe_get(employee, 'join_date')),
+            'contract_status': safe_get(employee, 'contract_status'),
+            'license_status': safe_get(employee, 'license_status'),
+            
+            'contact': {
+                'mobile': safe_get(employee, 'mobile'),
+                'mobile_personal': safe_get(employee, 'mobilePersonal'),
+                'email': safe_get(employee, 'email')
+            },
+            
+            'work': {
+                'department': department,
+                'job_title': safe_get(employee, 'job_title'),
+                'location': safe_get(employee, 'location'),
+                'project': safe_get(employee, 'project')
+            },
+            
+            'salary_info': {
+                'basic_salary': safe_get(employee, 'basic_salary', 0.0),
+                'daily_wage': safe_get(employee, 'daily_wage', 0.0),
+                'attendance_bonus': safe_get(employee, 'attendance_bonus', 0.0)
+            },
+            
+            'images': {
+                'profile': build_full_url(safe_get(employee, 'profile_image')),
+                'national_id': build_full_url(safe_get(employee, 'national_id_image')),
+                'license': build_full_url(safe_get(employee, 'license_image'))
+            },
+            
+            'sponsor': {
+                'current_sponsor_name': safe_get(employee, 'current_sponsor_name'),
+                'sponsor_id': safe_get(employee, 'sponsor_id'),
+                'sponsor_mobile': safe_get(employee, 'sponsor_mobile')
+            },
+            
+            'custody': {
+                'has_mobile_custody': safe_get(employee, 'has_mobile_custody', False),
+                'mobile_type': safe_get(employee, 'mobile_type'),
+                'mobile_imei': safe_get(employee, 'mobile_imei')
+            }
+        }
+        
+        # ═══════════════════════════════════════════════════════════════
+        # القسم 2: الحضور والغياب
+        # ═══════════════════════════════════════════════════════════════
+        
+        attendance_data = {
+            'summary': {
+                'total_days': 0,
+                'present_days': 0,
+                'absent_days': 0,
+                'late_days': 0,
+                'attendance_rate': 0.0,
+                'total_hours_worked': 0.0,
+                'average_hours_per_day': 0.0
+            },
+            'recent_records': [],
+            'last_30_days': {
+                'present': 0,
+                'absent': 0,
+                'late': 0
+            }
+        }
+        
+        try:
+            # جلب سجلات الحضور لآخر 60 يوم
+            sixty_days_ago = date.today() - timedelta(days=60)
+            thirty_days_ago = date.today() - timedelta(days=30)
+            
+            attendance_records = Attendance.query.filter(
+                Attendance.employee_id == employee.id,
+                Attendance.date >= sixty_days_ago
+            ).order_by(Attendance.date.desc()).all()
+            
+            if attendance_records:
+                total_days = len(attendance_records)
+                present_days = sum(1 for a in attendance_records if safe_get(a, 'status') == 'present')
+                absent_days = sum(1 for a in attendance_records if safe_get(a, 'status') == 'absent')
+                late_days = sum(1 for a in attendance_records if safe_get(a, 'is_late', False))
+                
+                total_hours = sum(safe_get(a, 'hours_worked', 0.0) for a in attendance_records)
+                avg_hours = total_hours / total_days if total_days > 0 else 0.0
+                attendance_rate = (present_days / total_days * 100) if total_days > 0 else 0.0
+                
+                attendance_data['summary'] = {
+                    'total_days': total_days,
+                    'present_days': present_days,
+                    'absent_days': absent_days,
+                    'late_days': late_days,
+                    'attendance_rate': round(attendance_rate, 2),
+                    'total_hours_worked': round(total_hours, 1),
+                    'average_hours_per_day': round(avg_hours, 1)
+                }
+                
+                # آخر 5 سجلات
+                attendance_data['recent_records'] = [
+                    {
+                        'date': format_date(safe_get(a, 'date')),
+                        'check_in': a.check_in.strftime('%H:%M') if a.check_in else None,
+                        'check_out': a.check_out.strftime('%H:%M') if a.check_out else None,
+                        'status': safe_get(a, 'status'),
+                        'hours_worked': safe_get(a, 'hours_worked', 0.0),
+                        'overtime_hours': safe_get(a, 'overtime_hours', 0.0),
+                        'is_late': safe_get(a, 'is_late', False),
+                        'notes': safe_get(a, 'notes')
+                    }
+                    for a in attendance_records[:5]
+                ]
+                
+                # إحصائيات آخر 30 يوم
+                last_30_records = [a for a in attendance_records if a.date and a.date >= thirty_days_ago]
+                attendance_data['last_30_days'] = {
+                    'present': sum(1 for a in last_30_records if safe_get(a, 'status') == 'present'),
+                    'absent': sum(1 for a in last_30_records if safe_get(a, 'status') == 'absent'),
+                    'late': sum(1 for a in last_30_records if safe_get(a, 'is_late', False))
+                }
+        except Exception as e:
+            logger.warning(f"خطأ في جلب بيانات الحضور: {str(e)}")
+        
+        # ═══════════════════════════════════════════════════════════════
+        # القسم 3: السيارات
+        # ═══════════════════════════════════════════════════════════════
+        
+        vehicles_data = {
+            'current': None,
+            'history': [],
+            'total_vehicles_used': 0
+        }
+        
+        try:
+            # جلب جميع السيارات مع التحميل المسبق (لتجنب N+1)
+            all_handovers = VehicleHandover.query.options(
+                joinedload(VehicleHandover.vehicle)
+            ).filter(
+                VehicleHandover.employee_id == employee.id
+            ).order_by(VehicleHandover.created_at.desc()).all()
+            
+            vehicles_data['total_vehicles_used'] = len(all_handovers)
+            
+            # جلب السيارة الحالية (آخر تسليم بدون استلام)
+            current_handover = None
+            for handover in all_handovers:
+                if handover.handover_type == 'delivery' and handover.vehicle_id:
+                    current_handover = handover
+                    break
+            
+            if current_handover and current_handover.vehicle:
+                vehicle = current_handover.vehicle
+                vehicles_data['current'] = {
+                    'id': safe_get(vehicle, 'id'),
+                    'plate_number': safe_get(vehicle, 'plate_number'),
+                    'make': safe_get(vehicle, 'make'),
+                    'model': safe_get(vehicle, 'model'),
+                    'year': safe_get(vehicle, 'year'),
+                    'color': safe_get(vehicle, 'color'),
+                    'status': safe_get(vehicle, 'status'),
+                    'assigned_date': format_date(safe_get(current_handover, 'created_at')),
+                    'handover_type': safe_get(current_handover, 'handover_type')
+                }
+            
+            # بناء تاريخ السيارات (آخر 5، مستثنياً السيارة الحالية)
+            history_count = 0
+            for handover in all_handovers:
+                if history_count >= 5:
+                    break
+                if handover.vehicle and handover != current_handover:
+                    vehicles_data['history'].append({
+                        'plate_number': safe_get(handover.vehicle, 'plate_number'),
+                        'make': safe_get(handover.vehicle, 'make'),
+                        'model': safe_get(handover.vehicle, 'model'),
+                        'assigned_date': format_date(safe_get(handover, 'created_at')),
+                        'handover_type': safe_get(handover, 'handover_type')
+                    })
+                    history_count += 1
+        except Exception as e:
+            logger.warning(f"خطأ في جلب بيانات السيارات: {str(e)}")
+        
+        # ═══════════════════════════════════════════════════════════════
+        # القسم 4: الرواتب
+        # ═══════════════════════════════════════════════════════════════
+        
+        salaries_data = {
+            'summary': {
+                'total_months': 0,
+                'total_paid': 0.0,
+                'average_monthly': 0.0,
+                'last_salary': None
+            },
+            'recent_records': [],
+            'yearly_total': 0.0
+        }
+        
+        try:
+            # جلب الرواتب لآخر 12 شهر
+            current_year = date.today().year
+            
+            salary_records = Salary.query.filter(
+                Salary.employee_id == employee.id
+            ).order_by(Salary.year.desc(), Salary.month.desc()).limit(12).all()
+            
+            if salary_records:
+                total_paid = sum(safe_get(s, 'net_salary', 0.0) for s in salary_records)
+                total_months = len(salary_records)
+                avg_monthly = total_paid / total_months if total_months > 0 else 0.0
+                
+                # آخر راتب
+                last_salary_record = salary_records[0]
+                
+                salaries_data['summary'] = {
+                    'total_months': total_months,
+                    'total_paid': round(total_paid, 2),
+                    'average_monthly': round(avg_monthly, 2),
+                    'last_salary': {
+                        'month': f"{safe_get(last_salary_record, 'year')}-{safe_get(last_salary_record, 'month'):02d}",
+                        'amount': safe_get(last_salary_record, 'net_salary', 0.0),
+                        'paid_date': format_date(safe_get(last_salary_record, 'payment_date'))
+                    } if last_salary_record else None
+                }
+                
+                # آخر 6 سجلات
+                salaries_data['recent_records'] = [
+                    {
+                        'month': safe_get(s, 'month'),
+                        'year': safe_get(s, 'year'),
+                        'basic_salary': safe_get(s, 'basic_salary', 0.0),
+                        'allowances': safe_get(s, 'allowances', 0.0),
+                        'deductions': safe_get(s, 'deductions', 0.0),
+                        'overtime_pay': safe_get(s, 'overtime_pay', 0.0),
+                        'bonus': safe_get(s, 'bonus', 0.0),
+                        'net_salary': safe_get(s, 'net_salary', 0.0),
+                        'is_paid': safe_get(s, 'is_paid', False),
+                        'payment_date': format_date(safe_get(s, 'payment_date')),
+                        'notes': safe_get(s, 'notes')
+                    }
+                    for s in salary_records[:6]
+                ]
+                
+                # مجموع السنة الحالية
+                yearly_records = [s for s in salary_records if safe_get(s, 'year') == current_year]
+                salaries_data['yearly_total'] = round(sum(safe_get(s, 'net_salary', 0.0) for s in yearly_records), 2)
+        except Exception as e:
+            logger.warning(f"خطأ في جلب بيانات الرواتب: {str(e)}")
+        
+        # ═══════════════════════════════════════════════════════════════
+        # القسم 5: الطلبات
+        # ═══════════════════════════════════════════════════════════════
+        
+        requests_data = {
+            'summary': {
+                'total': 0,
+                'pending': 0,
+                'approved': 0,
+                'rejected': 0
+            },
+            'by_type': {},
+            'recent': []
+        }
+        
+        try:
+            employee_requests = EmployeeRequest.query.filter(
+                EmployeeRequest.employee_id == employee.id
+            ).order_by(EmployeeRequest.created_at.desc()).all()
+            
+            if employee_requests:
+                requests_data['summary']['total'] = len(employee_requests)
+                requests_data['summary']['pending'] = sum(1 for r in employee_requests if safe_get(r, 'status') == 'pending')
+                requests_data['summary']['approved'] = sum(1 for r in employee_requests if safe_get(r, 'status') == 'approved')
+                requests_data['summary']['rejected'] = sum(1 for r in employee_requests if safe_get(r, 'status') == 'rejected')
+                
+                # تصنيف حسب النوع
+                for req in employee_requests:
+                    req_type = str(safe_get(req, 'request_type', 'unknown')).lower()
+                    requests_data['by_type'][req_type] = requests_data['by_type'].get(req_type, 0) + 1
+                
+                # آخر 10 طلبات
+                requests_data['recent'] = [
+                    {
+                        'id': safe_get(r, 'id'),
+                        'type': str(safe_get(r, 'request_type')),
+                        'status': str(safe_get(r, 'status')),
+                        'amount': safe_get(r, 'amount', 0.0),
+                        'created_at': format_datetime(safe_get(r, 'created_at')),
+                        'notes': safe_get(r, 'notes')
+                    }
+                    for r in employee_requests[:10]
+                ]
+        except Exception as e:
+            logger.warning(f"خطأ في جلب بيانات الطلبات: {str(e)}")
+        
+        # ═══════════════════════════════════════════════════════════════
+        # القسم 6: الذمم المالية
+        # ═══════════════════════════════════════════════════════════════
+        
+        liabilities_data = {
+            'summary': {
+                'total_active': 0,
+                'total_amount': 0.0,
+                'total_paid': 0.0,
+                'remaining': 0.0
+            },
+            'records': []
+        }
+        
+        try:
+            liabilities = EmployeeLiability.query.filter(
+                EmployeeLiability.employee_id == employee.id
+            ).order_by(EmployeeLiability.created_at.desc()).all()
+            
+            if liabilities:
+                active_liabilities = [l for l in liabilities if str(safe_get(l, 'status')).lower() == 'active']
+                liabilities_data['summary']['total_active'] = len(active_liabilities)
+                liabilities_data['summary']['total_amount'] = sum(safe_get(l, 'amount', 0.0) for l in active_liabilities)
+                liabilities_data['summary']['total_paid'] = sum(safe_get(l, 'paid_amount', 0.0) for l in active_liabilities)
+                liabilities_data['summary']['remaining'] = liabilities_data['summary']['total_amount'] - liabilities_data['summary']['total_paid']
+                
+                # جميع السجلات
+                liabilities_data['records'] = [
+                    {
+                        'id': safe_get(l, 'id'),
+                        'type': str(safe_get(l, 'liability_type')),
+                        'amount': safe_get(l, 'amount', 0.0),
+                        'paid_amount': safe_get(l, 'paid_amount', 0.0),
+                        'remaining': safe_get(l, 'amount', 0.0) - safe_get(l, 'paid_amount', 0.0),
+                        'status': str(safe_get(l, 'status')),
+                        'description': safe_get(l, 'description'),
+                        'due_date': format_date(safe_get(l, 'due_date')),
+                        'created_at': format_date(safe_get(l, 'created_at'))
+                    }
+                    for l in liabilities[:10]
+                ]
+        except Exception as e:
+            logger.warning(f"خطأ في جلب بيانات الذمم: {str(e)}")
+        
+        # ═══════════════════════════════════════════════════════════════
+        # القسم 7: الوثائق
+        # ═══════════════════════════════════════════════════════════════
+        
+        documents_data = {
+            'total': 0,
+            'valid': 0,
+            'expiring_soon': 0,
+            'expired': 0,
+            'records': []
+        }
+        
+        try:
+            documents = Document.query.filter(
+                Document.employee_id == employee.id
+            ).order_by(Document.created_at.desc()).all()
+            
+            if documents:
+                today = date.today()
+                thirty_days_later = today + timedelta(days=30)
+                
+                documents_data['total'] = len(documents)
+                
+                for doc in documents:
+                    expiry_date = safe_get(doc, 'expiry_date')
+                    if expiry_date:
+                        if expiry_date < today:
+                            documents_data['expired'] += 1
+                        elif expiry_date <= thirty_days_later:
+                            documents_data['expiring_soon'] += 1
+                        else:
+                            documents_data['valid'] += 1
+                    else:
+                        documents_data['valid'] += 1
+                
+                # جميع الوثائق
+                documents_data['records'] = [
+                    {
+                        'id': safe_get(doc, 'id'),
+                        'type': safe_get(doc, 'document_type'),
+                        'number': safe_get(doc, 'document_number'),
+                        'issue_date': format_date(safe_get(doc, 'issue_date')),
+                        'expiry_date': format_date(safe_get(doc, 'expiry_date')),
+                        'status': 'expired' if (doc.expiry_date and doc.expiry_date < today) 
+                                  else 'expiring_soon' if (doc.expiry_date and doc.expiry_date <= thirty_days_later)
+                                  else 'valid',
+                        'days_remaining': (doc.expiry_date - today).days if doc.expiry_date else None,
+                        'file_url': build_full_url(safe_get(doc, 'file_path'))
+                    }
+                    for doc in documents[:10]
+                ]
+        except Exception as e:
+            logger.warning(f"خطأ في جلب بيانات الوثائق: {str(e)}")
+        
+        # ═══════════════════════════════════════════════════════════════
+        # القسم 8: الأجهزة والعهدة
+        # ═══════════════════════════════════════════════════════════════
+        
+        devices_data = {
+            'mobile_devices': [],
+            'sim_cards': []
+        }
+        
+        try:
+            mobile_devices = MobileDevice.query.filter(
+                MobileDevice.employee_id == employee.id
+            ).all()
+            
+            devices_data['mobile_devices'] = [
+                {
+                    'brand': safe_get(device, 'brand'),
+                    'model': safe_get(device, 'model'),
+                    'imei': safe_get(device, 'imei'),
+                    'phone_number': safe_get(device, 'phone_number'),
+                    'status': safe_get(device, 'status'),
+                    'assigned_date': format_date(safe_get(device, 'created_at'))
+                }
+                for device in mobile_devices
+            ]
+            
+            sim_cards = SimCard.query.filter(
+                SimCard.employee_id == employee.id
+            ).all()
+            
+            devices_data['sim_cards'] = [
+                {
+                    'phone_number': safe_get(sim, 'phone_number'),
+                    'carrier': safe_get(sim, 'carrier'),
+                    'status': safe_get(sim, 'status'),
+                    'data_plan': safe_get(sim, 'data_plan')
+                }
+                for sim in sim_cards
+            ]
+        except Exception as e:
+            logger.warning(f"خطأ في جلب بيانات الأجهزة: {str(e)}")
+        
+        # ═══════════════════════════════════════════════════════════════
+        # القسم 9: الإحصائيات الشاملة
+        # ═══════════════════════════════════════════════════════════════
+        
+        statistics_data = {
+            'performance': {
+                'attendance_rate': attendance_data['summary']['attendance_rate'],
+                'punctuality_rate': 100.0 - (attendance_data['summary']['late_days'] / attendance_data['summary']['total_days'] * 100) if attendance_data['summary']['total_days'] > 0 else 100.0,
+                'average_working_hours': attendance_data['summary']['average_hours_per_day']
+            },
+            'financial': {
+                'total_earnings_ytd': salaries_data['yearly_total'],
+                'average_monthly_salary': salaries_data['summary']['average_monthly'],
+                'outstanding_liabilities': liabilities_data['summary']['remaining']
+            },
+            'activity': {
+                'days_employed': (date.today() - employee.join_date).days if employee.join_date else 0,
+                'total_vehicles_assigned': vehicles_data['total_vehicles_used'],
+                'total_requests_submitted': requests_data['summary']['total'],
+                'last_activity_date': format_date(date.today())
+            }
+        }
+        
+        # ═══════════════════════════════════════════════════════════════
+        # بناء الاستجابة النهائية
+        # ═══════════════════════════════════════════════════════════════
+        
+        response_data = {
+            'employee': employee_data,
+            'attendance': attendance_data,
+            'vehicles': vehicles_data,
+            'salaries': salaries_data,
+            'requests': requests_data,
+            'liabilities': liabilities_data,
+            'documents': documents_data,
+            'devices': devices_data,
+            'statistics': statistics_data
+        }
+        
+        logger.info(f"✅ تم جلب الملف الشامل للموظف {employee.name} ({employee_id}) بنجاح")
+        
+        return jsonify({
+            'success': True,
+            'message': 'تم جلب بيانات الموظف بنجاح',
+            'data': response_data
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"❌ خطأ في جلب الملف الشامل للموظف: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'message': 'حدث خطأ في الخادم',
+            'error': str(e)
         }), 500
