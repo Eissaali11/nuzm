@@ -1464,6 +1464,7 @@ def create_car_wash_request(current_employee):
                     car_wash_media = CarWashMedia()
                     car_wash_media.wash_request_id = car_wash_request.id
                     car_wash_media.media_type = media_type_map[photo_field]
+                    car_wash_media.local_path = f"uploads/car_wash/{unique_filename}"
                     db.session.add(car_wash_media)
         
         db.session.commit()

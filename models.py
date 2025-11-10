@@ -2449,9 +2449,12 @@ class CarWashMedia(db.Model):
     media_type = db.Column(db.Enum(MediaType), nullable=False)
     drive_file_id = db.Column(db.String(255), unique=True)
     drive_view_url = db.Column(db.Text)
+    drive_download_url = db.Column(db.Text)
+    local_path = db.Column(db.String(512))
     file_size = db.Column(db.BigInteger)
     
     uploaded_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     __table_args__ = (
         db.UniqueConstraint('wash_request_id', 'media_type', name='uq_wash_media_type'),

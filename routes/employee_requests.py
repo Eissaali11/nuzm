@@ -637,3 +637,126 @@ def edit_advance_payment(request_id):
         db.session.rollback()
         flash('حدث خطأ أثناء تحديث البيانات', 'error')
         return redirect(url_for('employee_requests.view_request', request_id=request_id))
+
+@employee_requests.route('/<int:request_id>/edit-car-wash', methods=['POST'])
+@login_required
+def edit_car_wash(request_id):
+    """تعديل طلب غسيل سيارة"""
+    if not check_access():
+        flash('ليس لديك صلاحية الوصول إلى هذا القسم', 'error')
+        return redirect(url_for('dashboard'))
+    
+    emp_request = EmployeeRequest.query.get_or_404(request_id)
+    
+    if emp_request.request_type != RequestType.CAR_WASH:
+        flash('هذا الطلب ليس طلب غسيل سيارة', 'error')
+        return redirect(url_for('employee_requests.view_request', request_id=request_id))
+    
+    if emp_request.status != RequestStatus.PENDING:
+        flash('لا يمكن تعديل طلب تمت معالجته', 'error')
+        return redirect(url_for('employee_requests.view_request', request_id=request_id))
+    
+    car_wash_data = CarWashRequest.query.filter_by(request_id=request_id).first()
+    if not car_wash_data:
+        flash('بيانات غسيل السيارة غير موجودة', 'error')
+        return redirect(url_for('employee_requests.view_request', request_id=request_id))
+    
+    try:
+        # تحديث نوع الخدمة
+        service_type = request.form.get('service_type')
+        if service_type in ['normal', 'polish', 'full_clean']:
+            car_wash_data.service_type = service_type
+        
+        # تحديث التاريخ
+        scheduled_date_str = request.form.get('scheduled_date')
+        if scheduled_date_str:
+            from datetime import datetime
+            car_wash_data.scheduled_date = datetime.strptime(scheduled_date_str, '%Y-%m-%d').date()
+        
+        # حذف الصور المحددة
+        delete_media_ids = request.form.getlist('delete_media')
+        if delete_media_ids:
+            for media_id in delete_media_ids:
+                media = CarWashMedia.query.get(media_id)
+                if media and media.wash_request_id == car_wash_data.id:
+                    # حذف الملف المحلي إذا كان موجوداً
+                    if media.local_path:
+                        local_file = os.path.join('static', media.local_path)
+                        if os.path.exists(local_file):
+                            try:
+                                os.remove(local_file)
+                            except Exception:
+                                pass
+                    db.session.delete(media)
+                    logger.info(f"✅ تم حذف الصورة #{media_id}")
+        
+        # رفع صور جديدة
+        photo_fields = ['photo_plate', 'photo_front', 'photo_back', 'photo_right_side', 'photo_left_side']
+        upload_dir = os.path.join('static', 'uploads', 'car_wash')
+        os.makedirs(upload_dir, exist_ok=True)
+        
+        media_type_map = {
+            'photo_plate': MediaType.PLATE,
+            'photo_front': MediaType.FRONT,
+            'photo_back': MediaType.BACK,
+            'photo_right_side': MediaType.RIGHT,
+            'photo_left_side': MediaType.LEFT
+        }
+        
+        for photo_field in photo_fields:
+            if photo_field in request.files:
+                photo_file = request.files[photo_field]
+                if photo_file and photo_file.filename:
+                    # التحقق من صيغة الملف
+                    allowed_extensions = {'png', 'jpg', 'jpeg', 'heic'}
+                    file_extension = photo_file.filename.rsplit('.', 1)[1].lower() if '.' in photo_file.filename else ''
+                    
+                    if file_extension in allowed_extensions:
+                        from werkzeug.utils import secure_filename
+                        import uuid
+                        
+                        # حذف الصورة القديمة من نفس النوع إن وجدت
+                        old_media = CarWashMedia.query.filter_by(
+                            wash_request_id=car_wash_data.id,
+                            media_type=media_type_map[photo_field]
+                        ).first()
+                        
+                        if old_media:
+                            if old_media.local_path:
+                                old_file = os.path.join('static', old_media.local_path)
+                                if os.path.exists(old_file):
+                                    try:
+                                        os.remove(old_file)
+                                    except Exception:
+                                        pass
+                            db.session.delete(old_media)
+                        
+                        # حفظ الصورة الجديدة
+                        filename = secure_filename(photo_file.filename)
+                        unique_filename = f"wash_{request_id}_{photo_field}_{uuid.uuid4().hex[:8]}.{file_extension}"
+                        file_path = os.path.join(upload_dir, unique_filename)
+                        photo_file.save(file_path)
+                        
+                        # إنشاء سجل جديد
+                        new_media = CarWashMedia()
+                        new_media.wash_request_id = car_wash_data.id
+                        new_media.media_type = media_type_map[photo_field]
+                        new_media.local_path = f"uploads/car_wash/{unique_filename}"
+                        db.session.add(new_media)
+                        
+                        logger.info(f"✅ تم رفع صورة جديدة: {photo_field}")
+        
+        db.session.commit()
+        
+        logger.info(f"✅ تم تعديل طلب غسيل السيارة #{request_id} بواسطة {current_user.username}")
+        
+        flash('تم تحديث بيانات طلب غسيل السيارة بنجاح', 'success')
+        return redirect(url_for('employee_requests.view_request', request_id=request_id))
+        
+    except Exception as e:
+        logger.error(f"❌ خطأ في تعديل طلب غسيل السيارة #{request_id}: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        db.session.rollback()
+        flash('حدث خطأ أثناء تحديث البيانات', 'error')
+        return redirect(url_for('employee_requests.view_request', request_id=request_id))

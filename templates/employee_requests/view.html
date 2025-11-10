@@ -2,6 +2,28 @@
 
 {% block title %}تفاصيل الطلب{% endblock %}
 
+{% block extra_css %}
+<style>
+    .hover-scale {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .hover-scale:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15) !important;
+    }
+    .car-wash-image {
+        transition: transform 0.5s ease;
+    }
+    .car-wash-image:hover {
+        transform: scale(1.05);
+    }
+    .image-gallery .card {
+        border: none;
+        overflow: hidden;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container-fluid p-4">
     <div class="row mb-4">
@@ -152,29 +174,111 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <strong>رقم لوحة السيارة:</strong>
-                                <p class="text-muted">{{ specific_request.vehicle_plate_number }}</p>
+                                <p class="text-muted">{{ specific_request.vehicle.plate_number if specific_request.vehicle else 'غير محدد' }}</p>
                             </div>
+                            <div class="col-md-6 mb-3">
+                                <strong>نوع الخدمة:</strong>
+                                <p class="text-muted">
+                                    {% if specific_request.service_type == 'normal' %}
+                                        <span class="badge bg-info">غسيل عادي</span>
+                                    {% elif specific_request.service_type == 'polish' %}
+                                        <span class="badge bg-primary">تلميع</span>
+                                    {% elif specific_request.service_type == 'full_clean' %}
+                                        <span class="badge bg-success">تنظيف شامل</span>
+                                    {% else %}
+                                        {{ specific_request.service_type }}
+                                    {% endif %}
+                                </p>
+                            </div>
+                            {% if specific_request.scheduled_date %}
+                            <div class="col-md-6 mb-3">
+                                <strong>التاريخ المطلوب:</strong>
+                                <p class="text-muted">{{ specific_request.scheduled_date.strftime('%Y-%m-%d') }}</p>
+                            </div>
+                            {% endif %}
                             <div class="col-md-6 mb-3">
                                 <strong>عدد الصور:</strong>
                                 <p class="text-muted">
-                                    {% if specific_request.images_urls %}
-                                        {{ specific_request.images_urls|length }} صورة
+                                    {% if specific_request.media_files %}
+                                        {{ specific_request.media_files|length }} صورة
                                     {% else %}
                                         لا توجد صور
                                     {% endif %}
                                 </p>
                             </div>
-                            {% if specific_request.images_urls %}
+                            
+                            {% if specific_request.media_files %}
                             <div class="col-12">
-                                <strong>الصور:</strong>
-                                <div class="row mt-2">
-                                    {% for img_url in specific_request.images_urls %}
-                                    <div class="col-md-3 mb-2">
-                                        <a href="{{ img_url }}" target="_blank">
-                                            <img src="{{ img_url }}" class="img-thumbnail" alt="صورة">
-                                        </a>
+                                <strong class="mb-3 d-block">
+                                    <i class="fas fa-images me-2"></i>معرض الصور
+                                </strong>
+                                
+                                <div class="image-gallery">
+                                    <div class="row g-3">
+                                        {% for media in specific_request.media_files %}
+                                        <div class="col-md-4 col-sm-6">
+                                            <div class="card shadow-sm hover-scale">
+                                                <div class="position-relative">
+                                                    <img src="{{ media.drive_view_url or url_for('static', filename=media.local_path) }}" 
+                                                         class="card-img-top car-wash-image" 
+                                                         alt="{{ media.media_type.value }}"
+                                                         data-bs-toggle="modal"
+                                                         data-bs-target="#imageModal{{ loop.index }}"
+                                                         style="height: 200px; object-fit: cover; cursor: pointer;">
+                                                    <div class="position-absolute top-0 start-0 m-2">
+                                                        <span class="badge bg-dark bg-opacity-75">
+                                                            {% if media.media_type.value == 'PLATE' %}
+                                                                <i class="fas fa-car me-1"></i>اللوحة
+                                                            {% elif media.media_type.value == 'FRONT' %}
+                                                                <i class="fas fa-arrow-up me-1"></i>أمامي
+                                                            {% elif media.media_type.value == 'BACK' %}
+                                                                <i class="fas fa-arrow-down me-1"></i>خلفي
+                                                            {% elif media.media_type.value == 'RIGHT' %}
+                                                                <i class="fas fa-arrow-right me-1"></i>يمين
+                                                            {% elif media.media_type.value == 'LEFT' %}
+                                                                <i class="fas fa-arrow-left me-1"></i>يسار
+                                                            {% endif %}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <div class="card-body p-2 text-center">
+                                                    <small class="text-muted">{{ media.uploaded_at.strftime('%Y-%m-%d') if media.uploaded_at else 'غير محدد' }}</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Modal للصورة -->
+                                        <div class="modal fade" id="imageModal{{ loop.index }}" tabindex="-1" aria-hidden="true">
+                                            <div class="modal-dialog modal-lg modal-dialog-centered">
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title">
+                                                            {% if media.media_type.value == 'PLATE' %}اللوحة
+                                                            {% elif media.media_type.value == 'FRONT' %}أمامي
+                                                            {% elif media.media_type.value == 'BACK' %}خلفي
+                                                            {% elif media.media_type.value == 'RIGHT' %}يمين
+                                                            {% elif media.media_type.value == 'LEFT' %}يسار
+                                                            {% endif %}
+                                                        </h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                    </div>
+                                                    <div class="modal-body text-center">
+                                                        <img src="{{ media.drive_view_url or url_for('static', filename=media.local_path) }}" 
+                                                             class="img-fluid rounded" 
+                                                             alt="{{ media.media_type.value }}">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {% endfor %}
                                     </div>
-                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% else %}
+                            <div class="col-12">
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    لم يتم رفع صور لهذا الطلب
                                 </div>
                             </div>
                             {% endif %}
@@ -281,6 +385,20 @@
                     </button>
                 </div>
             </div>
+            {% elif emp_request.request_type == RequestType.CAR_WASH %}
+            <div class="card shadow-lg mb-4">
+                <div class="card-header bg-gradient-warning text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-edit me-2"></i>
+                        تعديل الطلب
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <button type="button" class="btn btn-warning w-100" data-bs-toggle="modal" data-bs-target="#editCarWashModal">
+                        <i class="fas fa-edit me-2"></i>تعديل البيانات والصور
+                    </button>
+                </div>
+            </div>
             {% endif %}
             
             <div class="card shadow-lg mb-4">
@@ -371,7 +489,130 @@
     </div>
 </div>
 
-<!-- Modal التعديل -->
+<!-- Modal التعديل - غسيل السيارات -->
+{% if emp_request.request_type == RequestType.CAR_WASH and emp_request.status == RequestStatus.PENDING %}
+<div class="modal fade" id="editCarWashModal" tabindex="-1" aria-labelledby="editCarWashModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-gradient-warning text-white">
+                <h5 class="modal-title" id="editCarWashModalLabel">
+                    <i class="fas fa-edit me-2"></i>
+                    تعديل طلب غسيل السيارة #{{ emp_request.id }}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="إغلاق"></button>
+            </div>
+            <form method="POST" action="{{ url_for('employee_requests.edit_car_wash', request_id=emp_request.id) }}" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="service_type" class="form-label">نوع الخدمة <span class="text-danger">*</span></label>
+                            <select class="form-select" id="service_type" name="service_type" required>
+                                <option value="normal" {% if specific_request.service_type == 'normal' %}selected{% endif %}>غسيل عادي</option>
+                                <option value="polish" {% if specific_request.service_type == 'polish' %}selected{% endif %}>تلميع</option>
+                                <option value="full_clean" {% if specific_request.service_type == 'full_clean' %}selected{% endif %}>تنظيف شامل</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="scheduled_date" class="form-label">التاريخ المطلوب</label>
+                            <input type="date" class="form-control" id="scheduled_date" name="scheduled_date" 
+                                   value="{{ specific_request.scheduled_date.strftime('%Y-%m-%d') if specific_request.scheduled_date else '' }}">
+                        </div>
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <h6 class="mb-3">
+                        <i class="fas fa-images me-2"></i>إدارة الصور
+                    </h6>
+                    
+                    {% if specific_request.media_files %}
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <label class="form-label">الصور الحالية (اختر الصور المراد حذفها)</label>
+                            <div class="row g-3">
+                                {% for media in specific_request.media_files %}
+                                <div class="col-md-3 col-sm-6">
+                                    <div class="card">
+                                        <img src="{{ media.drive_view_url or url_for('static', filename=media.local_path) }}" 
+                                             class="card-img-top" 
+                                             alt="{{ media.media_type.value }}"
+                                             style="height: 150px; object-fit: cover;">
+                                        <div class="card-body p-2 text-center">
+                                            <small class="d-block mb-2">
+                                                {% if media.media_type.value == 'PLATE' %}اللوحة
+                                                {% elif media.media_type.value == 'FRONT' %}أمامي
+                                                {% elif media.media_type.value == 'BACK' %}خلفي
+                                                {% elif media.media_type.value == 'RIGHT' %}يمين
+                                                {% elif media.media_type.value == 'LEFT' %}يسار
+                                                {% endif %}
+                                            </small>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="delete_media" value="{{ media.id }}" id="delete_{{ media.id }}">
+                                                <label class="form-check-label text-danger" for="delete_{{ media.id }}">
+                                                    <i class="fas fa-trash-alt me-1"></i>حذف
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="row">
+                        <div class="col-12 mb-3">
+                            <label class="form-label">إضافة صور جديدة (اختياري)</label>
+                            <small class="form-text text-muted d-block mb-2">يمكنك إضافة أو استبدال الصور المحذوفة</small>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="photo_plate" class="form-label">
+                                <i class="fas fa-car me-1"></i>صورة اللوحة
+                            </label>
+                            <input type="file" class="form-control" id="photo_plate" name="photo_plate" accept="image/*">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="photo_front" class="form-label">
+                                <i class="fas fa-arrow-up me-1"></i>صورة أمامية
+                            </label>
+                            <input type="file" class="form-control" id="photo_front" name="photo_front" accept="image/*">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="photo_back" class="form-label">
+                                <i class="fas fa-arrow-down me-1"></i>صورة خلفية
+                            </label>
+                            <input type="file" class="form-control" id="photo_back" name="photo_back" accept="image/*">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="photo_right_side" class="form-label">
+                                <i class="fas fa-arrow-right me-1"></i>صورة جانب أيمن
+                            </label>
+                            <input type="file" class="form-control" id="photo_right_side" name="photo_right_side" accept="image/*">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="photo_left_side" class="form-label">
+                                <i class="fas fa-arrow-left me-1"></i>صورة جانب أيسر
+                            </label>
+                            <input type="file" class="form-control" id="photo_left_side" name="photo_left_side" accept="image/*">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>إلغاء
+                    </button>
+                    <button type="submit" class="btn btn-warning">
+                        <i class="fas fa-save me-2"></i>حفظ التعديلات
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Modal التعديل - السلف المالية -->
 {% if emp_request.request_type == RequestType.ADVANCE_PAYMENT and emp_request.status == RequestStatus.PENDING %}
 <div class="modal fade" id="editAdvanceModal" tabindex="-1" aria-labelledby="editAdvanceModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
