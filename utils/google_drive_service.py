@@ -172,8 +172,12 @@ class GoogleDriveService:
                 'parents': [folder_id]
             }
             
-            # رفع الملف
-            media = MediaFileUpload(file_path, resumable=True)
+            # رفع الملف إلى Shared Drive
+            # Note: استخدام non-resumable upload للملفات الصغيرة لتجنب مشكلة quota
+            file_size = os.path.getsize(file_path)
+            use_resumable = file_size > 5 * 1024 * 1024  # 5MB
+            
+            media = MediaFileUpload(file_path, resumable=use_resumable)
             file = service.files().create(
                 body=file_metadata,
                 media_body=media,
