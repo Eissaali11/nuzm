@@ -115,17 +115,28 @@
                                 <strong>اسم المحل:</strong>
                                 <p class="text-muted">{{ specific_request.vendor_name or 'غير محدد' }}</p>
                             </div>
-                            {% if specific_request.drive_view_url or specific_request.drive_download_url %}
+                            {% if specific_request.drive_view_url or specific_request.drive_download_url or specific_request.local_image_path %}
                             <div class="col-12 mb-3">
                                 <strong>صورة الفاتورة:</strong>
                                 <div class="mt-2">
-                                    {% set invoice_url = specific_request.drive_view_url or specific_request.drive_download_url %}
-                                    <a href="{{ invoice_url }}" target="_blank" class="d-block mb-2">
-                                        <img src="{{ invoice_url }}" class="img-fluid rounded shadow" alt="صورة الفاتورة" style="max-height: 500px; cursor: pointer;" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-                                        <div class="btn btn-sm btn-primary" style="display: none;">
-                                            <i class="fas fa-file-invoice me-2"></i>عرض الفاتورة (PDF)
-                                        </div>
-                                    </a>
+                                    {% if specific_request.drive_view_url or specific_request.drive_download_url %}
+                                        {% set invoice_url = specific_request.drive_view_url or specific_request.drive_download_url %}
+                                        <a href="{{ invoice_url }}" target="_blank" class="d-block mb-2">
+                                            <img src="{{ invoice_url }}" class="img-fluid rounded shadow" alt="صورة الفاتورة" style="max-height: 500px; cursor: pointer;" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                                            <div class="btn btn-sm btn-primary" style="display: none;">
+                                                <i class="fas fa-file-invoice me-2"></i>عرض الفاتورة (PDF)
+                                            </div>
+                                        </a>
+                                    {% elif specific_request.local_image_path %}
+                                        {% set invoice_url = url_for('static', filename=specific_request.local_image_path) %}
+                                        <a href="{{ invoice_url }}" target="_blank" class="d-block mb-2">
+                                            <img src="{{ invoice_url }}" class="img-fluid rounded shadow" alt="صورة الفاتورة" style="max-height: 500px; cursor: pointer;">
+                                        </a>
+                                        <p class="text-muted small mt-2">
+                                            <i class="fas fa-check-circle text-success me-1"></i>
+                                            الصورة محفوظة محلياً
+                                        </p>
+                                    {% endif %}
                                 </div>
                             </div>
                             {% else %}

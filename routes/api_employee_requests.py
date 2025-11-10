@@ -1242,18 +1242,39 @@ def create_invoice_request(current_employee):
         )
         
         db.session.add(invoice_request)
+        db.session.flush()
+        
+        # حفظ الصورة محلياً
+        filename = secure_filename(invoice_image.filename)
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        unique_filename = f"{new_request.id}_{timestamp}_{filename}"
+        
+        upload_folder = os.path.join('static', 'uploads', 'invoices')
+        os.makedirs(upload_folder, exist_ok=True)
+        
+        file_path = os.path.join(upload_folder, unique_filename)
+        invoice_image.save(file_path)
+        
+        # حفظ المسار في قاعدة البيانات
+        relative_path = os.path.join('uploads', 'invoices', unique_filename)
+        invoice_request.local_image_path = relative_path
+        
+        logger.info(f"✅ Image saved locally: {file_path}")
+        logger.info(f"✅ Relative path saved to DB: {relative_path}")
+        
         db.session.commit()
         
         return jsonify({
             'success': True,
-            'message': 'تم رفع الفاتورة بنجاح. استخدم endpoint /upload لرفع الصورة',
+            'message': 'تم رفع الفاتورة بنجاح',
             'data': {
                 'request_id': new_request.id,
                 'type': 'invoice',
                 'status': 'pending',
                 'vendor_name': vendor_name,
                 'amount': float(amount),
-                'upload_endpoint': f'/api/v1/requests/{new_request.id}/upload'
+                'image_saved': True,
+                'local_path': relative_path
             }
         }), 201
         
