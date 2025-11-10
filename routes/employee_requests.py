@@ -238,14 +238,15 @@ def delete_request(request_id):
         else:
             flash('تم حذف الطلب بنجاح', 'success')
             return redirect(url_for('employee_requests.index'))
-        
     except Exception as e:
         db.session.rollback()
+        error_message = f'حدث خطأ أثناء الحذف: {str(e)}'
+        
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return jsonify({'success': False, 'message': f'حدث خطأ: {str(e)}'}), 500
+            return jsonify({'success': False, 'message': error_message}), 500
         else:
-            flash(f'حدث خطأ أثناء حذف الطلب: {str(e)}', 'error')
-            return redirect(url_for('employee_requests.view_request', request_id=request_id))
+            flash(error_message, 'error')
+            return redirect(url_for('employee_requests.index'))
 
 
 @employee_requests.route('/advance-payments')
