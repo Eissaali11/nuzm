@@ -13,7 +13,7 @@ Preferred communication style: Simple, everyday language.
 - **N+1 Query Fix**: Optimized Drive Browser with left joins to eliminate N+1 query performance issues when loading employee request data.
 - **Enum Compatibility**: Fixed request_type and status field compatibility issues by using mixed-case comparison in request_type_names dictionary.
 - **LSP Error Fixes**: Resolved all 14 LSP typing errors in `routes/api_employee_requests.py` by migrating from constructor arguments to SQLAlchemy 2.0 pattern.
-- **Google Drive Configuration**: Updated Google Drive folder IDs to use regular folders. Root folder: `1sePOW03BZfjkybt8p8s7D3413gJzYhL_`, Requests folder: `1Qi9mcMu0i1dVUEyT3T1-C2JNfO2rmefr`.
+- **Google Drive Configuration**: Updated Google Drive folder IDs to use Shared Drive. Root folder: `1AvaKUW2VKb9t4O4Dwo_KXTntBfDQ1IYe` (https://drive.google.com/drive/folders/1AvaKUW2VKb9t4O4Dwo_KXTntBfDQ1IYe).
 - **Root Cause Analysis**:
   - **Flask API works correctly**: Test confirmed request #36 successfully saved file to `static/uploads/invoices/` with proper validation
   - **Flutter client issue**: Requests #30-34 created DB records but files never persisted to disk, indicating Flutter app either (a) doesn't send multipart/form-data properly, (b) calls wrong endpoint (`/requests` instead of `/requests/create-invoice`), or (c) has file path/storage issue

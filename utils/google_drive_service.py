@@ -19,8 +19,8 @@ class GoogleDriveService:
         """تهيئة الخدمة"""
         self.credentials = self._load_credentials()
         self.access_token = None
-        self.root_folder_id = "1sePOW03BZfjkybt8p8s7D3413gJzYhL_"  # مجلد "نُظم" الرئيسي
-        self.requests_folder_id = "1Qi9mcMu0i1dVUEyT3T1-C2JNfO2rmefr"  # مجلد "نُظم - طلبات الموظفين"
+        self.root_folder_id = "1AvaKUW2VKb9t4O4Dwo_KXTntBfDQ1IYe"  # مجلد "نُظم" الرئيسي (Shared Drive)
+        self.requests_folder_id = "1AvaKUW2VKb9t4O4Dwo_KXTntBfDQ1IYe"  # مجلد طلبات الموظفين (نفس المجلد الرئيسي)
         
     def _load_credentials(self) -> Optional[Dict]:
         """تحميل بيانات الاعتماد من المتغيرات البيئية أو ملف"""
