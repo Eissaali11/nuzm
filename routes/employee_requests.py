@@ -5,7 +5,7 @@ from models import (
     EmployeeRequest, InvoiceRequest, AdvancePaymentRequest,
     CarWashRequest, CarInspectionRequest, EmployeeLiability,
     RequestNotification, Employee, RequestStatus, RequestType,
-    UserRole, Module, Vehicle
+    UserRole, Module, Vehicle, LiabilityStatus
 )
 from datetime import datetime
 from sqlalchemy import desc, or_, and_
@@ -313,16 +313,16 @@ def liabilities():
     
     if status_filter:
         if status_filter == 'ACTIVE':
-            query = query.filter_by(is_paid=False)
+            query = query.filter_by(status=LiabilityStatus.ACTIVE)
         elif status_filter == 'PAID':
-            query = query.filter_by(is_paid=True)
+            query = query.filter_by(status=LiabilityStatus.PAID)
     
     liabilities_pagination = query.order_by(desc(EmployeeLiability.created_at)).paginate(
         page=page, per_page=per_page, error_out=False
     )
     
-    total_unpaid = EmployeeLiability.query.filter_by(is_paid=False).count()
-    total_amount = db.session.query(db.func.sum(EmployeeLiability.amount)).filter_by(is_paid=False).scalar() or 0
+    total_unpaid = EmployeeLiability.query.filter_by(status=LiabilityStatus.ACTIVE).count()
+    total_amount = db.session.query(db.func.sum(EmployeeLiability.amount)).filter_by(status=LiabilityStatus.ACTIVE).scalar() or 0
     
     return render_template('employee_requests/liabilities.html',
                          liabilities=liabilities_pagination.items,
