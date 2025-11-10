@@ -524,3 +524,116 @@ def upload_to_drive(request_id):
             'message': 'حدث خطأ أثناء الرفع إلى Google Drive',
             'error': str(e)
         }), 500
+
+
+@employee_requests.route('/<int:request_id>/edit-advance-payment', methods=['POST'])
+@login_required
+def edit_advance_payment(request_id):
+    """تعديل طلب سلفة"""
+    if not check_access():
+        flash('ليس لديك صلاحية الوصول إلى هذا القسم', 'error')
+        return redirect(url_for('dashboard'))
+    
+    emp_request = EmployeeRequest.query.get_or_404(request_id)
+    
+    if emp_request.request_type != RequestType.ADVANCE_PAYMENT:
+        flash('هذا الطلب ليس طلب سلفة', 'error')
+        return redirect(url_for('employee_requests.view_request', request_id=request_id))
+    
+    if emp_request.status != RequestStatus.PENDING:
+        flash('لا يمكن تعديل طلب تمت معالجته', 'error')
+        return redirect(url_for('employee_requests.view_request', request_id=request_id))
+    
+    advance_data = AdvancePaymentRequest.query.filter_by(request_id=request_id).first()
+    if not advance_data:
+        flash('بيانات السلفة غير موجودة', 'error')
+        return redirect(url_for('employee_requests.view_request', request_id=request_id))
+    
+    try:
+        # تحديث المبلغ المطلوب
+        requested_amount = request.form.get('requested_amount')
+        if requested_amount:
+            try:
+                requested_amount = float(requested_amount)
+                if requested_amount <= 0:
+                    raise ValueError("المبلغ يجب أن يكون أكبر من صفر")
+                advance_data.requested_amount = requested_amount
+                advance_data.remaining_amount = requested_amount
+                emp_request.amount = requested_amount
+                emp_request.title = f"طلب سلفة - {requested_amount} ريال"
+            except ValueError as e:
+                flash(f'المبلغ غير صحيح: {str(e)}', 'error')
+                return redirect(url_for('employee_requests.view_request', request_id=request_id))
+        
+        # تحديث عدد الأقساط
+        installments = request.form.get('installments')
+        if installments:
+            try:
+                installments_int = int(installments)
+                if installments_int > 0:
+                    advance_data.installments = installments_int
+                    advance_data.installment_amount = advance_data.requested_amount / installments_int
+                else:
+                    advance_data.installments = None
+                    advance_data.installment_amount = None
+            except ValueError:
+                advance_data.installments = None
+                advance_data.installment_amount = None
+        else:
+            advance_data.installments = None
+            advance_data.installment_amount = None
+        
+        # تحديث السبب
+        reason = request.form.get('reason', '')
+        advance_data.reason = reason
+        emp_request.description = reason
+        
+        # تحديث الصورة إذا تم رفع صورة جديدة
+        if 'new_image' in request.files:
+            image_file = request.files['new_image']
+            
+            if image_file and image_file.filename:
+                # التحقق من صيغة الملف
+                allowed_extensions = {'png', 'jpg', 'jpeg', 'heic'}
+                file_extension = image_file.filename.rsplit('.', 1)[1].lower() if '.' in image_file.filename else ''
+                
+                if file_extension in allowed_extensions:
+                    # إنشاء اسم ملف
+                    filename = f"request_{request_id}_image.{file_extension}"
+                    
+                    # حفظ الصورة
+                    upload_dir = os.path.join('static', 'uploads', 'advance_payments')
+                    os.makedirs(upload_dir, exist_ok=True)
+                    
+                    file_path = os.path.join(upload_dir, filename)
+                    
+                    # حذف الصورة القديمة إذا كانت موجودة
+                    import glob
+                    old_files = glob.glob(os.path.join(upload_dir, f"request_{request_id}_image.*"))
+                    for old_file in old_files:
+                        try:
+                            os.remove(old_file)
+                        except Exception:
+                            pass
+                    
+                    # حفظ الصورة الجديدة
+                    image_file.save(file_path)
+                    
+                    logger.info(f"✅ تم تحديث صورة السلفة #{request_id}: {file_path}")
+                else:
+                    flash('صيغة الصورة غير مدعومة. استخدم PNG, JPG, JPEG, أو HEIC', 'warning')
+        
+        db.session.commit()
+        
+        logger.info(f"✅ تم تعديل طلب السلفة #{request_id} بواسطة {current_user.username}")
+        
+        flash('تم تحديث بيانات السلفة بنجاح', 'success')
+        return redirect(url_for('employee_requests.view_request', request_id=request_id))
+        
+    except Exception as e:
+        logger.error(f"❌ خطأ في تعديل طلب السلفة #{request_id}: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        db.session.rollback()
+        flash('حدث خطأ أثناء تحديث البيانات', 'error')
+        return redirect(url_for('employee_requests.view_request', request_id=request_id))

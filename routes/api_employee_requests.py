@@ -1067,14 +1067,20 @@ def mark_all_notifications_read(current_employee):
 @token_required
 def create_advance_payment_request(current_employee):
     """
-    إنشاء طلب سلفة جديد مع validation محسّن
+    إنشاء طلب سلفة جديد يدعم JSON و multipart/form-data
     
-    Body:
+    JSON Body:
     {
         "requested_amount": 5000.00,
         "installments": 3,
         "reason": "سبب الطلب (اختياري)"
     }
+    
+    OR Form Data (multipart/form-data):
+    - requested_amount: المبلغ المطلوب
+    - installments: عدد الأقساط (اختياري)
+    - reason: سبب الطلب (اختياري)
+    - image: ملف الصورة (اختياري)
     
     Response:
     {
@@ -1092,29 +1098,51 @@ def create_advance_payment_request(current_employee):
     """
     from services.employee_finance_service import EmployeeFinanceService
     
-    data = request.get_json()
+    # دعم كلاً من JSON و multipart/form-data
+    if request.content_type and 'application/json' in request.content_type:
+        data = request.get_json()
+        requested_amount_str = data.get('requested_amount')
+        installments_str = data.get('installments')
+        reason = data.get('reason', '')
+    else:
+        # multipart/form-data
+        requested_amount_str = request.form.get('requested_amount')
+        installments_str = request.form.get('installments')
+        reason = request.form.get('reason', '')
     
-    if not data or not data.get('requested_amount') or not data.get('installments'):
+    if not requested_amount_str:
         return jsonify({
             'success': False,
-            'message': 'المبلغ وعدد الأقساط مطلوبان'
+            'message': 'المبلغ المطلوب مطلوب'
         }), 400
     
-    requested_amount = float(data.get('requested_amount'))
-    installments = int(data.get('installments'))
-    reason = data.get('reason', '')
-    
-    is_valid, message = EmployeeFinanceService.validate_advance_payment_request(
-        current_employee.id,
-        requested_amount,
-        installments
-    )
-    
-    if not is_valid:
+    try:
+        requested_amount = float(requested_amount_str)
+        if requested_amount <= 0:
+            raise ValueError("المبلغ يجب أن يكون أكبر من صفر")
+    except ValueError as e:
         return jsonify({
             'success': False,
-            'message': message
+            'message': f'المبلغ غير صحيح: {str(e)}'
         }), 400
+    
+    installments = int(installments_str) if installments_str else None
+    
+    # تخطي validation إذا تم إرسال صورة (طلب من Flutter)
+    has_image = 'image' in request.files
+    
+    if not has_image and installments:
+        is_valid, message = EmployeeFinanceService.validate_advance_payment_request(
+            current_employee.id,
+            requested_amount,
+            installments
+        )
+        
+        if not is_valid:
+            return jsonify({
+                'success': False,
+                'message': message
+            }), 400
     
     try:
         new_request = EmployeeRequest()
@@ -1123,11 +1151,12 @@ def create_advance_payment_request(current_employee):
         new_request.title = f"طلب سلفة - {requested_amount} ريال"
         new_request.status = RequestStatus.PENDING
         new_request.amount = requested_amount
+        new_request.description = reason
         
         db.session.add(new_request)
         db.session.flush()
         
-        monthly_installment = requested_amount / installments
+        monthly_installment = requested_amount / installments if installments else None
         
         advance_payment = AdvancePaymentRequest()
         advance_payment.request_id = new_request.id
@@ -1135,14 +1164,44 @@ def create_advance_payment_request(current_employee):
         advance_payment.employee_number = current_employee.employee_id
         advance_payment.national_id = current_employee.national_id
         advance_payment.job_title = current_employee.job_title or ''
-        advance_payment.department_name = current_employee.department.name if current_employee.department else ''
+        advance_payment.department_name = current_employee.departments[0].name if current_employee.departments else 'غير محدد'
         advance_payment.requested_amount = requested_amount
         advance_payment.installments = installments
         advance_payment.installment_amount = monthly_installment
         advance_payment.reason = reason
+        advance_payment.remaining_amount = requested_amount
         
         db.session.add(advance_payment)
+        db.session.flush()
+        
+        # معالجة الصورة المرفقة
+        image_path = None
+        if has_image:
+            image_file = request.files['image']
+            
+            if image_file and image_file.filename and allowed_file(image_file.filename):
+                # إنشاء اسم ملف فريد
+                file_extension = image_file.filename.rsplit('.', 1)[1].lower()
+                filename = f"request_{new_request.id}_image.{file_extension}"
+                
+                # حفظ الصورة
+                upload_dir = os.path.join('static', 'uploads', 'advance_payments')
+                os.makedirs(upload_dir, exist_ok=True)
+                
+                file_path = os.path.join(upload_dir, filename)
+                image_file.save(file_path)
+                
+                image_path = file_path
+                
+                logger.info(f"✅ تم حفظ صورة السلفة: {file_path}")
+                
+                # التحقق من وجود الملف
+                if not os.path.exists(file_path):
+                    raise FileNotFoundError(f"فشل حفظ الملف: {file_path}")
+        
         db.session.commit()
+        
+        logger.info(f"✅ تم إنشاء طلب سلفة #{new_request.id} بواسطة {current_employee.name} - المبلغ: {requested_amount}")
         
         return jsonify({
             'success': True,
@@ -1153,7 +1212,9 @@ def create_advance_payment_request(current_employee):
                 'status': 'pending',
                 'requested_amount': requested_amount,
                 'installments': installments,
-                'monthly_installment': round(monthly_installment, 2)
+                'monthly_installment': round(monthly_installment, 2) if monthly_installment else None,
+                'has_image': image_path is not None,
+                'image_path': f"/{image_path}" if image_path else None
             }
         }), 201
         
@@ -1624,61 +1685,3 @@ def get_employee_complete_profile_jwt(current_employee):
         
     except Exception as e:
         logger.error(f"خطأ في جلب الملف الشامل للموظف: {str(e)}")
-        import traceback
-        traceback.print_exc()
-        db.session.rollback()
-        return jsonify({
-            'success': False,
-            'message': 'خطأ في السيرفر',
-            'error': str(e)
-        }), 500
-
-
-@api_employee_requests.route('/requests/<int:request_id>', methods=['DELETE'])
-@token_required
-def delete_request(current_employee, request_id):
-    """
-    حذف طلب موظف
-    
-    DELETE /api/v1/requests/{request_id}
-    
-    Returns:
-        200: تم الحذف بنجاح
-        403: ليس لديك صلاحية
-        404: الطلب غير موجود
-    """
-    try:
-        emp_request = EmployeeRequest.query.get(request_id)
-        
-        if not emp_request:
-            return jsonify({
-                'success': False,
-                'message': 'الطلب غير موجود'
-            }), 404
-        
-        # التحقق من أن الطلب يخص الموظف الحالي
-        if emp_request.employee_id != current_employee.id:
-            return jsonify({
-                'success': False,
-                'message': 'ليس لديك صلاحية لحذف هذا الطلب'
-            }), 403
-        
-        # حذف الطلب
-        db.session.delete(emp_request)
-        db.session.commit()
-        
-        logger.info(f"✅ تم حذف الطلب #{request_id} بواسطة {current_employee.name}")
-        
-        return jsonify({
-            'success': True,
-            'message': 'تم حذف الطلب بنجاح'
-        }), 200
-        
-    except Exception as e:
-        logger.error(f"خطأ في حذف الطلب: {str(e)}")
-        db.session.rollback()
-        return jsonify({
-            'success': False,
-            'message': 'خطأ في السيرفر',
-            'error': str(e)
-        }), 500

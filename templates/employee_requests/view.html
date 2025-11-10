@@ -222,18 +222,41 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <strong>المبلغ المطلوب:</strong>
-                                <p class="text-muted">{{ specific_request.amount }} ريال</p>
+                                <p class="text-muted">{{ specific_request.requested_amount }} ريال</p>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <strong>السبب:</strong>
                                 <p class="text-muted">{{ specific_request.reason or 'غير محدد' }}</p>
                             </div>
-                            {% if specific_request.repayment_plan %}
-                            <div class="col-12">
-                                <strong>خطة السداد:</strong>
-                                <p class="text-muted">{{ specific_request.repayment_plan }}</p>
+                            {% if specific_request.installments %}
+                            <div class="col-md-6 mb-3">
+                                <strong>عدد الأقساط:</strong>
+                                <p class="text-muted">{{ specific_request.installments }} قسط</p>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <strong>مبلغ القسط:</strong>
+                                <p class="text-muted">{{ specific_request.installment_amount }} ريال</p>
                             </div>
                             {% endif %}
+                            
+                            {% set image_path = 'uploads/advance_payments/request_' + emp_request.id|string + '_image.jpg' %}
+                            {% set full_path = 'static/' + image_path %}
+                            
+                            <div class="col-12 mb-3">
+                                <strong>صورة مرفقة:</strong>
+                                <div class="mt-2">
+                                    <img src="{{ url_for('static', filename=image_path) }}" 
+                                         class="img-fluid rounded shadow" 
+                                         alt="صورة السلفة" 
+                                         style="max-height: 500px; cursor: pointer;"
+                                         onclick="window.open(this.src, '_blank')"
+                                         onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                                    <div class="alert alert-warning" style="display: none;">
+                                        <i class="fas fa-exclamation-triangle me-2"></i>
+                                        لم يتم رفع صورة مع هذا الطلب
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     {% endif %}
                 </div>
@@ -244,6 +267,22 @@
         <!-- إجراءات الموافقة/الرفض -->
         <div class="col-md-4">
             {% if emp_request.status == RequestStatus.PENDING %}
+            {% if emp_request.request_type == RequestType.ADVANCE_PAYMENT %}
+            <div class="card shadow-lg mb-4">
+                <div class="card-header bg-gradient-warning text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-edit me-2"></i>
+                        تعديل الطلب
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <button type="button" class="btn btn-warning w-100" data-bs-toggle="modal" data-bs-target="#editAdvanceModal">
+                        <i class="fas fa-edit me-2"></i>تعديل البيانات
+                    </button>
+                </div>
+            </div>
+            {% endif %}
+            
             <div class="card shadow-lg mb-4">
                 <div class="card-header bg-gradient-success text-white">
                     <h5 class="mb-0">
@@ -331,4 +370,54 @@
         </div>
     </div>
 </div>
+
+<!-- Modal التعديل -->
+{% if emp_request.request_type == RequestType.ADVANCE_PAYMENT and emp_request.status == RequestStatus.PENDING %}
+<div class="modal fade" id="editAdvanceModal" tabindex="-1" aria-labelledby="editAdvanceModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-gradient-warning text-white">
+                <h5 class="modal-title" id="editAdvanceModalLabel">
+                    <i class="fas fa-edit me-2"></i>
+                    تعديل طلب السلفة #{{ emp_request.id }}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="إغلاق"></button>
+            </div>
+            <form method="POST" action="{{ url_for('employee_requests.edit_advance_payment', request_id=emp_request.id) }}" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="requested_amount" class="form-label">المبلغ المطلوب <span class="text-danger">*</span></label>
+                            <input type="number" step="0.01" class="form-control" id="requested_amount" name="requested_amount" 
+                                   value="{{ specific_request.requested_amount }}" required min="1">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="installments" class="form-label">عدد الأقساط (اختياري)</label>
+                            <input type="number" class="form-control" id="installments" name="installments" 
+                                   value="{{ specific_request.installments or '' }}" min="1">
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label for="reason" class="form-label">سبب الطلب</label>
+                            <textarea class="form-control" id="reason" name="reason" rows="3">{{ specific_request.reason or '' }}</textarea>
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label for="new_image" class="form-label">تحديث الصورة (اختياري)</label>
+                            <input type="file" class="form-control" id="new_image" name="new_image" accept="image/*">
+                            <small class="form-text text-muted">اترك الحقل فارغاً للاحتفاظ بالصورة الحالية</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>إلغاء
+                    </button>
+                    <button type="submit" class="btn btn-warning">
+                        <i class="fas fa-save me-2"></i>حفظ التعديلات
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
 {% endblock %}
