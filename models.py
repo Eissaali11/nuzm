@@ -2498,6 +2498,7 @@ class CarInspectionMedia(db.Model):
     drive_file_id = db.Column(db.String(255), unique=True)
     drive_view_url = db.Column(db.Text)
     drive_download_url = db.Column(db.Text)
+    local_path = db.Column(db.String(512))
     
     file_size = db.Column(db.BigInteger)
     video_duration = db.Column(db.Integer)
@@ -2507,6 +2508,7 @@ class CarInspectionMedia(db.Model):
     upload_progress = db.Column(db.Integer, default=0)
     
     uploaded_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     inspection_request = db.relationship('CarInspectionRequest', back_populates='media_files')
     
