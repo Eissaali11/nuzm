@@ -82,3 +82,4 @@ replit-object-storage
 requests
 requests
 apscheduler
+google-api-python-client

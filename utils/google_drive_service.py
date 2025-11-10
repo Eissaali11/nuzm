@@ -54,11 +54,14 @@ class GoogleDriveService:
             return False
             
         try:
-            # استخدام Service Account للمصادقة
+            # استخدام Service Account للمصادقة مع صلاحيات Shared Drive
             from google.oauth2 import service_account
             from google.auth.transport.requests import Request
             
-            SCOPES = ['https://www.googleapis.com/auth/drive.file']
+            SCOPES = [
+                'https://www.googleapis.com/auth/drive.file',
+                'https://www.googleapis.com/auth/drive'
+            ]
             credentials = service_account.Credentials.from_service_account_info(
                 self.credentials, scopes=SCOPES
             )
@@ -142,54 +145,53 @@ class GoogleDriveService:
         return self.root_folder_id
     
     def upload_file(self, file_path: str, folder_id: str, custom_name: Optional[str] = None) -> Optional[Dict]:
-        """رفع ملف إلى Google Drive"""
-        if not self.access_token:
-            if not self.authenticate():
-                return None
-        
+        """رفع ملف إلى Google Drive (Shared Drive)"""
         try:
-            # قراءة الملف
-            with open(file_path, 'rb') as f:
-                file_content = f.read()
+            from google.oauth2 import service_account
+            from googleapiclient.discovery import build
+            from googleapiclient.http import MediaFileUpload
+            
+            # إنشاء الـ credentials
+            SCOPES = [
+                'https://www.googleapis.com/auth/drive.file',
+                'https://www.googleapis.com/auth/drive'
+            ]
+            credentials = service_account.Credentials.from_service_account_info(
+                self.credentials, scopes=SCOPES
+            )
+            
+            # إنشاء خدمة Drive
+            service = build('drive', 'v3', credentials=credentials)
             
             # اسم الملف
             file_name = custom_name or os.path.basename(file_path)
             
-            # رفع الملف
-            metadata = {
+            # metadata للملف
+            file_metadata = {
                 'name': file_name,
                 'parents': [folder_id]
             }
             
-            files = {
-                'data': ('metadata', json.dumps(metadata), 'application/json'),
-                'file': (file_name, file_content)
+            # رفع الملف
+            media = MediaFileUpload(file_path, resumable=True)
+            file = service.files().create(
+                body=file_metadata,
+                media_body=media,
+                fields='id,name,webViewLink,webContentLink',
+                supportsAllDrives=True
+            ).execute()
+            
+            logger.info(f"تم رفع الملف بنجاح: {file_name}")
+            return {
+                'file_id': file.get('id'),
+                'file_name': file.get('name'),
+                'web_view_link': file.get('webViewLink'),
+                'download_link': file.get('webContentLink')
             }
-            
-            headers = {"Authorization": f"Bearer {self.access_token}"}
-            
-            response = requests.post(
-                "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,webViewLink,webContentLink&supportsAllDrives=true",
-                headers=headers,
-                files=files
-            )
-            
-            if response.status_code == 200:
-                file_info = response.json()
-                logger.info(f"تم رفع الملف: {file_name}")
-                return {
-                    'file_id': file_info['id'],
-                    'file_name': file_info['name'],
-                    'web_view_link': file_info.get('webViewLink'),
-                    'download_link': file_info.get('webContentLink')
-                }
-            else:
-                logger.error(f"خطأ في رفع الملف: {response.status_code} - {response.text}")
                 
         except Exception as e:
             logger.error(f"خطأ في رفع الملف {file_path}: {e}")
-        
-        return None
+            return None
     
     def upload_vehicle_operation(
         self,
