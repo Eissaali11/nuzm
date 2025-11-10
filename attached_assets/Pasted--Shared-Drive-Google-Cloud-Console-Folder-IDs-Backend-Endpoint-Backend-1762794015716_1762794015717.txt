@@ -1,0 +1,58 @@
+
+إنشاء Shared Drive في Google Cloud Console
+تحديث Folder IDs في Backend
+تحديث Endpoint في Backend
+اختبار الرفع
+الحالة النهائية:
+Flutter Client: جاهز للاستخدام
+جميع الطلبات: تعمل بشكل صحيح
+لا توجد أخطاء 415: تم إصلاحها
+Google Drive: اختياري (يعمل بدون Drive - حفظ محلي فقط)
+النتيجة:
+جميع المهام المطلوبة تم إنجازها بنجاح.
+إصلاح Flutter Client
+حل مشكلة 415
+إضافة رفع صورة للسلفة
+تحسين معالجة الأخطاء
+تحسين logging
+التطبيق جاهز للاستخدام.
+راجع TESTING_GUIDE.md للاختبارات التفصيلية.
+هل هاذ هواء 
+drive.google.com/drive/folders/1AvaKUW2VKb9t4O4Dwo_KXTntBfDQ1IYe?usp=sharing
+ 
+
+فحص الكود للتحقق من استخدام رابط Google Drive:
+استخراج Folder ID من الرابط: 1AvaKUW2VKb9t4O4Dwo_KXTntBfDQ1IYe. إضافة هذا الـ Folder ID إلى إعدادات التطبيق:
+api_config.dart
++7
+  // Timeout للطلبات
+  // Google Drive Folder IDs  // رابط المجلد: https://drive.google.com/drive/folders/1AvaKUW2VKb9t4O4Dwo_KXTntBfDQ1IYe  static const String invoiceDriveFolderId = '1AvaKUW2VKb9t4O4Dwo_KXTntBfDQ1IYe';  static const String advanceDriveFolderId = '1AvaKUW2VKb9t4O4Dwo_KXTntBfDQ1IYe'; // نفس المجلد أو مجلد منفصل  static const String carWashDriveFolderId = '1AvaKUW2VKb9t4O4Dwo_KXTntBfDQ1IYe'; // نفس المجلد أو مجلد منفصل  static const String inspectionDriveFolderId = '1AvaKUW2VKb9t4O4Dwo_KXTntBfDQ1IYe'; // نفس المجلد أو مجلد منفصل  // Timeout للطلبات
+GOOGLE_DRIVE_SETUP.md
++237
+# 📁 إعداد Google Drive - Google Drive Setup## 📋 معلومات المجلد### رابط المجلد:https://drive.google.com/drive/folders/1AvaKUW2VKb9t4O4Dwo_KXTntBfDQ1IYe?usp=sharing### Folder ID:```1AvaKUW2VKb9t4O4Dwo_KXTntBfDQ1IYe```---## 🔧 الإعداد في Backend (Replit)### 1. تحديث Folder IDs في Backendفي ملف `backend/config.py` أو `backend/routes/requests.py`:```python# Google Drive Folder IDsINVOICE_DRIVE_FOLDER_ID = "1AvaKUW2VKb9t4O4Dwo_KXTntBfDQ1IYe"ADVANCE_DRIVE_FOLDER_ID = "1AvaKUW2VKb9t4O4Dwo_KXTntBfDQ1IYe"CAR_WASH_DRIVE_FOLDER_ID = "1AvaKUW2VKb9t4O4Dwo_KXTntBfDQ1IYe"INSPECTION_DRIVE_FOLDER_ID = "1AvaKUW2VKb9t4O4Dwo_KXTntBfDQ1IYe"```### 2. تحديث Endpoint لرفع على Drive#### مثال: رفع صورة الفاتورة```python@app.route('/api/v1/requests/<int:request_id>/upload-invoice-image', methods=['POST'])def upload_invoice_image(request_id):    try:        file = request.files['file']                # رفع الملف على Google Drive        file_metadata = {            'name': f'invoice_{request_id}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.jpg',            'parents': [INVOICE_DRIVE_FOLDER_ID]  # استخدام Folder ID        }                media = MediaFileUpload(file, mimetype=file.content_type)        result = drive_service.files().create(            body=file_metadata,            media_body=media,            fields='id,webViewLink'        ).execute()                return jsonify({            'success': True,            'drive_url': result.get('webViewLink'),            'file_id': result.get('id')        })    except Exception as e:        return jsonify({            'success': False,            'error': str(e)        }), 500```#### مثال: رفع صورة السلفة```python@app.route('/api/v1/requests/<int:request_id>/upload-advance-image', methods=['POST'])def upload_advance_image(request_id):    try:        file = request.files['file']                file_metadata = {            'name': f'advance_{request_id}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.jpg',            'parents': [ADVANCE_DRIVE_FOLDER_ID]        }                media = MediaFileUpload(file, mimetype=file.content_type)        result = drive_service.files().create(            body=file_metadata,            media_body=media,            fields='id,webViewLink'        ).execute()                return jsonify({            'success': True,            'drive_url': result.get('webViewLink'),            'file_id': result.get('id')        })    except Exception as e:        return jsonify({            'success': False,            'error': str(e)        }), 500```---## ✅ التحقق من الصلاحيات### 1. التحقق من أن Service Account لديه صلاحيات على المجلد1. افتح رابط المجلد: https://drive.google.com/drive/folders/1AvaKUW2VKb9t4O4Dwo_KXTntBfDQ1IYe2. اضغط على "مشاركة" (Share)3. أضف Service Account email كـ "Manager" أو "Editor"4. تأكد من أن Service Account يمكنه الوصول للمجلد### 2. التحقق من Google Drive API1. افتح Google Cloud Console2. تأكد من تفعيل Google Drive API3. تأكد من أن Service Account لديه الصلاحيات المطلوبة---## 🧪 اختبار الرفع### 1. اختبار من Backend مباشرة```python# test_upload.pyfrom google.oauth2 import service_accountfrom googleapiclient.discovery import buildfrom googleapiclient.http import MediaFileUploadimport jsonimport os# تحميل Service AccountSERVICE_ACCOUNT_INFO = json.loads(os.environ['GOOGLE_SERVICE_ACCOUNT'])credentials = service_account.Credentials.from_service_account_info(    SERVICE_ACCOUNT_INFO,    scopes=['https://www.googleapis.com/auth/drive.file'])drive_service = build('drive', 'v3', credentials=credentials)# رفع ملف تجريبيfile_metadata = {    'name': 'test_file.jpg',    'parents': ['1AvaKUW2VKb9t4O4Dwo_KXTntBfDQ1IYe']}media = MediaFileUpload('test_file.jpg', mimetype='image/jpeg')result = drive_service.files().create(    body=file_metadata,    media_body=media,    fields='id,webViewLink').execute()print(f"File ID: {result.get('id')}")print(f"Drive URL: {result.get('webViewLink')}")```### 2. اختبار من Flutter```dart// اختبار رفع فاتورةfinal request = InvoiceRequest(  employeeId: 123,  vendorName: 'مورد تجريبي',  amount: 1000.0,  imagePath: '/path/to/invoice.jpg',);final result = await RequestsApiService.createInvoice(  request,  onProgress: (sent, total) {    print('Progress: ${(sent / total * 100).toStringAsFixed(1)}%');  },);if (result['success'] == true) {  print('✅ Request ID: ${result['data']['request_id']}');  if (result['data']['drive_url'] != null) {    print('✅ Drive URL: ${result['data']['drive_url']}');  }}```---## 📝 ملاحظات مهمة### 1. Folder ID vs Folder Link- **Folder ID**: `1AvaKUW2VKb9t4O4Dwo_KXTntBfDQ1IYe` (يستخدم في الكود)- **Folder Link**: `https://drive.google.com/drive/folders/1AvaKUW2VKb9t4O4Dwo_KXTntBfDQ1IYe` (للمستخدمين)### 2. الصلاحيات- Service Account يجب أن يكون "Manager" أو "Editor" على المجلد- لا يكفي أن يكون "Viewer"### 3. Shared Drive vs My Drive- إذا كان المجلد في Shared Drive، تأكد من أن Service Account عضو في Shared Drive- إذا كان في My Drive، تأكد من أن Service Account لديه صلاحيات على المجلد---## 🔍 استكشاف الأخطاء### المشكلة: خطأ 403 (Forbidden)**الحل**: - تأكد من أن Service Account لديه صلاحيات على المجلد- تأكد من أن Google Drive API مفعل### المشكلة: خطأ 404 (Not Found)**الحل**:- تأكد من أن Folder ID صحيح- تأكد من أن المجلد موجود### المشكلة: لا يتم رفع الملفات**الحل**:- تحقق من الـ logs في Backend- تحقق من أن Service Account صحيح- تحقق من أن Google Drive API يعمل---## ✅ قائمة التحقق- [ ] Folder ID صحيح: `1AvaKUW2VKb9t4O4Dwo_KXTntBfDQ1IYe`- [ ] Service Account لديه صلاحيات على المجلد- [ ] Google Drive API مفعل- [ ] Backend endpoint يعمل بشكل صحيح- [ ] Flutter يرسل الطلبات بشكل صحيح- [ ] الملفات تُرفع على Drive بنجاح- [ ] `drive_url` يُعاد في الـ response---## 📞 الدعمإذا واجهت أي مشاكل:1. تحقق من الـ logs في Backend2. تحقق من صلاحيات Service Account3. تحقق من أن Folder ID صحيح4. تحقق من أن Google Drive API مفعل---**آخر تحديث:** 2025-01-27
+تم إضافة Folder ID إلى إعدادات التطبيق.
+ما تم إضافته:
+1. إضافة Folder ID إلى ApiConfig:
+// Google Drive Folder IDsstatic const String invoiceDriveFolderId = '1AvaKUW2VKb9t4O4Dwo_KXTntBfDQ1IYe';static const String advanceDriveFolderId = '1AvaKUW2VKb9t4O4Dwo_KXTntBfDQ1IYe';static const String carWashDriveFolderId = '1AvaKUW2VKb9t4O4Dwo_KXTntBfDQ1IYe';static const String inspectionDriveFolderId = '1AvaKUW2VKb9t4O4Dwo_KXTntBfDQ1IYe';
+2. إنشاء ملف توثيق:
+GOOGLE_DRIVE_SETUP.md - دليل إعداد Google Drive
+معلومات المجلد:
+الرابط: https://drive.google.com/drive/folders/1AvaKUW2VKb9t4O4Dwo_KXTntBfDQ1IYe
+Folder ID: 1AvaKUW2VKb9t4O4Dwo_KXTntBfDQ1IYe
+الخطوات التالية في Backend:
+1. تحديث Folder IDs في Backend (Replit):
+في ملف backend/config.py أو backend/routes/requests.py:
+# Google Drive Folder IDsINVOICE_DRIVE_FOLDER_ID = "1AvaKUW2VKb9t4O4Dwo_KXTntBfDQ1IYe"ADVANCE_DRIVE_FOLDER_ID = "1AvaKUW2VKb9t4O4Dwo_KXTntBfDQ1IYe"CAR_WASH_DRIVE_FOLDER_ID = "1AvaKUW2VKb9t4O4Dwo_KXTntBfDQ1IYe"INSPECTION_DRIVE_FOLDER_ID = "1AvaKUW2VKb9t4O4Dwo_KXTntBfDQ1IYe"
+2. تحديث Endpoint لرفع على Drive:
+@app.route('/api/v1/requests/<int:request_id>/upload-invoice-image', methods=['POST'])def upload_invoice_image(request_id):    file = request.files['file']        file_metadata = {        'name': f'invoice_{request_id}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.jpg',        'parents': [INVOICE_DRIVE_FOLDER_ID]  # استخدام Folder ID    }        media = MediaFileUpload(file, mimetype=file.content_type)    result = drive_service.files().create(        body=file_metadata,        media_body=media,        fields='id,webViewLink'    ).execute()        return jsonify({        'success': True,        'drive_url': result.get('webViewLink'),        'file_id': result.get('id')    })
+التحقق من الصلاحيات:
+افتح رابط المجلد: https://drive.google.com/drive/folders/1AvaKUW2VKb9t4O4Dwo_KXTntBfDQ1IYe
+اضغط على "مشاركة" (Share)
+أضف Service Account email كـ "Manager" أو "Editor"
+تأكد من أن Service Account يمكنه الوصول للمجلد
+النتيجة:
+تم إضافة Folder ID إلى Flutter Client
+تم إنشاء ملف توثيق GOOGLE_DRIVE_SETUP.md
+جاهز للاستخدام في Backend
+راجع GOOGLE_DRIVE_SETUP.md للتفاصيل الكاملة.
+هل تريد تحديث Backend الآن لاستخدام هذا الـ Folder ID؟
