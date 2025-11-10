@@ -79,11 +79,22 @@ class GoogleDriveService:
     
     def _get_or_create_folder(self, folder_name: str, parent_id: Optional[str] = None) -> Optional[str]:
         """الحصول على مجلد أو إنشاؤه إذا لم يكن موجوداً"""
-        if not self.access_token:
-            if not self.authenticate():
-                return None
-        
         try:
+            from google.oauth2 import service_account
+            from googleapiclient.discovery import build
+            
+            # إنشاء الـ credentials
+            SCOPES = [
+                'https://www.googleapis.com/auth/drive.file',
+                'https://www.googleapis.com/auth/drive'
+            ]
+            credentials = service_account.Credentials.from_service_account_info(
+                self.credentials, scopes=SCOPES
+            )
+            
+            # إنشاء خدمة Drive
+            service = build('drive', 'v3', credentials=credentials)
+            
             # البحث عن المجلد
             query = f"name='{folder_name}' and mimeType='application/vnd.google-apps.folder' and trashed=false"
             if parent_id:
@@ -91,50 +102,36 @@ class GoogleDriveService:
             else:
                 query += f" and '{self.shared_drive_id}' in parents"
             
-            search_url = "https://www.googleapis.com/drive/v3/files"
-            headers = {"Authorization": f"Bearer {self.access_token}"}
-            params = {
-                "q": query, 
-                "fields": "files(id, name)",
-                "supportsAllDrives": "true",
-                "includeItemsFromAllDrives": "true"
-            }
+            results = service.files().list(
+                q=query,
+                fields="files(id, name)",
+                supportsAllDrives=True,
+                includeItemsFromAllDrives=True
+            ).execute()
             
-            response = requests.get(search_url, headers=headers, params=params)
-            
-            if response.status_code == 200:
-                files = response.json().get('files', [])
-                if files:
-                    return files[0]['id']
+            files = results.get('files', [])
+            if files:
+                return files[0]['id']
             
             # إنشاء المجلد إذا لم يكن موجوداً
-            metadata = {
+            file_metadata = {
                 'name': folder_name,
-                'mimeType': 'application/vnd.google-apps.folder'
+                'mimeType': 'application/vnd.google-apps.folder',
+                'parents': [parent_id if parent_id else self.shared_drive_id]
             }
-            if parent_id:
-                metadata['parents'] = [parent_id]
-            else:
-                metadata['parents'] = [self.shared_drive_id]
             
-            create_response = requests.post(
-                f"{search_url}?supportsAllDrives=true",
-                headers={
-                    **headers,
-                    'Content-Type': 'application/json'
-                },
-                json=metadata
-            )
+            folder = service.files().create(
+                body=file_metadata,
+                fields='id',
+                supportsAllDrives=True
+            ).execute()
             
-            if create_response.status_code == 200:
-                folder_id = create_response.json()['id']
-                logger.info(f"تم إنشاء المجلد: {folder_name}")
-                return folder_id
+            logger.info(f"تم إنشاء المجلد: {folder_name}")
+            return folder.get('id')
                 
         except Exception as e:
             logger.error(f"خطأ في إنشاء/الحصول على المجلد {folder_name}: {e}")
-        
-        return None
+            return None
     
     def get_root_folder(self) -> Optional[str]:
         """الحصول على Shared Drive ID كمجلد رئيسي"""
