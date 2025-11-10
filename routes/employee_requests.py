@@ -5,10 +5,15 @@ from models import (
     EmployeeRequest, InvoiceRequest, AdvancePaymentRequest,
     CarWashRequest, CarInspectionRequest, EmployeeLiability,
     RequestNotification, Employee, RequestStatus, RequestType,
-    UserRole, Module
+    UserRole, Module, Vehicle
 )
 from datetime import datetime
 from sqlalchemy import desc, or_, and_
+from utils.employee_requests_drive_uploader import EmployeeRequestsDriveUploader
+import os
+import logging
+
+logger = logging.getLogger(__name__)
 
 employee_requests = Blueprint('employee_requests', __name__, url_prefix='/employee-requests')
 
@@ -351,3 +356,149 @@ def invoices():
                          requests=requests_pagination.items,
                          pagination=requests_pagination,
                          RequestStatus=RequestStatus)
+
+
+@employee_requests.route('/<int:request_id>/upload-to-drive', methods=['POST'])
+@login_required
+def upload_to_drive(request_id):
+    """رفع طلب يدوياً إلى Google Drive"""
+    if not check_access():
+        return jsonify({
+            'success': False,
+            'message': 'ليس لديك صلاحية لهذا الإجراء'
+        }), 403
+    
+    try:
+        # جلب الطلب
+        emp_request = EmployeeRequest.query.get_or_404(request_id)
+        
+        # التحقق من عدم الرفع مسبقاً
+        if emp_request.google_drive_folder_id:
+            return jsonify({
+                'success': False,
+                'message': 'هذا الطلب مرفوع بالفعل على Google Drive',
+                'folder_url': emp_request.google_drive_folder_url
+            }), 400
+        
+        # تهيئة خدمة Google Drive
+        drive_uploader = EmployeeRequestsDriveUploader()
+        
+        # التحقق من توفر الخدمة
+        if not drive_uploader.is_available():
+            logger.warning(f"Google Drive غير متاح - الطلب {request_id}")
+            return jsonify({
+                'success': False,
+                'message': 'خدمة Google Drive غير متاحة حالياً. تأكد من إعداد Service Account بشكل صحيح.',
+                'error': 'Drive service not configured'
+            }), 503
+        
+        # تحديد نوع الطلب
+        request_type_map = {
+            RequestType.INVOICE: 'invoice',
+            RequestType.CAR_WASH: 'car_wash',
+            RequestType.CAR_INSPECTION: 'car_inspection',
+            RequestType.ADVANCE_PAYMENT: 'advance_payment'
+        }
+        
+        request_type_str = request_type_map.get(emp_request.request_type, 'other')
+        
+        # إنشاء مجلد Drive
+        employee_name = emp_request.employee.name if emp_request.employee else "موظف غير معروف"
+        vehicle_number = None
+        
+        # للطلبات المتعلقة بالسيارات، جلب رقم السيارة
+        if emp_request.request_type in [RequestType.CAR_WASH, RequestType.CAR_INSPECTION]:
+            if emp_request.request_type == RequestType.CAR_WASH:
+                car_wash = CarWashRequest.query.filter_by(request_id=request_id).first()
+                if car_wash and car_wash.vehicle:
+                    vehicle_number = str(car_wash.vehicle.plate_number) if car_wash.vehicle.plate_number else None
+            elif emp_request.request_type == RequestType.CAR_INSPECTION:
+                car_inspection = CarInspectionRequest.query.filter_by(request_id=request_id).first()
+                if car_inspection and car_inspection.vehicle:
+                    vehicle_number = str(car_inspection.vehicle.plate_number) if car_inspection.vehicle.plate_number else None
+        
+        folder_result = drive_uploader.create_request_folder(
+            request_type=request_type_str,
+            request_id=request_id,
+            employee_name=employee_name,
+            vehicle_number=vehicle_number,
+            date=emp_request.created_at
+        )
+        
+        if not folder_result:
+            logger.error(f"فشل إنشاء مجلد Drive للطلب {request_id}")
+            return jsonify({
+                'success': False,
+                'message': 'فشل إنشاء المجلد في Google Drive. تحقق من الصلاحيات.',
+                'error': 'Failed to create folder'
+            }), 500
+        
+        # حفظ معلومات المجلد في قاعدة البيانات
+        emp_request.google_drive_folder_id = folder_result['folder_id']
+        emp_request.google_drive_folder_url = folder_result['folder_url']
+        
+        # رفع الملفات حسب نوع الطلب
+        files_uploaded = 0
+        
+        if emp_request.request_type == RequestType.INVOICE:
+            invoice = InvoiceRequest.query.filter_by(request_id=request_id).first()
+            if invoice and invoice.local_image_path:
+                file_path = os.path.join('static', invoice.local_image_path)
+                if os.path.exists(file_path):
+                    upload_result = drive_uploader.upload_invoice_image(
+                        file_path=file_path,
+                        folder_id=folder_result['folder_id'],
+                        custom_name=f"invoice_{request_id}.jpg"
+                    )
+                    if upload_result:
+                        invoice.drive_file_id = upload_result['file_id']
+                        files_uploaded += 1
+        
+        elif emp_request.request_type == RequestType.CAR_WASH:
+            car_wash = CarWashRequest.query.filter_by(request_id=request_id).first()
+            if car_wash:
+                # تحضير الصور للرفع
+                images_dict = {}
+                photo_mapping = {
+                    'photo_plate': 'plate',
+                    'photo_front': 'front',
+                    'photo_back': 'back',
+                    'photo_right_side': 'right',
+                    'photo_left_side': 'left'
+                }
+                
+                for field, media_type in photo_mapping.items():
+                    photo_path = getattr(car_wash, field, None)
+                    if photo_path:
+                        full_path = os.path.join('static', photo_path)
+                        if os.path.exists(full_path):
+                            images_dict[media_type] = full_path
+                
+                # رفع جميع الصور
+                if images_dict:
+                    upload_results = drive_uploader.upload_car_wash_images(
+                        images_dict=images_dict,
+                        folder_id=folder_result['folder_id']
+                    )
+                    files_uploaded += len([r for r in upload_results.values() if r is not None])
+        
+        db.session.commit()
+        
+        logger.info(f"✅ تم رفع الطلب {request_id} يدوياً إلى Drive - {files_uploaded} ملف")
+        
+        return jsonify({
+            'success': True,
+            'message': f'تم الرفع إلى Google Drive بنجاح ({files_uploaded} ملف)',
+            'folder_id': folder_result['folder_id'],
+            'folder_url': folder_result['folder_url'],
+            'files_uploaded': files_uploaded
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"خطأ في رفع الطلب {request_id} إلى Drive: {str(e)}")
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'message': 'حدث خطأ أثناء الرفع إلى Google Drive',
+            'error': str(e)
+        }), 500
