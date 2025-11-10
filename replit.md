@@ -6,6 +6,12 @@
 ## User Preferences
 Preferred communication style: Simple, everyday language.
 
+## Recent Changes (November 10, 2025)
+- **LSP Error Fixes**: Resolved all 14 LSP typing errors in `routes/api_employee_requests.py` by migrating from constructor arguments to SQLAlchemy 2.0 pattern (instantiate empty object then assign fields).
+- **Google Drive Configuration**: Updated Google Drive folder IDs to use regular folders instead of Shared Drive. Root folder: `1sePOW03BZfjkybt8p8s7D3413gJzYhL_`, Requests folder: `1Qi9mcMu0i1dVUEyT3T1-C2JNfO2rmefr`.
+- **Invoice Upload Testing**: Successfully tested invoice creation API endpoint from Flutter app simulation. Confirmed local image storage and database persistence working correctly.
+- **Known Issue**: Service Account cannot upload to regular Google Drive folders (requires Shared Drive or OAuth delegation). Local storage remains primary and fully functional.
+
 ## System Architecture
 ### Frontend Architecture
 - **Framework**: Flask with Jinja2 templates, supporting right-to-left (RTL) Arabic.
