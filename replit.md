@@ -7,6 +7,8 @@
 Preferred communication style: Simple, everyday language.
 
 ## Recent Changes (November 10, 2025)
+- **Employee Verification API**: Added public endpoint `/api/external/verify-employee/<employee_id>/<national_id>` for third-party identity verification. Returns `{"exists": true/false}` without authentication requirement. Validates employee existence by matching both job number and national ID simultaneously.
+- **Liabilities Page Fix**: Resolved Internal Server Error on `/employee-requests/liabilities` by replacing non-existent `is_paid` field with correct `status` enum (LiabilityStatus.ACTIVE, LiabilityStatus.PAID).
 - **Manual Drive Upload Feature**: Added "رفع إلى Drive" button in employee requests list for manual upload to Google Drive. Includes endpoint `/employee-requests/<id>/upload-to-drive` with comprehensive logging, error handling, and validation that files exist before attempting upload.
 - **API File Upload Validation**: Enhanced `/api/v1/requests/create-invoice` with immediate file existence verification after saving. If file not found on disk, transaction is rolled back with clear error message.
 - **Drive Browser Enhancement**: Updated to display ALL employee requests regardless of Google Drive upload status. Added "Local File" links and "محلي فقط" status badges for requests stored only locally.

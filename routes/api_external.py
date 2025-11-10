@@ -696,3 +696,45 @@ def get_employee_complete_profile():
             'message': 'خطأ في السيرفر',
             'error': 'Internal server error'
         }), 500
+
+
+@api_external_bp.route('/verify-employee/<employee_id>/<national_id>', methods=['GET'])
+def verify_employee(employee_id, national_id):
+    """
+    التحقق من وجود الموظف باستخدام رقم الموظف الوظيفي ورقم الهوية
+    
+    نقطة نهاية بسيطة للطرف الثالث للتحقق من هوية الموظف
+    لا تحتاج إلى مصادقة
+    
+    استخدام:
+    GET /api/external/verify-employee/EMP001/1234567890
+    
+    استجابة:
+    {
+        "exists": true
+    }
+    أو
+    {
+        "exists": false
+    }
+    """
+    try:
+        # البحث عن الموظف باستخدام الرقم الوظيفي ورقم الهوية
+        employee = Employee.query.filter_by(
+            employee_id=employee_id,
+            national_id=national_id
+        ).first()
+        
+        if employee:
+            logger.info(f"✅ تحقق ناجح: الموظف {employee.name} ({employee_id}) موجود")
+            return jsonify({'exists': True}), 200
+        else:
+            logger.info(f"❌ تحقق فاشل: لا يوجد موظف بالرقم الوظيفي {employee_id} ورقم الهوية {national_id}")
+            return jsonify({'exists': False}), 200
+            
+    except Exception as e:
+        logger.error(f"خطأ في التحقق من الموظف: {str(e)}")
+        return jsonify({
+            'exists': False,
+            'error': 'حدث خطأ في الخادم'
+        }), 500
