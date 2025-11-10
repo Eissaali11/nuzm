@@ -444,7 +444,10 @@ def upload_to_drive(request_id):
             invoice = InvoiceRequest.query.filter_by(request_id=request_id).first()
             if invoice and invoice.local_image_path:
                 file_path = os.path.join('static', invoice.local_image_path)
+                logger.info(f"📁 فحص ملف الفاتورة: {file_path}")
+                
                 if os.path.exists(file_path):
+                    logger.info(f"✓ الملف موجود - بدء الرفع")
                     upload_result = drive_uploader.upload_invoice_image(
                         file_path=file_path,
                         folder_id=folder_result['folder_id'],
@@ -453,6 +456,13 @@ def upload_to_drive(request_id):
                     if upload_result:
                         invoice.drive_file_id = upload_result['file_id']
                         files_uploaded += 1
+                        logger.info(f"✓ تم رفع الصورة بنجاح")
+                    else:
+                        logger.error(f"✗ فشل رفع الصورة إلى Drive")
+                else:
+                    logger.warning(f"✗ الملف غير موجود على القرص: {file_path}")
+            else:
+                logger.warning(f"⚠ لا توجد فاتورة أو مسار صورة فارغ للطلب {request_id}")
         
         elif emp_request.request_type == RequestType.CAR_WASH:
             car_wash = CarWashRequest.query.filter_by(request_id=request_id).first()
@@ -481,6 +491,18 @@ def upload_to_drive(request_id):
                         folder_id=folder_result['folder_id']
                     )
                     files_uploaded += len([r for r in upload_results.values() if r is not None])
+        
+        # التحقق من أنه تم رفع ملفات فعلاً
+        if files_uploaded == 0:
+            # لم يتم رفع أي ملف - فشل العملية
+            db.session.rollback()
+            logger.warning(f"⚠ فشل رفع الطلب {request_id} - لا توجد ملفات متاحة للرفع")
+            return jsonify({
+                'success': False,
+                'message': 'فشل الرفع: الملفات غير موجودة على الخادم. تأكد من رفع الملفات من التطبيق أولاً.',
+                'error': 'No files found to upload',
+                'files_uploaded': 0
+            }), 400
         
         db.session.commit()
         
