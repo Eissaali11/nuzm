@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "nuzum-477618",
+  "private_key_id": "bd21749d7d0129cc1818c09e5323bca4acd3f2ef",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC8mEOih+9wcTqb\nR1G4BJQhfGkoTQVEtXkfPq7LccM0ZT0Q+edCTxX+y/uVmdpR2Fvpl88J7/e5V/3K\nI65mlqm6JOeo+sLOiFVhen3wdTEQR6ZzJHAQxEwmFA65qCrynAqNh8skeXmHK7M/\nm96rM+IbFIbSz3hF+1V1Wa2udSZnePXIfWI+3Sp+h5u3IU0W/QTWY+4U73gVTVO2\na7/gBcbyJRmtLvWalLf9Olr128KvX76G8gh3r+kFPWxhzOkBt+A6LDNFEdXaDyZH\nZtCxxzW1FfAACOyy/mHWA6W3KExi5oq70mDcY+gwT7gsLhoTBVcXsyzD6R6uh+n0\n+H9LWdmxAgMBAAECggEAKORS9fDHh/flHzoNi/riK4iQPH7Gv6khhBbRS6d1De1N\nmlq1O/lt6XtNJ5jeb5ScCUAzUhJIAlYD30pxTCkq0AOkf00v5BxHdwVaPUMLyl3e\nx2SFL/2ADVmX/8Vo2oXe++UPtO7p3Ncq3IXtd+2d/wUqXpdBmtruIq25LPSVySVf\nLSzqb0SNavchlbsEOIFyAgfJ+OszbkD/hGpHzldPmmPKl7Qc3nyiAja5ieQjT7WB\niicezlXXcUisZ3C0+jxSwReF0+DiQDjfF3SP64BnYDQ1+plrofd63cdQRktCkI8S\nJkatp5az7hT1trPx9/hNLytgOiGuXCrWxM5RQwMe6QKBgQD2TNX50+b7zPr8IL9x\nnNqXWz0JN055C6Z//mcmSR049mA1C6spBvI1J0moBV8kF0oCqXd43Ifjibl6Jedv\nkSovM66/1Vohm1es7O4C/xZpUeWhTPiH2aFx8vbXaZAn+7WfE14hwXp6R+Rj4kTP\nhXLbCSsSXpvaeqtk3DA4HKF7wwKBgQDEBaafSifbU5tQaXDY2v3iDPkQBKEZGRCw\nq9fYc8tMaZo2+IRUS2bVukqQjgUegbshJ4KvyqIrnnae0fs6w8wv+RTfXCPUpyZ2\nNnuyflTwjTVP+2OV04GHjfpI9aau6M0Q48g8ZeLFs4KAN279csKjH7VVNQWgxNQS\nYW/tzT/hewKBgB9OQNxSTMewlC4701mTgE1AsY9cUkMccftO0LmTDX3SAwR7CTRb\nx6lt5vTOSfuCYkvYUnEwRq1rMgIOk04g+2WoggusCJrA7fHy44XJ+oVEfZV0/Rn3\nVYfwQ+O5bTNH0Rv5EDvmJbUpMiRn/CsMYT7p+WmKUPECKorVWeOn7/aVAoGARS3d\nXRAVuuDpylo7+jxnJ1T+vTl1BV+ENWWgOoK7N895HndcdEdcFoe1cwi8I8UTHqNM\nCvBPhWdaY7ilmlqpgDC+vglNl+oZt9SImTjejzq2mvCUd7b6WrWvo/oWBlqgrJpG\n+5HVk4JDxy5JHGdY66rwGw8oWlG8qnP6xYkPR2sCgYEAoH6QOJ3+TpThRgkigwCk\nC4ovsQsVZjriCNzi4VSU28EuBVMd2qcXRe3z8gjxi2+Z0MQlReGYoHqYXe+x8P2K\nKxTp/pWMTCvWqR2pf+X2ahXnThhRQY+htThGYc/g6/pKgv27H2vAAmY7iPA+cwNH\nrWvCVneWGFgN5MsEi4O7Q1M=\n-----END PRIVATE KEY-----\n",
+  "client_email": "nuzum-721@nuzum-477618.iam.gserviceaccount.com",
+  "client_id": "108366574147056527902",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/nuzum-721%40nuzum-477618.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
