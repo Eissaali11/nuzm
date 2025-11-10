@@ -2937,7 +2937,7 @@ def get_all_employees_complete_data():
             latest_handover = db.session.query(VehicleHandover)\
                 .filter(
                     VehicleHandover.employee_id == emp.id,
-                    VehicleHandover.return_date.is_(None)
+                    VehicleHandover.handover_type == 'delivery'
                 )\
                 .order_by(VehicleHandover.handover_date.desc())\
                 .first()
@@ -2954,7 +2954,7 @@ def get_all_employees_complete_data():
                     'color': vehicle.color,
                     'status': vehicle.status,
                     'handover_date': latest_handover.handover_date.isoformat() if latest_handover.handover_date else None,
-                    'handover_mileage': latest_handover.handover_mileage
+                    'handover_mileage': latest_handover.mileage if latest_handover.mileage else None
                 }
             else:
                 employee_dict['assigned_vehicle'] = None
@@ -3009,13 +3009,18 @@ def get_all_employees_complete_data():
                 employee_dict['latest_salary'] = {
                     'month': latest_salary.month,
                     'year': latest_salary.year,
-                    'total_amount': float(latest_salary.total_amount) if latest_salary.total_amount else 0,
-                    'base_salary': float(latest_salary.base_salary) if latest_salary.base_salary else 0,
+                    'basic_salary': float(latest_salary.basic_salary) if latest_salary.basic_salary else 0,
+                    'attendance_bonus': float(latest_salary.attendance_bonus) if latest_salary.attendance_bonus else 0,
                     'allowances': float(latest_salary.allowances) if latest_salary.allowances else 0,
                     'deductions': float(latest_salary.deductions) if latest_salary.deductions else 0,
+                    'attendance_deduction': float(latest_salary.attendance_deduction) if latest_salary.attendance_deduction else 0,
+                    'bonus': float(latest_salary.bonus) if latest_salary.bonus else 0,
                     'net_salary': float(latest_salary.net_salary) if latest_salary.net_salary else 0,
-                    'payment_status': latest_salary.payment_status,
-                    'paid_date': latest_salary.paid_date.isoformat() if latest_salary.paid_date else None
+                    'overtime_hours': float(latest_salary.overtime_hours) if latest_salary.overtime_hours else 0,
+                    'is_paid': latest_salary.is_paid,
+                    'absent_days': latest_salary.absent_days if latest_salary.absent_days else 0,
+                    'present_days': latest_salary.present_days if latest_salary.present_days else 0,
+                    'notes': latest_salary.notes
                 }
             else:
                 employee_dict['latest_salary'] = None
