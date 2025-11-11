@@ -2005,14 +2005,9 @@ def tracking():
         
         photo_url = None
         if emp.profile_image:
-            if emp.profile_image.startswith('http'):
-                photo_url = emp.profile_image
-            elif emp.profile_image.startswith('static/'):
-                photo_url = url_for('static', filename=emp.profile_image.replace('static/', ''), _external=False)
-            elif emp.profile_image.startswith('uploads/'):
-                photo_url = url_for('static', filename=emp.profile_image, _external=False)
-            else:
-                photo_url = url_for('static', filename=f'uploads/{emp.profile_image}', _external=False)
+            # المسارات في قاعدة البيانات الآن بدون static/ في البداية
+            # مثال: uploads/employees/1212_profile_20251111_075113.jpg
+            photo_url = f"/{emp.profile_image}"
         
         emp_dict = {
             'id': emp.id,
