@@ -327,8 +327,8 @@ def get_request_details(current_employee, request_id):
             'file_size': invoice.file_size
         }
     
-    elif emp_request.request_type == RequestType.ADVANCE_PAYMENT and emp_request.advance_payment_data:
-        advance = emp_request.advance_payment_data
+    elif emp_request.request_type == RequestType.ADVANCE_PAYMENT and emp_request.advance_data:
+        advance = emp_request.advance_data
         request_data['details'] = {
             'requested_amount': float(advance.requested_amount),
             'reason': advance.reason,
@@ -370,6 +370,143 @@ def get_request_details(current_employee, request_id):
                 'drive_file_id': media.drive_file_id,
                 'drive_view_url': media.drive_view_url,
                 'file_size': media.file_size,
+                'uploaded_at': media.uploaded_at.isoformat()
+            })
+        
+        request_data['details'] = {
+            'inspection_type': inspection.inspection_type,
+            'inspection_date': inspection.inspection_date.isoformat() if inspection.inspection_date else None,
+            'vehicle': {
+                'id': inspection.vehicle.id,
+                'plate_number': inspection.vehicle.plate_number,
+                'make': inspection.vehicle.make,
+                'model': inspection.vehicle.model
+            } if inspection.vehicle else None,
+            'media_files': media_files
+        }
+    
+    return jsonify({
+        'success': True,
+        'request': request_data
+    }), 200
+
+
+@api_employee_requests.route('/public/requests/<int:request_id>', methods=['GET'])
+def get_public_request_details(request_id):
+    """
+    الحصول على تفاصيل طلب معين - Endpoint عام بدون مصادقة
+    ⚠️ تحذير: هذا الـ endpoint متاح للجميع بدون مصادقة
+    
+    Response:
+    {
+        "success": true,
+        "request": {
+            "id": 1,
+            "type": "INVOICE",
+            "status": "PENDING",
+            ...
+            "details": {...}
+        }
+    }
+    """
+    emp_request = EmployeeRequest.query.get(request_id)
+    
+    if not emp_request:
+        return jsonify({
+            'success': False,
+            'message': 'الطلب غير موجود'
+        }), 404
+    
+    type_names = {
+        'INVOICE': 'فاتورة',
+        'CAR_WASH': 'غسيل سيارة',
+        'CAR_INSPECTION': 'فحص وتوثيق',
+        'ADVANCE_PAYMENT': 'سلفة مالية'
+    }
+    
+    status_names = {
+        'PENDING': 'قيد الانتظار',
+        'APPROVED': 'موافق عليها',
+        'REJECTED': 'مرفوضة'
+    }
+    
+    request_data = {
+        'id': emp_request.id,
+        'employee': {
+            'id': emp_request.employee.id,
+            'name': emp_request.employee.name,
+            'employee_id': emp_request.employee.employee_id
+        } if emp_request.employee else None,
+        'type': emp_request.request_type.name,
+        'type_display': type_names.get(emp_request.request_type.name, emp_request.request_type.name),
+        'status': emp_request.status.name,
+        'status_display': status_names.get(emp_request.status.name, emp_request.status.name),
+        'title': emp_request.title,
+        'description': emp_request.description,
+        'amount': float(emp_request.amount) if emp_request.amount else None,
+        'created_at': emp_request.created_at.isoformat(),
+        'updated_at': emp_request.updated_at.isoformat() if emp_request.updated_at else None,
+        'reviewed_at': emp_request.reviewed_at.isoformat() if emp_request.reviewed_at else None,
+        'admin_notes': emp_request.admin_notes,
+        'google_drive_folder_url': emp_request.google_drive_folder_url
+    }
+    
+    # إضافة التفاصيل حسب نوع الطلب
+    if emp_request.request_type == RequestType.INVOICE and emp_request.invoice_data:
+        invoice = emp_request.invoice_data
+        request_data['details'] = {
+            'vendor_name': invoice.vendor_name,
+            'invoice_date': invoice.invoice_date.isoformat() if invoice.invoice_date else None,
+            'drive_view_url': invoice.drive_view_url,
+            'file_size': invoice.file_size,
+            'local_file_path': invoice.file_path
+        }
+    
+    elif emp_request.request_type == RequestType.ADVANCE_PAYMENT and emp_request.advance_data:
+        advance = emp_request.advance_data
+        request_data['details'] = {
+            'requested_amount': float(advance.requested_amount),
+            'reason': advance.reason,
+            'installments': advance.installments,
+            'installment_amount': float(advance.installment_amount) if advance.installment_amount else None
+        }
+    
+    elif emp_request.request_type == RequestType.CAR_WASH and emp_request.car_wash_data:
+        wash = emp_request.car_wash_data
+        media_files = []
+        for media in wash.media_files:
+            media_files.append({
+                'id': media.id,
+                'file_type': media.file_type,
+                'drive_file_id': media.drive_file_id,
+                'drive_view_url': media.drive_view_url,
+                'local_file_path': media.file_path,
+                'uploaded_at': media.uploaded_at.isoformat()
+            })
+        
+        request_data['details'] = {
+            'service_type': wash.service_type,
+            'scheduled_date': wash.scheduled_date.isoformat() if wash.scheduled_date else None,
+            'vehicle': {
+                'id': wash.vehicle.id,
+                'plate_number': wash.vehicle.plate_number,
+                'make': wash.vehicle.make,
+                'model': wash.vehicle.model
+            } if wash.vehicle else None,
+            'media_files': media_files
+        }
+    
+    elif emp_request.request_type == RequestType.CAR_INSPECTION and emp_request.inspection_data:
+        inspection = emp_request.inspection_data
+        media_files = []
+        for media in inspection.media_files:
+            media_files.append({
+                'id': media.id,
+                'file_type': media.file_type,
+                'drive_file_id': media.drive_file_id,
+                'drive_view_url': media.drive_view_url,
+                'file_size': media.file_size,
+                'local_file_path': media.file_path,
                 'uploaded_at': media.uploaded_at.isoformat()
             })
         
