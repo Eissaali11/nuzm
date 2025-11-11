@@ -1430,63 +1430,44 @@ def export_all_employees_to_excel():
             bottom=Side(style='thin', color='CCCCCC')
         )
         
-        # تعريف الأعمدة (شاملة جداً)
+        # تعريف الأعمدة (الحقول الأساسية فقط من جدول Employee)
         columns = [
             ("ID", 8),
             ("الرقم الوظيفي", 15),
             ("الاسم الكامل", 25),
             ("الرقم الوطني", 15),
-            ("الجنسية", 12),
+            ("الجنسية", 15),
             ("تاريخ الميلاد", 12),
             ("العمر", 8),
-            ("رقم الجوال", 15),
+            ("رقم الجوال الرسمي", 15),
+            ("رقم الجوال الشخصي", 15),
             ("البريد الإلكتروني", 25),
             ("الأقسام", 30),
             ("الحالة", 12),
             ("المسمى الوظيفي", 20),
             ("نوع العقد", 12),
+            ("نوع الموظف", 12),
             ("تاريخ التعيين", 12),
+            ("الموقع", 15),
+            ("المشروع", 20),
             ("الراتب الأساسي", 12),
             ("حافز الدوام", 12),
             ("الأجر اليومي", 12),
             ("إجمالي الراتب", 12),
-            ("رقم الإقامة", 15),
-            ("تاريخ إصدار الإقامة", 15),
-            ("تاريخ انتهاء الإقامة", 15),
-            ("حالة الإقامة", 12),
-            ("رقم الجواز", 15),
-            ("تاريخ إصدار الجواز", 15),
-            ("تاريخ انتهاء الجواز", 15),
-            ("حالة الجواز", 12),
-            ("اسم الكفيل", 20),
-            ("رقم الكفيل الوطني", 15),
-            ("رقم جوال الكفيل", 15),
-            ("السيارة الحالية", 15),
-            ("لوحة السيارة", 15),
-            ("آخر موقع GPS - خط العرض", 15),
-            ("آخر موقع GPS - خط الطول", 15),
-            ("آخر موقع GPS - الدقة", 12),
-            ("آخر موقع GPS - التاريخ", 18),
-            ("معدل الحضور (30 يوم)", 15),
-            ("أيام الحضور (30 يوم)", 15),
-            ("أيام الغياب (30 يوم)", 15),
-            ("أيام التأخير (30 يوم)", 15),
-            ("ساعات العمل اليومية", 15),
-            ("ساعات الإضافي (30 يوم)", 15),
-            ("عدد الطلبات المقدمة", 15),
-            ("طلبات معلقة", 12),
-            ("طلبات مكتملة", 12),
-            ("مجموع الالتزامات النشطة", 15),
-            ("مجموع الالتزامات المدفوعة", 15),
-            ("عدد الوثائق", 12),
-            ("وثائق منتهية", 12),
-            ("وثائق قرب الانتهاء", 12),
-            ("الأجهزة المخصصة", 12),
-            ("بطاقات SIM", 12),
-            ("عنوان السكن", 30),
-            ("صور السكن", 12),
-            ("رابط Google Drive للسكن", 40),
-            ("معلومات إضافية", 40)
+            ("حالة العقد", 15),
+            ("حالة الرخصة", 15),
+            ("حالة الكفالة", 15),
+            ("اسم الكفيل الحالي", 25),
+            ("رقم الإيبان", 25),
+            ("عنوان السكن", 35),
+            ("رابط موقع السكن", 40),
+            ("مقاس البنطلون", 12),
+            ("مقاس التيشرت", 12),
+            ("عهدة جوال", 10),
+            ("نوع الجوال", 20),
+            ("رقم IMEI", 20),
+            ("تاريخ الإنشاء", 15),
+            ("آخر تحديث", 15)
         ]
         
         # كتابة الرؤوس
@@ -1551,6 +1532,7 @@ def export_all_employees_to_excel():
         
         # كتابة بيانات الموظفين
         row_num = 2
+        successful_count = 0
         for emp in employees:
             try:
                 # حساب البيانات المركبة بشكل آمن
@@ -1570,94 +1552,11 @@ def export_all_employees_to_excel():
                 except:
                     total_salary = safe_number(emp.basic_salary)
                 
-                # السيارة الحالية
-                try:
-                    current_vehicle = VehicleHandover.query.filter_by(
-                        employee_id=emp.id,
-                        status='active'
-                    ).join(Vehicle).first()
-                    vehicle_make = safe_value(current_vehicle.vehicle.make if current_vehicle else "")
-                    vehicle_plate = safe_value(current_vehicle.vehicle.plate_number if current_vehicle else "")
-                except:
-                    vehicle_make = ""
-                    vehicle_plate = ""
-                
-                # آخر موقع GPS
-                try:
-                    last_location = EmployeeLocation.query.filter_by(
-                        employee_id=emp.id
-                    ).order_by(EmployeeLocation.recorded_at.desc()).first()
-                    gps_lat = last_location.latitude if last_location and last_location.latitude else ""
-                    gps_lng = last_location.longitude if last_location and last_location.longitude else ""
-                    gps_accuracy = last_location.accuracy if last_location and last_location.accuracy else ""
-                    gps_date = safe_date(last_location.recorded_at, "%Y-%m-%d %H:%M") if last_location else ""
-                except:
-                    gps_lat = gps_lng = gps_accuracy = gps_date = ""
-                
-                # بيانات الحضور (آخر 30 يوم)
-                try:
-                    thirty_days_ago = date.today() - timedelta(days=30)
-                    attendance_records = Attendance.query.filter(
-                        Attendance.employee_id == emp.id,
-                        Attendance.date >= thirty_days_ago
-                    ).all()
-                    
-                    total_days = len(attendance_records)
-                    present_days = sum(1 for a in attendance_records if a.status in ['present', 'late'])
-                    absent_days = sum(1 for a in attendance_records if a.status == 'absent')
-                    late_days = sum(1 for a in attendance_records if a.status == 'late')
-                    attendance_rate = round((present_days / total_days * 100), 1) if total_days > 0 else 0
-                    
-                    total_work_hours = sum(safe_number(a.hours_worked, 0) for a in attendance_records)
-                    avg_work_hours = round(total_work_hours / present_days, 1) if present_days > 0 else 0
-                    
-                    total_overtime = sum(safe_number(a.overtime_hours, 0) for a in attendance_records)
-                except:
-                    attendance_rate = present_days = absent_days = late_days = 0
-                    avg_work_hours = total_overtime = 0
-                
-                # الطلبات
-                try:
-                    all_requests = EmployeeRequest.query.filter_by(employee_id=emp.id).all()
-                    total_requests = len(all_requests)
-                    pending_requests = sum(1 for r in all_requests if r.status == 'pending')
-                    completed_requests = sum(1 for r in all_requests if r.status in ['approved', 'completed'])
-                except:
-                    total_requests = pending_requests = completed_requests = 0
-                
-                # الالتزامات
-                try:
-                    liabilities = EmployeeLiability.query.filter_by(employee_id=emp.id).all()
-                    active_liabilities = sum(safe_number(l.amount, 0) - safe_number(l.amount_paid, 0) 
-                                           for l in liabilities if l.status == 'ACTIVE')
-                    paid_liabilities = sum(safe_number(l.amount, 0) 
-                                          for l in liabilities if l.status == 'PAID')
-                except:
-                    active_liabilities = paid_liabilities = 0
-                
-                # الوثائق
-                try:
-                    documents = Document.query.filter_by(employee_id=emp.id).all()
-                    total_docs = len(documents)
-                    expired_docs = sum(1 for d in documents if d.expiry_date and d.expiry_date < date.today())
-                    expiring_soon = sum(1 for d in documents if d.expiry_date and 
-                                      0 <= (d.expiry_date - date.today()).days <= 30)
-                except:
-                    total_docs = expired_docs = expiring_soon = 0
-                
-                # الأجهزة
-                try:
-                    mobile_devices_count = MobileDevice.query.filter_by(employee_id=emp.id).count()
-                    sim_cards_count = SimCard.query.filter_by(employee_id=emp.id).count()
-                except:
-                    mobile_devices_count = sim_cards_count = 0
-                
-                # كتابة الصف
                 # تحديد الجنسية بشكل آمن
                 try:
-                    nationality_name = emp.nationality.name if hasattr(emp.nationality, 'name') else safe_value(emp.nationality)
+                    nationality_name = emp.nationality_obj.name_ar if emp.nationality_obj else safe_value(emp.nationality)
                 except:
-                    nationality_name = ""
+                    nationality_name = safe_value(emp.nationality)
                 
                 row_data = [
                     emp.id,
@@ -1668,53 +1567,34 @@ def export_all_employees_to_excel():
                     safe_date(emp.birth_date),
                     calculate_age(emp.birth_date),
                     safe_value(emp.mobile),
+                    safe_value(emp.mobilePersonal),
                     safe_value(emp.email),
                     departments_names,
                     safe_value(emp.status),
                     safe_value(emp.job_title),
                     safe_value(emp.contract_type),
+                    safe_value(emp.employee_type),
                     safe_date(emp.join_date),
+                    safe_value(emp.location),
+                    safe_value(emp.project),
                     safe_number(emp.basic_salary),
                     safe_number(emp.attendance_bonus),
                     safe_number(emp.daily_wage),
                     total_salary,
-                    safe_value(emp.residency_number),
-                    safe_date(emp.residency_issue_date),
-                    safe_date(emp.residency_expiry_date),
-                    get_document_status(emp.residency_expiry_date),
-                    safe_value(emp.passport_number),
-                    safe_date(emp.passport_issue_date),
-                    safe_date(emp.passport_expiry_date),
-                    get_document_status(emp.passport_expiry_date),
-                    safe_value(emp.sponsor_name),
-                    safe_value(emp.sponsor_national_id),
-                    safe_value(emp.sponsor_mobile),
-                    vehicle_make,
-                    vehicle_plate,
-                    gps_lat,
-                    gps_lng,
-                    gps_accuracy,
-                    gps_date,
-                    attendance_rate,
-                    present_days,
-                    absent_days,
-                    late_days,
-                    avg_work_hours,
-                    total_overtime,
-                    total_requests,
-                    pending_requests,
-                    completed_requests,
-                    active_liabilities,
-                    paid_liabilities,
-                    total_docs,
-                    expired_docs,
-                    expiring_soon,
-                    mobile_devices_count,
-                    sim_cards_count,
-                    safe_value(emp.housing_address),
-                    safe_value(len(emp.housing_images.split(',')) if emp.housing_images else 0),
-                    safe_value(emp.housing_drive_link),
-                    safe_value(emp.notes)
+                    safe_value(emp.contract_status),
+                    safe_value(emp.license_status),
+                    safe_value(emp.sponsorship_status),
+                    safe_value(emp.current_sponsor_name),
+                    safe_value(emp.bank_iban),
+                    safe_value(emp.residence_details),
+                    safe_value(emp.residence_location_url),
+                    safe_value(emp.pants_size),
+                    safe_value(emp.shirt_size),
+                    "نعم" if emp.has_mobile_custody else "لا",
+                    safe_value(emp.mobile_type),
+                    safe_value(emp.mobile_imei),
+                    safe_date(emp.created_at, "%Y-%m-%d %H:%M"),
+                    safe_date(emp.updated_at, "%Y-%m-%d %H:%M")
                 ]
                 
                 for col_num, value in enumerate(row_data, 1):
@@ -1724,9 +1604,10 @@ def export_all_employees_to_excel():
                     cell.border = cell_border
                 
                 row_num += 1
+                successful_count += 1
                 
             except Exception as e:
-                logger.error(f"خطأ في معالجة الموظف {emp.id}: {str(e)}")
+                logger.error(f"❌ خطأ في معالجة الموظف {emp.id}: {str(e)}")
                 # المتابعة مع الموظف التالي بدون توقف
                 continue
         
@@ -1734,7 +1615,7 @@ def export_all_employees_to_excel():
         summary_row = row_num + 1
         ws.cell(row=summary_row, column=1).value = "الإجمالي"
         ws.cell(row=summary_row, column=1).font = Font(bold=True, size=12)
-        ws.cell(row=summary_row, column=2).value = f"{len(employees)} موظف"
+        ws.cell(row=summary_row, column=2).value = f"{successful_count} موظف"
         ws.cell(row=summary_row, column=2).font = Font(bold=True, size=12)
         
         # تجميد الصف الأول
@@ -1748,7 +1629,7 @@ def export_all_employees_to_excel():
         # تحديد اسم الملف
         filename = f"employees_full_data_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
         
-        logger.info(f"✅ تم إنشاء ملف Excel بنجاح: {filename} ({row_num - 2} موظف)")
+        logger.info(f"✅ تم إنشاء ملف Excel بنجاح: {filename} ({successful_count} موظف من أصل {len(employees)})")
         
         return send_file(
             output,
