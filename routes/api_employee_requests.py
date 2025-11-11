@@ -458,8 +458,9 @@ def get_public_request_details(request_id):
             'vendor_name': invoice.vendor_name,
             'invoice_date': invoice.invoice_date.isoformat() if invoice.invoice_date else None,
             'drive_view_url': invoice.drive_view_url,
+            'drive_file_id': invoice.drive_file_id,
             'file_size': invoice.file_size,
-            'local_file_path': invoice.file_path
+            'local_file_path': invoice.local_image_path
         }
     
     elif emp_request.request_type == RequestType.ADVANCE_PAYMENT and emp_request.advance_data:
@@ -477,11 +478,12 @@ def get_public_request_details(request_id):
         for media in wash.media_files:
             media_files.append({
                 'id': media.id,
-                'file_type': media.file_type,
+                'media_type': media.media_type.value if media.media_type else None,
                 'drive_file_id': media.drive_file_id,
                 'drive_view_url': media.drive_view_url,
-                'local_file_path': media.file_path,
-                'uploaded_at': media.uploaded_at.isoformat()
+                'local_file_path': media.local_path,
+                'file_size': media.file_size,
+                'uploaded_at': media.uploaded_at.isoformat() if media.uploaded_at else None
             })
         
         request_data['details'] = {
@@ -502,12 +504,12 @@ def get_public_request_details(request_id):
         for media in inspection.media_files:
             media_files.append({
                 'id': media.id,
-                'file_type': media.file_type,
+                'file_type': media.file_type.value if media.file_type else None,
                 'drive_file_id': media.drive_file_id,
                 'drive_view_url': media.drive_view_url,
                 'file_size': media.file_size,
-                'local_file_path': media.file_path,
-                'uploaded_at': media.uploaded_at.isoformat()
+                'local_file_path': media.local_path,
+                'uploaded_at': media.uploaded_at.isoformat() if media.uploaded_at else None
             })
         
         request_data['details'] = {
