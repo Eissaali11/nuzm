@@ -5,7 +5,7 @@ API Endpoints الخارجية - بدون مصادقة
 from flask import Blueprint, request, jsonify
 from datetime import datetime
 from models import (
-    Employee, EmployeeLocation, Geofence, GeofenceEvent, employee_departments, 
+    Employee, EmployeeLocation, Geofence, GeofenceEvent, GeofenceSession, employee_departments, 
     VehicleHandover, db, Attendance, Salary, EmployeeRequest, EmployeeLiability,
     Document, MobileDevice, SimCard, Department, Vehicle
 )
@@ -14,6 +14,7 @@ from sqlalchemy.orm import joinedload
 from datetime import date, timedelta
 import os
 import logging
+from utils.geofence_session_manager import SessionManager
 
 # إنشاء Blueprint
 api_external_bp = Blueprint('api_external', __name__, url_prefix='/api/external')
@@ -78,6 +79,16 @@ def process_geofence_events(employee, latitude, longitude):
                     notes=f'كشف تلقائي من نظام تتبع المواقع'
                 )
                 db.session.add(event)
+                db.session.flush()  # للحصول على event.id
+                
+                # إنشاء/تحديث جلسة باستخدام SessionManager
+                try:
+                    if event_type == 'enter':
+                        SessionManager.process_enter_event(employee.id, geofence.id, event)
+                    elif event_type == 'exit':
+                        SessionManager.process_exit_event(employee.id, geofence.id, event)
+                except Exception as e:
+                    logger.error(f"خطأ في معالجة جلسة الموظف: {str(e)}")
                 
                 # إرسال إشعار (اختياري) - يمكن تفعيله لاحقاً
                 if (event_type == 'enter' and geofence.notify_on_entry) or \

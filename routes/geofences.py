@@ -1,7 +1,9 @@
 from flask import Blueprint, render_template, request, jsonify, flash, redirect, url_for, send_file
 from flask_login import login_required, current_user
-from models import Geofence, GeofenceEvent, Employee, Department, Attendance, EmployeeLocation, db, employee_departments
+from models import Geofence, GeofenceEvent, GeofenceSession, Employee, Department, Attendance, EmployeeLocation, db, employee_departments
 from datetime import datetime, timedelta
+from utils.geofence_session_manager import SessionManager
+from sqlalchemy import func, desc
 import re
 import requests
 
@@ -120,12 +122,40 @@ def view(geofence_id):
     assigned_employee_ids = [emp.id for emp in geofence.assigned_employees]
     available_employees = [emp for emp in department_employees if emp.id not in assigned_employee_ids]
     
+    # جلب الجلسات النشطة (الموظفون داخل الدائرة الآن)
+    active_sessions = SessionManager.get_active_sessions(geofence_id=geofence_id)
+    
+    # جلب جميع الجلسات مع تفاصيل الموظفين
+    all_sessions = GeofenceSession.query.filter_by(
+        geofence_id=geofence_id
+    ).options(
+        db.joinedload(GeofenceSession.employee)
+    ).order_by(GeofenceSession.entry_time.desc()).limit(100).all()
+    
+    # حساب إحصائيات الموظفين
+    employee_stats = {}
+    for emp in geofence.assigned_employees:
+        total_time = SessionManager.get_employee_total_time(emp.id, geofence_id)
+        visit_count = SessionManager.get_employee_visit_count(emp.id, geofence_id)
+        is_inside = any(s.employee_id == emp.id for s in active_sessions)
+        
+        employee_stats[emp.id] = {
+            'employee': emp,
+            'total_time_minutes': total_time,
+            'total_time_hours': round(total_time / 60, 1) if total_time else 0,
+            'visit_count': visit_count,
+            'avg_duration': round(total_time / visit_count, 1) if visit_count > 0 else 0,
+            'is_inside': is_inside
+        }
+    
     # إحصائيات الحضور
     today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
     week_start = today_start - timedelta(days=7)
     
     total_assigned = len(geofence.assigned_employees)
-    present_count = len([emp for emp in geofence.assigned_employees if emp.id in {e['employee'].id for e in employees_inside}])
+    # حساب فقط الموظفين المعينين للدائرة والموجودين داخلها
+    assigned_ids = {emp.id for emp in geofence.assigned_employees}
+    present_count = len([s for s in active_sessions if s.employee_id in assigned_ids])
     absent_count = total_assigned - present_count
     attendance_rate = (present_count / total_assigned * 100) if total_assigned > 0 else 0
     
@@ -181,7 +211,10 @@ def view(geofence_id):
         recent_events=recent_events,
         assigned_employees=geofence.assigned_employees,
         available_employees=available_employees,
-        stats=stats
+        stats=stats,
+        employee_stats=employee_stats,
+        all_sessions=all_sessions,
+        active_sessions=active_sessions
     )
 
 

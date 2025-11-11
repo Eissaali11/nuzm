@@ -2252,11 +2252,11 @@ class GeofenceEvent(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     geofence_id = db.Column(db.Integer, db.ForeignKey('geofences.id', ondelete='CASCADE'))
     employee_id = db.Column(db.Integer, db.ForeignKey('employee.id', ondelete='CASCADE'))
-    event_type = db.Column(db.String(30), nullable=False)
+    event_type = db.Column(db.String(30), nullable=False)  # 'enter', 'exit', 'check_in'
     location_latitude = db.Column(db.Numeric(9, 6))
     location_longitude = db.Column(db.Numeric(9, 6))
     distance_from_center = db.Column(db.Integer)
-    recorded_at = db.Column(db.DateTime, default=datetime.utcnow)
+    recorded_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
     processed_at = db.Column(db.DateTime)
     source = db.Column(db.String(20), default='auto')
     attendance_id = db.Column(db.Integer, db.ForeignKey('attendance.id'))
@@ -2266,6 +2266,47 @@ class GeofenceEvent(db.Model):
     
     def __repr__(self):
         return f'<GeofenceEvent {self.event_type} - {self.employee_id}>'
+
+
+class GeofenceSession(db.Model):
+    """جلسة كاملة لموظف في دائرة جغرافية (من الدخول إلى الخروج)"""
+    __tablename__ = 'geofence_sessions'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    geofence_id = db.Column(db.Integer, db.ForeignKey('geofences.id', ondelete='CASCADE'), nullable=False, index=True)
+    employee_id = db.Column(db.Integer, db.ForeignKey('employee.id', ondelete='CASCADE'), nullable=False, index=True)
+    
+    # أحداث الدخول/الخروج
+    entry_event_id = db.Column(db.Integer, db.ForeignKey('geofence_events.id'))
+    exit_event_id = db.Column(db.Integer, db.ForeignKey('geofence_events.id'))
+    
+    # الأوقات
+    entry_time = db.Column(db.DateTime, nullable=False, index=True)
+    exit_time = db.Column(db.DateTime)
+    duration_minutes = db.Column(db.Integer)  # المدة بالدقائق
+    
+    # الحالة
+    is_active = db.Column(db.Boolean, default=True)  # True = لا يزال داخل الدائرة
+    
+    # تواريخ
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # العلاقات
+    geofence = db.relationship('Geofence', backref=db.backref('sessions', lazy='dynamic'))
+    employee = db.relationship('Employee', backref=db.backref('geofence_sessions', lazy='dynamic'))
+    entry_event = db.relationship('GeofenceEvent', foreign_keys=[entry_event_id])
+    exit_event = db.relationship('GeofenceEvent', foreign_keys=[exit_event_id])
+    
+    def calculate_duration(self):
+        """حساب المدة بالدقائق"""
+        if self.entry_time and self.exit_time:
+            delta = self.exit_time - self.entry_time
+            self.duration_minutes = int(delta.total_seconds() / 60)
+        return self.duration_minutes
+    
+    def __repr__(self):
+        return f'<GeofenceSession {self.id} - Employee {self.employee_id} - Active: {self.is_active}>'
 
 
 # ============================================================================
