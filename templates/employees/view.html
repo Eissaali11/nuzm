@@ -774,10 +774,11 @@ document.addEventListener('DOMContentLoaded', function() {
                         <h6 class="text-muted mb-3">الصورة الشخصية</h6>
                         <div class="image-preview mb-3">
                             {% if employee.profile_image %}
-                                <img src="{{ url_for('static', filename=employee.profile_image) }}" 
+                                <img src="/{{ employee.profile_image }}" 
                                      alt="الصورة الشخصية" 
                                      class="img-fluid rounded" 
-                                     style="max-height: 180px; width: auto;">
+                                     style="max-height: 180px; width: auto;"
+                                     onerror="this.parentElement.innerHTML='<div class=\'text-center text-muted\'><i class=\'fas fa-user fa-3x mb-2\'></i><p>لا توجد صورة شخصية</p></div>'">
                             {% else %}
                                 <div class="text-center text-muted">
                                     <i class="fas fa-user fa-3x mb-2"></i>
@@ -803,10 +804,11 @@ document.addEventListener('DOMContentLoaded', function() {
                         <h6 class="text-muted mb-3">صورة الهوية الوطنية</h6>
                         <div class="image-preview mb-3">
                             {% if employee.national_id_image %}
-                                <img src="{{ url_for('static', filename=employee.national_id_image) }}" 
+                                <img src="/{{ employee.national_id_image }}" 
                                      alt="صورة الهوية الوطنية" 
                                      class="img-fluid rounded" 
-                                     style="max-height: 180px; width: auto;">
+                                     style="max-height: 180px; width: auto;"
+                                     onerror="this.parentElement.innerHTML='<div class=\'text-center text-muted\'><i class=\'fas fa-id-card fa-3x mb-2\'></i><p>لا توجد صورة الهوية</p></div>'">
                             {% else %}
                                 <div class="text-center text-muted">
                                     <i class="fas fa-id-card fa-3x mb-2"></i>
@@ -832,10 +834,11 @@ document.addEventListener('DOMContentLoaded', function() {
                         <h6 class="text-muted mb-3">صورة رخصة القيادة</h6>
                         <div class="image-preview mb-3">
                             {% if employee.license_image %}
-                                <img src="{{ url_for('static', filename=employee.license_image) }}" 
+                                <img src="/{{ employee.license_image }}" 
                                      alt="صورة رخصة القيادة" 
                                      class="img-fluid rounded" 
-                                     style="max-height: 180px; width: auto;">
+                                     style="max-height: 180px; width: auto;"
+                                     onerror="this.parentElement.innerHTML='<div class=\'text-center text-muted\'><i class=\'fas fa-car fa-3x mb-2\'></i><p>لا توجد صورة الرخصة</p></div>'">
                             {% else %}
                                 <div class="text-center text-muted">
                                     <i class="fas fa-car fa-3x mb-2"></i>

@@ -40,8 +40,8 @@ def save_employee_image(file, employee_id, image_type):
         filepath = os.path.join(UPLOAD_FOLDER, unique_filename)
         file.save(filepath)
         
-        # إرجاع المسار النسبي للحفظ في قاعدة البيانات
-        return f"static/uploads/employees/{unique_filename}"
+        # إرجاع المسار النسبي للحفظ في قاعدة البيانات (بدون static/ في البداية)
+        return f"uploads/employees/{unique_filename}"
     return None
 
 @employees_bp.route('/')
