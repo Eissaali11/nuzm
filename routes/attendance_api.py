@@ -9,8 +9,10 @@ from werkzeug.utils import secure_filename
 from datetime import datetime, date, time, timezone, timedelta
 from sqlalchemy import func, and_, or_
 from decimal import Decimal
+from functools import wraps
 import json
 import os
+import jwt
 import hashlib
 import logging
 from math import radians, sin, cos, sqrt, atan2
@@ -22,6 +24,185 @@ logger = logging.getLogger(__name__)
 
 # إنشاء Blueprint
 attendance_api_bp = Blueprint('attendance_api', __name__, url_prefix='/api/v1/attendance')
+
+# إعدادات الأمان
+SECRET_KEY = os.environ.get('SESSION_SECRET')
+if not SECRET_KEY:
+    raise RuntimeError("SESSION_SECRET environment variable is required for JWT authentication")
+
+# إعدادات Geofencing
+GEOFENCE_REQUIRED = True  # إلزامية التحقق من الموقع
+MIN_GPS_ACCURACY = 100  # الحد الأدنى للدقة بالأمتار
+MAX_GPS_ACCURACY = 500  # الحد الأقصى للدقة بالأمتار
+
+# إعدادات التحقق البيومتري
+MIN_CONFIDENCE_SCORE = 0.75  # الحد الأدنى لدرجة الثقة
+MIN_LIVENESS_SCORE = 0.70  # الحد الأدنى لدرجة الحياة
+
+# Rate Limiting (بسيط - يمكن تحسينه باستخدام Redis)
+check_in_attempts = {}  # {employee_id: [(timestamp, success), ...]}
+MAX_ATTEMPTS_PER_HOUR = 5
+
+# ============================================
+# Security & Authentication
+# ============================================
+
+def token_required(f):
+    """Decorator للتحقق من JWT Token"""
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = None
+        
+        if 'Authorization' in request.headers:
+            auth_header = request.headers['Authorization']
+            try:
+                token = auth_header.split(' ')[1]
+            except IndexError:
+                return jsonify({
+                    'success': False,
+                    'error': 'صيغة التوكن غير صحيحة',
+                    'code': 'INVALID_TOKEN_FORMAT'
+                }), 401
+        
+        if not token:
+            return jsonify({
+                'success': False,
+                'error': 'التوكن مفقود - يجب تسجيل الدخول',
+                'code': 'MISSING_TOKEN'
+            }), 401
+        
+        try:
+            data = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
+            current_employee = Employee.query.filter_by(
+                employee_id=data['employee_id'],
+                status='active'
+            ).first()
+            
+            if not current_employee:
+                return jsonify({
+                    'success': False,
+                    'error': 'الموظف غير موجود أو غير نشط',
+                    'code': 'EMPLOYEE_NOT_FOUND'
+                }), 401
+                
+        except jwt.ExpiredSignatureError:
+            return jsonify({
+                'success': False,
+                'error': 'التوكن منتهي الصلاحية - يجب تسجيل الدخول مرة أخرى',
+                'code': 'TOKEN_EXPIRED'
+            }), 401
+        except jwt.InvalidTokenError:
+            return jsonify({
+                'success': False,
+                'error': 'التوكن غير صالح',
+                'code': 'INVALID_TOKEN'
+            }), 401
+        
+        return f(current_employee, *args, **kwargs)
+    
+    return decorated
+
+
+def check_rate_limit(employee_id):
+    """التحقق من rate limiting"""
+    now = datetime.now(timezone.utc)
+    one_hour_ago = now - timedelta(hours=1)
+    
+    # تنظيف المحاولات القديمة
+    if employee_id in check_in_attempts:
+        check_in_attempts[employee_id] = [
+            (ts, success) for ts, success in check_in_attempts[employee_id]
+            if ts > one_hour_ago
+        ]
+    else:
+        check_in_attempts[employee_id] = []
+    
+    # التحقق من عدد المحاولات
+    recent_attempts = len(check_in_attempts[employee_id])
+    
+    if recent_attempts >= MAX_ATTEMPTS_PER_HOUR:
+        return False, f"تم تجاوز الحد الأقصى للمحاولات ({MAX_ATTEMPTS_PER_HOUR} محاولات في الساعة)"
+    
+    return True, None
+
+
+def record_attempt(employee_id, success=True):
+    """تسجيل محاولة حضور"""
+    now = datetime.now(timezone.utc)
+    if employee_id not in check_in_attempts:
+        check_in_attempts[employee_id] = []
+    check_in_attempts[employee_id].append((now, success))
+
+
+def validate_gps_data(latitude, longitude, accuracy):
+    """التحقق من صحة بيانات GPS"""
+    try:
+        lat = float(latitude)
+        lon = float(longitude)
+        acc = float(accuracy)
+        
+        # التحقق من النطاقات
+        if not (-90 <= lat <= 90):
+            return False, "خط العرض غير صحيح"
+        if not (-180 <= lon <= 180):
+            return False, "خط الطول غير صحيح"
+        if acc < 0 or acc > MAX_GPS_ACCURACY:
+            return False, f"دقة الموقع غير مقبولة (يجب أن تكون أقل من {MAX_GPS_ACCURACY}م)"
+        
+        return True, None
+        
+    except (ValueError, TypeError):
+        return False, "بيانات الموقع غير صحيحة"
+
+
+def validate_biometric_scores(confidence, liveness_score, require_biometric=False):
+    """
+    التحقق من درجات التحقق البيومتري
+    
+    Args:
+        confidence: درجة الثقة (0-1)
+        liveness_score: درجة الحياة (0-1)
+        require_biometric: إلزامية التحقق البيومتري
+    
+    Returns:
+        (valid: bool, error_msg: str|None)
+    """
+    errors = []
+    
+    # معالجة confidence
+    if confidence is not None and str(confidence).strip() != '':
+        try:
+            conf = float(confidence)
+            if conf <= 0:
+                errors.append("مستوى الثقة يجب أن يكون أكبر من 0")
+            elif conf < MIN_CONFIDENCE_SCORE:
+                errors.append(f"مستوى الثقة منخفض جداً ({conf:.2f} < {MIN_CONFIDENCE_SCORE})")
+            elif conf > 1.0:
+                errors.append("مستوى الثقة غير صحيح (أكبر من 1.0)")
+        except (ValueError, TypeError):
+            errors.append("مستوى الثقة غير صحيح - يجب أن يكون رقم بين 0 و 1")
+    elif require_biometric:
+        errors.append("مستوى الثقة مطلوب")
+    
+    # معالجة liveness_score
+    if liveness_score is not None and str(liveness_score).strip() != '':
+        try:
+            liveness = float(liveness_score)
+            if liveness <= 0:
+                errors.append("درجة الحياة يجب أن تكون أكبر من 0")
+            elif liveness < MIN_LIVENESS_SCORE:
+                errors.append(f"فحص الحياة فشل ({liveness:.2f} < {MIN_LIVENESS_SCORE})")
+            elif liveness > 1.0:
+                errors.append("درجة الحياة غير صحيحة (أكبر من 1.0)")
+        except (ValueError, TypeError):
+            errors.append("درجة الحياة غير صحيحة - يجب أن تكون رقم بين 0 و 1")
+    elif require_biometric:
+        errors.append("درجة الحياة مطلوبة")
+    
+    if errors:
+        return False, " | ".join(errors)
+    return True, None
+
 
 # ============================================
 # Helper Functions
@@ -46,19 +227,42 @@ def calculate_distance(lat1, lon1, lat2, lon2):
         return None
 
 
-def verify_geofence(employee, latitude, longitude):
-    """التحقق من أن الموظف داخل منطقة العمل"""
+def verify_geofence(employee, latitude, longitude, strict=True):
+    """
+    التحقق من أن الموظف داخل منطقة العمل
+    
+    Args:
+        employee: كائن الموظف
+        latitude: خط العرض
+        longitude: خط الطول
+        strict: إذا كان True، يُطلب وجود geofence محدد
+    
+    Returns:
+        (success: bool, geofence: Geofence|None, message: str)
+    """
     try:
-        # البحث عن geofences المرتبطة بالموظف
+        # البحث عن geofences المرتبطة بالموظف أو القسم
         geofences = Geofence.query.filter(
-            Geofence.employees.contains(employee)
+            or_(
+                Geofence.employees.contains(employee),
+                Geofence.department_id == employee.department_id
+            ),
+            Geofence.is_active == True
         ).all()
         
         if not geofences:
-            # لا توجد geofences محددة - السماح بالحضور
-            return True, None, "لا توجد منطقة محددة"
+            if GEOFENCE_REQUIRED or strict:
+                # إلزامية وجود geofence
+                return False, None, "لم يتم تعيين منطقة عمل لهذا الموظف - اتصل بالإدارة"
+            else:
+                # السماح بدون geofence (للتطوير فقط)
+                logger.warning(f"No geofence assigned for employee {employee.employee_id}")
+                return True, None, "⚠️ لا توجد منطقة محددة (تحذير)"
         
         # التحقق من وجود الموظف داخل أي geofence
+        closest_distance = None
+        closest_geofence = None
+        
         for geofence in geofences:
             distance = calculate_distance(
                 float(geofence.latitude),
@@ -67,15 +271,36 @@ def verify_geofence(employee, latitude, longitude):
                 float(longitude)
             )
             
-            if distance is not None and distance <= float(geofence.radius):
-                return True, geofence, f"داخل منطقة {geofence.name}"
+            if distance is None:
+                continue
+                
+            # حفظ أقرب منطقة
+            if closest_distance is None or distance < closest_distance:
+                closest_distance = distance
+                closest_geofence = geofence
+            
+            # التحقق من الدخول
+            if distance <= float(geofence.radius):
+                logger.info(f"✓ Employee {employee.employee_id} inside geofence '{geofence.name}' (distance: {distance:.1f}m)")
+                return True, geofence, f"✓ داخل منطقة {geofence.name}"
         
         # الموظف خارج جميع المناطق
-        return False, None, "خارج منطقة العمل"
+        if closest_geofence and closest_distance:
+            logger.warning(
+                f"✗ Employee {employee.employee_id} outside geofence. "
+                f"Closest: '{closest_geofence.name}' at {closest_distance:.1f}m "
+                f"(max: {closest_geofence.radius}m)"
+            )
+            return False, closest_geofence, (
+                f"✗ خارج منطقة العمل - أنت على بُعد {closest_distance:.0f}م من '{closest_geofence.name}' "
+                f"(المسموح: {closest_geofence.radius}م)"
+            )
+        else:
+            return False, None, "✗ خارج جميع مناطق العمل المحددة"
         
     except Exception as e:
-        logger.error(f"Error verifying geofence: {e}")
-        return False, None, f"خطأ في التحقق: {str(e)}"
+        logger.error(f"Error verifying geofence for {employee.employee_id}: {e}")
+        return False, None, f"خطأ في التحقق من الموقع: {str(e)}"
 
 
 def save_face_image(face_image, employee_id, check_type='check_in'):
@@ -109,20 +334,22 @@ def save_face_image(face_image, employee_id, check_type='check_in'):
 # ============================================
 
 @attendance_api_bp.route('/check-in', methods=['POST'])
-def attendance_check_in():
+@token_required
+def attendance_check_in(current_employee):
     """
-    تسجيل الحضور مع التحقق من الوجه والموقع
+    تسجيل الحضور مع التحقق من الوجه والموقع (محمي بـ JWT)
+    
+    Headers:
+    - Authorization: Bearer <JWT_TOKEN>
     
     Request (multipart/form-data):
-    - employee_id: معرف الموظف
-    - latitude: خط العرض
-    - longitude: خط الطول  
-    - accuracy: دقة الموقع
-    - confidence: مستوى الثقة في التعرف (0-1)
-    - liveness_score: درجة الحياة (0-1)
-    - liveness_checks: JSON تفاصيل فحوصات الحياة
-    - device_fingerprint: JSON معلومات الجهاز
-    - timestamp: وقت التحضير ISO 8601
+    - latitude: خط العرض (مطلوب)
+    - longitude: خط الطول (مطلوب)
+    - accuracy: دقة الموقع بالأمتار (مطلوب)
+    - confidence: مستوى الثقة في التعرف (0-1، اختياري)
+    - liveness_score: درجة الحياة (0-1، اختياري)
+    - device_fingerprint: JSON معلومات الجهاز (اختياري)
+    - timestamp: وقت التحضير ISO 8601 (اختياري)
     - face_image: صورة الوجه (اختياري)
     
     Response:
@@ -131,82 +358,99 @@ def attendance_check_in():
     - data: بيانات الحضور
     """
     try:
-        # 1. استقبال البيانات
-        employee_id = request.form.get('employee_id')
-        if not employee_id:
+        # 1. التحقق من Rate Limiting
+        can_proceed, rate_limit_msg = check_rate_limit(current_employee.employee_id)
+        if not can_proceed:
+            record_attempt(current_employee.employee_id, success=False)
             return jsonify({
                 'success': False,
-                'error': 'employee_id مطلوب',
-                'code': 'MISSING_EMPLOYEE_ID'
+                'error': rate_limit_msg,
+                'code': 'RATE_LIMIT_EXCEEDED'
+            }), 429
+        
+        # 2. استقبال و التحقق من بيانات الموقع
+        latitude = request.form.get('latitude')
+        longitude = request.form.get('longitude')
+        accuracy = request.form.get('accuracy')
+        
+        if not all([latitude, longitude, accuracy]):
+            return jsonify({
+                'success': False,
+                'error': 'بيانات الموقع مطلوبة (latitude, longitude, accuracy)',
+                'code': 'MISSING_LOCATION_DATA'
             }), 400
         
-        # 2. التحقق من وجود الموظف
-        employee = Employee.query.filter_by(employee_id=employee_id, status='active').first()
-        if not employee:
+        # التحقق من صحة بيانات GPS
+        gps_valid, gps_error = validate_gps_data(latitude, longitude, accuracy)
+        if not gps_valid:
+            record_attempt(current_employee.employee_id, success=False)
             return jsonify({
                 'success': False,
-                'error': 'الموظف غير موجود أو غير نشط',
-                'code': 'EMPLOYEE_NOT_FOUND'
-            }), 404
+                'error': gps_error,
+                'code': 'INVALID_GPS_DATA'
+            }), 400
         
-        # 3. استقبال بيانات الموقع
+        latitude = float(latitude)
+        longitude = float(longitude)
+        accuracy = float(accuracy)
+        
+        # 3. استقبال بيانات التحقق البيومتري (اختياري)
+        confidence_raw = request.form.get('confidence', '')
+        liveness_score_raw = request.form.get('liveness_score', '')
+        
+        # التحقق من صحة البيانات البيومترية
+        biometric_valid, biometric_error = validate_biometric_scores(confidence_raw, liveness_score_raw)
+        if not biometric_valid:
+            record_attempt(current_employee.employee_id, success=False)
+            return jsonify({
+                'success': False,
+                'error': biometric_error,
+                'code': 'BIOMETRIC_VALIDATION_FAILED'
+            }), 400
+        
+        # تحويل إلى أرقام بعد التحقق
         try:
-            latitude = float(request.form.get('latitude', 0))
-            longitude = float(request.form.get('longitude', 0))
-            accuracy = float(request.form.get('accuracy', 0))
+            confidence = float(confidence_raw) if confidence_raw and str(confidence_raw).strip() else None
+            liveness_score = float(liveness_score_raw) if liveness_score_raw and str(liveness_score_raw).strip() else None
         except (ValueError, TypeError):
-            return jsonify({
-                'success': False,
-                'error': 'بيانات الموقع غير صحيحة',
-                'code': 'INVALID_LOCATION'
-            }), 400
-        
-        # 4. استقبال بيانات التحقق
-        confidence = float(request.form.get('confidence', 0))
-        liveness_score = float(request.form.get('liveness_score', 0))
+            confidence = None
+            liveness_score = None
         
         try:
-            liveness_checks = json.loads(request.form.get('liveness_checks', '{}'))
             device_fingerprint = json.loads(request.form.get('device_fingerprint', '{}'))
         except json.JSONDecodeError:
-            liveness_checks = {}
             device_fingerprint = {}
         
-        # 5. استقبال الصورة
+        # 4. استقبال الصورة
         face_image = request.files.get('face_image')
         
-        # 6. التحقق من التاريخ
+        # 5. التحقق من التاريخ
         timestamp_str = request.form.get('timestamp')
         try:
             check_in_timestamp = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
         except:
             check_in_timestamp = datetime.now(timezone.utc)
         
-        # 7. التحقق من الموقع (Geofencing)
-        geofence_ok, geofence, geofence_msg = verify_geofence(employee, latitude, longitude)
+        # 6. التحقق من الموقع (Geofencing) - MANDATORY
+        geofence_ok, geofence, geofence_msg = verify_geofence(current_employee, latitude, longitude, strict=True)
         
-        # 8. التحقق من Liveness (إذا كانت مطلوبة)
-        if liveness_score > 0 and liveness_score < 0.7:
+        if not geofence_ok:
+            record_attempt(current_employee.employee_id, success=False)
+            logger.warning(f"Geofence check failed for {current_employee.employee_id}: {geofence_msg}")
             return jsonify({
                 'success': False,
-                'error': 'فحص الحياة فشل. الرجاء التأكد من أنك شخص حقيقي.',
-                'code': 'LIVENESS_FAILED',
-                'details': {'liveness_score': liveness_score}
-            }), 400
+                'error': geofence_msg,
+                'code': 'GEOFENCE_VIOLATION',
+                'details': {
+                    'your_location': {'lat': latitude, 'lon': longitude},
+                    'geofence': geofence.name if geofence else None
+                }
+            }), 403
         
-        # 9. التحقق من Confidence (إذا كانت مطلوبة)
-        if confidence > 0 and confidence < 0.75:
-            return jsonify({
-                'success': False,
-                'error': 'مستوى الثقة منخفض. الرجاء التأكد من الإضاءة الجيدة.',
-                'code': 'LOW_CONFIDENCE',
-                'details': {'confidence': confidence}
-            }), 400
-        
-        # 10. التحقق من عدم التحضير المتكرر
+        # 7. التحقق من عدم التحضير المتكرر
         today = date.today()
         existing_attendance = Attendance.query.filter(
-            Attendance.employee_id == employee.id,
+            Attendance.employee_id == current_employee.id,
             Attendance.date == today
         ).first()
         
@@ -221,10 +465,10 @@ def attendance_check_in():
                 }
             }), 400
         
-        # 11. حفظ صورة الوجه
-        face_image_path = save_face_image(face_image, employee_id, 'check_in')
+        # 8. حفظ صورة الوجه
+        face_image_path = save_face_image(face_image, current_employee.employee_id, 'check_in')
         
-        # 12. إنشاء أو تحديث سجل الحضور
+        # 9. إنشاء أو تحديث سجل الحضور
         verification_id = f'ver_{int(datetime.now().timestamp() * 1000)}'
         check_in_time = check_in_timestamp.time()
         
@@ -244,7 +488,7 @@ def attendance_check_in():
         else:
             # إنشاء سجل جديد
             attendance_record = Attendance(
-                employee_id=employee.id,
+                employee_id=current_employee.id,
                 date=today,
                 check_in=check_in_time,
                 status='present',
@@ -259,9 +503,9 @@ def attendance_check_in():
             )
             db.session.add(attendance_record)
         
-        # 13. حفظ موقع الموظف
+        # 10. حفظ موقع الموظف
         location_record = EmployeeLocation(
-            employee_id=employee.id,
+            employee_id=current_employee.id,
             latitude=Decimal(str(latitude)),
             longitude=Decimal(str(longitude)),
             accuracy_m=Decimal(str(accuracy)),
@@ -273,13 +517,16 @@ def attendance_check_in():
         
         db.session.commit()
         
-        # 14. إرجاع الاستجابة
+        # 11. تسجيل المحاولة الناجحة
+        record_attempt(current_employee.employee_id, success=True)
+        
+        # 12. إرجاع الاستجابة
         response_data = {
             'verification_id': verification_id,
             'server_timestamp': datetime.now(timezone.utc).isoformat(),
             'attendance_id': attendance_record.id,
-            'employee_id': employee.employee_id,
-            'employee_name': employee.name,
+            'employee_id': current_employee.employee_id,
+            'employee_name': current_employee.name,
             'check_in_time': check_in_time.strftime('%H:%M:%S'),
             'date': today.strftime('%Y-%m-%d'),
             'location': {
@@ -293,7 +540,7 @@ def attendance_check_in():
             'geofence_verified': geofence_ok
         }
         
-        logger.info(f"✅ تسجيل حضور ناجح: {employee.name} - {verification_id}")
+        logger.info(f"✅ تسجيل حضور ناجح: {current_employee.name} - {verification_id}")
         
         return jsonify({
             'success': True,
@@ -315,59 +562,66 @@ def attendance_check_in():
 
 
 @attendance_api_bp.route('/check-out', methods=['POST'])
-def attendance_check_out():
-    """تسجيل الانصراف"""
+@token_required
+def attendance_check_out(current_employee):
+    """تسجيل الانصراف (محمي بـ JWT)"""
     try:
-        # 1. استقبال البيانات
-        employee_id = request.form.get('employee_id')
-        if not employee_id:
+        # 1. استقبال بيانات الموقع
+        latitude = request.form.get('latitude')
+        longitude = request.form.get('longitude')
+        accuracy = request.form.get('accuracy')
+        
+        if not all([latitude, longitude, accuracy]):
             return jsonify({
                 'success': False,
-                'error': 'employee_id مطلوب'
+                'error': 'بيانات الموقع مطلوبة',
+                'code': 'MISSING_LOCATION_DATA'
             }), 400
         
-        # 2. التحقق من وجود الموظف
-        employee = Employee.query.filter_by(employee_id=employee_id).first()
-        if not employee:
+        # التحقق من صحة GPS
+        gps_valid, gps_error = validate_gps_data(latitude, longitude, accuracy)
+        if not gps_valid:
             return jsonify({
                 'success': False,
-                'error': 'الموظف غير موجود'
-            }), 404
+                'error': gps_error,
+                'code': 'INVALID_GPS_DATA'
+            }), 400
         
-        # 3. استقبال بيانات الموقع
-        latitude = float(request.form.get('latitude', 0))
-        longitude = float(request.form.get('longitude', 0))
-        accuracy = float(request.form.get('accuracy', 0))
+        latitude = float(latitude)
+        longitude = float(longitude)
+        accuracy = float(accuracy)
         
-        # 4. استقبال الصورة (اختياري)
+        # 2. استقبال الصورة (اختياري)
         face_image = request.files.get('face_image')
         
-        # 5. البحث عن سجل الحضور لليوم
+        # 3. البحث عن سجل الحضور لليوم
         today = date.today()
         attendance_record = Attendance.query.filter(
-            Attendance.employee_id == employee.id,
+            Attendance.employee_id == current_employee.id,
             Attendance.date == today
         ).first()
         
         if not attendance_record or not attendance_record.check_in:
             return jsonify({
                 'success': False,
-                'error': 'لم يتم تسجيل الحضور اليوم. يجب تسجيل الحضور أولاً.'
+                'error': 'لم يتم تسجيل الحضور اليوم. يجب تسجيل الحضور أولاً.',
+                'code': 'NO_CHECK_IN'
             }), 400
         
         if attendance_record.check_out:
             return jsonify({
                 'success': False,
                 'error': 'تم تسجيل الانصراف مسبقاً',
+                'code': 'ALREADY_CHECKED_OUT',
                 'data': {
                     'check_out_time': attendance_record.check_out.strftime('%H:%M:%S')
                 }
             }), 400
         
-        # 6. حفظ صورة الوجه
-        face_image_path = save_face_image(face_image, employee_id, 'check_out')
+        # 4. حفظ صورة الوجه
+        face_image_path = save_face_image(face_image, current_employee.employee_id, 'check_out')
         
-        # 7. تحديث سجل الحضور
+        # 5. تحديث سجل الحضور
         check_out_time = datetime.now().time()
         attendance_record.check_out = check_out_time
         attendance_record.check_out_latitude = Decimal(str(latitude))
@@ -375,9 +629,9 @@ def attendance_check_out():
         attendance_record.check_out_accuracy = Decimal(str(accuracy))
         attendance_record.check_out_face_image = face_image_path
         
-        # 8. حفظ موقع الموظف
+        # 6. حفظ موقع الموظف
         location_record = EmployeeLocation(
-            employee_id=employee.id,
+            employee_id=current_employee.id,
             latitude=Decimal(str(latitude)),
             longitude=Decimal(str(longitude)),
             accuracy_m=Decimal(str(accuracy)),
@@ -389,19 +643,19 @@ def attendance_check_out():
         
         db.session.commit()
         
-        # 9. حساب ساعات العمل
+        # 7. حساب ساعات العمل
         check_in_datetime = datetime.combine(today, attendance_record.check_in)
         check_out_datetime = datetime.combine(today, check_out_time)
         work_duration = (check_out_datetime - check_in_datetime).total_seconds() / 3600  # بالساعات
         
-        logger.info(f"✅ تسجيل انصراف ناجح: {employee.name}")
+        logger.info(f"✅ تسجيل انصراف ناجح: {current_employee.name}")
         
         return jsonify({
             'success': True,
             'message': 'تم تسجيل الانصراف بنجاح',
             'data': {
-                'employee_id': employee.employee_id,
-                'employee_name': employee.name,
+                'employee_id': current_employee.employee_id,
+                'employee_name': current_employee.name,
                 'check_in_time': attendance_record.check_in.strftime('%H:%M:%S'),
                 'check_out_time': check_out_time.strftime('%H:%M:%S'),
                 'work_duration_hours': round(work_duration, 2),
@@ -420,23 +674,18 @@ def attendance_check_out():
 
 
 @attendance_api_bp.route('/records', methods=['GET'])
-def get_attendance_records():
-    """جلب سجلات الحضور"""
+@token_required
+def get_attendance_records(current_employee):
+    """جلب سجلات الحضور للموظف المُسجل (محمي بـ JWT)"""
     try:
         # معاملات الاستعلام
-        employee_id = request.args.get('employee_id')
         date_from = request.args.get('date_from')
         date_to = request.args.get('date_to')
         page = int(request.args.get('page', 1))
         limit = int(request.args.get('limit', 50))
         
-        # بناء الاستعلام
-        query = Attendance.query
-        
-        if employee_id:
-            employee = Employee.query.filter_by(employee_id=employee_id).first()
-            if employee:
-                query = query.filter(Attendance.employee_id == employee.id)
+        # بناء الاستعلام - سجلات الموظف الحالي فقط
+        query = Attendance.query.filter(Attendance.employee_id == current_employee.id)
         
         if date_from:
             query = query.filter(Attendance.date >= datetime.strptime(date_from, '%Y-%m-%d').date())
@@ -503,26 +752,13 @@ def get_attendance_records():
 
 
 @attendance_api_bp.route('/today', methods=['GET'])
-def get_today_attendance():
-    """جلب حضور اليوم لموظف معين"""
+@token_required
+def get_today_attendance(current_employee):
+    """جلب حضور اليوم للموظف المُسجل (محمي بـ JWT)"""
     try:
-        employee_id = request.args.get('employee_id')
-        if not employee_id:
-            return jsonify({
-                'success': False,
-                'error': 'employee_id مطلوب'
-            }), 400
-        
-        employee = Employee.query.filter_by(employee_id=employee_id).first()
-        if not employee:
-            return jsonify({
-                'success': False,
-                'error': 'الموظف غير موجود'
-            }), 404
-        
         today = date.today()
         attendance = Attendance.query.filter(
-            Attendance.employee_id == employee.id,
+            Attendance.employee_id == current_employee.id,
             Attendance.date == today
         ).first()
         
