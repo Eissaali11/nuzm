@@ -6,7 +6,7 @@
 
 from datetime import datetime, timedelta
 import pandas as pd
-from sqlalchemy import func, case, literal
+from sqlalchemy import func, case, literal, or_
 from flask import Blueprint, render_template, request, jsonify, send_file
 from flask_login import login_required, current_user
 import io
@@ -437,6 +437,254 @@ def export_excel():
     
     # إنشاء DataFrame من النتائج التفصيلية
     detailed_df = pd.DataFrame(detailed_results)
+
+
+# ==============================
+# لوحة المراقبة الحية (Real-Time)
+# ==============================
+
+@attendance_dashboard_bp.route('/live-monitoring')
+@login_required
+@module_access_required(Module.ATTENDANCE)
+def live_monitoring():
+    """لوحة المراقبة الحية مع البيانات البيومترية وGPS"""
+    today = datetime.now().date()
+    
+    # إحصائيات أساسية
+    total_employees = Employee.query.filter_by(status='active').count()
+    
+    # الحضور اليوم
+    checked_in = db.session.query(func.count(Attendance.id)).join(Employee).filter(
+        Attendance.date == today,
+        Attendance.check_in.isnot(None),
+        Employee.status == 'active'
+    ).scalar() or 0
+    
+    # الانصراف اليوم
+    checked_out = db.session.query(func.count(Attendance.id)).join(Employee).filter(
+        Attendance.date == today,
+        Attendance.check_out.isnot(None),
+        Employee.status == 'active'
+    ).scalar() or 0
+    
+    # الموظفون الحاليون (حضروا ولم ينصرفوا)
+    currently_present = checked_in - checked_out
+    
+    # إحصائيات بيومترية
+    with_biometric = db.session.query(func.count(Attendance.id)).filter(
+        Attendance.date == today,
+        Attendance.check_in.isnot(None),
+        or_(
+            Attendance.check_in_confidence.isnot(None),
+            Attendance.check_in_liveness_score.isnot(None)
+        )
+    ).scalar() or 0
+    
+    # متوسط الثقة
+    avg_confidence = db.session.query(func.avg(Attendance.check_in_confidence)).filter(
+        Attendance.date == today,
+        Attendance.check_in_confidence.isnot(None)
+    ).scalar()
+    
+    # متوسط اختبار الحياة
+    avg_liveness = db.session.query(func.avg(Attendance.check_in_liveness_score)).filter(
+        Attendance.date == today,
+        Attendance.check_in_liveness_score.isnot(None)
+    ).scalar()
+    
+    # إحصائيات GPS
+    with_gps = db.session.query(func.count(Attendance.id)).filter(
+        Attendance.date == today,
+        Attendance.check_in_latitude.isnot(None),
+        Attendance.check_in_longitude.isnot(None)
+    ).scalar() or 0
+    
+    # متوسط دقة GPS
+    avg_accuracy = db.session.query(func.avg(Attendance.check_in_accuracy)).filter(
+        Attendance.date == today,
+        Attendance.check_in_accuracy.isnot(None)
+    ).scalar()
+    
+    # آخر عمليات الحضور
+    recent_checkins = db.session.query(Attendance, Employee).join(
+        Employee, Attendance.employee_id == Employee.id
+    ).filter(
+        Attendance.date == today,
+        Attendance.check_in.isnot(None)
+    ).order_by(Attendance.check_in.desc()).limit(15).all()
+    
+    # تحويل لقائمة
+    recent_list = []
+    for attendance, employee in recent_checkins:
+        dept_name = None
+        if employee.departments:
+            dept_name = employee.departments[0].name
+        
+        recent_list.append({
+            'id': attendance.id,
+            'employee_id': employee.employee_id,
+            'employee_name': employee.name,
+            'department': dept_name or '---',
+            'check_in_time': attendance.check_in.strftime('%H:%M:%S') if attendance.check_in else None,
+            'check_out_time': attendance.check_out.strftime('%H:%M:%S') if attendance.check_out else None,
+            'confidence': round(float(attendance.check_in_confidence), 2) if attendance.check_in_confidence else None,
+            'liveness': round(float(attendance.check_in_liveness_score), 2) if attendance.check_in_liveness_score else None,
+            'has_face_image': bool(attendance.check_in_face_image),
+            'latitude': float(attendance.check_in_latitude) if attendance.check_in_latitude else None,
+            'longitude': float(attendance.check_in_longitude) if attendance.check_in_longitude else None,
+            'accuracy': round(float(attendance.check_in_accuracy), 1) if attendance.check_in_accuracy else None,
+            'status': 'present' if not attendance.check_out else 'checked_out'
+        })
+    
+    # توزيع الحضور حسب القسم
+    departments = Department.query.all()
+    dept_breakdown = []
+    
+    for dept in departments:
+        active_emps = [e for e in dept.employees if e.status == 'active']
+        total = len(active_emps)
+        
+        if total == 0:
+            continue
+        
+        emp_ids = [e.id for e in active_emps]
+        present = db.session.query(func.count(Attendance.id)).filter(
+            Attendance.employee_id.in_(emp_ids),
+            Attendance.date == today,
+            Attendance.check_in.isnot(None)
+        ).scalar() or 0
+        
+        dept_breakdown.append({
+            'name': dept.name,
+            'total': total,
+            'present': present,
+            'absent': total - present,
+            'percentage': round((present / total * 100) if total > 0 else 0, 1)
+        })
+    
+    return render_template(
+        'attendance/live_monitoring.html',
+        today=today,
+        gregorian_date=format_date_gregorian(today),
+        hijri_date=format_date_hijri(today),
+        total_employees=total_employees,
+        checked_in=checked_in,
+        checked_out=checked_out,
+        currently_present=currently_present,
+        with_biometric=with_biometric,
+        avg_confidence=round(float(avg_confidence), 2) if avg_confidence else 0,
+        avg_liveness=round(float(avg_liveness), 2) if avg_liveness else 0,
+        with_gps=with_gps,
+        avg_accuracy=round(float(avg_accuracy), 1) if avg_accuracy else 0,
+        recent_checkins=recent_list,
+        dept_breakdown=dept_breakdown
+    )
+
+
+@attendance_dashboard_bp.route('/api/live-stats')
+@login_required
+@module_access_required(Module.ATTENDANCE)
+def api_live_stats():
+    """API endpoint للحصول على الإحصائيات الحية"""
+    try:
+        today = datetime.now().date()
+        
+        # إحصائيات أساسية
+        total_employees = Employee.query.filter_by(status='active').count()
+        
+        checked_in = db.session.query(func.count(Attendance.id)).join(Employee).filter(
+            Attendance.date == today,
+            Attendance.check_in.isnot(None),
+            Employee.status == 'active'
+        ).scalar() or 0
+        
+        checked_out = db.session.query(func.count(Attendance.id)).join(Employee).filter(
+            Attendance.date == today,
+            Attendance.check_out.isnot(None),
+            Employee.status == 'active'
+        ).scalar() or 0
+        
+        currently_present = checked_in - checked_out
+        
+        # إحصائيات بيومترية
+        with_biometric = db.session.query(func.count(Attendance.id)).filter(
+            Attendance.date == today,
+            or_(
+                Attendance.check_in_confidence.isnot(None),
+                Attendance.check_in_liveness_score.isnot(None)
+            )
+        ).scalar() or 0
+        
+        avg_confidence = db.session.query(func.avg(Attendance.check_in_confidence)).filter(
+            Attendance.date == today,
+            Attendance.check_in_confidence.isnot(None)
+        ).scalar()
+        
+        avg_liveness = db.session.query(func.avg(Attendance.check_in_liveness_score)).filter(
+            Attendance.date == today,
+            Attendance.check_in_liveness_score.isnot(None)
+        ).scalar()
+        
+        # إحصائيات GPS
+        with_gps = db.session.query(func.count(Attendance.id)).filter(
+            Attendance.date == today,
+            Attendance.check_in_latitude.isnot(None)
+        ).scalar() or 0
+        
+        avg_accuracy = db.session.query(func.avg(Attendance.check_in_accuracy)).filter(
+            Attendance.date == today,
+            Attendance.check_in_accuracy.isnot(None)
+        ).scalar()
+        
+        # آخر الحضور
+        recent = db.session.query(Attendance, Employee).join(
+            Employee, Attendance.employee_id == Employee.id
+        ).filter(
+            Attendance.date == today,
+            Attendance.check_in.isnot(None)
+        ).order_by(Attendance.check_in.desc()).limit(10).all()
+        
+        recent_list = []
+        for attendance, employee in recent:
+            dept_name = employee.departments[0].name if employee.departments else '---'
+            recent_list.append({
+                'employee_id': employee.employee_id,
+                'employee_name': employee.name,
+                'department': dept_name,
+                'check_in_time': attendance.check_in.strftime('%H:%M:%S'),
+                'check_out_time': attendance.check_out.strftime('%H:%M:%S') if attendance.check_out else None,
+                'confidence': round(float(attendance.check_in_confidence), 2) if attendance.check_in_confidence else None,
+                'liveness': round(float(attendance.check_in_liveness_score), 2) if attendance.check_in_liveness_score else None,
+                'has_face_image': bool(attendance.check_in_face_image),
+                'status': 'present' if not attendance.check_out else 'checked_out'
+            })
+        
+        return jsonify({
+            'success': True,
+            'timestamp': datetime.now().isoformat(),
+            'stats': {
+                'total_employees': total_employees,
+                'checked_in': checked_in,
+                'checked_out': checked_out,
+                'currently_present': currently_present,
+                'absent': total_employees - checked_in
+            },
+            'biometric_stats': {
+                'with_biometric': with_biometric,
+                'avg_confidence': round(float(avg_confidence), 2) if avg_confidence else 0,
+                'avg_liveness': round(float(avg_liveness), 2) if avg_liveness else 0
+            },
+            'location_stats': {
+                'with_gps': with_gps,
+                'avg_accuracy': round(float(avg_accuracy), 1) if avg_accuracy else 0
+            },
+            'recent_checkins': recent_list
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
     
     # معالجة الحالة
     def format_status(status):
