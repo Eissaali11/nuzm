@@ -1,0 +1,628 @@
+# 📋 مواصفات API لتسجيل الحضور - Attendance API Specification
+
+**التاريخ:** 2025-01-20  
+**الإصدار:** 1.0.0  
+**الهدف:** استقبال بيانات الحضور من التطبيق وعرضها في النظام العام
+
+---
+
+## 🎯 نظرة عامة
+
+هذا API يستقبل بيانات تسجيل الحضور من تطبيق Flutter ويقوم بـ:
+1. ✅ التحقق من جميع البيانات
+2. ✅ مطابقة الوجه
+3. ✅ التحقق من الموقع
+4. ✅ حفظ السجل في قاعدة البيانات
+5. ✅ إرجاع النتيجة
+
+---
+
+## 📡 API Endpoint
+
+### POST `/api/v1/attendance/check-in`
+
+**الوصف:** تسجيل التحضير مع التحقق الكامل
+
+**Headers:**
+```
+Authorization: Bearer <token>
+Content-Type: multipart/form-data
+```
+
+**Request Body (FormData):**
+
+| الحقل | النوع | مطلوب | الوصف |
+|-------|-------|-------|--------|
+| `employee_id` | string | ✅ | معرف الموظف |
+| `latitude` | string | ✅ | خط العرض |
+| `longitude` | string | ✅ | خط الطول |
+| `accuracy` | string | ✅ | دقة الموقع (بالمتر) |
+| `confidence` | string | ✅ | مستوى الثقة في التعرف (0-1) |
+| `liveness_score` | string | ✅ | درجة الحياة (0-1) |
+| `liveness_checks` | JSON string | ✅ | تفاصيل فحوصات الحياة |
+| `face_features` | JSON string | ✅ | ميزات الوجه (Landmarks) |
+| `device_fingerprint` | JSON string | ✅ | معلومات الجهاز |
+| `timestamp` | ISO 8601 string | ✅ | وقت التحضير (UTC) |
+| `is_mock_location` | string | ✅ | هل الموقع مزيف؟ ("true"/"false") |
+| `face_image` | File (JPEG) | ✅ | صورة الوجه |
+
+---
+
+## 📦 تفاصيل البيانات
+
+### 1. `liveness_checks` (JSON):
+```json
+{
+  "motion": true,
+  "blink": true,
+  "smile": false,
+  "headPose": true
+}
+```
+
+### 2. `face_features` (JSON):
+```json
+{
+  "landmarks": [
+    {
+      "type": "FaceLandmarkType.leftEye",
+      "x": 150.5,
+      "y": 200.3
+    },
+    ...
+  ],
+  "boundingBox": {
+    "left": 100.0,
+    "top": 150.0,
+    "width": 200.0,
+    "height": 250.0
+  },
+  "headEulerAngleY": 5.2,
+  "headEulerAngleZ": -2.1,
+  "leftEyeOpenProbability": 0.95,
+  "rightEyeOpenProbability": 0.92,
+  "smilingProbability": 0.3
+}
+```
+
+### 3. `device_fingerprint` (JSON):
+```json
+{
+  "platform": "android",
+  "device_id": "abc123...",
+  "model": "SM-G991B",
+  "manufacturer": "Samsung",
+  "brand": "Samsung",
+  "device": "o1s",
+  "product": "o1sxxx",
+  "android_version": "13",
+  "sdk_int": 33,
+  "app_version": "1.0.0",
+  "build_number": "1",
+  "package_name": "com.example.nuzum_tracker"
+}
+```
+
+---
+
+## ✅ Response
+
+### Success Response (200/201):
+```json
+{
+  "success": true,
+  "message": "تم تسجيل التحضير بنجاح",
+  "data": {
+    "verification_id": "ver_1234567890",
+    "server_timestamp": "2025-01-20T10:30:05Z",
+    "attendance_id": "att_9876543210",
+    "employee_id": "12345",
+    "check_in_time": "2025-01-20T10:30:00Z",
+    "location": {
+      "latitude": 24.7136,
+      "longitude": 46.6753,
+      "accuracy": 10.5
+    },
+    "confidence": 0.85,
+    "liveness_score": 0.92
+  }
+}
+```
+
+### Error Response (400/401/403/500):
+```json
+{
+  "success": false,
+  "error": "فشل التحقق من الوجه",
+  "code": "FACE_MATCH_FAILED",
+  "details": {
+    "confidence": 0.65,
+    "threshold": 0.75
+  }
+}
+```
+
+---
+
+## 🔍 عمليات التحقق المطلوبة
+
+### 1. Token Verification
+```python
+# التحقق من صحة Token
+if not verify_token(token):
+    return error_response(401, "Invalid token")
+```
+
+### 2. Employee Verification
+```python
+# التحقق من وجود الموظف
+employee = get_employee(employee_id)
+if not employee:
+    return error_response(404, "Employee not found")
+```
+
+### 3. Device Fingerprint Verification
+```python
+# التحقق من Device Fingerprint (منع التكرار)
+if is_device_blocked(device_fingerprint):
+    return error_response(403, "Device is blocked")
+```
+
+### 4. Location Verification
+```python
+# التحقق من Mock Location
+if is_mock_location == "true":
+    return error_response(400, "Mock location detected")
+
+# التحقق من Geofencing
+work_location = get_work_location(employee_id)
+distance = calculate_distance(
+    work_location.latitude, work_location.longitude,
+    latitude, longitude
+)
+if distance > work_location.allowed_radius:
+    return error_response(400, f"Outside work area ({distance}m)")
+```
+
+### 5. Face Verification
+```python
+# مطابقة الوجه مع قاعدة البيانات
+stored_face = get_stored_face(employee_id)
+face_similarity = compare_faces(
+    stored_face.features,
+    face_features
+)
+
+if face_similarity < 0.75:  # 75% threshold
+    return error_response(400, "Face match failed", {
+        "similarity": face_similarity,
+        "threshold": 0.75
+    })
+```
+
+### 6. Liveness Verification
+```python
+# التحقق من Liveness
+if liveness_score < 0.7:
+    return error_response(400, "Liveness check failed")
+
+# التحقق من جميع Checks
+if not liveness_checks.get("motion"):
+    return error_response(400, "Motion detection failed")
+if not liveness_checks.get("blink"):
+    return error_response(400, "Blink detection failed")
+```
+
+### 7. Rate Limiting
+```python
+# التحقق من Rate Limiting
+recent_attempts = get_recent_attempts(employee_id, hours=1)
+if len(recent_attempts) >= 3:
+    return error_response(429, "Too many attempts. Please wait.")
+
+# التحقق من Cooldown
+failed_attempts = get_failed_attempts(employee_id)
+if failed_attempts >= 3:
+    last_failed = get_last_failed_time(employee_id)
+    if time_since(last_failed) < 30 minutes:
+        return error_response(429, "Cooldown period active")
+```
+
+### 8. Time Verification
+```python
+# التحقق من Timestamp
+client_timestamp = parse_timestamp(timestamp)
+server_timestamp = datetime.now(UTC)
+time_diff = abs((server_timestamp - client_timestamp).total_seconds())
+
+if time_diff > 60:  # أكثر من دقيقة فرق
+    return error_response(400, "Timestamp mismatch")
+
+# التحقق من التحضير المتكرر
+last_checkin = get_last_checkin(employee_id)
+if last_checkin and same_day(last_checkin, client_timestamp):
+    if last_checkin.type == "check_in":
+        return error_response(400, "Already checked in today")
+```
+
+---
+
+## 💾 حفظ البيانات
+
+### Database Schema:
+
+```sql
+CREATE TABLE attendance_records (
+    id SERIAL PRIMARY KEY,
+    verification_id VARCHAR(255) UNIQUE NOT NULL,
+    employee_id VARCHAR(255) NOT NULL,
+    check_in_time TIMESTAMP NOT NULL,
+    server_timestamp TIMESTAMP NOT NULL DEFAULT NOW(),
+    latitude DECIMAL(10, 8) NOT NULL,
+    longitude DECIMAL(11, 8) NOT NULL,
+    accuracy DECIMAL(10, 2),
+    confidence DECIMAL(5, 4) NOT NULL,
+    liveness_score DECIMAL(5, 4) NOT NULL,
+    liveness_checks JSONB,
+    face_features JSONB,
+    device_fingerprint JSONB,
+    face_image_url TEXT,
+    is_mock_location BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW(),
+    FOREIGN KEY (employee_id) REFERENCES employees(id)
+);
+
+CREATE INDEX idx_attendance_employee_date ON attendance_records(employee_id, DATE(check_in_time));
+CREATE INDEX idx_attendance_date ON attendance_records(DATE(check_in_time));
+```
+
+---
+
+## 📊 عرض البيانات في النظام العام
+
+### API للحصول على سجلات الحضور:
+
+#### GET `/api/v1/attendance/records`
+
+**Query Parameters:**
+- `employee_id` (optional) - فلترة حسب الموظف
+- `date_from` (optional) - تاريخ البداية (YYYY-MM-DD)
+- `date_to` (optional) - تاريخ النهاية (YYYY-MM-DD)
+- `page` (optional) - رقم الصفحة (default: 1)
+- `limit` (optional) - عدد السجلات (default: 50)
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "records": [
+      {
+        "id": "att_9876543210",
+        "verification_id": "ver_1234567890",
+        "employee_id": "12345",
+        "employee_name": "أحمد محمد",
+        "check_in_time": "2025-01-20T10:30:00Z",
+        "server_timestamp": "2025-01-20T10:30:05Z",
+        "location": {
+          "latitude": 24.7136,
+          "longitude": 46.6753,
+          "accuracy": 10.5,
+          "address": "الرياض، حي النرجس"
+        },
+        "confidence": 0.85,
+        "liveness_score": 0.92,
+        "device_info": {
+          "model": "SM-G991B",
+          "manufacturer": "Samsung"
+        },
+        "face_image_url": "https://...",
+        "status": "verified"
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "limit": 50,
+      "total": 150,
+      "total_pages": 3
+    }
+  }
+}
+```
+
+---
+
+## 🔧 مثال على Implementation (Python/Flask)
+
+```python
+from flask import Flask, request, jsonify
+from flask_sqlalchemy import SQLAlchemy
+from werkzeug.utils import secure_filename
+import face_recognition
+import json
+from datetime import datetime, timezone
+import os
+
+app = Flask(__name__)
+db = SQLAlchemy(app)
+
+@app.route('/api/v1/attendance/check-in', methods=['POST'])
+def check_in():
+    try:
+        # 1. التحقق من Token
+        token = request.headers.get('Authorization', '').replace('Bearer ', '')
+        if not verify_token(token):
+            return jsonify({
+                'success': False,
+                'error': 'Invalid token',
+                'code': 'INVALID_TOKEN'
+            }), 401
+        
+        # 2. استقبال البيانات
+        employee_id = request.form.get('employee_id')
+        latitude = float(request.form.get('latitude'))
+        longitude = float(request.form.get('longitude'))
+        accuracy = float(request.form.get('accuracy', 0))
+        confidence = float(request.form.get('confidence'))
+        liveness_score = float(request.form.get('liveness_score'))
+        liveness_checks = json.loads(request.form.get('liveness_checks'))
+        face_features = json.loads(request.form.get('face_features'))
+        device_fingerprint = json.loads(request.form.get('device_fingerprint'))
+        timestamp = datetime.fromisoformat(request.form.get('timestamp').replace('Z', '+00:00'))
+        is_mock_location = request.form.get('is_mock_location') == 'true'
+        face_image = request.files.get('face_image')
+        
+        # 3. التحقق من الموظف
+        employee = Employee.query.filter_by(id=employee_id).first()
+        if not employee:
+            return jsonify({
+                'success': False,
+                'error': 'Employee not found',
+                'code': 'EMPLOYEE_NOT_FOUND'
+            }), 404
+        
+        # 4. التحقق من Mock Location
+        if is_mock_location:
+            return jsonify({
+                'success': False,
+                'error': 'Mock location detected',
+                'code': 'MOCK_LOCATION'
+            }), 400
+        
+        # 5. التحقق من Geofencing
+        work_location = employee.work_location
+        if work_location:
+            distance = calculate_distance(
+                work_location.latitude, work_location.longitude,
+                latitude, longitude
+            )
+            if distance > work_location.allowed_radius:
+                return jsonify({
+                    'success': False,
+                    'error': f'Outside work area ({distance:.0f}m)',
+                    'code': 'OUTSIDE_WORK_AREA',
+                    'details': {'distance': distance}
+                }), 400
+        
+        # 6. التحقق من Liveness
+        if liveness_score < 0.7:
+            return jsonify({
+                'success': False,
+                'error': 'Liveness check failed',
+                'code': 'LIVENESS_FAILED'
+            }), 400
+        
+        if not liveness_checks.get('motion') or not liveness_checks.get('blink'):
+            return jsonify({
+                'success': False,
+                'error': 'Liveness checks failed',
+                'code': 'LIVENESS_CHECKS_FAILED'
+            }), 400
+        
+        # 7. مطابقة الوجه
+        stored_face = employee.stored_face
+        if stored_face:
+            face_similarity = compare_face_features(
+                stored_face.features,
+                face_features
+            )
+            
+            if face_similarity < 0.75:
+                return jsonify({
+                    'success': False,
+                    'error': 'Face match failed',
+                    'code': 'FACE_MATCH_FAILED',
+                    'details': {
+                        'similarity': face_similarity,
+                        'threshold': 0.75
+                    }
+                }), 400
+        
+        # 8. التحقق من Confidence
+        if confidence < 0.75:
+            return jsonify({
+                'success': False,
+                'error': 'Confidence too low',
+                'code': 'LOW_CONFIDENCE',
+                'details': {'confidence': confidence}
+            }), 400
+        
+        # 9. Rate Limiting
+        recent_attempts = AttendanceRecord.query.filter(
+            AttendanceRecord.employee_id == employee_id,
+            AttendanceRecord.created_at >= datetime.now(timezone.utc) - timedelta(hours=1)
+        ).count()
+        
+        if recent_attempts >= 3:
+            return jsonify({
+                'success': False,
+                'error': 'Too many attempts. Please wait.',
+                'code': 'RATE_LIMIT_EXCEEDED'
+            }), 429
+        
+        # 10. حفظ الصورة
+        face_image_url = None
+        if face_image:
+            filename = f'attendance_{employee_id}_{datetime.now().timestamp()}.jpg'
+            filepath = os.path.join('uploads/attendance', filename)
+            os.makedirs(os.path.dirname(filepath), exist_ok=True)
+            face_image.save(filepath)
+            face_image_url = f'/uploads/attendance/{filename}'
+        
+        # 11. إنشاء سجل الحضور
+        verification_id = f'ver_{int(datetime.now().timestamp() * 1000)}'
+        attendance_id = f'att_{int(datetime.now().timestamp() * 1000)}'
+        
+        attendance_record = AttendanceRecord(
+            verification_id=verification_id,
+            employee_id=employee_id,
+            check_in_time=timestamp,
+            server_timestamp=datetime.now(timezone.utc),
+            latitude=latitude,
+            longitude=longitude,
+            accuracy=accuracy,
+            confidence=confidence,
+            liveness_score=liveness_score,
+            liveness_checks=liveness_checks,
+            face_features=face_features,
+            device_fingerprint=device_fingerprint,
+            face_image_url=face_image_url,
+            is_mock_location=is_mock_location
+        )
+        
+        db.session.add(attendance_record)
+        db.session.commit()
+        
+        # 12. إرجاع النتيجة
+        return jsonify({
+            'success': True,
+            'message': 'تم تسجيل التحضير بنجاح',
+            'data': {
+                'verification_id': verification_id,
+                'server_timestamp': attendance_record.server_timestamp.isoformat(),
+                'attendance_id': attendance_id,
+                'employee_id': employee_id,
+                'check_in_time': timestamp.isoformat(),
+                'location': {
+                    'latitude': latitude,
+                    'longitude': longitude,
+                    'accuracy': accuracy
+                },
+                'confidence': confidence,
+                'liveness_score': liveness_score
+            }
+        }), 201
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'code': 'INTERNAL_ERROR'
+        }), 500
+
+def compare_face_features(stored_features, current_features):
+    """مقارنة ميزات الوجه"""
+    # Implementation هنا
+    # يمكن استخدام face_recognition library أو ML model
+    return 0.85  # مثال
+
+def calculate_distance(lat1, lon1, lat2, lon2):
+    """حساب المسافة بين نقطتين (Haversine formula)"""
+    from math import radians, sin, cos, sqrt, atan2
+    
+    R = 6371000  # Earth radius in meters
+    
+    lat1_rad = radians(lat1)
+    lat2_rad = radians(lat2)
+    delta_lat = radians(lat2 - lat1)
+    delta_lon = radians(lon2 - lon1)
+    
+    a = sin(delta_lat/2)**2 + cos(lat1_rad) * cos(lat2_rad) * sin(delta_lon/2)**2
+    c = 2 * atan2(sqrt(a), sqrt(1-a))
+    
+    return R * c
+```
+
+---
+
+## 📊 Dashboard للعرض
+
+### صفحة عرض سجلات الحضور:
+
+```html
+<!-- attendance_dashboard.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>سجلات الحضور</title>
+</head>
+<body>
+    <h1>سجلات الحضور</h1>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>الموظف</th>
+                <th>وقت التحضير</th>
+                <th>الموقع</th>
+                <th>الثقة</th>
+                <th>صورة الوجه</th>
+                <th>الحالة</th>
+            </tr>
+        </thead>
+        <tbody id="attendance-records">
+            <!-- يتم ملؤها بـ JavaScript -->
+        </tbody>
+    </table>
+    
+    <script>
+        // جلب السجلات
+        fetch('/api/v1/attendance/records')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const records = data.data.records;
+                    const tbody = document.getElementById('attendance-records');
+                    
+                    records.forEach(record => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${record.employee_name}</td>
+                            <td>${new Date(record.check_in_time).toLocaleString('ar-SA')}</td>
+                            <td>${record.location.latitude}, ${record.location.longitude}</td>
+                            <td>${(record.confidence * 100).toFixed(0)}%</td>
+                            <td><img src="${record.face_image_url}" width="100"></td>
+                            <td>${record.status === 'verified' ? '✅ تم التحقق' : '❌ غير محقق'}</td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+                }
+            });
+    </script>
+</body>
+</html>
+```
+
+---
+
+## ✅ Checklist للتنفيذ
+
+- [ ] إنشاء API endpoint `/api/v1/attendance/check-in`
+- [ ] إعداد قاعدة البيانات (attendance_records table)
+- [ ] تنفيذ Token verification
+- [ ] تنفيذ Face matching
+- [ ] تنفيذ Location verification (Geofencing)
+- [ ] تنفيذ Liveness verification
+- [ ] تنفيذ Rate limiting
+- [ ] حفظ الصور
+- [ ] إنشاء API للعرض (`/api/v1/attendance/records`)
+- [ ] إنشاء Dashboard للعرض
+- [ ] إضافة Logging و Monitoring
+
+---
+
+**تم إعداد المواصفات بواسطة:** Backend Expert  
+**التاريخ:** 2025-01-20
+
