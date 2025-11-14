@@ -1,0 +1,103 @@
+# 🤖 Prompt لبناء API تسجيل الحضور
+
+انسخ هذا الـ Prompt وأرسله لأي LLM (ChatGPT, Claude, etc.) لبناء السيرفر:
+
+---
+
+## 📋 PROMPT:
+
+```
+أريد بناء API endpoint لتسجيل الحضور (Attendance Check-in) باستخدام Python/Flask.
+
+المتطلبات:
+
+1. **API Endpoint:** POST /api/v1/attendance/check-in
+
+2. **Request Format:**
+   - Content-Type: multipart/form-data
+   - Headers: Authorization: Bearer <token>
+   - Fields:
+     * employee_id (string, required)
+     * latitude (string, required)
+     * longitude (string, required)
+     * accuracy (string, required)
+     * confidence (string, required) - مستوى الثقة في التعرف (0-1)
+     * liveness_score (string, required) - درجة الحياة (0-1)
+     * liveness_checks (JSON string, required) - {"motion": true, "blink": true, "smile": false, "headPose": true}
+     * face_features (JSON string, required) - ميزات الوجه (Landmarks)
+     * device_fingerprint (JSON string, required) - معلومات الجهاز
+     * timestamp (ISO 8601 string, required) - وقت التحضير (UTC)
+     * is_mock_location (string, required) - "true" أو "false"
+     * face_image (File, required) - صورة الوجه (JPEG)
+
+3. **عمليات التحقق المطلوبة:**
+   - التحقق من Token (JWT)
+   - التحقق من وجود الموظف
+   - رفض Mock Location (إذا كان is_mock_location = "true")
+   - التحقق من Geofencing (المسافة من موقع العمل يجب أن تكون <= allowed_radius)
+   - التحقق من Liveness Score (يجب أن يكون >= 0.7)
+   - التحقق من Liveness Checks (motion و blink يجب أن يكونا true)
+   - مطابقة الوجه (Face Matching - يجب أن يكون similarity >= 0.75)
+   - التحقق من Confidence (يجب أن يكون >= 0.75)
+   - Rate Limiting (حد أقصى 3 محاولات في الساعة)
+   - التحقق من Timestamp (الفرق مع server time يجب أن يكون <= 60 ثانية)
+   - منع التحضير المتكرر في نفس اليوم
+
+4. **قاعدة البيانات:**
+   - Table: attendance_records
+   - Fields: verification_id (unique), employee_id, check_in_time, server_timestamp, latitude, longitude, accuracy, confidence, liveness_score, liveness_checks (JSON), face_features (JSON), device_fingerprint (JSON), face_image_url, is_mock_location, created_at, updated_at
+   - Table: employees
+   - Fields: id, name, work_latitude, work_longitude, allowed_radius, stored_face_features (JSON)
+
+5. **Response Format:**
+   - Success (201): {"success": true, "message": "...", "data": {"verification_id": "...", "server_timestamp": "...", "attendance_id": "...", ...}}
+   - Error (400/401/403/429/500): {"success": false, "error": "...", "code": "ERROR_CODE"}
+
+6. **حفظ الصورة:**
+   - حفظ الصورة في مجلد uploads/attendance/
+   - اسم الملف: attendance_{employee_id}_{timestamp}.jpg
+   - حفظ URL في قاعدة البيانات
+
+7. **API للعرض:**
+   - GET /api/v1/attendance/records
+   - Query Parameters: employee_id, date_from, date_to, page, limit
+   - Response: {"success": true, "data": {"records": [...], "pagination": {...}}}
+
+8. **ميزات إضافية:**
+   - Logging للمحاولات الفاشلة
+   - Error handling شامل
+   - CORS enabled
+   - Database transactions
+
+أريد كود كامل جاهز للاستخدام مع:
+- Flask app structure
+- Database models (SQLAlchemy)
+- Helper functions
+- Error handling
+- Comments بالعربية
+```
+
+---
+
+## 📝 ملاحظات:
+
+1. **Face Matching:** يمكن استخدام مكتبة `face_recognition` أو أي ML model
+2. **Token Verification:** يمكن استخدام JWT أو OAuth2
+3. **Database:** يمكن استخدام PostgreSQL أو MySQL
+4. **Image Storage:** يمكن استخدام local storage أو cloud storage (S3, etc.)
+
+---
+
+## 🎯 النتيجة المتوقعة:
+
+بعد إرسال هذا الـ Prompt، ستحصل على:
+- ✅ كود Python/Flask كامل
+- ✅ Database models
+- ✅ API endpoints
+- ✅ Error handling
+- ✅ Documentation
+
+---
+
+**استخدم هذا الـ Prompt مع:** ChatGPT, Claude, Gemini, أو أي LLM آخر
+

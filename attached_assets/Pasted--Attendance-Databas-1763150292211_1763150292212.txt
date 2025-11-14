@@ -1,0 +1,178 @@
+-- ============================================
+-- قاعدة بيانات تسجيل الحضور
+-- Attendance Database Schema
+-- ============================================
+
+-- جدول الموظفين
+CREATE TABLE IF NOT EXISTS employees (
+    id VARCHAR(255) PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255),
+    phone VARCHAR(20),
+    work_latitude DECIMAL(10, 8),
+    work_longitude DECIMAL(11, 8),
+    allowed_radius DECIMAL(10, 2) DEFAULT 50.0, -- بالمتار
+    stored_face_features JSONB,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- جدول سجلات الحضور
+CREATE TABLE IF NOT EXISTS attendance_records (
+    id SERIAL PRIMARY KEY,
+    verification_id VARCHAR(255) UNIQUE NOT NULL,
+    employee_id VARCHAR(255) NOT NULL REFERENCES employees(id),
+    check_in_time TIMESTAMP NOT NULL,
+    server_timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    latitude DECIMAL(10, 8) NOT NULL,
+    longitude DECIMAL(11, 8) NOT NULL,
+    accuracy DECIMAL(10, 2),
+    confidence DECIMAL(5, 4) NOT NULL,
+    liveness_score DECIMAL(5, 4) NOT NULL,
+    liveness_checks JSONB,
+    face_features JSONB,
+    device_fingerprint JSONB,
+    face_image_url TEXT,
+    is_mock_location BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- جدول سجلات الخروج
+CREATE TABLE IF NOT EXISTS attendance_checkout (
+    id SERIAL PRIMARY KEY,
+    attendance_record_id INTEGER REFERENCES attendance_records(id),
+    employee_id VARCHAR(255) NOT NULL REFERENCES employees(id),
+    check_out_time TIMESTAMP NOT NULL,
+    server_timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    latitude DECIMAL(10, 8) NOT NULL,
+    longitude DECIMAL(11, 8) NOT NULL,
+    accuracy DECIMAL(10, 2),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- جدول محاولات التحضير الفاشلة (للتحليل)
+CREATE TABLE IF NOT EXISTS attendance_attempts (
+    id SERIAL PRIMARY KEY,
+    employee_id VARCHAR(255) NOT NULL,
+    attempt_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    failure_reason VARCHAR(255),
+    error_code VARCHAR(100),
+    device_fingerprint JSONB,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ============================================
+-- Indexes للأداء
+-- ============================================
+
+-- Indexes لسجلات الحضور
+CREATE INDEX IF NOT EXISTS idx_attendance_employee_date 
+    ON attendance_records(employee_id, DATE(check_in_time));
+
+CREATE INDEX IF NOT EXISTS idx_attendance_date 
+    ON attendance_records(DATE(check_in_time));
+
+CREATE INDEX IF NOT EXISTS idx_attendance_employee 
+    ON attendance_records(employee_id);
+
+CREATE INDEX IF NOT EXISTS idx_attendance_verification 
+    ON attendance_records(verification_id);
+
+-- Indexes للمحاولات الفاشلة
+CREATE INDEX IF NOT EXISTS idx_attempts_employee_time 
+    ON attendance_attempts(employee_id, attempt_time);
+
+-- ============================================
+-- Views للتقارير
+-- ============================================
+
+-- View لعرض سجلات الحضور مع بيانات الموظف
+CREATE OR REPLACE VIEW attendance_records_view AS
+SELECT 
+    ar.id,
+    ar.verification_id,
+    ar.employee_id,
+    e.name AS employee_name,
+    ar.check_in_time,
+    ar.server_timestamp,
+    ar.latitude,
+    ar.longitude,
+    ar.accuracy,
+    ar.confidence,
+    ar.liveness_score,
+    ar.face_image_url,
+    ar.is_mock_location,
+    ar.created_at
+FROM attendance_records ar
+LEFT JOIN employees e ON ar.employee_id = e.id;
+
+-- View لتقرير الحضور اليومي
+CREATE OR REPLACE VIEW daily_attendance_report AS
+SELECT 
+    DATE(check_in_time) AS date,
+    employee_id,
+    COUNT(*) AS check_ins_count,
+    MIN(check_in_time) AS first_check_in,
+    MAX(check_in_time) AS last_check_in
+FROM attendance_records
+GROUP BY DATE(check_in_time), employee_id;
+
+-- ============================================
+-- Functions
+-- ============================================
+
+-- Function لحساب المسافة بين نقطتين
+CREATE OR REPLACE FUNCTION calculate_distance(
+    lat1 DECIMAL,
+    lon1 DECIMAL,
+    lat2 DECIMAL,
+    lon2 DECIMAL
+) RETURNS DECIMAL AS $$
+DECLARE
+    R DECIMAL := 6371000; -- Earth radius in meters
+    dlat DECIMAL;
+    dlon DECIMAL;
+    a DECIMAL;
+    c DECIMAL;
+BEGIN
+    dlat := radians(lat2 - lat1);
+    dlon := radians(lon2 - lon1);
+    
+    a := sin(dlat/2) * sin(dlat/2) +
+         cos(radians(lat1)) * cos(radians(lat2)) *
+         sin(dlon/2) * sin(dlon/2);
+    
+    c := 2 * atan2(sqrt(a), sqrt(1-a));
+    
+    RETURN R * c;
+END;
+$$ LANGUAGE plpgsql;
+
+-- ============================================
+-- Triggers
+-- ============================================
+
+-- Trigger لتحديث updated_at تلقائياً
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER update_attendance_records_updated_at
+    BEFORE UPDATE ON attendance_records
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+-- ============================================
+-- Sample Data (للاختبار)
+-- ============================================
+
+-- إدراج موظف تجريبي
+INSERT INTO employees (id, name, work_latitude, work_longitude, allowed_radius)
+VALUES ('12345', 'أحمد محمد', 24.7136, 46.6753, 50.0)
+ON CONFLICT (id) DO NOTHING;
+

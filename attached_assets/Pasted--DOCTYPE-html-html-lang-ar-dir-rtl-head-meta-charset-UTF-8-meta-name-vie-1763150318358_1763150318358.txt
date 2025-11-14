@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة تحكم الحضور - Attendance Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #1A237E 0%, #0D47A1 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+        
+        .filters {
+            padding: 20px;
+            background: #f5f5f5;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .filters input, .filters select, .filters button {
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        
+        .filters button {
+            background: #1A237E;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .filters button:hover {
+            background: #0D47A1;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            padding: 20px;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+        }
+        
+        .stat-card h3 {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 10px;
+        }
+        
+        .stat-card .value {
+            font-size: 32px;
+            font-weight: bold;
+        }
+        
+        .table-container {
+            padding: 20px;
+            overflow-x: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+        
+        thead {
+            background: #1A237E;
+            color: white;
+        }
+        
+        th, td {
+            padding: 15px;
+            text-align: right;
+            border-bottom: 1px solid #eee;
+        }
+        
+        tbody tr:hover {
+            background: #f5f5f5;
+        }
+        
+        .status-badge {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .status-verified {
+            background: #4caf50;
+            color: white;
+        }
+        
+        .status-failed {
+            background: #f44336;
+            color: white;
+        }
+        
+        .face-image {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 50%;
+            border: 2px solid #1A237E;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 لوحة تحكم الحضور</h1>
+            <p>Attendance Management Dashboard</p>
+        </div>
+        
+        <div class="filters">
+            <input type="text" id="employee-id" placeholder="رقم الموظف">
+            <input type="date" id="date-from" placeholder="من تاريخ">
+            <input type="date" id="date-to" placeholder="إلى تاريخ">
+            <select id="status-filter">
+                <option value="">جميع الحالات</option>
+                <option value="verified">تم التحقق</option>
+                <option value="failed">فشل</option>
+            </select>
+            <button onclick="loadRecords()">🔍 بحث</button>
+            <button onclick="resetFilters()">🔄 إعادة تعيين</button>
+        </div>
+        
+        <div class="stats" id="stats">
+            <div class="stat-card">
+                <h3>إجمالي السجلات</h3>
+                <div class="value" id="total-records">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>اليوم</h3>
+                <div class="value" id="today-records">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>متوسط الثقة</h3>
+                <div class="value" id="avg-confidence">0%</div>
+            </div>
+            <div class="stat-card">
+                <h3>نسبة النجاح</h3>
+                <div class="value" id="success-rate">0%</div>
+            </div>
+        </div>
+        
+        <div class="table-container">
+            <div id="loading" class="loading">جاري التحميل...</div>
+            <div id="error" class="error" style="display: none;"></div>
+            <table id="attendance-table" style="display: none;">
+                <thead>
+                    <tr>
+                        <th>الموظف</th>
+                        <th>وقت التحضير</th>
+                        <th>الموقع</th>
+                        <th>الثقة</th>
+                        <th>Liveness</th>
+                        <th>صورة الوجه</th>
+                        <th>الحالة</th>
+                    </tr>
+                </thead>
+                <tbody id="records-body">
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <script>
+        const API_BASE_URL = 'http://localhost:5000/api/v1';
+        
+        async function loadRecords() {
+            const loading = document.getElementById('loading');
+            const error = document.getElementById('error');
+            const table = document.getElementById('attendance-table');
+            const tbody = document.getElementById('records-body');
+            
+            loading.style.display = 'block';
+            error.style.display = 'none';
+            table.style.display = 'none';
+            
+            try {
+                const params = new URLSearchParams();
+                const employeeId = document.getElementById('employee-id').value;
+                const dateFrom = document.getElementById('date-from').value;
+                const dateTo = document.getElementById('date-to').value;
+                
+                if (employeeId) params.append('employee_id', employeeId);
+                if (dateFrom) params.append('date_from', dateFrom);
+                if (dateTo) params.append('date_to', dateTo);
+                
+                const response = await fetch(`${API_BASE_URL}/attendance/records?${params}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    const records = data.data.records;
+                    tbody.innerHTML = '';
+                    
+                    records.forEach(record => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${record.employee_name || record.employee_id}</td>
+                            <td>${new Date(record.check_in_time).toLocaleString('ar-SA')}</td>
+                            <td>${record.location.latitude.toFixed(6)}, ${record.location.longitude.toFixed(6)}</td>
+                            <td>${(record.confidence * 100).toFixed(0)}%</td>
+                            <td>${(record.liveness_score * 100).toFixed(0)}%</td>
+                            <td>
+                                ${record.face_image_url 
+                                    ? `<img src="${record.face_image_url}" class="face-image" alt="Face">`
+                                    : 'لا توجد صورة'
+                                }
+                            </td>
+                            <td>
+                                <span class="status-badge status-verified">✅ تم التحقق</span>
+                            </td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+                    
+                    // تحديث الإحصائيات
+                    updateStats(records);
+                    
+                    loading.style.display = 'none';
+                    table.style.display = 'table';
+                } else {
+                    throw new Error(data.error || 'فشل تحميل البيانات');
+                }
+            } catch (err) {
+                loading.style.display = 'none';
+                error.style.display = 'block';
+                error.textContent = `خطأ: ${err.message}`;
+            }
+        }
+        
+        function updateStats(records) {
+            document.getElementById('total-records').textContent = records.length;
+            
+            const today = new Date().toISOString().split('T')[0];
+            const todayRecords = records.filter(r => r.check_in_time.startsWith(today));
+            document.getElementById('today-records').textContent = todayRecords.length;
+            
+            if (records.length > 0) {
+                const avgConfidence = records.reduce((sum, r) => sum + r.confidence, 0) / records.length;
+                document.getElementById('avg-confidence').textContent = (avgConfidence * 100).toFixed(0) + '%';
+                
+                const successRate = (records.filter(r => r.status === 'verified').length / records.length) * 100;
+                document.getElementById('success-rate').textContent = successRate.toFixed(0) + '%';
+            }
+        }
+        
+        function resetFilters() {
+            document.getElementById('employee-id').value = '';
+            document.getElementById('date-from').value = '';
+            document.getElementById('date-to').value = '';
+            document.getElementById('status-filter').value = '';
+            loadRecords();
+        }
+        
+        // تحميل البيانات عند فتح الصفحة
+        window.onload = loadRecords;
+    </script>
+</body>
+</html>
+

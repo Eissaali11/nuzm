@@ -1,0 +1,451 @@
+"""
+API Implementation لتسجيل الحضور
+Python/Flask Example
+"""
+
+from flask import Flask, request, jsonify
+from flask_sqlalchemy import SQLAlchemy
+from flask_cors import CORS
+from werkzeug.utils import secure_filename
+from datetime import datetime, timezone, timedelta
+import json
+import os
+import hashlib
+from math import radians, sin, cos, sqrt, atan2
+
+app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://user:password@localhost/attendance_db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['UPLOAD_FOLDER'] = 'uploads/attendance'
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
+
+db = SQLAlchemy(app)
+CORS(app)
+
+# ============================================
+# Database Models
+# ============================================
+
+class Employee(db.Model):
+    __tablename__ = 'employees'
+    
+    id = db.Column(db.String(255), primary_key=True)
+    name = db.Column(db.String(255), nullable=False)
+    work_latitude = db.Column(db.Numeric(10, 8))
+    work_longitude = db.Column(db.Numeric(11, 8))
+    allowed_radius = db.Column(db.Numeric(10, 2), default=50.0)  # meters
+    stored_face_features = db.Column(db.JSON)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class AttendanceRecord(db.Model):
+    __tablename__ = 'attendance_records'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    verification_id = db.Column(db.String(255), unique=True, nullable=False)
+    employee_id = db.Column(db.String(255), db.ForeignKey('employees.id'), nullable=False)
+    check_in_time = db.Column(db.DateTime, nullable=False)
+    server_timestamp = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    latitude = db.Column(db.Numeric(10, 8), nullable=False)
+    longitude = db.Column(db.Numeric(11, 8), nullable=False)
+    accuracy = db.Column(db.Numeric(10, 2))
+    confidence = db.Column(db.Numeric(5, 4), nullable=False)
+    liveness_score = db.Column(db.Numeric(5, 4), nullable=False)
+    liveness_checks = db.Column(db.JSON)
+    face_features = db.Column(db.JSON)
+    device_fingerprint = db.Column(db.JSON)
+    face_image_url = db.Column(db.Text)
+    is_mock_location = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    employee = db.relationship('Employee', backref='attendance_records')
+
+# ============================================
+# Helper Functions
+# ============================================
+
+def verify_token(token):
+    """التحقق من صحة Token"""
+    # TODO: تنفيذ التحقق من Token
+    # يمكن استخدام JWT أو OAuth2
+    return True  # Placeholder
+
+def calculate_distance(lat1, lon1, lat2, lon2):
+    """حساب المسافة بين نقطتين (Haversine formula)"""
+    R = 6371000  # Earth radius in meters
+    
+    lat1_rad = radians(float(lat1))
+    lat2_rad = radians(float(lat2))
+    delta_lat = radians(float(lat2) - float(lat1))
+    delta_lon = radians(float(lon2) - float(lon1))
+    
+    a = sin(delta_lat/2)**2 + cos(lat1_rad) * cos(lat2_rad) * sin(delta_lon/2)**2
+    c = 2 * atan2(sqrt(a), sqrt(1-a))
+    
+    return R * c
+
+def compare_face_features(stored_features, current_features):
+    """مقارنة ميزات الوجه"""
+    if not stored_features or not current_features:
+        return 0.0
+    
+    try:
+        stored_landmarks = stored_features.get('landmarks', [])
+        current_landmarks = current_features.get('landmarks', [])
+        
+        if not stored_landmarks or not current_landmarks:
+            return 0.0
+        
+        # حساب المسافة بين landmarks المتشابهة
+        total_distance = 0.0
+        matched_count = 0
+        
+        for stored_landmark in stored_landmarks:
+            stored_type = stored_landmark.get('type')
+            if not stored_type:
+                continue
+            
+            for current_landmark in current_landmarks:
+                if current_landmark.get('type') == stored_type:
+                    stored_x = float(stored_landmark.get('x', 0))
+                    stored_y = float(stored_landmark.get('y', 0))
+                    current_x = float(current_landmark.get('x', 0))
+                    current_y = float(current_landmark.get('y', 0))
+                    
+                    distance = sqrt((stored_x - current_x)**2 + (stored_y - current_y)**2)
+                    total_distance += distance
+                    matched_count += 1
+                    break
+        
+        if matched_count == 0:
+            return 0.0
+        
+        # تطبيع المسافة
+        avg_distance = total_distance / matched_count
+        normalized_distance = min(avg_distance / 100.0, 1.0)
+        similarity = 1.0 - normalized_distance
+        
+        return max(0.0, min(1.0, similarity))
+    except Exception as e:
+        print(f"Error comparing faces: {e}")
+        return 0.0
+
+# ============================================
+# API Endpoints
+# ============================================
+
+@app.route('/api/v1/attendance/check-in', methods=['POST'])
+def check_in():
+    """تسجيل التحضير مع التحقق الكامل"""
+    try:
+        # 1. التحقق من Token
+        token = request.headers.get('Authorization', '').replace('Bearer ', '')
+        if not verify_token(token):
+            return jsonify({
+                'success': False,
+                'error': 'Invalid or expired token',
+                'code': 'INVALID_TOKEN'
+            }), 401
+        
+        # 2. استقبال البيانات
+        employee_id = request.form.get('employee_id')
+        if not employee_id:
+            return jsonify({
+                'success': False,
+                'error': 'employee_id is required',
+                'code': 'MISSING_EMPLOYEE_ID'
+            }), 400
+        
+        latitude = float(request.form.get('latitude'))
+        longitude = float(request.form.get('longitude'))
+        accuracy = float(request.form.get('accuracy', 0))
+        confidence = float(request.form.get('confidence', 0))
+        liveness_score = float(request.form.get('liveness_score', 0))
+        liveness_checks = json.loads(request.form.get('liveness_checks', '{}'))
+        face_features = json.loads(request.form.get('face_features', '{}'))
+        device_fingerprint = json.loads(request.form.get('device_fingerprint', '{}'))
+        timestamp_str = request.form.get('timestamp')
+        is_mock_location = request.form.get('is_mock_location', 'false').lower() == 'true'
+        face_image = request.files.get('face_image')
+        
+        # 3. Parse timestamp
+        try:
+            timestamp = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
+        except:
+            timestamp = datetime.now(timezone.utc)
+        
+        # 4. التحقق من الموظف
+        employee = Employee.query.filter_by(id=employee_id).first()
+        if not employee:
+            return jsonify({
+                'success': False,
+                'error': 'Employee not found',
+                'code': 'EMPLOYEE_NOT_FOUND'
+            }), 404
+        
+        # 5. التحقق من Mock Location
+        if is_mock_location:
+            return jsonify({
+                'success': False,
+                'error': 'Mock location detected. Please disable mock location apps.',
+                'code': 'MOCK_LOCATION_DETECTED'
+            }), 400
+        
+        # 6. التحقق من Geofencing
+        if employee.work_latitude and employee.work_longitude:
+            distance = calculate_distance(
+                float(employee.work_latitude),
+                float(employee.work_longitude),
+                latitude,
+                longitude
+            )
+            allowed_radius = float(employee.allowed_radius or 50.0)
+            
+            if distance > allowed_radius:
+                return jsonify({
+                    'success': False,
+                    'error': f'أنت خارج نطاق موقع العمل ({distance:.0f} متر)',
+                    'code': 'OUTSIDE_WORK_AREA',
+                    'details': {
+                        'distance': round(distance, 2),
+                        'allowed_radius': allowed_radius
+                    }
+                }), 400
+        
+        # 7. التحقق من Liveness
+        if liveness_score < 0.7:
+            return jsonify({
+                'success': False,
+                'error': 'Liveness check failed. Please ensure you are a real person.',
+                'code': 'LIVENESS_FAILED',
+                'details': {'liveness_score': liveness_score}
+            }), 400
+        
+        if not liveness_checks.get('motion') or not liveness_checks.get('blink'):
+            return jsonify({
+                'success': False,
+                'error': 'Liveness checks failed. Please move your head and blink.',
+                'code': 'LIVENESS_CHECKS_FAILED',
+                'details': liveness_checks
+            }), 400
+        
+        # 8. مطابقة الوجه
+        if employee.stored_face_features:
+            face_similarity = compare_face_features(
+                employee.stored_face_features,
+                face_features
+            )
+            
+            if face_similarity < 0.75:
+                return jsonify({
+                    'success': False,
+                    'error': 'Face match failed. Please try again.',
+                    'code': 'FACE_MATCH_FAILED',
+                    'details': {
+                        'similarity': round(face_similarity, 4),
+                        'threshold': 0.75
+                    }
+                }), 400
+        
+        # 9. التحقق من Confidence
+        if confidence < 0.75:
+            return jsonify({
+                'success': False,
+                'error': 'Confidence too low. Please ensure good lighting and face the camera directly.',
+                'code': 'LOW_CONFIDENCE',
+                'details': {'confidence': confidence}
+            }), 400
+        
+        # 10. Rate Limiting
+        one_hour_ago = datetime.now(timezone.utc) - timedelta(hours=1)
+        recent_attempts = AttendanceRecord.query.filter(
+            AttendanceRecord.employee_id == employee_id,
+            AttendanceRecord.created_at >= one_hour_ago
+        ).count()
+        
+        if recent_attempts >= 3:
+            return jsonify({
+                'success': False,
+                'error': 'Too many attempts. Please wait before trying again.',
+                'code': 'RATE_LIMIT_EXCEEDED'
+            }), 429
+        
+        # 11. التحقق من Timestamp
+        server_timestamp = datetime.now(timezone.utc)
+        time_diff = abs((server_timestamp - timestamp).total_seconds())
+        
+        if time_diff > 60:  # أكثر من دقيقة فرق
+            return jsonify({
+                'success': False,
+                'error': 'Timestamp mismatch. Please try again.',
+                'code': 'TIMESTAMP_MISMATCH'
+            }), 400
+        
+        # 12. التحقق من التحضير المتكرر في نفس اليوم
+        today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+        today_checkin = AttendanceRecord.query.filter(
+            AttendanceRecord.employee_id == employee_id,
+            AttendanceRecord.check_in_time >= today_start
+        ).first()
+        
+        if today_checkin:
+            return jsonify({
+                'success': False,
+                'error': 'Already checked in today. Please check out first.',
+                'code': 'ALREADY_CHECKED_IN'
+            }), 400
+        
+        # 13. حفظ الصورة
+        face_image_url = None
+        if face_image:
+            filename = f'attendance_{employee_id}_{int(datetime.now().timestamp() * 1000)}.jpg'
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            os.makedirs(os.path.dirname(filepath), exist_ok=True)
+            face_image.save(filepath)
+            face_image_url = f'/uploads/attendance/{filename}'
+        
+        # 14. إنشاء سجل الحضور
+        verification_id = f'ver_{int(datetime.now().timestamp() * 1000)}'
+        attendance_id = f'att_{int(datetime.now().timestamp() * 1000)}'
+        
+        attendance_record = AttendanceRecord(
+            verification_id=verification_id,
+            employee_id=employee_id,
+            check_in_time=timestamp,
+            server_timestamp=server_timestamp,
+            latitude=latitude,
+            longitude=longitude,
+            accuracy=accuracy,
+            confidence=confidence,
+            liveness_score=liveness_score,
+            liveness_checks=liveness_checks,
+            face_features=face_features,
+            device_fingerprint=device_fingerprint,
+            face_image_url=face_image_url,
+            is_mock_location=is_mock_location
+        )
+        
+        db.session.add(attendance_record)
+        db.session.commit()
+        
+        # 15. إرجاع النتيجة
+        return jsonify({
+            'success': True,
+            'message': 'تم تسجيل التحضير بنجاح',
+            'data': {
+                'verification_id': verification_id,
+                'server_timestamp': server_timestamp.isoformat(),
+                'attendance_id': attendance_id,
+                'employee_id': employee_id,
+                'check_in_time': timestamp.isoformat(),
+                'location': {
+                    'latitude': latitude,
+                    'longitude': longitude,
+                    'accuracy': accuracy
+                },
+                'confidence': confidence,
+                'liveness_score': liveness_score
+            }
+        }), 201
+        
+    except ValueError as e:
+        return jsonify({
+            'success': False,
+            'error': f'Invalid data format: {str(e)}',
+            'code': 'INVALID_DATA'
+        }), 400
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error in check_in: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'Internal server error',
+            'code': 'INTERNAL_ERROR'
+        }), 500
+
+@app.route('/api/v1/attendance/records', methods=['GET'])
+def get_attendance_records():
+    """جلب سجلات الحضور"""
+    try:
+        # Query parameters
+        employee_id = request.args.get('employee_id')
+        date_from = request.args.get('date_from')
+        date_to = request.args.get('date_to')
+        page = int(request.args.get('page', 1))
+        limit = int(request.args.get('limit', 50))
+        
+        # بناء Query
+        query = AttendanceRecord.query
+        
+        if employee_id:
+            query = query.filter(AttendanceRecord.employee_id == employee_id)
+        
+        if date_from:
+            date_from_obj = datetime.fromisoformat(date_from)
+            query = query.filter(AttendanceRecord.check_in_time >= date_from_obj)
+        
+        if date_to:
+            date_to_obj = datetime.fromisoformat(date_to) + timedelta(days=1)
+            query = query.filter(AttendanceRecord.check_in_time < date_to_obj)
+        
+        # Pagination
+        total = query.count()
+        total_pages = (total + limit - 1) // limit
+        
+        records = query.order_by(AttendanceRecord.check_in_time.desc())\
+                      .offset((page - 1) * limit)\
+                      .limit(limit)\
+                      .all()
+        
+        # تحويل إلى JSON
+        records_data = []
+        for record in records:
+            employee = Employee.query.get(record.employee_id)
+            records_data.append({
+                'id': f'att_{record.id}',
+                'verification_id': record.verification_id,
+                'employee_id': record.employee_id,
+                'employee_name': employee.name if employee else 'Unknown',
+                'check_in_time': record.check_in_time.isoformat(),
+                'server_timestamp': record.server_timestamp.isoformat(),
+                'location': {
+                    'latitude': float(record.latitude),
+                    'longitude': float(record.longitude),
+                    'accuracy': float(record.accuracy) if record.accuracy else None
+                },
+                'confidence': float(record.confidence),
+                'liveness_score': float(record.liveness_score),
+                'device_info': {
+                    'model': record.device_fingerprint.get('model') if record.device_fingerprint else None,
+                    'manufacturer': record.device_fingerprint.get('manufacturer') if record.device_fingerprint else None
+                },
+                'face_image_url': record.face_image_url,
+                'status': 'verified'
+            })
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'records': records_data,
+                'pagination': {
+                    'page': page,
+                    'limit': limit,
+                    'total': total,
+                    'total_pages': total_pages
+                }
+            }
+        }), 200
+        
+    except Exception as e:
+        print(f"Error in get_attendance_records: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'Internal server error',
+            'code': 'INTERNAL_ERROR'
+        }), 500
+
+if __name__ == '__main__':
+    with app.app_context():
+        db.create_all()
+    app.run(debug=True, host='0.0.0.0', port=5000)
+

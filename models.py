@@ -241,6 +241,22 @@ class Attendance(db.Model):
     status = db.Column(db.String(20), nullable=False, default='present')  # present, absent, leave, sick
     notes = db.Column(db.Text)
     sick_leave_file = db.Column(db.String(255), nullable=True)  # ملف الإجازة المرضية (PDF أو صورة)
+    
+    # حقول التحقق من الوجه والموقع
+    check_in_latitude = db.Column(db.Numeric(10, 8), nullable=True)
+    check_in_longitude = db.Column(db.Numeric(11, 8), nullable=True)
+    check_in_accuracy = db.Column(db.Numeric(10, 2), nullable=True)
+    check_in_face_image = db.Column(db.String(255), nullable=True)  # صورة الوجه عند الدخول
+    check_in_confidence = db.Column(db.Numeric(5, 4), nullable=True)  # مستوى الثقة في التعرف
+    check_in_liveness_score = db.Column(db.Numeric(5, 4), nullable=True)  # درجة الحياة
+    check_in_device_info = db.Column(db.JSON, nullable=True)  # معلومات الجهاز
+    check_in_verification_id = db.Column(db.String(255), nullable=True)  # معرف التحقق
+    
+    check_out_latitude = db.Column(db.Numeric(10, 8), nullable=True)
+    check_out_longitude = db.Column(db.Numeric(11, 8), nullable=True)
+    check_out_accuracy = db.Column(db.Numeric(10, 2), nullable=True)
+    check_out_face_image = db.Column(db.String(255), nullable=True)  # صورة الوجه عند الخروج
+    
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
