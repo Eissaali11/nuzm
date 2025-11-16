@@ -1777,7 +1777,7 @@ def department_stats():
 
 @attendance_bp.route('/export-excel-dashboard')
 def export_excel_dashboard():
-    """تصدير لوحة المعلومات إلى Excel مع تصميم داش بورد خيالي ومبهر"""
+    """تصدير لوحة المعلومات إلى Excel مع تصميم داش بورد خيالي ومبهر + تفاصيل الغياب"""
     try:
         from openpyxl import Workbook
         from openpyxl.chart import BarChart, PieChart, Reference
@@ -1794,61 +1794,40 @@ def export_excel_dashboard():
         start_date = today.replace(day=1)
         end_date = today
         
-        # جلب جميع الموظفين
-        all_employees = Employee.query.filter_by(status='active').all()
-        total_employees = len(all_employees)
+        # استخدام خدمة analytics لجلب البيانات التفصيلية
+        summary = AttendanceAnalytics.get_department_summary(
+            start_date=start_date,
+            end_date=end_date,
+            project_name=selected_project
+        )
         
-        # جلب البيانات حسب الفلتر
-        departments = Department.query.all()
+        # تحويل البيانات للصيغة المطلوبة
         department_data = []
-        
-        total_present = 0
-        total_absent = 0
-        total_leave = 0
-        total_sick = 0
-        total_records = 0
-        
-        for dept in departments:
-            if selected_department and dept.name != selected_department:
+        for dept in summary['departments']:
+            if selected_department and dept['name'] != selected_department:
                 continue
-                
-            employees = [emp for emp in all_employees if any(d.id == dept.id for d in emp.departments)]
-            dept_employee_count = len(employees)
-            
-            if dept_employee_count == 0:
-                continue
-                
-            employee_ids = [emp.id for emp in employees]
-            attendance_records = Attendance.query.filter(
-                Attendance.employee_id.in_(employee_ids),
-                Attendance.date >= start_date,
-                Attendance.date <= end_date
-            ).all()
-            
-            present_count = sum(1 for r in attendance_records if r.status == 'present')
-            absent_count = sum(1 for r in attendance_records if r.status == 'absent')
-            leave_count = sum(1 for r in attendance_records if r.status == 'leave')
-            sick_count = sum(1 for r in attendance_records if r.status == 'sick')
-            dept_total_records = len(attendance_records)
-            
-            attendance_rate = (present_count / dept_total_records * 100) if dept_total_records > 0 else 0
-            
-            total_present += present_count
-            total_absent += absent_count
-            total_leave += leave_count
-            total_sick += sick_count
-            total_records += dept_total_records
             
             department_data.append({
-                'name': dept.name,
-                'employees': dept_employee_count,
-                'present': present_count,
-                'absent': absent_count,
-                'leave': leave_count,
-                'sick': sick_count,
-                'total': dept_total_records,
-                'rate': round(attendance_rate, 1)
+                'name': dept['name'],
+                'employees': dept['total_employees'],
+                'present': dept['present'],
+                'absent': dept['absent'],
+                'leave': dept['leave'],
+                'sick': dept['sick'],
+                'total': dept['total_records'],
+                'rate': dept['attendance_rate'],
+                'absentees': dept['absentees'],  # بيانات الغياب التفصيلية
+                'on_leave': dept['on_leave'],
+                'sick_employees': dept['sick_employees']
             })
+        
+        # الإجماليات
+        total_employees = summary['total_employees']
+        total_present = summary['total_present']
+        total_absent = summary['total_absent']
+        total_leave = summary['total_leave']
+        total_sick = summary['total_sick']
+        total_records = summary['total_records']
         
         if not department_data:
             wb = Workbook()
@@ -2050,6 +2029,167 @@ def export_excel_dashboard():
         column_widths = [20, 15, 12, 12, 12, 12, 18, 18]
         for i, width in enumerate(column_widths, 1):
             ws.column_dimensions[get_column_letter(i)].width = width
+        
+        # ===== Sheet جديد: قائمة الغياب التفصيلية =====
+        if total_absent > 0:
+            ws_absence = wb.create_sheet(title="📋 قائمة الغياب")
+            
+            # العنوان الرئيسي
+            ws_absence.merge_cells('A1:F3')
+            title_cell = ws_absence['A1']
+            title_cell.value = f"📋 قائمة الغياب التفصيلية\n{start_date.strftime('%Y/%m/%d')} - {end_date.strftime('%Y/%m/%d')}"
+            title_cell.font = Font(size=20, bold=True, color="FFFFFF")
+            title_cell.fill = PatternFill(start_color="E74C3C", end_color="E74C3C", fill_type="solid")
+            title_cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+            ws_absence.row_dimensions[1].height = 25
+            ws_absence.row_dimensions[2].height = 25
+            
+            current_row = 5
+            
+            # إضافة بيانات الغياب لكل قسم
+            for dept in department_data:
+                if dept['absentees']:
+                    # عنوان القسم
+                    ws_absence.merge_cells(f'A{current_row}:F{current_row}')
+                    dept_header = ws_absence[f'A{current_row}']
+                    dept_header.value = f"🏢 {dept['name']} - عدد الغائبين: {len(dept['absentees'])}"
+                    dept_header.font = Font(size=14, bold=True, color="FFFFFF")
+                    dept_header.fill = PatternFill(start_color="34495E", end_color="34495E", fill_type="solid")
+                    dept_header.alignment = Alignment(horizontal='center', vertical='center')
+                    ws_absence.row_dimensions[current_row].height = 25
+                    current_row += 1
+                    
+                    # رؤوس الأعمدة
+                    headers = ['#', 'اسم الموظف', 'رقم الموظف', 'التاريخ', 'ملاحظات', 'الحالة']
+                    header_colors = ['95A5A6', '3498DB', '9B59B6', 'E67E22', 'E74C3C', 'E74C3C']
+                    for col_idx, (header, color) in enumerate(zip(headers, header_colors), 1):
+                        cell = ws_absence.cell(row=current_row, column=col_idx)
+                        cell.value = header
+                        cell.font = Font(size=11, bold=True, color="FFFFFF")
+                        cell.fill = PatternFill(start_color=color, end_color=color, fill_type="solid")
+                        cell.alignment = Alignment(horizontal='center', vertical='center')
+                        cell.border = Border(
+                            left=Side(style='thin'), right=Side(style='thin'),
+                            top=Side(style='thin'), bottom=Side(style='thin')
+                        )
+                    ws_absence.row_dimensions[current_row].height = 25
+                    current_row += 1
+                    
+                    # بيانات الموظفين الغائبين
+                    for idx, emp in enumerate(dept['absentees'], 1):
+                        row_data = [
+                            idx,
+                            emp['name'],
+                            emp.get('employee_id', '-'),
+                            emp['date'].strftime('%Y-%m-%d') if emp.get('date') else '-',
+                            emp.get('notes', '-'),
+                            'غائب'
+                        ]
+                        
+                        for col_idx, value in enumerate(row_data, 1):
+                            cell = ws_absence.cell(row=current_row, column=col_idx)
+                            cell.value = value
+                            cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+                            cell.border = Border(
+                                left=Side(style='thin'), right=Side(style='thin'),
+                                top=Side(style='thin'), bottom=Side(style='thin')
+                            )
+                            
+                            # تلوين بديل للصفوف
+                            if current_row % 2 == 0:
+                                cell.fill = PatternFill(start_color="FADBD8", end_color="FADBD8", fill_type="solid")
+                        
+                        current_row += 1
+                    
+                    # مسافة بين الأقسام
+                    current_row += 1
+            
+            # تعيين عرض الأعمدة
+            ws_absence.column_dimensions['A'].width = 8
+            ws_absence.column_dimensions['B'].width = 30
+            ws_absence.column_dimensions['C'].width = 15
+            ws_absence.column_dimensions['D'].width = 15
+            ws_absence.column_dimensions['E'].width = 35
+            ws_absence.column_dimensions['F'].width = 12
+        
+        # ===== Sheet جديد: قائمة الإجازات =====
+        if total_leave > 0:
+            ws_leave = wb.create_sheet(title="🏖️ قائمة الإجازات")
+            
+            # العنوان الرئيسي
+            ws_leave.merge_cells('A1:F3')
+            title_cell = ws_leave['A1']
+            title_cell.value = f"🏖️ قائمة الإجازات التفصيلية\n{start_date.strftime('%Y/%m/%d')} - {end_date.strftime('%Y/%m/%d')}"
+            title_cell.font = Font(size=20, bold=True, color="FFFFFF")
+            title_cell.fill = PatternFill(start_color="F39C12", end_color="F39C12", fill_type="solid")
+            title_cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+            ws_leave.row_dimensions[1].height = 25
+            ws_leave.row_dimensions[2].height = 25
+            
+            current_row = 5
+            
+            # إضافة بيانات الإجازات لكل قسم
+            for dept in department_data:
+                if dept.get('on_leave'):
+                    # عنوان القسم
+                    ws_leave.merge_cells(f'A{current_row}:F{current_row}')
+                    dept_header = ws_leave[f'A{current_row}']
+                    dept_header.value = f"🏢 {dept['name']} - عدد الإجازات: {len(dept['on_leave'])}"
+                    dept_header.font = Font(size=14, bold=True, color="FFFFFF")
+                    dept_header.fill = PatternFill(start_color="34495E", end_color="34495E", fill_type="solid")
+                    dept_header.alignment = Alignment(horizontal='center', vertical='center')
+                    ws_leave.row_dimensions[current_row].height = 25
+                    current_row += 1
+                    
+                    # رؤوس الأعمدة
+                    headers = ['#', 'اسم الموظف', 'رقم الموظف', 'التاريخ', 'ملاحظات', 'الحالة']
+                    for col_idx, header in enumerate(headers, 1):
+                        cell = ws_leave.cell(row=current_row, column=col_idx)
+                        cell.value = header
+                        cell.font = Font(size=11, bold=True, color="FFFFFF")
+                        cell.fill = PatternFill(start_color="F39C12", end_color="F39C12", fill_type="solid")
+                        cell.alignment = Alignment(horizontal='center', vertical='center')
+                        cell.border = Border(
+                            left=Side(style='thin'), right=Side(style='thin'),
+                            top=Side(style='thin'), bottom=Side(style='thin')
+                        )
+                    ws_leave.row_dimensions[current_row].height = 25
+                    current_row += 1
+                    
+                    # بيانات الموظفين
+                    for idx, emp in enumerate(dept['on_leave'], 1):
+                        row_data = [
+                            idx,
+                            emp['name'],
+                            emp.get('employee_id', '-'),
+                            emp['date'].strftime('%Y-%m-%d') if emp.get('date') else '-',
+                            emp.get('notes', '-'),
+                            'إجازة'
+                        ]
+                        
+                        for col_idx, value in enumerate(row_data, 1):
+                            cell = ws_leave.cell(row=current_row, column=col_idx)
+                            cell.value = value
+                            cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+                            cell.border = Border(
+                                left=Side(style='thin'), right=Side(style='thin'),
+                                top=Side(style='thin'), bottom=Side(style='thin')
+                            )
+                            
+                            if current_row % 2 == 0:
+                                cell.fill = PatternFill(start_color="FCF3CF", end_color="FCF3CF", fill_type="solid")
+                        
+                        current_row += 1
+                    
+                    current_row += 1
+            
+            # تعيين عرض الأعمدة
+            ws_leave.column_dimensions['A'].width = 8
+            ws_leave.column_dimensions['B'].width = 30
+            ws_leave.column_dimensions['C'].width = 15
+            ws_leave.column_dimensions['D'].width = 15
+            ws_leave.column_dimensions['E'].width = 35
+            ws_leave.column_dimensions['F'].width = 12
         
         # حفظ الملف
         output = BytesIO()
