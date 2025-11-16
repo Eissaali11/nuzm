@@ -1783,10 +1783,17 @@ def share_data(operation_id):
                     message_parts.append("\n👤 معلومات السائق\n")
                     message_parts.append(f"• اسم الموظف: {handover.person_name}\n")
                     
-                    # جلب بيانات الموظف الكاملة إذا كانت متوفرة
+                    # جلب بيانات الموظف الكاملة
+                    employee = None
+                    
+                    # محاولة الحصول على الموظف من العلاقة أولاً
                     if handover.driver_employee:
                         employee = handover.driver_employee
-                        
+                    else:
+                        # إذا لم يكن مرتبطاً، ابحث عن الموظف بالاسم
+                        employee = Employee.query.filter_by(name=handover.person_name).first()
+                    
+                    if employee:
                         # رقم الإقامة
                         residency = handover.driver_residency_number or employee.national_id or "[غير متوفر]"
                         message_parts.append(f"• رقم الإقامة: {residency}\n")
@@ -1807,7 +1814,7 @@ def share_data(operation_id):
                         city = handover.city or employee.location or "[غير متوفر]"
                         message_parts.append(f"• المدينة: {city}\n")
                     else:
-                        # في حالة عدم ربط الموظف، نستخدم البيانات المتاحة فقط
+                        # في حالة عدم العثور على الموظف، نستخدم البيانات المتاحة فقط
                         if handover.driver_residency_number:
                             message_parts.append(f"• رقم الإقامة: {handover.driver_residency_number}\n")
                         if handover.driver_phone_number:
