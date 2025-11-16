@@ -298,21 +298,21 @@ def create_vehicle_handover_pdf(handover_data):
         
         # إضافة بيانات الموظف إذا كانت متوفرة
         if employee_data:
-            # رقم الموظف
-            if hasattr(employee_data, 'employee_number') and employee_data.employee_number:
-                handover_details.append(["Employee Number", safe_arabic_text(str(employee_data.employee_number))])
+            # رقم الموظف (employee_id في قاعدة البيانات)
+            if hasattr(employee_data, 'employee_id') and employee_data.employee_id:
+                handover_details.append(["Company No", safe_arabic_text(str(employee_data.employee_id))])
             
-            # رقم الإقامة
-            if hasattr(employee_data, 'iqama_number') and employee_data.iqama_number:
-                handover_details.append(["Iqama Number", safe_arabic_text(str(employee_data.iqama_number))])
+            # رقم الإقامة (national_id في قاعدة البيانات)
+            if hasattr(employee_data, 'national_id') and employee_data.national_id:
+                handover_details.append(["Residency No", safe_arabic_text(str(employee_data.national_id))])
             
-            # رقم الجوال الشخصي
-            if hasattr(employee_data, 'phone_number') and employee_data.phone_number:
-                handover_details.append(["Personal Mobile", safe_arabic_text(str(employee_data.phone_number))])
+            # رقم الجوال الشخصي (mobilePersonal في قاعدة البيانات)
+            if hasattr(employee_data, 'mobilePersonal') and employee_data.mobilePersonal:
+                handover_details.append(["Personal Phone", safe_arabic_text(str(employee_data.mobilePersonal))])
             
-            # رقم أبشر
-            if hasattr(employee_data, 'absher_number') and employee_data.absher_number:
-                handover_details.append(["Absher Number", safe_arabic_text(str(employee_data.absher_number))])
+            # رقم جوال العمل (mobile في قاعدة البيانات)
+            if hasattr(employee_data, 'mobile') and employee_data.mobile:
+                handover_details.append(["Work Phone", safe_arabic_text(str(employee_data.mobile))])
             
             # القسم
             if hasattr(employee_data, 'department') and employee_data.department:
