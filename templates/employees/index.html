@@ -1552,18 +1552,22 @@
                                        data-bs-toggle="tooltip">
                                         <i class="fas fa-eye"></i>
                                     </a>
-                                    <a href="{{ url_for('employees.edit', id=employee.id) }}" 
+                                    {% if can_edit(Module.EMPLOYEES) %}
+<a href="{{ url_for('employees.edit', id=employee.id) }}" 
                                        class="btn btn-sm btn-primary-enhanced-sm" 
                                        title="تعديل"
                                        data-bs-toggle="tooltip">
                                         <i class="fas fa-edit"></i>
                                     </a>
+                                    {% endif %}
+                                    {% if can_delete(Module.EMPLOYEES) %}
                                     <a href="{{ url_for('employees.confirm_delete', id=employee.id) }}" 
                                        class="btn btn-sm btn-danger-enhanced" 
                                        title="حذف"
                                        data-bs-toggle="tooltip">
                                         <i class="fas fa-trash"></i>
                                     </a>
+                                    {% endif %}
                                 </div>
                             </td>
                         </tr>

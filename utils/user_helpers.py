@@ -435,36 +435,10 @@ def check_module_access(user: User, module: Module, permission: int = Permission
 def require_module_access(module: Module, permission: int = Permission.VIEW):
     """
     زخرفة للتحقق من صلاحية الوصول إلى وحدة معينة
+    (Legacy wrapper - يستخدم النظام المركزي الجديد)
     
     :param module: الوحدة المطلوب التحقق منها
     :param permission: الصلاحية المطلوبة (القيمة الافتراضية هي العرض)
     """
-    from functools import wraps
-    from flask import flash, redirect, url_for, abort
-    from flask_login import current_user, login_required
-    
-    def decorator(f):
-        @login_required
-        @wraps(f)
-        def decorated_function(*args, **kwargs):
-            if not current_user.is_active:
-                flash('حسابك غير نشط. الرجاء التواصل مع مدير النظام.', 'danger')
-                return redirect(url_for('auth.login'))
-            
-            if not check_module_access(current_user, module, permission):
-                flash('ليس لديك صلاحية للوصول إلى هذه الصفحة.', 'danger')
-                
-                # تسجيل محاولة الوصول المرفوضة
-                from utils.audit_helpers import log_access_denied
-                log_access_denied(
-                    entity_type=module.value,
-                    entity_id=0,
-                    details=f"محاولة وصول مرفوضة إلى {get_module_display_name(module)}"
-                )
-                
-                return abort(403)
-            
-            return f(*args, **kwargs)
-        return decorated_function
-    
-    return decorator
+    from utils.permissions_service import require_permission
+    return require_permission(module, permission, return_json=False)
