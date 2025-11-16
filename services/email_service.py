@@ -612,6 +612,57 @@ class EmailService:
             # إنشاء الموضوع
             subject = f"عملية {operation_type_text}"
             
+            # جلب معلومات الموظف الكاملة
+            from models import Employee
+            employee = None
+            if handover_record.driver_employee:
+                employee = handover_record.driver_employee
+            else:
+                employee = Employee.query.filter_by(name=handover_record.person_name).first()
+            
+            # بناء معلومات الموظف
+            employee_info_html = ""
+            employee_info_text = ""
+            if employee:
+                residency = handover_record.driver_residency_number or employee.national_id or "غير متوفر"
+                emp_number = employee.employee_id or "غير متوفر"
+                department_name = employee.department.name if employee.department else "غير متوفر"
+                birth_date = employee.birth_date.strftime('%Y-%m-%d') if employee.birth_date else "غير متوفر"
+                city = handover_record.city or employee.location or "غير متوفر"
+                
+                employee_info_html = f"""
+                <div style="text-align: right; margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                    <h3 style="margin-top: 0; color: #495057;">👤 معلومات السائق</h3>
+                    <p style="margin: 5px 0;"><strong>اسم الموظف:</strong> {handover_record.person_name}</p>
+                    <p style="margin: 5px 0;"><strong>رقم الإقامة:</strong> {residency}</p>
+                    <p style="margin: 5px 0;"><strong>رقم الموظف:</strong> {emp_number}</p>
+                    <p style="margin: 5px 0;"><strong>القسم:</strong> {department_name}</p>
+                    <p style="margin: 5px 0;"><strong>تاريخ الميلاد:</strong> {birth_date}</p>
+                    <p style="margin: 5px 0;"><strong>المدينة:</strong> {city}</p>
+                </div>
+                """
+                
+                employee_info_text = f"""
+👤 معلومات السائق:
+• اسم الموظف: {handover_record.person_name}
+• رقم الإقامة: {residency}
+• رقم الموظف: {emp_number}
+• القسم: {department_name}
+• تاريخ الميلاد: {birth_date}
+• المدينة: {city}
+"""
+            else:
+                employee_info_html = f"""
+                <div style="text-align: right; margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                    <h3 style="margin-top: 0; color: #495057;">👤 معلومات السائق</h3>
+                    <p style="margin: 5px 0;"><strong>اسم الموظف:</strong> {handover_record.person_name}</p>
+                </div>
+                """
+                employee_info_text = f"""
+👤 معلومات السائق:
+• اسم الموظف: {handover_record.person_name}
+"""
+            
             # إنشاء محتوى HTML
             html_content = f"""
             <!DOCTYPE html>
@@ -630,7 +681,7 @@ class EmailService:
                         padding: 20px;
                     }}
                     .container {{
-                        max-width: 500px;
+                        max-width: 600px;
                         margin: 0 auto;
                         background: white;
                         border-radius: 12px;
@@ -649,25 +700,6 @@ class EmailService:
                     }}
                     .content {{
                         padding: 30px;
-                    }}
-                    .message {{
-                        background: #d4edda;
-                        border: 2px solid #28a745;
-                        border-radius: 8px;
-                        padding: 25px;
-                        text-align: center;
-                        margin-bottom: 20px;
-                    }}
-                    .icon {{
-                        font-size: 48px;
-                        margin-bottom: 15px;
-                    }}
-                    .message p {{
-                        color: #155724;
-                        margin: 0;
-                        font-size: 18px;
-                        line-height: 1.8;
-                        font-weight: 500;
                     }}
                     .vehicle-plate {{
                         background: linear-gradient(135deg, #667eea, #764ba2);
@@ -695,11 +727,25 @@ class EmailService:
                     </div>
                     
                     <div class="content">
-                        <div class="message">
-                            <div class="icon">✓</div>
-                            <p>تمت عملية {operation_type_text} <span class="vehicle-plate">{vehicle_plate}</span> - {driver_name or 'غير محدد'} بنجاح.<br><br>
-                            يرجى مراجعة التفاصيل في المرفقات.</p>
+                        <p>السادة المعنيين، تحية طيبة وبعد،</p>
+                        <p>مرفق لكم تفاصيل عملية استلام أو تسليم المركبة وفقاً للمعلومات التالية:</p>
+                        
+                        <div style="text-align: center; margin: 20px 0; padding: 15px; background: #d4edda; border: 2px solid #28a745; border-radius: 8px;">
+                            <h2 style="margin-top: 0; color: #155724;">🔄 {operation_type_text} مركبة</h2>
+                            <p style="margin: 5px 0;"><strong>رقم السيارة:</strong> <span class="vehicle-plate">{vehicle_plate}</span></p>
+                            <p style="margin: 5px 0;"><strong>نوع العملية:</strong> {operation_type_text}</p>
+                            <p style="margin: 5px 0;"><strong>تاريخ العملية:</strong> {handover_record.handover_date.strftime('%Y-%m-%d') if handover_record.handover_date else 'غير محدد'}</p>
                         </div>
+                        
+                        {employee_info_html}
+                        
+                        <div style="text-align: right; margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                            <h3 style="margin-top: 0; color: #495057;">📊 تفاصيل إضافية</h3>
+                            <p style="margin: 5px 0;"><strong>المسافة:</strong> {handover_record.mileage:,} كم</p>
+                        </div>
+                        
+                        <p style="margin-top: 30px;">شاكرين لكم تعاونكم المستمر، وفي حال الحاجة لأي تفاصيل إضافية أو استفسارات، نحن في خدمتكم.</p>
+                        <p>مع خالص التحية،</p>
                     </div>
                     
                     <div class="footer">
@@ -714,9 +760,23 @@ class EmailService:
             text_content = f"""
 نظام نُظم
 
-تمت عملية {operation_type_text} {vehicle_plate} - {driver_name or 'غير محدد'} بنجاح.
+السادة المعنيين، تحية طيبة وبعد،
 
-يرجى مراجعة التفاصيل في المرفقات.
+مرفق لكم تفاصيل عملية استلام أو تسليم المركبة وفقاً للمعلومات التالية:
+
+🔄 {operation_type_text} مركبة
+• رقم السيارة: {vehicle_plate}
+• نوع العملية: {operation_type_text}
+• تاريخ العملية: {handover_record.handover_date.strftime('%Y-%m-%d') if handover_record.handover_date else 'غير محدد'}
+
+{employee_info_text}
+
+📊 تفاصيل إضافية
+• المسافة: {handover_record.mileage:,} كم
+
+شاكرين لكم تعاونكم المستمر، وفي حال الحاجة لأي تفاصيل إضافية أو استفسارات، نحن في خدمتكم.
+
+مع خالص التحية،
 
 ---
 نظام نُظم لإدارة الموظفين والمركبات

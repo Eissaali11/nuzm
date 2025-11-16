@@ -848,8 +848,13 @@
             <span>مشاركة خارجية</span>
         </button>
         
-        <button onclick="showEmailForm()" class="sidebar-action-btn">
+        <button onclick="shareWithOutlook({{ operation.id }})" class="sidebar-action-btn">
             <i class="fas fa-envelope"></i>
+            <span>مشاركة عبر Outlook</span>
+        </button>
+        
+        <button onclick="showEmailForm()" class="sidebar-action-btn">
+            <i class="fas fa-paper-plane"></i>
             <span>إرسال بالإيميل</span>
         </button>
         
@@ -1358,6 +1363,47 @@ function copyShareMessage() {
         copyBtn.classList.remove('btn-success');
         copyBtn.classList.add('btn-primary');
     }, 2000);
+}
+
+// دالة المشاركة عبر Outlook
+async function shareWithOutlook(operationId) {
+    try {
+        Swal.fire({
+            title: 'جاري التحضير...',
+            text: 'جاري تجهيز الرسالة والملفات لـ Outlook',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        // جلب بيانات المشاركة
+        const dataResponse = await fetch(`/operations/${operationId}/share-data`);
+        const data = await dataResponse.json();
+
+        if (!data.success) {
+            throw new Error(data.error || 'فشل في جلب البيانات');
+        }
+
+        // تحميل ملف .eml من الخادم
+        window.location.href = `/operations/${operationId}/share-outlook`;
+
+        Swal.fire({
+            icon: 'success',
+            title: 'تم بنجاح!',
+            text: 'سيتم تنزيل ملف Outlook الآن. افتحه لإرسال الرسالة مع المرفقات.',
+            confirmButtonText: 'حسناً'
+        });
+
+    } catch (error) {
+        console.error('خطأ في المشاركة عبر Outlook:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'حدث خطأ',
+            text: error.message || 'فشل في تجهيز ملف Outlook',
+            confirmButtonText: 'حسناً'
+        });
+    }
 }
 
 // دالة إظهار/إخفاء القائمة الجانبية
