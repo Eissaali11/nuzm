@@ -293,7 +293,7 @@ def department_attendance():
             
             # Get all employees in the department using many-to-many relationship
             department = Department.query.get_or_404(department_id)
-            employees = [emp for emp in department.employees if emp.status == 'active']
+            employees = [emp for emp in department.employees if emp.status not in ['terminated', 'inactive']]
             
             count = 0
             for employee in employees:
@@ -1067,12 +1067,12 @@ def export_excel():
             # جلب معرفات الموظفين الذين لديهم حضور
             employee_ids_with_attendance = set([att.employee_id for att in attendances])
             
-            # جلب الموظفين النشطين في القسم + الموظفين غير النشطين الذين لديهم حضور
+            # جلب الموظفين في القسم (استبعاد المنتهية خدمتهم فقط) + الموظفين المنتهية خدمتهم الذين لديهم حضور
             department_employee_ids = [emp.id for emp in department.employees]
             employees_to_export = Employee.query.filter(
                 Employee.id.in_(department_employee_ids),
                 or_(
-                    Employee.status == 'active',
+                    ~Employee.status.in_(['terminated', 'inactive']),
                     Employee.id.in_(employee_ids_with_attendance)
                 )
             ).all()
@@ -1098,10 +1098,10 @@ def export_excel():
             # جلب معرفات الموظفين الذين لديهم حضور
             employee_ids_with_attendance = set([att.employee_id for att in attendances])
             
-            # جلب الموظفين النشطين + الموظفين غير النشطين الذين لديهم حضور في الفترة
+            # جلب الموظفين (استبعاد المنتهية خدمتهم فقط) + الموظفين المنتهية خدمتهم الذين لديهم حضور في الفترة
             all_employees = Employee.query.filter(
                 or_(
-                    Employee.status == 'active',
+                    ~Employee.status.in_(['terminated', 'inactive']),
                     Employee.id.in_(employee_ids_with_attendance)
                 )
             ).all()
@@ -1153,8 +1153,8 @@ def get_department_employees(department_id):
         # الحصول على القسم أولاً
         department = Department.query.get_or_404(department_id)
         
-        # استخدام العلاقة many-to-many للحصول على جميع الموظفين النشطين
-        employees = [emp for emp in department.employees if emp.status == 'active']
+        # استخدام العلاقة many-to-many للحصول على جميع الموظفين (استبعاد المنتهية خدمتهم فقط)
+        employees = [emp for emp in department.employees if emp.status not in ['terminated', 'inactive']]
         
         employee_data = []
         for employee in employees:
@@ -1236,7 +1236,7 @@ def dashboard():
                 # نحتاج للحصول على قائمة الموظفين المرتبطين بالمشروع
                 project_employees = db.session.query(Employee.id).filter(
                     Employee.project == project_name,
-                    Employee.status == 'active'
+                    ~Employee.status.in_(['terminated', 'inactive'])
                 ).all()
                 
                 # تحويل النتائج إلى قائمة بسيطة من المعرفات
@@ -1336,9 +1336,9 @@ def dashboard():
                     'absent': absent_count
                 })
                 
-            # 8. الحصول على قائمة المشاريع النشطة للفلتر
+            # 8. الحصول على قائمة المشاريع للفلتر (استبعاد المنتهية خدمتهم فقط)
             active_projects = db.session.query(Employee.project).filter(
-                Employee.status == 'active',
+                ~Employee.status.in_(['terminated', 'inactive']),
                 Employee.project.isnot(None)
             ).distinct().all()
             
@@ -1437,15 +1437,15 @@ def dashboard():
             if total_days > 0:
                 daily_attendance_rate = round((daily_stats_dict['present'] / total_days) * 100)
             
-            # حساب إجمالي الموظفين النشطين - استخدام علاقة many-to-many الصحيحة
+            # حساب إجمالي الموظفين - استخدام علاقة many-to-many الصحيحة (استبعاد المنتهية خدمتهم فقط)
             if employee_ids:
                 active_employees_count = len(employee_ids)
             else:
-                # عد الموظفين النشطين المرتبطين بأقسام عبر علاقة many-to-many
+                # عد الموظفين المرتبطين بأقسام عبر علاقة many-to-many
                 active_employees_count = db.session.query(func.count(func.distinct(Employee.id))).join(
                     employee_departments, Employee.id == employee_departments.c.employee_id
                 ).filter(
-                    Employee.status == 'active'
+                    ~Employee.status.in_(['terminated', 'inactive'])
                 ).scalar() or 0
             
             # حساب كامل الأسبوع (7 أيام) × عدد الموظفين النشطين
@@ -1697,8 +1697,8 @@ def department_stats():
     department_stats = []
     
     for dept in departments:
-        # جلب الموظفين النشطين في القسم - استخدام علاقة many-to-many
-        employees = [emp for emp in dept.employees if emp.status == 'active']
+        # جلب الموظفين في القسم - استخدام علاقة many-to-many (استبعاد المنتهية خدمتهم فقط)
+        employees = [emp for emp in dept.employees if emp.status not in ['terminated', 'inactive']]
         
         # فلترة حسب المشروع إذا تم تحديده
         if project_name:
@@ -2394,7 +2394,7 @@ def export_excel_department():
             current += timedelta(days=1)
         
         # جلب الموظفين والبيانات - استخدام علاقة many-to-many
-        all_employees = [emp for emp in department.employees if emp.status == 'active']
+        all_employees = [emp for emp in department.employees if emp.status not in ['terminated', 'inactive']]
         
         if selected_project and selected_project != 'None' and selected_project.strip():
             employees = [emp for emp in all_employees if emp.project == selected_project]
@@ -3216,7 +3216,7 @@ def department_bulk_attendance():
             
             # الحصول على القسم والموظفين
             department = Department.query.get_or_404(department_id)
-            employees = [emp for emp in department.employees if emp.status == 'active']
+            employees = [emp for emp in department.employees if emp.status not in ['terminated', 'inactive']]
             
             if not employees:
                 flash('لا يوجد موظفين نشطين في هذا القسم', 'warning')
