@@ -1366,43 +1366,22 @@ function copyShareMessage() {
 }
 
 // دالة المشاركة عبر Outlook
-async function shareWithOutlook(operationId) {
+function shareWithOutlook(operationId) {
     try {
-        Swal.fire({
-            title: 'جاري التحضير...',
-            text: 'جاري تجهيز الرسالة والملفات لـ Outlook',
-            allowOutsideClick: false,
-            didOpen: () => {
-                Swal.showLoading();
-            }
-        });
-
-        // جلب بيانات المشاركة
-        const dataResponse = await fetch(`/operations/${operationId}/share-data`);
-        const data = await dataResponse.json();
-
-        if (!data.success) {
-            throw new Error(data.error || 'فشل في جلب البيانات');
-        }
-
-        // تحميل ملف .eml من الخادم
-        window.location.href = `/operations/${operationId}/share-outlook`;
-
-        Swal.fire({
-            icon: 'success',
-            title: 'تم بنجاح!',
-            text: 'سيتم تنزيل ملف Outlook الآن. افتحه لإرسال الرسالة مع المرفقات.',
-            confirmButtonText: 'حسناً'
-        });
+        // تحميل ملف .eml من الخادم مباشرة
+        const downloadUrl = `/operations/${operationId}/share-outlook`;
+        
+        // فتح الرابط في نافذة جديدة لتنزيل الملف
+        window.location.href = downloadUrl;
+        
+        // إظهار رسالة نجاح بعد ثانية واحدة
+        setTimeout(() => {
+            alert('سيتم تنزيل ملف Outlook. افتح الملف لإرسال الرسالة مع المرفقات عبر Outlook.');
+        }, 1000);
 
     } catch (error) {
         console.error('خطأ في المشاركة عبر Outlook:', error);
-        Swal.fire({
-            icon: 'error',
-            title: 'حدث خطأ',
-            text: error.message || 'فشل في تجهيز ملف Outlook',
-            confirmButtonText: 'حسناً'
-        });
+        alert('حدث خطأ: ' + (error.message || 'فشل في تجهيز ملف Outlook'));
     }
 }
 
