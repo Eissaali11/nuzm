@@ -1415,9 +1415,9 @@ def send_operation_email(operation_id):
                     from utils.simple_pdf_generator import create_vehicle_handover_pdf
                     handover_record = VehicleHandover.query.get(operation.related_record_id)
                     if handover_record:
-                        pdf_content = create_vehicle_handover_pdf(handover_record.id)
+                        pdf_content = create_vehicle_handover_pdf(handover_record)
                         with open(pdf_file_path, 'wb') as f:
-                            f.write(pdf_content)
+                            f.write(pdf_content.read())
                 except Exception as pdf_error:
                     current_app.logger.warning(f"فشل في إنشاء PDF: {str(pdf_error)}")
                     pdf_file_path = None
@@ -1667,11 +1667,11 @@ def share_with_outlook(operation_id):
         # إنشاء ملف PDF
         try:
             from utils.simple_pdf_generator import create_vehicle_handover_pdf
-            pdf_content = create_vehicle_handover_pdf(handover_record.id)
+            pdf_content = create_vehicle_handover_pdf(handover_record)
             pdf_filename = f"handover_{operation_id}_report.pdf"
             pdf_file_path = os.path.join('/tmp', pdf_filename)
             with open(pdf_file_path, 'wb') as f:
-                f.write(pdf_content)
+                f.write(pdf_content.read())
         except Exception as pdf_error:
             current_app.logger.warning(f"فشل في إنشاء PDF: {str(pdf_error)}")
             pdf_file_path = None
