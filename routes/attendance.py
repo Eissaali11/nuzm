@@ -240,24 +240,26 @@ def record():
             print(f"المستخدم الحالي: {current_user.name}, الدور: {user_role}, القسم المخصص: {current_user.assigned_department_id}")
             
             if user_role in ['ADMIN', 'MANAGER', 'SUPERVISOR']:
-                # المديرون والمشرفون يمكنهم رؤية جميع الموظفين
-                employees = Employee.query.filter_by(status='active').order_by(Employee.name).all()
-                print(f"تم العثور على {len(employees)} موظف نشط للمدير/المشرف")
+                # المديرون والمشرفون يمكنهم رؤية جميع الموظفين (استبعاد المنتهية خدمتهم فقط)
+                employees = Employee.query.filter(~Employee.status.in_(['terminated', 'inactive'])).order_by(Employee.name).all()
+                print(f"تم العثور على {len(employees)} موظف للمدير/المشرف")
             elif current_user.assigned_department_id:
                 # المستخدمون مع قسم مخصص يرون موظفي قسمهم فقط
-                employees = Employee.query.filter_by(
-                    status='active',
-                    department_id=current_user.assigned_department_id
-                ).order_by(Employee.name).all()
-                print(f"تم العثور على {len(employees)} موظف نشط للقسم {current_user.assigned_department_id}")
+                dept = Department.query.get(current_user.assigned_department_id)
+                if dept:
+                    employees = [emp for emp in dept.employees if emp.status not in ['terminated', 'inactive']]
+                    employees.sort(key=lambda x: x.name)
+                else:
+                    employees = []
+                print(f"تم العثور على {len(employees)} موظف للقسم {current_user.assigned_department_id}")
             else:
-                # كحل بديل، عرض جميع الموظفين للمستخدمين المسجلين
-                employees = Employee.query.filter_by(status='active').order_by(Employee.name).all()
+                # كحل بديل، عرض جميع الموظفين للمستخدمين المسجلين (استبعاد المنتهية خدمتهم فقط)
+                employees = Employee.query.filter(~Employee.status.in_(['terminated', 'inactive'])).order_by(Employee.name).all()
                 print(f"عرض جميع الموظفين كحل بديل: {len(employees)} موظف")
         except Exception as e:
             print(f"خطأ في تحديد صلاحيات المستخدم: {e}")
-            # كحل بديل في حالة الخطأ، عرض جميع الموظفين
-            employees = Employee.query.filter_by(status='active').order_by(Employee.name).all()
+            # كحل بديل في حالة الخطأ، عرض جميع الموظفين (استبعاد المنتهية خدمتهم فقط)
+            employees = Employee.query.filter(~Employee.status.in_(['terminated', 'inactive'])).order_by(Employee.name).all()
     else:
         print("المستخدم غير مسجل دخول")
     
