@@ -2928,7 +2928,7 @@ def save_base64_image(base64_string, subfolder):
 def save_uploaded_file(file, subfolder):
     """
     تحفظ ملف مرفوع (من request.files) في مجلد فرعي داخل uploads،
-    وتُرجع المسار النسبي.
+    وتُرجع المسار النسبي الكامل.
     """
     if not file or not file.filename:
         return None
@@ -2949,8 +2949,8 @@ def save_uploaded_file(file, subfolder):
         file_path = os.path.join(upload_folder, unique_filename)
         file.save(file_path)
 
-        # إرجاع المسار النسبي
-        return os.path.join(subfolder, unique_filename)
+        # إرجاع المسار النسبي الكامل (متطابق مع save_file)
+        return f"static/uploads/{subfolder}/{unique_filename}"
 
     except Exception as e:
         print(f"Error saving uploaded file: {e}")
