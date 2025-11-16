@@ -797,27 +797,39 @@ class EmailService:
             
             # إضافة المرفقات (فقط إذا كانت موجودة)
             attachments_added = False
+            current_app.logger.info(f"DEBUG .eml: excel_file_path={excel_file_path}, pdf_file_path={pdf_file_path}")
+            
             if excel_file_path and os.path.exists(excel_file_path):
                 try:
+                    file_size = os.path.getsize(excel_file_path)
+                    current_app.logger.info(f"DEBUG .eml: Found Excel file at {excel_file_path}, size: {file_size} bytes")
                     with open(excel_file_path, 'rb') as f:
                         attachment = MIMEApplication(f.read(), _subtype='xlsx')
                         attachment.add_header('Content-Disposition', 'attachment', 
                                             filename=f'{operation_type_text}_{vehicle_plate}_details.xlsx')
                         msg.attach(attachment)
                         attachments_added = True
+                        current_app.logger.info(f"DEBUG .eml: Successfully attached Excel file")
                 except Exception as e:
                     current_app.logger.warning(f"فشل في إرفاق ملف Excel: {str(e)}")
+            else:
+                current_app.logger.warning(f"DEBUG .eml: Excel file NOT found or path is None")
             
             if pdf_file_path and os.path.exists(pdf_file_path):
                 try:
+                    file_size = os.path.getsize(pdf_file_path)
+                    current_app.logger.info(f"DEBUG .eml: Found PDF file at {pdf_file_path}, size: {file_size} bytes")
                     with open(pdf_file_path, 'rb') as f:
                         attachment = MIMEApplication(f.read(), _subtype='pdf')
                         attachment.add_header('Content-Disposition', 'attachment',
                                             filename=f'{operation_type_text}_{vehicle_plate}_document.pdf')
                         msg.attach(attachment)
                         attachments_added = True
+                        current_app.logger.info(f"DEBUG .eml: Successfully attached PDF file")
                 except Exception as e:
                     current_app.logger.warning(f"فشل في إرفاق ملف PDF: {str(e)}")
+            else:
+                current_app.logger.warning(f"DEBUG .eml: PDF file NOT found or path is None")
             
             # تحويل الرسالة إلى BytesIO
             eml_bytes = io.BytesIO()
