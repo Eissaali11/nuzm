@@ -278,7 +278,9 @@ def create_vehicle_handover_pdf(handover_data):
             try:
                 from models import Employee
                 employee_data = Employee.query.get(handover_data.employee_id)
-            except:
+                print(f"DEBUG: Found employee by ID {handover_data.employee_id}: {employee_data}")
+            except Exception as e:
+                print(f"DEBUG: Error finding employee by ID: {str(e)}")
                 pass
         
         # إذا لم يكن هناك employee_id، حاول البحث بالاسم
@@ -286,8 +288,14 @@ def create_vehicle_handover_pdf(handover_data):
             try:
                 from models import Employee
                 employee_data = Employee.query.filter_by(name=handover_data.person_name).first()
-            except:
+                print(f"DEBUG: Found employee by name '{handover_data.person_name}': {employee_data}")
+                if employee_data:
+                    print(f"DEBUG: Employee data - ID: {employee_data.employee_id}, National ID: {employee_data.national_id}, Mobile: {employee_data.mobile}, MobilePersonal: {employee_data.mobilePersonal}")
+            except Exception as e:
+                print(f"DEBUG: Error finding employee by name: {str(e)}")
                 pass
+        
+        print(f"DEBUG: Final employee_data: {employee_data}")
         
         # جدول تفاصيل التسليم المفصل مع بيانات الموظف الكاملة
         handover_details = [
