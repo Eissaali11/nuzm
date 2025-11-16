@@ -419,6 +419,149 @@
             </div>
         </div>
     </div>
+    
+    <!-- قسم تفاصيل الغياب بأسماء الموظفين -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); color: white;">
+                    <h5 class="mb-0">
+                        <i class="fas fa-user-times me-2"></i>
+                        تفاصيل الغياب حسب القسم
+                    </h5>
+                    <div class="btn-group" role="group">
+                        <input type="radio" class="btn-check" name="absencePeriod" id="absenceDaily" value="daily" checked autocomplete="off">
+                        <label class="btn btn-outline-light btn-sm" for="absenceDaily">اليوم</label>
+                        
+                        <input type="radio" class="btn-check" name="absencePeriod" id="absenceMonthly" value="monthly" autocomplete="off">
+                        <label class="btn btn-outline-light btn-sm" for="absenceMonthly">الشهر</label>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- بيانات اليوم -->
+                    <div id="dailyAbsenceData">
+                        {% if daily_summary and daily_summary.departments %}
+                            <div class="row">
+                                {% for dept in daily_summary.departments %}
+                                    {% if dept.absentees %}
+                                        <div class="col-md-6 mb-4">
+                                            <div class="card department-card">
+                                                <div class="card-header bg-gradient" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                                                    <h6 class="mb-0">
+                                                        <i class="fas fa-building me-2"></i>{{ dept.name }}
+                                                        <span class="badge bg-danger float-end">{{ dept.absent }} غائب</span>
+                                                    </h6>
+                                                </div>
+                                                <div class="card-body p-0">
+                                                    <div class="table-responsive">
+                                                        <table class="table table-hover mb-0">
+                                                            <thead class="table-light">
+                                                                <tr>
+                                                                    <th class="text-center" style="width: 60px;">#</th>
+                                                                    <th>اسم الموظف</th>
+                                                                    <th>رقم الموظف</th>
+                                                                    <th>ملاحظات</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                {% for emp in dept.absentees %}
+                                                                    <tr>
+                                                                        <td class="text-center">{{ loop.index }}</td>
+                                                                        <td>
+                                                                            <i class="fas fa-user-circle text-muted me-1"></i>
+                                                                            <strong>{{ emp.name }}</strong>
+                                                                        </td>
+                                                                        <td><span class="badge bg-secondary">{{ emp.employee_id or '-' }}</span></td>
+                                                                        <td class="text-muted small">{{ emp.notes or '-' }}</td>
+                                                                    </tr>
+                                                                {% endfor %}
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                            {% if daily_summary.total_absent == 0 %}
+                                <div class="text-center text-success py-5">
+                                    <i class="fas fa-check-circle" style="font-size: 3rem;"></i>
+                                    <h5 class="mt-3">ممتاز! لا يوجد غياب اليوم</h5>
+                                </div>
+                            {% endif %}
+                        {% else %}
+                            <div class="text-center text-muted py-5">
+                                <i class="fas fa-info-circle" style="font-size: 3rem;"></i>
+                                <h5 class="mt-3">لا توجد بيانات</h5>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- بيانات الشهر -->
+                    <div id="monthlyAbsenceData" style="display: none;">
+                        {% if monthly_summary and monthly_summary.departments %}
+                            <div class="row">
+                                {% for dept in monthly_summary.departments %}
+                                    {% if dept.absentees %}
+                                        <div class="col-md-6 mb-4">
+                                            <div class="card department-card">
+                                                <div class="card-header bg-gradient" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                                                    <h6 class="mb-0">
+                                                        <i class="fas fa-building me-2"></i>{{ dept.name }}
+                                                        <span class="badge bg-danger float-end">{{ dept.absentees|length }} غياب</span>
+                                                    </h6>
+                                                </div>
+                                                <div class="card-body p-0">
+                                                    <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                                                        <table class="table table-hover mb-0 table-sm">
+                                                            <thead class="table-light sticky-top">
+                                                                <tr>
+                                                                    <th class="text-center" style="width: 50px;">#</th>
+                                                                    <th>اسم الموظف</th>
+                                                                    <th>التاريخ</th>
+                                                                    <th>ملاحظات</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                {% for emp in dept.absentees %}
+                                                                    <tr>
+                                                                        <td class="text-center">{{ loop.index }}</td>
+                                                                        <td>
+                                                                            <i class="fas fa-user-circle text-muted me-1"></i>
+                                                                            <strong>{{ emp.name }}</strong>
+                                                                            <br><small class="text-muted">{{ emp.employee_id or '-' }}</small>
+                                                                        </td>
+                                                                        <td><small>{{ emp.date.strftime('%Y-%m-%d') if emp.date else '-' }}</small></td>
+                                                                        <td class="text-muted small">{{ emp.notes or '-' }}</td>
+                                                                    </tr>
+                                                                {% endfor %}
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                            {% if monthly_summary.total_absent == 0 %}
+                                <div class="text-center text-success py-5">
+                                    <i class="fas fa-check-circle" style="font-size: 3rem;"></i>
+                                    <h5 class="mt-3">ممتاز! لا يوجد غياب هذا الشهر</h5>
+                                </div>
+                            {% endif %}
+                        {% else %}
+                            <div class="text-center text-muted py-5">
+                                <i class="fas fa-info-circle" style="font-size: 3rem;"></i>
+                                <h5 class="mt-3">لا توجد بيانات</h5>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}
 
@@ -780,6 +923,22 @@ function exportToExcel() {
 // إضافة مستمع الحدث لزر التصدير
 document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('exportExcelBtn').addEventListener('click', exportToExcel);
+    
+    // التبديل بين اليوم والشهر في قسم الغياب
+    document.querySelectorAll('input[name="absencePeriod"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            const dailyData = document.getElementById('dailyAbsenceData');
+            const monthlyData = document.getElementById('monthlyAbsenceData');
+            
+            if (this.value === 'daily') {
+                dailyData.style.display = 'block';
+                monthlyData.style.display = 'none';
+            } else {
+                dailyData.style.display = 'none';
+                monthlyData.style.display = 'block';
+            }
+        });
+    });
 });
 </script>
 {% endblock %}

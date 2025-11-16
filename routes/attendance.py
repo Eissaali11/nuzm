@@ -9,6 +9,7 @@ from utils.excel import export_attendance_by_department
 from utils.excel_dashboard import export_attendance_by_department_with_dashboard
 from utils.user_helpers import check_module_access
 from utils.audit_logger import log_attendance_activity, log_system_activity, log_activity
+from services.attendance_analytics import AttendanceAnalytics
 import calendar
 import logging
 import time as time_module  # Renamed to avoid conflict with datetime.time
@@ -1518,7 +1519,18 @@ def dashboard():
             ]
             current_month_name = month_names[current_month - 1]
             
-            # 14. إضافة المتغيرات الأصلية للاحتياط مع المتغيرات المنسقة
+            # 14. جلب بيانات الغياب التفصيلية بأسماء الموظفين لكل قسم
+            daily_summary = AttendanceAnalytics.get_department_summary(
+                start_date=today,
+                end_date=today,
+                project_name=project_name
+            )
+            
+            monthly_summary = AttendanceAnalytics.get_department_summary(
+                start_date=start_of_month,
+                end_date=end_of_month,
+                project_name=project_name
+            )
             
             # 15. إعداد البيانات للعرض على الصفحة
             return render_template('attendance/dashboard_new.html',
@@ -1547,7 +1559,9 @@ def dashboard():
                                 monthly_attendance_rate=monthly_attendance_rate,
                                 active_employees_count=active_employees_count,
                                 active_projects=active_projects,
-                                selected_project=project_name)
+                                selected_project=project_name,
+                                daily_summary=daily_summary,
+                                monthly_summary=monthly_summary)
                                 
             # Si todo funciona bien, sal del bucle
             break
