@@ -6,6 +6,9 @@
 ## User Preferences
 Preferred communication style: Simple, everyday language.
 
+## Recent Updates
+- **Nov 16, 2025**: Added Google Search Console verification files to resolve "deceptive site" warning. Files created in multiple locations (root, static folder, Flask route). Requires deployment/publish to take effect on live domain.
+
 ## System Architecture
 ### Frontend Architecture
 - **Framework**: Flask with Jinja2 templates, supporting right-to-left (RTL) Arabic.
