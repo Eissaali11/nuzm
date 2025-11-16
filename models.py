@@ -363,6 +363,10 @@ class Module(enum.Enum):
     CUSTOMERS = 'العملاء'
     EXTERNAL_SAFETY = 'الفحص الخارجي'
     LANDING_ADMIN = 'إدارة الصفحة الرئيسية'
+    EMPLOYEE_REQUESTS = 'طلبات الموظفين'
+    TRACKING = 'تتبع الموظفين'
+    VOICEHUB = 'VoiceHub'
+    RENTAL_PROPERTIES = 'العقارات المستأجرة'
 
 class User(UserMixin, db.Model):
     """User model for authentication"""
