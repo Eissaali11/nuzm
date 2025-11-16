@@ -1,0 +1,18 @@
+{
+  "id": "email_20251116_113551_082456",
+  "to_email": "i.ali@rassaudi.com",
+  "from_email": "noreply@eissa.site",
+  "from_name": "نظام نُظم",
+  "subject": "تفاصيل العملية: موافقة على استلام مركبة ABC-123 (جوال) - مركبة ABC-123",
+  "html_content": "\n    <!DOCTYPE html>\n    <html dir=\"rtl\" lang=\"ar\">\n    <head>\n        <meta charset=\"UTF-8\">\n        <style>\n            body { font-family: Arial, sans-serif; direction: rtl; margin: 20px; }\n            .header { background: #1e3a5c; color: white; padding: 20px; text-align: center; }\n            .content { padding: 20px; }\n            .info-box { background: #f8f9fa; padding: 15px; margin: 10px 0; border-right: 3px solid #1e3a5c; }\n            .vehicle-info { background: #28a745; color: white; padding: 15px; margin: 10px 0; text-align: center; }\n        </style>\n    </head>\n    <body>\n        <div class=\"header\">\n            <h1>شركة رأس السعودية المحدودة</h1>\n            <h2>نظام نُظم - إدارة المركبات</h2>\n        </div>\n        \n        <div class=\"content\">\n            <h2>تفاصيل العملية</h2>\n            \n            <div class=\"info-box\">\n                <p><strong>عنوان العملية:</strong> موافقة على استلام مركبة ABC-123 (جوال)</p>\n                <p><strong>نوع العملية:</strong> تسليم واستلام مركبة</p>\n                <p><strong>الحالة:</strong> في انتظار الموافقة</p>\n                <p><strong>تاريخ الطلب:</strong> 2025/11/16 08:26</p>\n                <p><strong>طالب العملية:</strong> Eissa Ali</p>\n            </div>\n            \n            <div class=\"vehicle-info\">\n                <h3>معلومات المركبة</h3>\n                <p><strong>رقم اللوحة:</strong> ABC-123</p>\n                <p><strong>السائق الحالي:</strong> ABBAS AMEEN QAID QASEM</p>\n            </div>\n            \n            <div class=\"info-box\"><p><strong>الوصف:</strong> تم إنشاء نموذج استلام للمركبة ABC-123 بواسطة Eissa Ali عبر الجوال. الرجاء المراجعة والموافقة.</p></div>\n            \n            <div class=\"info-box\">\n                <h3>المرفقات</h3>\n                <ul>\n                    <li>ملف Excel مع تفاصيل العملية</li>\n                    <li>ملف PDF للمستندات (حسب نوع العملية)</li>\n                </ul>\n            </div>\n        </div>\n    </body>\n    </html>\n    ",
+  "created_at": "2025-11-16T11:35:51.082482",
+  "status": "queued",
+  "attachments": [
+    {
+      "filename": "operation_243_details.xlsx",
+      "content_type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "file_path": "emails_queue/email_20251116_113551_082456_attachment_0_operation_243_details.xlsx",
+      "size": 5531
+    }
+  ]
+}
