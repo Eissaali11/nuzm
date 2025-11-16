@@ -259,6 +259,13 @@ def inject_csrf_token():
 
     return {'csrf_token': get_csrf_token}
 
+# إضافة نظام الصلاحيات إلى جميع القوالب
+@app.context_processor
+def inject_permissions():
+    """إضافة دوال التحقق من الصلاحيات إلى جميع القوالب"""
+    from utils.permissions_service import get_permissions_context
+    return get_permissions_context()
+
 # مسار الجذر الرئيسي للتطبيق مع توجيه تلقائي حسب نوع الجهاز
 @app.route('/')
 def root():
