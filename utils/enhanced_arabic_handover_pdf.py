@@ -272,17 +272,60 @@ def create_vehicle_handover_pdf(handover_data):
         handover_title = safe_arabic_text("تفاصيل التسليم")
         c.drawString(50, y_position, handover_title)
         
-        # جدول تفاصيل التسليم المفصل
+        # الحصول على بيانات الموظف إذا كان موجوداً
+        employee_data = None
+        if handover_data.employee_id:
+            try:
+                from models import Employee
+                employee_data = Employee.query.get(handover_data.employee_id)
+            except:
+                pass
+        
+        # إذا لم يكن هناك employee_id، حاول البحث بالاسم
+        if not employee_data and handover_data.person_name:
+            try:
+                from models import Employee
+                employee_data = Employee.query.filter_by(name=handover_data.person_name).first()
+            except:
+                pass
+        
+        # جدول تفاصيل التسليم المفصل مع بيانات الموظف الكاملة
         handover_details = [
             [safe_arabic_text("التاريخ"), safe_arabic_text(handover_data.handover_date.strftime('%Y-%m-%d') if handover_data.handover_date else "Not Specified")],
             [safe_arabic_text("الوقت"), safe_arabic_text(handover_data.handover_date.strftime('%H:%M') if handover_data.handover_date else "Not Specified")],
-            [safe_arabic_text("اسم الشخص"), safe_arabic_text(str(handover_data.person_name) if handover_data.person_name else "Not Specified")],
-            ["Employee ID", safe_arabic_text(str(handover_data.employee_id) if handover_data.employee_id else "Not Assigned")],
+            [safe_arabic_text("اسم السائق"), safe_arabic_text(str(handover_data.person_name) if handover_data.person_name else "Not Specified")],
+        ]
+        
+        # إضافة بيانات الموظف إذا كانت متوفرة
+        if employee_data:
+            # رقم الموظف
+            if hasattr(employee_data, 'employee_number') and employee_data.employee_number:
+                handover_details.append(["Employee Number", safe_arabic_text(str(employee_data.employee_number))])
+            
+            # رقم الإقامة
+            if hasattr(employee_data, 'iqama_number') and employee_data.iqama_number:
+                handover_details.append(["Iqama Number", safe_arabic_text(str(employee_data.iqama_number))])
+            
+            # رقم الجوال الشخصي
+            if hasattr(employee_data, 'phone_number') and employee_data.phone_number:
+                handover_details.append(["Personal Mobile", safe_arabic_text(str(employee_data.phone_number))])
+            
+            # رقم أبشر
+            if hasattr(employee_data, 'absher_number') and employee_data.absher_number:
+                handover_details.append(["Absher Number", safe_arabic_text(str(employee_data.absher_number))])
+            
+            # القسم
+            if hasattr(employee_data, 'department') and employee_data.department:
+                if hasattr(employee_data.department, 'name'):
+                    handover_details.append(["Department", safe_arabic_text(str(employee_data.department.name))])
+        
+        # معلومات إضافية عن العملية
+        handover_details.extend([
             ["Supervisor", safe_arabic_text(str(handover_data.supervisor_name) if handover_data.supervisor_name else "Not Specified")],
             [safe_arabic_text("قراءة العداد"), safe_arabic_text(f"{handover_data.mileage} km" if handover_data.mileage else "Not Specified")],
             [safe_arabic_text("مستوى الوقود"), safe_arabic_text(f"{handover_data.fuel_level}%" if handover_data.fuel_level else "Not Specified")],
-            ["Vehicle Status", safe_arabic_text(str(handover_data.vehicle_status_summary) if hasattr(handover_data, 'vehicle_status_summary') and handover_data.vehicle_status_summary else "طبيعية")]
-        ]
+            ["Vehicle Status", safe_arabic_text(str(handover_data.vehicle_status_summary) if hasattr(handover_data, 'vehicle_status_summary') and handover_data.vehicle_status_summary else "Normal")]
+        ])
         
         handover_table = Table(handover_details, colWidths=[2.2*inch, 2.8*inch])
         handover_table.setStyle(TableStyle([
