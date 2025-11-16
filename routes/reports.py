@@ -1014,8 +1014,8 @@ def attendance_excel():
         if not dept:
             continue
         
-        # جلب موظفي القسم عبر العلاقة الصحيحة
-        employees = [emp for emp in dept.employees if emp.status == 'active']
+        # جلب موظفي القسم عبر العلاقة الصحيحة (استبعاد المنتهية خدمتهم فقط)
+        employees = [emp for emp in dept.employees if emp.status not in ['terminated', 'inactive']]
         dept_employee_count = len(employees)
         
         if dept_employee_count == 0:
@@ -1301,8 +1301,8 @@ def attendance_excel():
         if not dept:
             continue
         
-        # جلب جميع موظفي القسم النشطين عبر العلاقة الصحيحة
-        employees = [emp for emp in dept.employees if emp.status == 'active']
+        # جلب جميع موظفي القسم عبر العلاقة الصحيحة (استبعاد المنتهية خدمتهم فقط)
+        employees = [emp for emp in dept.employees if emp.status not in ['terminated', 'inactive']]
         
         if not employees:
             continue
