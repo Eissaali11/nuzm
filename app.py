@@ -337,6 +337,13 @@ def request_entity_too_large(error):
                              error_code=413,
                              error_message='حجم الطلب كبير جداً. يرجى تقليل حجم البيانات المرسلة.'), 413
 
+# Google Search Console verification route
+@app.route('/googleab59b7c3bfbdd81d.html')
+def google_verification():
+    """عرض ملف التحقق من Google Search Console"""
+    from flask import Response
+    return Response('google-site-verification: googleab59b7c3bfbdd81d.html', mimetype='text/html')
+
 # تعطيل استخدام WeasyPrint مؤقتاً
 WEASYPRINT_ENABLED = False
 
@@ -694,8 +701,3 @@ cleanup_old_location_data()
 
 # إيقاف المجدول عند إيقاف التطبيق
 atexit.register(lambda: scheduler.shutdown())
-
-@app.route('/googleab59b7c3bfbdd81d.html')
-def google_verification():
-    """عرض ملف التحقق من Google Search Console"""
-    return 'google-site-verification: googleab59b7c3bfbdd81d.html'
