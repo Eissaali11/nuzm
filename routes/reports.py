@@ -1301,22 +1301,10 @@ def attendance_excel():
         if not dept:
             continue
         
-        # جلب موظفي القسم الذين لديهم سجلات حضور في الفترة المحددة
+        # جلب جميع موظفي القسم النشطين (بغض النظر عن سجلات الحضور)
         employees = Employee.query.filter_by(department_id=dept.id, status='active').all()
         
         if not employees:
-            continue
-        
-        employee_ids = [emp.id for emp in employees]
-        
-        # التأكد من وجود سجلات حضور
-        has_attendance = Attendance.query.filter(
-            Attendance.employee_id.in_(employee_ids),
-            Attendance.date >= from_date,
-            Attendance.date <= to_date
-        ).first()
-        
-        if not has_attendance:
             continue
         
         ws_dept = wb.create_sheet(f"🏢 {dept.name[:25]}")
