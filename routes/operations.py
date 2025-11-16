@@ -1748,15 +1748,14 @@ def share_data(operation_id):
         # بناء الرسالة المنسقة
         message_parts = ["السادة المعنيين، تحية طيبة وبعد،\n\n"]
         message_parts.append("مرفق لكم تفاصيل عملية استلام أو تسليم المركبة وفقاً للمعلومات التالية:\n\n")
-        message_parts.append("═══════════════════════════\n")
         
         # نوع العملية
         if operation.operation_type == 'handover':
             handover = VehicleHandover.query.get(operation.related_record_id) if operation.related_record_id else None
             if handover:
-                operation_title = "🚙 تسليم مركبة" if handover.handover_type == 'delivery' else "🔄 استلام مركبة"
+                operation_title = "🔄 تسليم مركبة" if handover.handover_type == 'delivery' else "🔄 استلام مركبة"
             else:
-                operation_title = "🚙 عملية تسليم/استلام"
+                operation_title = "🔄 عملية تسليم/استلام"
         elif operation.operation_type == 'workshop':
             operation_title = "🔧 دخول ورشة"
         elif operation.operation_type == 'safety_inspection':
@@ -1765,7 +1764,6 @@ def share_data(operation_id):
             operation_title = "📋 عملية"
         
         message_parts.append(f"{operation_title}\n")
-        message_parts.append("═══════════════════════════\n")
         
         # معلومات المركبة
         if operation.vehicle:
@@ -1782,31 +1780,50 @@ def share_data(operation_id):
                 
                 # معلومات السائق
                 if handover.person_name:
-                    message_parts.append("\n═══════════════════════════\n")
-                    message_parts.append("👤 معلومات السائق\n")
-                    message_parts.append("═══════════════════════════\n")
-                    message_parts.append(f"• الاسم: {handover.person_name}\n")
-                    if handover.driver_phone_number:
-                        message_parts.append(f"• الجوال: {handover.driver_phone_number}\n")
-                    if handover.driver_residency_number:
-                        message_parts.append(f"• رقم الإقامة: {handover.driver_residency_number}\n")
+                    message_parts.append("\n👤 معلومات السائق\n")
+                    message_parts.append(f"• اسم الموظف: {handover.person_name}\n")
+                    
+                    # جلب بيانات الموظف الكاملة إذا كانت متوفرة
+                    if handover.driver_employee:
+                        employee = handover.driver_employee
+                        
+                        # رقم الإقامة
+                        residency = handover.driver_residency_number or employee.national_id or "[غير متوفر]"
+                        message_parts.append(f"• رقم الإقامة: {residency}\n")
+                        
+                        # رقم الموظف
+                        emp_number = employee.employee_id or "[غير متوفر]"
+                        message_parts.append(f"• رقم الموظف: {emp_number}\n")
+                        
+                        # القسم
+                        department_name = employee.department.name if employee.department else "[غير متوفر]"
+                        message_parts.append(f"• القسم: {department_name}\n")
+                        
+                        # تاريخ الميلاد
+                        birth_date = employee.birth_date.strftime('%Y-%m-%d') if employee.birth_date else "[غير متوفر]"
+                        message_parts.append(f"• تاريخ الميلاد: {birth_date}\n")
+                        
+                        # المدينة
+                        city = handover.city or employee.location or "[غير متوفر]"
+                        message_parts.append(f"• المدينة: {city}\n")
+                    else:
+                        # في حالة عدم ربط الموظف، نستخدم البيانات المتاحة فقط
+                        if handover.driver_residency_number:
+                            message_parts.append(f"• رقم الإقامة: {handover.driver_residency_number}\n")
+                        if handover.driver_phone_number:
+                            message_parts.append(f"• الجوال: {handover.driver_phone_number}\n")
                 
                 # معلومات إضافية
-                message_parts.append("\n═══════════════════════════\n")
-                message_parts.append("📊 تفاصيل إضافية\n")
-                message_parts.append("═══════════════════════════\n")
-                message_parts.append(f"• المسافة: {handover.mileage} كم\n")
-                if handover.city:
-                    message_parts.append(f"• المدينة: {handover.city}\n")
-                if handover.project_name:
-                    message_parts.append(f"• المشروع: {handover.project_name}\n")
+                message_parts.append("\n📊 تفاصيل إضافية\n")
+                message_parts.append(f"• المسافة: {handover.mileage:,} كم\n")
                 
+                # الملاحظات
                 if handover.notes:
-                    message_parts.append(f"\n💬 ملاحظات:\n{handover.notes}\n")
+                    message_parts.append(f"\n💬 ملاحظات\n{handover.notes}\n")
         
-        message_parts.append("\n═══════════════════════════\n")
-        message_parts.append("📎 مرفقات: ملف Excel + ملف PDF\n")
-        message_parts.append("═══════════════════════════\n\n")
+        message_parts.append("\n📎 مرفقات:\n\n")
+        message_parts.append("ملف Excel\n\n")
+        message_parts.append("ملف PDF\n\n")
         message_parts.append("شاكرين لكم تعاونكم المستمر، وفي حال الحاجة لأي تفاصيل إضافية أو استفسارات، نحن في خدمتكم.\n\n")
         message_parts.append("مع خالص التحية،")
         
