@@ -1014,8 +1014,8 @@ def attendance_excel():
         if not dept:
             continue
         
-        # جلب موظفي القسم
-        employees = Employee.query.filter_by(department_id=dept.id, status='active').all()
+        # جلب موظفي القسم عبر العلاقة الصحيحة
+        employees = [emp for emp in dept.employees if emp.status == 'active']
         dept_employee_count = len(employees)
         
         if dept_employee_count == 0:
@@ -1301,8 +1301,8 @@ def attendance_excel():
         if not dept:
             continue
         
-        # جلب جميع موظفي القسم النشطين (بغض النظر عن سجلات الحضور)
-        employees = Employee.query.filter_by(department_id=dept.id, status='active').all()
+        # جلب جميع موظفي القسم النشطين عبر العلاقة الصحيحة
+        employees = [emp for emp in dept.employees if emp.status == 'active']
         
         if not employees:
             continue
