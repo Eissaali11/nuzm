@@ -694,3 +694,8 @@ cleanup_old_location_data()
 
 # إيقاف المجدول عند إيقاف التطبيق
 atexit.register(lambda: scheduler.shutdown())
+
+@app.route('/googleab59b7c3bfbdd81d.html')
+def google_verification():
+    """عرض ملف التحقق من Google Search Console"""
+    return 'google-site-verification: googleab59b7c3bfbdd81d.html'
