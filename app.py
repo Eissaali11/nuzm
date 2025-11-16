@@ -664,6 +664,26 @@ def make_all_users_admins_command():
         print("تم التراجع عن كل التغييرات.")
 
 
+
+# ================== صفحات المعلومات الثابتة ==================
+
+@app.route('/about')
+def about():
+    """صفحة من نحن - لتوضيح طبيعة النظام لمحركات البحث"""
+    return render_template('about.html')
+
+@app.route('/privacy')
+def privacy():
+    """صفحة سياسة الخصوصية - لتوضيح استخدام البيانات"""
+    return render_template('privacy.html')
+
+@app.route('/contact')
+def contact():
+    """صفحة اتصل بنا - معلومات الشركة"""
+    return render_template('contact.html')
+
+# ================== نهاية صفحات المعلومات الثابتة ==================
+
 # وظيفة حذف البيانات القديمة (أقدم من 48 ساعة)
 def cleanup_old_location_data():
     """حذف مواقع الموظفين الأقدم من 48 ساعة"""

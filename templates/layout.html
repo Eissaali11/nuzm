@@ -768,6 +768,13 @@
         <!-- Footer -->
         <footer class="footer mt-auto py-3">
             <div class="container text-center" style="color: black">
+                <div class="mb-2">
+                    <a href="{{ url_for('about') }}" class="text-muted mx-2" style="color: black !important; text-decoration: none;">من نحن</a>
+                    <span class="text-muted">|</span>
+                    <a href="{{ url_for('privacy') }}" class="text-muted mx-2" style="color: black !important; text-decoration: none;">سياسة الخصوصية</a>
+                    <span class="text-muted">|</span>
+                    <a href="{{ url_for('contact') }}" class="text-muted mx-2" style="color: black !important; text-decoration: none;">اتصل بنا</a>
+                </div>
                 <span class="text-muted" style="color: black !important"
                     >جميع الحقوق محفوظة &copy; {{ now.year }} نُظم - نظام إدارة
                     متكامل</span
