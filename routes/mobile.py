@@ -2959,8 +2959,10 @@ def save_uploaded_file(file, subfolder):
 def save_file(file, folder):
     """حفظ الملف (صورة أو PDF) في المجلد المحدد وإرجاع المسار ونوع الملف - مع دعم HEIC"""
     if not file:
+        current_app.logger.warning("save_file: No file provided")
         return None, None
     if not file.filename:
+        current_app.logger.warning("save_file: File has no filename")
         return None, None
 
     # فصل الاسم والامتداد قبل استخدام secure_filename لتجنب فقدان الامتداد
@@ -2979,15 +2981,26 @@ def save_file(file, folder):
 
     # حفظ الملف
     file_path = os.path.join(upload_folder, unique_filename)
+    final_file_path = file_path
     
     try:
+        current_app.logger.info(f"save_file: Saving {original_filename} to {file_path}")
         file.save(file_path)
+        
+        # ✅ التحقق من نجاح الحفظ
+        if not os.path.exists(file_path):
+            current_app.logger.error(f"save_file: File NOT saved! Path: {file_path}")
+            return None, None
+        
+        file_size = os.path.getsize(file_path)
+        current_app.logger.info(f"save_file: File saved successfully! Size: {file_size} bytes")
         
         # تحويل HEIC/HEIF إلى JPEG للتوافق مع المتصفحات
         ext_lower = ext_part.lower()
         if ext_lower in ('.heic', '.heif'):
             try:
                 from PIL import Image
+                current_app.logger.info(f"save_file: Converting HEIC to JPEG: {file_path}")
                 img = Image.open(file_path)
                 if img.mode != 'RGB':
                     img = img.convert('RGB')
@@ -2996,15 +3009,24 @@ def save_file(file, folder):
                 img.save(jpeg_path, 'JPEG', quality=90)
                 os.remove(file_path)
                 unique_filename = jpeg_filename
+                final_file_path = jpeg_path
+                current_app.logger.info(f"save_file: HEIC conversion successful: {jpeg_path}")
             except Exception as convert_error:
-                print(f"تحذير: فشل تحويل HEIC: {convert_error}")
+                current_app.logger.error(f"save_file: HEIC conversion failed: {convert_error}")
+        
+        # التحقق النهائي من وجود الملف
+        if not os.path.exists(final_file_path):
+            current_app.logger.error(f"save_file: Final file NOT found! Path: {final_file_path}")
+            return None, None
         
         # تحديد نوع الملف
         file_type = 'pdf' if ext_lower == '.pdf' else 'image'
-        return f"static/uploads/{folder}/{unique_filename}", file_type
+        relative_path = f"static/uploads/{folder}/{unique_filename}"
+        current_app.logger.info(f"save_file: SUCCESS! Returning path: {relative_path}")
+        return relative_path, file_type
         
     except Exception as e:
-        print(f"خطأ في حفظ الملف: {e}")
+        current_app.logger.error(f"save_file: Exception occurred: {e}", exc_info=True)
         return None, None
 
 
