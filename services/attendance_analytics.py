@@ -93,12 +93,14 @@ class AttendanceAnalytics:
             if not dept:
                 continue
             
-            # جلب موظفي القسم
-            employees = dept.employees.filter_by(status='active').all()
+            # جلب موظفي القسم النشطين
+            employees_query = Employee.query.filter_by(department_id=dept.id, status='active')
             
             # فلترة حسب المشروع إذا تم تحديده
             if project_name:
-                employees = [emp for emp in employees if emp.project == project_name]
+                employees_query = employees_query.filter_by(project=project_name)
+            
+            employees = employees_query.all()
             
             if not employees:
                 continue
