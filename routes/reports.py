@@ -1287,44 +1287,169 @@ def attendance_excel():
         ws_leave.column_dimensions['E'].width = 35
         ws_leave.column_dimensions['F'].width = 12
     
-    # ===== صفحة لكل قسم =====
-    for dept in department_stats:
-        ws_dept = wb.create_sheet(f"🏢 {dept['name'][:25]}")
-        ws_dept.merge_cells('A1:G3')
-        ws_dept['A1'].value = f"🏢 تقرير قسم {dept['name']}\n{from_date.strftime('%Y/%m/%d')} - {to_date.strftime('%Y/%m/%d')}"
+    # توليد قائمة بكل الأيام في النطاق الزمني
+    date_list = []
+    current_date = from_date
+    while current_date <= to_date:
+        date_list.append(current_date)
+        current_date += timedelta(days=1)
+    
+    # ===== صفحة حضور تفصيلية لكل قسم =====
+    for dept_data in department_stats:
+        # جلب القسم من قاعدة البيانات
+        dept = Department.query.filter_by(name=dept_data['name']).first()
+        if not dept:
+            continue
+        
+        # جلب موظفي القسم الذين لديهم سجلات حضور في الفترة المحددة
+        employees = Employee.query.filter_by(department_id=dept.id, status='active').all()
+        
+        if not employees:
+            continue
+        
+        employee_ids = [emp.id for emp in employees]
+        
+        # التأكد من وجود سجلات حضور
+        has_attendance = Attendance.query.filter(
+            Attendance.employee_id.in_(employee_ids),
+            Attendance.date >= from_date,
+            Attendance.date <= to_date
+        ).first()
+        
+        if not has_attendance:
+            continue
+        
+        ws_dept = wb.create_sheet(f"🏢 {dept.name[:25]}")
+        
+        # العنوان
+        total_cols = 9 + len(date_list)
+        ws_dept.merge_cells(f'A1:{get_column_letter(total_cols)}3')
+        ws_dept['A1'].value = f"🏢 تقرير حضور قسم {dept.name}\n{from_date.strftime('%Y/%m/%d')} - {to_date.strftime('%Y/%m/%d')}"
         ws_dept['A1'].font = Font(size=18, bold=True, color="FFFFFF")
         ws_dept['A1'].fill = PatternFill(start_color="667eea", end_color="667eea", fill_type="solid")
         ws_dept['A1'].alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+        ws_dept.row_dimensions[1].height = 25
+        ws_dept.row_dimensions[2].height = 25
         
         # KPIs للقسم
         kpi_row = 5
-        kpis = [
-            ('A', 'عدد الموظفين', dept['employees'], "5B9BD5"),
-            ('B', 'حاضر', dept['present'], "70AD47"),
-            ('C', 'غائب', dept['absent'], "E74C3C"),
-            ('D', 'إجازة', dept['leave'], "F39C12"),
-            ('E', 'مرضي', dept['sick'], "3498DB"),
-            ('F', 'الإجمالي', dept['total'], "95A5A6"),
-            ('G', 'معدل الحضور %', f"{dept['rate']}%", "16A085")
+        ws_dept.row_dimensions[kpi_row].height = 25
+        ws_dept.row_dimensions[kpi_row + 1].height = 30
+        
+        kpis_data = [
+            (f'A{kpi_row}:B{kpi_row+1}', 'عدد الموظفين', len(employees), "5B9BD5"),
+            (f'C{kpi_row}:D{kpi_row+1}', 'حاضر', dept_data['present'], "70AD47"),
+            (f'E{kpi_row}:F{kpi_row+1}', 'غائب', dept_data['absent'], "E74C3C"),
+            (f'G{kpi_row}:H{kpi_row+1}', 'إجازة', dept_data['leave'], "F39C12"),
+            (f'I{kpi_row}:J{kpi_row+1}', 'مرضي', dept_data['sick'], "3498DB"),
         ]
         
-        for col, label, value, color in kpis:
-            cell = ws_dept[f'{col}{kpi_row}']
-            cell.value = label
-            cell.font = Font(bold=True, size=10)
-            cell.fill = PatternFill(start_color="E9ECEF", end_color="E9ECEF", fill_type="solid")
-            cell.alignment = Alignment(horizontal='center', vertical='center')
-            cell.border = thin_border
-            
-            cell_value = ws_dept[f'{col}{kpi_row+1}']
-            cell_value.value = value
-            cell_value.font = Font(bold=True, size=14, color="FFFFFF")
-            cell_value.fill = PatternFill(start_color=color, end_color=color, fill_type="solid")
-            cell_value.alignment = Alignment(horizontal='center', vertical='center')
-            cell_value.border = thin_border
+        for cell_range, label, value, color in kpis_data:
+            ws_dept.merge_cells(cell_range)
+            cell = ws_dept[cell_range.split(':')[0]]
+            cell.value = f"{label}\n{value}"
+            cell.font = Font(bold=True, size=14, color="FFFFFF")
+            cell.fill = PatternFill(start_color=color, end_color=color, fill_type="solid")
+            cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+            cell.border = thick_border
         
-        for col in ['A', 'B', 'C', 'D', 'E', 'F', 'G']:
-            ws_dept.column_dimensions[col].width = 15
+        # جدول الحضور
+        table_start_row = kpi_row + 3
+        
+        # رؤوس الأعمدة الثابتة
+        headers = ['اسم الموظف', 'رقم الموظف', 'الهوية الوطنية', 'الجوال', 'المسمى الوظيفي', 
+                   'الموقع', 'المشروع', 'الإجمالي', 'الحضور']
+        
+        # إضافة أيام الشهر كرؤوس
+        for date in date_list:
+            headers.append(f"{date.day}\n{date.strftime('%a')}")
+        
+        # كتابة رؤوس الأعمدة
+        for col_idx, header in enumerate(headers, 1):
+            cell = ws_dept.cell(row=table_start_row, column=col_idx)
+            cell.value = header
+            cell.font = Font(size=10, bold=True, color="FFFFFF")
+            cell.fill = PatternFill(start_color="34495E", end_color="34495E", fill_type="solid")
+            cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+            cell.border = thin_border
+        ws_dept.row_dimensions[table_start_row].height = 30
+        
+        # بيانات الموظفين
+        data_start_row = table_start_row + 1
+        for emp_idx, employee in enumerate(employees, data_start_row):
+            # معلومات الموظف
+            ws_dept.cell(row=emp_idx, column=1).value = employee.name
+            ws_dept.cell(row=emp_idx, column=2).value = employee.employee_id or '-'
+            ws_dept.cell(row=emp_idx, column=3).value = employee.national_id or '-'
+            ws_dept.cell(row=emp_idx, column=4).value = employee.mobile or '-'
+            ws_dept.cell(row=emp_idx, column=5).value = employee.job_title or '-'
+            ws_dept.cell(row=emp_idx, column=6).value = employee.location or '-'
+            ws_dept.cell(row=emp_idx, column=7).value = employee.project or '-'
+            
+            # جلب سجلات الحضور لهذا الموظف
+            attendance_records = Attendance.query.filter(
+                Attendance.employee_id == employee.id,
+                Attendance.date >= from_date,
+                Attendance.date <= to_date
+            ).all()
+            
+            # إنشاء dictionary لربط التاريخ بالحالة
+            attendance_dict = {record.date: record.status for record in attendance_records}
+            
+            # حساب إجمالي الحضور
+            total_present = sum(1 for status in attendance_dict.values() if status == 'present')
+            total_days = len(attendance_dict)
+            
+            ws_dept.cell(row=emp_idx, column=8).value = total_days
+            ws_dept.cell(row=emp_idx, column=9).value = total_present
+            
+            # ملء أعمدة الأيام
+            for day_idx, date in enumerate(date_list, 10):
+                cell = ws_dept.cell(row=emp_idx, column=day_idx)
+                
+                if date in attendance_dict:
+                    status = attendance_dict[date]
+                    status_map = {
+                        'present': ('P', "D5F4E6"),
+                        'absent': ('A', "FADBD8"),
+                        'leave': ('L', "FCF3CF"),
+                        'sick': ('S', "D6EAF8")
+                    }
+                    symbol, bg_color = status_map.get(status, ('', "FFFFFF"))
+                    cell.value = symbol
+                    cell.fill = PatternFill(start_color=bg_color, end_color=bg_color, fill_type="solid")
+                else:
+                    cell.value = ""
+                
+                cell.alignment = Alignment(horizontal='center', vertical='center')
+                cell.border = thin_border
+                cell.font = Font(size=11, bold=True)
+            
+            # تطبيق التنسيق على خلايا معلومات الموظف
+            for col in range(1, 10):
+                cell = ws_dept.cell(row=emp_idx, column=col)
+                cell.alignment = Alignment(horizontal='center', vertical='center')
+                cell.border = thin_border
+                
+                # تلوين الصفوف بالتناوب
+                if emp_idx % 2 == 0:
+                    if col <= 9:
+                        cell.fill = PatternFill(start_color="F8F9FA", end_color="F8F9FA", fill_type="solid")
+        
+        # ضبط عرض الأعمدة
+        ws_dept.column_dimensions['A'].width = 25
+        ws_dept.column_dimensions['B'].width = 12
+        ws_dept.column_dimensions['C'].width = 15
+        ws_dept.column_dimensions['D'].width = 12
+        ws_dept.column_dimensions['E'].width = 18
+        ws_dept.column_dimensions['F'].width = 12
+        ws_dept.column_dimensions['G'].width = 12
+        ws_dept.column_dimensions['H'].width = 10
+        ws_dept.column_dimensions['I'].width = 10
+        
+        # ضبط عرض أعمدة الأيام
+        for col_idx in range(10, 10 + len(date_list)):
+            ws_dept.column_dimensions[get_column_letter(col_idx)].width = 5
     
     # حفظ الملف
     wb.save(output)
