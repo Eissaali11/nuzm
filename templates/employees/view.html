@@ -1807,7 +1807,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
                 <div class="card-body">
                     <!-- Current Vehicle Section -->
-                    {% if current_vehicle %}
+                    {% if current_assigned_vehicle %}
                     <div class="alert alert-success mb-4" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); border: none; color: white; border-radius: 15px; box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);">
                         <div class="d-flex align-items-center">
                             <div class="me-3" style="font-size: 3rem;">
@@ -1815,25 +1815,24 @@ document.addEventListener('DOMContentLoaded', function() {
                             </div>
                             <div class="flex-grow-1">
                                 <h5 class="mb-2" style="color: white; font-weight: bold;">
-                                    <i class="fas fa-check-circle me-2"></i>السيارة الحالية
+                                    <i class="fas fa-check-circle me-2"></i>السيارة الحالية المربوطة
                                 </h5>
                                 <div class="row">
                                     <div class="col-md-3">
                                         <strong>رقم اللوحة:</strong><br>
-                                        <span style="font-size: 1.2rem;">{{ current_vehicle.vehicle.plate_number }}</span>
+                                        <span style="font-size: 1.2rem;">{{ current_assigned_vehicle.plate_number }}</span>
                                     </div>
                                     <div class="col-md-3">
                                         <strong>النوع:</strong><br>
-                                        {{ current_vehicle.vehicle.make }} {{ current_vehicle.vehicle.model }}
+                                        {{ current_assigned_vehicle.make }} {{ current_assigned_vehicle.model }} {{ current_assigned_vehicle.year }}
                                     </div>
                                     <div class="col-md-3">
-                                        <strong>تاريخ التسليم:</strong><br>
-                                        {{ current_vehicle.handover_date.strftime('%Y-%m-%d') }}
+                                        <strong>المشروع:</strong><br>
+                                        {{ current_assigned_vehicle.project if current_assigned_vehicle.project else 'غير محدد' }}
                                     </div>
                                     <div class="col-md-3">
-                                        <a href="{{ url_for('vehicles.view_handover', id=current_vehicle.id) }}" class="btn btn-light btn-sm mt-2">
-                                            <i class="fas fa-eye"></i> عرض التفاصيل
-                                        </a>
+                                        <strong>الحالة:</strong><br>
+                                        <span class="badge bg-success">{{ current_assigned_vehicle.status_arabic }}</span>
                                     </div>
                                 </div>
                             </div>
