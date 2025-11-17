@@ -2687,3 +2687,89 @@ class RequestNotification(db.Model):
     def __repr__(self):
         return f'<RequestNotification #{self.id} - {self.notification_type}>'
 
+
+class InspectionUploadToken(db.Model):
+    """رموز الرفع الفريدة لكل سيارة - نظام رفع صور الفحص الدوري"""
+    __tablename__ = 'inspection_upload_tokens'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    vehicle_id = db.Column(db.Integer, db.ForeignKey('vehicle.id', ondelete='CASCADE'), nullable=False, index=True)
+    token = db.Column(db.String(100), unique=True, nullable=False, index=True)
+    
+    # معلومات الإنشاء
+    created_by = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='SET NULL'))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    expires_at = db.Column(db.DateTime, nullable=False)
+    
+    # الحالة
+    is_active = db.Column(db.Boolean, default=True, index=True)
+    used_at = db.Column(db.DateTime)
+    
+    # العلاقات
+    vehicle = db.relationship('Vehicle', backref=db.backref('inspection_tokens', lazy='dynamic'))
+    created_by_user = db.relationship('User', foreign_keys=[created_by])
+    
+    def __repr__(self):
+        return f'<InspectionUploadToken #{self.id} - Vehicle {self.vehicle_id}>'
+
+
+class VehicleInspectionRecord(db.Model):
+    """سجلات الفحص الدوري للسيارات"""
+    __tablename__ = 'vehicle_inspection_records'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    vehicle_id = db.Column(db.Integer, db.ForeignKey('vehicle.id', ondelete='CASCADE'), nullable=False, index=True)
+    token_id = db.Column(db.Integer, db.ForeignKey('inspection_upload_tokens.id', ondelete='SET NULL'))
+    
+    # بيانات الفحص
+    inspection_date = db.Column(db.Date, nullable=False, index=True)
+    inspection_type = db.Column(db.String(50), default='دوري')
+    mileage = db.Column(db.Integer)
+    notes = db.Column(db.Text)
+    
+    # معلومات الرفع
+    uploaded_by_name = db.Column(db.String(200))
+    uploaded_via = db.Column(db.String(50), default='mobile_app')
+    uploaded_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    
+    # حالة المراجعة
+    review_status = db.Column(db.String(50), default='pending', index=True)
+    # القيم الممكنة: pending / approved / rejected / needs_review
+    
+    reviewed_by = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='SET NULL'))
+    reviewed_at = db.Column(db.DateTime)
+    reviewer_notes = db.Column(db.Text)
+    
+    # العلاقات
+    vehicle = db.relationship('Vehicle', backref=db.backref('inspection_records', lazy='dynamic', order_by='VehicleInspectionRecord.uploaded_at.desc()'))
+    token = db.relationship('InspectionUploadToken', backref=db.backref('inspections', lazy='dynamic'))
+    reviewer = db.relationship('User', foreign_keys=[reviewed_by])
+    images = db.relationship('VehicleInspectionImage', backref='inspection', 
+                            cascade='all, delete-orphan', lazy='dynamic',
+                            order_by='VehicleInspectionImage.uploaded_at')
+    
+    def __repr__(self):
+        return f'<VehicleInspectionRecord #{self.id} - Vehicle {self.vehicle_id} - {self.review_status}>'
+
+
+class VehicleInspectionImage(db.Model):
+    """صور الفحص الدوري"""
+    __tablename__ = 'vehicle_inspection_images'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    inspection_record_id = db.Column(db.Integer, 
+                                    db.ForeignKey('vehicle_inspection_records.id', ondelete='CASCADE'), 
+                                    nullable=False, index=True)
+    
+    image_path = db.Column(db.String(500), nullable=False)
+    image_url = db.Column(db.String(500))
+    uploaded_at = db.Column(db.DateTime, default=datetime.utcnow)
+    file_size = db.Column(db.Integer)
+    
+    # Google Drive (اختياري)
+    drive_file_id = db.Column(db.String(200))
+    drive_upload_status = db.Column(db.String(50), default='pending')
+    
+    def __repr__(self):
+        return f'<VehicleInspectionImage #{self.id} - Inspection {self.inspection_record_id}>'
+

@@ -1,7 +1,9 @@
 from flask import Blueprint, jsonify, request, url_for
-from models import Employee, Department, Document, Vehicle, VehicleHandover, VehicleHandoverImage
+from models import Employee, Department, Document, Vehicle, VehicleHandover, VehicleHandoverImage, InspectionUploadToken, VehicleInspectionRecord, VehicleInspectionImage
 from app import db
 import os
+import uuid
+from datetime import timedelta
 
 api_bp = Blueprint('api', __name__, url_prefix='/api')
 
@@ -432,3 +434,95 @@ def get_vehicle_details_by_id(vehicle_id):
             'success': False,
             'message': f'حدث خطأ أثناء جلب البيانات: {str(e)}'
         }), 500
+
+@api_bp.route('/vehicles/<int:vehicle_id>/generate-inspection-link', methods=['POST'])
+def generate_inspection_link(vehicle_id):
+    """
+    توليد token ورابط رفع جديد لصور الفحص الدوري
+    """
+    try:
+        from datetime import datetime
+        
+        vehicle = Vehicle.query.get_or_404(vehicle_id)
+        
+        token = str(uuid.uuid4())
+        expires_at = datetime.utcnow() + timedelta(days=30)
+        
+        upload_token = InspectionUploadToken(
+            vehicle_id=vehicle_id,
+            token=token,
+            created_by=None,
+            expires_at=expires_at,
+            is_active=True
+        )
+        db.session.add(upload_token)
+        db.session.commit()
+        
+        base_url = os.environ.get('CUSTOM_DOMAIN', 'http://nuzum.site')
+        upload_url = f"{base_url}/inspection-upload/{token}"
+        
+        return jsonify({
+            'success': True,
+            'upload_url': upload_url,
+            'token': token,
+            'expires_at': expires_at.strftime('%Y-%m-%d'),
+            'vehicle': {
+                'id': vehicle.id,
+                'plate_number': vehicle.plate_number,
+                'make': vehicle.make,
+                'model': vehicle.model,
+                'year': vehicle.year
+            }
+        }), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'message': f'فشل توليد الرابط: {str(e)}'
+        }), 500
+
+
+@api_bp.route('/inspection-status/<token>')
+def get_inspection_status(token):
+    """التحقق من حالة الفحص - للفلاتر"""
+    try:
+        upload_token = InspectionUploadToken.query.filter_by(token=token).first()
+        
+        if not upload_token:
+            return jsonify({'success': False, 'message': 'رابط غير صحيح'}), 404
+        
+        inspection = VehicleInspectionRecord.query.filter_by(
+            token_id=upload_token.id
+        ).order_by(VehicleInspectionRecord.uploaded_at.desc()).first()
+        
+        if not inspection:
+            return jsonify({'success': False, 'message': 'لم يتم رفع صور بعد'}), 404
+        
+        status_translations = {
+            'pending': 'في الانتظار',
+            'approved': 'تم الموافقة',
+            'rejected': 'مرفوض',
+            'needs_review': 'يحتاج مراجعة'
+        }
+        
+        return jsonify({
+            'success': True,
+            'inspection': {
+                'id': inspection.id,
+                'vehicle_plate': inspection.vehicle.plate_number,
+                'inspection_date': inspection.inspection_date.strftime('%Y-%m-%d'),
+                'uploaded_at': inspection.uploaded_at.strftime('%Y-%m-%d %H:%M:%S'),
+                'images_count': inspection.images.count(),
+                'status': inspection.review_status,
+                'status_arabic': status_translations.get(inspection.review_status, 'غير محدد'),
+                'approved_at': inspection.reviewed_at.strftime('%Y-%m-%d %H:%M:%S') if inspection.reviewed_at and inspection.review_status == 'approved' else None,
+                'approved_by': inspection.reviewer.username if inspection.reviewer and inspection.review_status == 'approved' else None,
+                'rejected_at': inspection.reviewed_at.strftime('%Y-%m-%d %H:%M:%S') if inspection.reviewed_at and inspection.review_status == 'rejected' else None,
+                'rejection_reason': inspection.reviewer_notes if inspection.review_status == 'rejected' else None,
+                'reviewer_notes': inspection.reviewer_notes if inspection.review_status not in ['rejected'] else None
+            }
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'حدث خطأ: {str(e)}'}), 500
