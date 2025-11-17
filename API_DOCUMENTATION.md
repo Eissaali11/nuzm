@@ -634,3 +634,436 @@ Future<Map<String, dynamic>> getEmployeeProfile({
 - **Primary Domain**: `http://nuzum.site`
 - **Backup Domain**: `https://eissahr.replit.app`
 - **Test API Key**: `test_location_key_2025`
+
+---
+
+# 🚗 Vehicle Details API - تفاصيل السيارات للتطبيق الخارجي
+
+## نظرة عامة
+هذه الـ API endpoints مخصصة للتطبيق الخارجي (Flutter mobile app) لجلب تفاصيل السيارات المربوطة بالموظفين مع كافة المعلومات والوثائق.
+
+---
+
+## 1. جلب تفاصيل السيارة المربوطة بالموظف
+
+### Endpoint
+```
+GET /api/employees/{employee_id}/vehicle
+```
+
+### الوصف
+يجلب كافة تفاصيل السيارة المربوطة بموظف معين، بما في ذلك:
+- معلومات السيارة الأساسية (الموديل، اللون، رقم اللوحة، إلخ)
+- صور الاستمارة والتأمين
+- تواريخ انتهاء التفويض والفحص الدوري والاستمارة
+- سجلات التسليم والاستلام الكاملة مع الصور
+- معلومات السائق الحالي
+
+### Parameters
+- `employee_id` (integer, required): رقم الموظف في النظام
+
+### مثال على الطلب
+```bash
+GET http://nuzum.site/api/employees/180/vehicle
+```
+
+### مثال على الاستجابة الناجحة (200 OK)
+```json
+{
+  "success": true,
+  "employee": {
+    "id": 180,
+    "employee_id": "1910",
+    "name": "HUSSAM AL DAIN",
+    "mobile": "966591014696",
+    "mobile_personal": "966563960177",
+    "job_title": "courier",
+    "department": "Aramex Courier"
+  },
+  "vehicle": {
+    "id": 10,
+    "plate_number": "3189-ب س ن",
+    "make": "نيسان",
+    "model": "ارفان",
+    "year": 2021,
+    "color": "برند ارامكس",
+    "type_of_car": "باص",
+    "status": "in_project",
+    "status_arabic": "نشطة مع سائق",
+    "driver_name": "HUSSAM AL DAIN",
+    "project": "Aramex Coruer",
+    "department": null,
+    "notes": "...",
+    "authorization_expiry_date": "2026-02-16",
+    "registration_expiry_date": "2026-10-07",
+    "inspection_expiry_date": "2026-07-10",
+    "registration_form_image": "http://nuzum.site/static/uploads/registration.jpg",
+    "insurance_file": "http://nuzum.site/static/uploads/insurance.pdf",
+    "license_image": "http://nuzum.site/static/uploads/license.jpg",
+    "plate_image": "http://nuzum.site/static/uploads/plate.jpg",
+    "drive_folder_link": "https://drive.google.com/..."
+  },
+  "handover_records": [
+    {
+      "id": 196,
+      "handover_type": "delivery",
+      "handover_type_arabic": "تسليم",
+      "handover_date": "2025-10-15",
+      "handover_time": "14:02",
+      "mileage": 150000,
+      "vehicle_plate_number": "3189-ب س ن",
+      "vehicle_type": "نيسان ارفان 2021",
+      "project_name": "Aramex",
+      "city": "المجمعه",
+      "person_name": "HUSSAM AL DAIN",
+      "supervisor_name": "أحمد",
+      "fuel_level": "1/2",
+      "notes": "...",
+      "form_link": "https://acrobat.adobe.com/...",
+      "driver_signature": "http://nuzum.site/static/signatures/xxx.png",
+      "supervisor_signature": "http://nuzum.site/static/signatures/yyy.png",
+      "damage_diagram": "http://nuzum.site/static/diagrams/zzz.png",
+      "checklist": {
+        "spare_tire": true,
+        "fire_extinguisher": true,
+        "first_aid_kit": true,
+        "warning_triangle": true,
+        "tools": true,
+        "oil_leaks": false,
+        "gear_issue": false,
+        "clutch_issue": false,
+        "engine_issue": false,
+        "windows_issue": false,
+        "tires_issue": false,
+        "body_issue": false,
+        "electricity_issue": false,
+        "lights_issue": false,
+        "ac_issue": false
+      },
+      "images": [
+        {
+          "id": 1768,
+          "url": "http://nuzum.site/static/uploads/handover/image1.jpg",
+          "uploaded_at": "2025-10-15 12:47:42"
+        }
+      ],
+      "drive_pdf_link": "https://drive.google.com/file/..."
+    }
+  ],
+  "handover_count": 4
+}
+```
+
+### رموز الاستجابة
+- `200 OK`: تم جلب البيانات بنجاح
+- `404 Not Found`: الموظف غير موجود أو لا توجد سيارة مربوطة به
+- `500 Internal Server Error`: حدث خطأ في الخادم
+
+### مثال على استجابة الخطأ (404)
+```json
+{
+  "success": false,
+  "message": "لا توجد سيارة مربوطة بهذا الموظف حالياً"
+}
+```
+
+---
+
+## 2. جلب تفاصيل السيارة بواسطة ID السيارة
+
+### Endpoint
+```
+GET /api/vehicles/{vehicle_id}/details
+```
+
+### الوصف
+يجلب كافة تفاصيل سيارة معينة بواسطة رقمها في النظام، بما في ذلك معلومات السائق الحالي وسجلات التسليم والاستلام.
+
+### Parameters
+- `vehicle_id` (integer, required): رقم السيارة في النظام
+
+### مثال على الطلب
+```bash
+GET http://nuzum.site/api/vehicles/10/details
+```
+
+### مثال على الاستجابة الناجحة (200 OK)
+```json
+{
+  "success": true,
+  "vehicle": {
+    "id": 10,
+    "plate_number": "3189-ب س ن",
+    "make": "نيسان",
+    "model": "ارفان",
+    "year": 2021,
+    "authorization_expiry_date": "2026-02-16",
+    "registration_expiry_date": "2026-10-07",
+    "inspection_expiry_date": "2026-07-10",
+    "registration_form_image": "http://nuzum.site/static/uploads/...",
+    "insurance_file": "http://nuzum.site/static/uploads/..."
+  },
+  "current_driver": {
+    "id": 180,
+    "employee_id": "1910",
+    "name": "HUSSAM AL DAIN",
+    "mobile": "966591014696",
+    "mobile_personal": "966563960177",
+    "job_title": "courier",
+    "department": "Aramex Courier"
+  },
+  "handover_records": [...],
+  "handover_count": 4
+}
+```
+
+---
+
+## حقول البيانات المُرجعة
+
+### حقول السيارة (Vehicle)
+| الحقل | النوع | الوصف |
+|------|------|-------|
+| `id` | integer | رقم السيارة في النظام |
+| `plate_number` | string | رقم اللوحة |
+| `make` | string | الشركة المصنعة |
+| `model` | string | الموديل |
+| `year` | integer | سنة الصنع |
+| `color` | string | اللون |
+| `type_of_car` | string | نوع السيارة |
+| `status` | string | الحالة (بالإنجليزية) |
+| `status_arabic` | string | الحالة (بالعربية) |
+| `driver_name` | string | اسم السائق الحالي |
+| `project` | string | اسم المشروع |
+| `authorization_expiry_date` | string (YYYY-MM-DD) | **تاريخ انتهاء التفويض** |
+| `registration_expiry_date` | string (YYYY-MM-DD) | **تاريخ انتهاء الاستمارة** |
+| `inspection_expiry_date` | string (YYYY-MM-DD) | **تاريخ انتهاء الفحص الدوري** |
+| `registration_form_image` | string (URL) | **رابط صورة الاستمارة** |
+| `insurance_file` | string (URL) | **رابط ملف التأمين** |
+| `license_image` | string (URL) | رابط صورة الرخصة |
+| `plate_image` | string (URL) | رابط صورة اللوحة |
+| `drive_folder_link` | string (URL) | رابط مجلد Google Drive |
+
+### حقول سجل التسليم/الاستلام (Handover Record)
+| الحقل | النوع | الوصف |
+|------|------|-------|
+| `id` | integer | رقم السجل |
+| `handover_type` | string | نوع العملية (delivery/receipt) |
+| `handover_type_arabic` | string | نوع العملية بالعربية (تسليم/استلام) |
+| `handover_date` | string (YYYY-MM-DD) | تاريخ التسليم/الاستلام |
+| `handover_time` | string (HH:MM) | وقت التسليم/الاستلام |
+| `mileage` | integer | عداد الكيلومترات |
+| `vehicle_plate_number` | string | رقم لوحة السيارة |
+| `project_name` | string | اسم المشروع |
+| `city` | string | المدينة |
+| `person_name` | string | اسم المستلم/المسلم |
+| `supervisor_name` | string | اسم المشرف |
+| `fuel_level` | string | مستوى الوقود |
+| `form_link` | string (URL) | **رابط نموذج Adobe** |
+| `driver_signature` | string (URL) | رابط توقيع السائق |
+| `supervisor_signature` | string (URL) | رابط توقيع المشرف |
+| `damage_diagram` | string (URL) | رابط مخطط الأضرار |
+| `checklist` | object | قائمة الفحص (انظر أدناه) |
+| `images` | array | **مصفوفة صور السيارة** |
+| `drive_pdf_link` | string (URL) | رابط PDF في Google Drive |
+
+### قائمة الفحص (Checklist)
+جميع الحقول من نوع boolean:
+- `spare_tire`: إطار احتياطي ✓
+- `fire_extinguisher`: طفاية حريق ✓
+- `first_aid_kit`: حقيبة إسعافات أولية ✓
+- `warning_triangle`: مثلث تحذير ✓
+- `tools`: عدة أدوات ✓
+- `oil_leaks`: تسريب زيت ✗
+- `gear_issue`: مشكلة في الجير ✗
+- `clutch_issue`: مشكلة في الكلتش ✗
+- `engine_issue`: مشكلة في المحرك ✗
+- `windows_issue`: مشكلة في الشبابيك ✗
+- `tires_issue`: مشكلة في الإطارات ✗
+- `body_issue`: مشكلة في الهيكل ✗
+- `electricity_issue`: مشكلة كهربائية ✗
+- `lights_issue`: مشكلة في الإضاءة ✗
+- `ac_issue`: مشكلة في المكيف ✗
+
+---
+
+## ملاحظات مهمة
+
+1. **الصور والملفات**: جميع الروابط المُرجعة للصور والملفات هي روابط مباشرة يمكن استخدامها في التطبيق.
+
+2. **التواريخ**: جميع التواريخ بصيغة `YYYY-MM-DD` (مثل: 2026-02-16).
+
+3. **القيم الفارغة**: قد تكون بعض الحقول `null` إذا لم تكن البيانات متوفرة.
+
+4. **الترميز**: جميع النصوص العربية مُرمزة بشكل صحيح بـ UTF-8.
+
+5. **الأمان**: يُنصح بإضافة آلية مصادقة (JWT أو API Key) لحماية الـ endpoints في الإصدارات المستقبلية.
+
+---
+
+## أمثلة استخدام في Flutter
+
+### مثال 1: جلب بيانات السيارة للموظف
+```dart
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+
+Future<Map<String, dynamic>> getEmployeeVehicle(int employeeId) async {
+  final response = await http.get(
+    Uri.parse('http://nuzum.site/api/employees/$employeeId/vehicle'),
+  );
+
+  if (response.statusCode == 200) {
+    return json.decode(utf8.decode(response.bodyBytes));
+  } else {
+    throw Exception('فشل جلب بيانات السيارة');
+  }
+}
+```
+
+### مثال 2: عرض تواريخ انتهاء الوثائق الهامة
+```dart
+Widget buildExpiryDates(Map<String, dynamic> vehicle) {
+  return Card(
+    child: Column(
+      children: [
+        ListTile(
+          leading: Icon(Icons.event_available, color: Colors.blue),
+          title: Text('تاريخ انتهاء التفويض'),
+          subtitle: Text(vehicle['authorization_expiry_date'] ?? 'غير محدد'),
+          trailing: _buildExpiryBadge(vehicle['authorization_expiry_date']),
+        ),
+        Divider(),
+        ListTile(
+          leading: Icon(Icons.description, color: Colors.orange),
+          title: Text('تاريخ انتهاء الفحص الدوري'),
+          subtitle: Text(vehicle['inspection_expiry_date'] ?? 'غير محدد'),
+          trailing: _buildExpiryBadge(vehicle['inspection_expiry_date']),
+        ),
+        Divider(),
+        ListTile(
+          leading: Icon(Icons.assignment, color: Colors.green),
+          title: Text('تاريخ انتهاء الاستمارة'),
+          subtitle: Text(vehicle['registration_expiry_date'] ?? 'غير محدد'),
+          trailing: _buildExpiryBadge(vehicle['registration_expiry_date']),
+        ),
+      ],
+    ),
+  );
+}
+
+Widget _buildExpiryBadge(String? expiryDate) {
+  if (expiryDate == null) return SizedBox.shrink();
+  
+  final expiry = DateTime.parse(expiryDate);
+  final now = DateTime.now();
+  final daysLeft = expiry.difference(now).inDays;
+  
+  Color badgeColor;
+  if (daysLeft < 30) {
+    badgeColor = Colors.red;
+  } else if (daysLeft < 90) {
+    badgeColor = Colors.orange;
+  } else {
+    badgeColor = Colors.green;
+  }
+  
+  return Container(
+    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+    decoration: BoxDecoration(
+      color: badgeColor,
+      borderRadius: BorderRadius.circular(12),
+    ),
+    child: Text(
+      '$daysLeft يوم',
+      style: TextStyle(color: Colors.white, fontSize: 12),
+    ),
+  );
+}
+```
+
+### مثال 3: عرض صور نماذج التسليم/الاستلام
+```dart
+Widget buildHandoverImages(List<dynamic> images) {
+  return GridView.builder(
+    shrinkWrap: true,
+    physics: NeverScrollableScrollPhysics(),
+    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+      crossAxisCount: 3,
+      crossAxisSpacing: 8,
+      mainAxisSpacing: 8,
+    ),
+    itemCount: images.length,
+    itemBuilder: (context, index) {
+      return GestureDetector(
+        onTap: () {
+          // فتح الصورة بشكل كامل
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => FullImageView(imageUrl: images[index]['url']),
+            ),
+          );
+        },
+        child: Image.network(
+          images[index]['url'],
+          fit: BoxFit.cover,
+          loadingBuilder: (context, child, loadingProgress) {
+            if (loadingProgress == null) return child;
+            return Center(child: CircularProgressIndicator());
+          },
+        ),
+      );
+    },
+  );
+}
+```
+
+### مثال 4: عرض قائمة الفحص (Checklist)
+```dart
+Widget buildChecklist(Map<String, dynamic> checklist) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text('قائمة الفحص', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+      SizedBox(height: 8),
+      _buildCheckItem('إطار احتياطي', checklist['spare_tire']),
+      _buildCheckItem('طفاية حريق', checklist['fire_extinguisher']),
+      _buildCheckItem('حقيبة إسعافات', checklist['first_aid_kit']),
+      _buildCheckItem('مثلث تحذير', checklist['warning_triangle']),
+      _buildCheckItem('عدة أدوات', checklist['tools']),
+      Divider(),
+      Text('المشاكل:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+      _buildIssueItem('تسريب زيت', checklist['oil_leaks']),
+      _buildIssueItem('مشكلة في الجير', checklist['gear_issue']),
+      _buildIssueItem('مشكلة في المحرك', checklist['engine_issue']),
+      _buildIssueItem('مشكلة في المكيف', checklist['ac_issue']),
+    ],
+  );
+}
+
+Widget _buildCheckItem(String label, bool? hasIt) {
+  return ListTile(
+    dense: true,
+    leading: Icon(
+      hasIt == true ? Icons.check_circle : Icons.cancel,
+      color: hasIt == true ? Colors.green : Colors.red,
+    ),
+    title: Text(label),
+  );
+}
+
+Widget _buildIssueItem(String label, bool? hasIssue) {
+  if (hasIssue != true) return SizedBox.shrink();
+  return ListTile(
+    dense: true,
+    leading: Icon(Icons.warning, color: Colors.red),
+    title: Text(label, style: TextStyle(color: Colors.red)),
+  );
+}
+```
+
+---
+
+## الدعم والمساعدة
+للمزيد من المعلومات أو المساعدة، يرجى التواصل مع فريق التطوير.
