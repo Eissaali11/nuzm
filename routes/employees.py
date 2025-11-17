@@ -835,11 +835,28 @@ def view(id):
     # Get vehicle handover records
     vehicle_handovers = VehicleHandover.query.filter_by(employee_id=id).order_by(VehicleHandover.handover_date.desc()).all()
     
-    # Get current vehicle (last active handover without return date)
-    current_vehicle = VehicleHandover.query.filter_by(
+    # Get current vehicle (last delivery without a corresponding receipt)
+    # جلب آخر عملية تسليم للموظف
+    last_delivery = VehicleHandover.query.filter_by(
         employee_id=id,
-        return_date=None
+        handover_type='delivery'
     ).order_by(VehicleHandover.handover_date.desc()).first()
+    
+    # التحقق من عدم وجود عملية استلام بعد التسليم
+    current_vehicle = None
+    if last_delivery:
+        # البحث عن عملية استلام لنفس السيارة بعد التسليم
+        receipt = VehicleHandover.query.filter_by(
+            employee_id=id,
+            vehicle_id=last_delivery.vehicle_id,
+            handover_type='receipt'
+        ).filter(
+            VehicleHandover.handover_date > last_delivery.handover_date
+        ).first()
+        
+        # إذا لم يتم استلام السيارة بعد، فهي السيارة الحالية
+        if not receipt:
+            current_vehicle = last_delivery
     
     # Get mobile devices assigned to this employee
     mobile_devices = MobileDevice.query.filter_by(employee_id=id).order_by(MobileDevice.assigned_date.desc()).all()
