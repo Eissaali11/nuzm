@@ -720,6 +720,7 @@ GET http://nuzum.site/api/employees/180/vehicle
       "fuel_level": "1/2",
       "notes": "...",
       "form_link": "https://acrobat.adobe.com/...",
+      "pdf_link": "http://nuzum.site/vehicles/handover/196/pdf/public",
       "driver_signature": "http://nuzum.site/static/signatures/xxx.png",
       "supervisor_signature": "http://nuzum.site/static/signatures/yyy.png",
       "damage_diagram": "http://nuzum.site/static/diagrams/zzz.png",
@@ -860,6 +861,7 @@ GET http://nuzum.site/api/vehicles/10/details
 | `supervisor_name` | string | اسم المشرف |
 | `fuel_level` | string | مستوى الوقود |
 | `form_link` | string (URL) | **رابط نموذج Adobe** |
+| `pdf_link` | string (URL) | **رابط PDF لعرض النموذج مباشرة** |
 | `driver_signature` | string (URL) | رابط توقيع السائق |
 | `supervisor_signature` | string (URL) | رابط توقيع المشرف |
 | `damage_diagram` | string (URL) | رابط مخطط الأضرار |
@@ -1019,7 +1021,35 @@ Widget buildHandoverImages(List<dynamic> images) {
 }
 ```
 
-### مثال 4: عرض قائمة الفحص (Checklist)
+### مثال 4: فتح PDF لنموذج التسليم/الاستلام
+```dart
+import 'package:url_launcher/url_launcher.dart';
+
+Widget buildHandoverPdfButton(Map<String, dynamic> handover) {
+  return ElevatedButton.icon(
+    onPressed: () async {
+      final pdfUrl = handover['pdf_link'];
+      if (pdfUrl != null) {
+        final uri = Uri.parse(pdfUrl);
+        if (await canLaunchUrl(uri)) {
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+        } else {
+          // عرض رسالة خطأ
+          print('لا يمكن فتح الرابط');
+        }
+      }
+    },
+    icon: Icon(Icons.picture_as_pdf),
+    label: Text('عرض نموذج PDF'),
+    style: ElevatedButton.styleFrom(
+      backgroundColor: Colors.red,
+      foregroundColor: Colors.white,
+    ),
+  );
+}
+```
+
+### مثال 5: عرض قائمة الفحص (Checklist)
 ```dart
 Widget buildChecklist(Map<String, dynamic> checklist) {
   return Column(

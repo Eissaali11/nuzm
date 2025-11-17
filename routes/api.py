@@ -1,8 +1,28 @@
 from flask import Blueprint, jsonify, request, url_for
 from models import Employee, Department, Document, Vehicle, VehicleHandover, VehicleHandoverImage
 from app import db
+import os
 
 api_bp = Blueprint('api', __name__, url_prefix='/api')
+
+def get_full_url(relative_path):
+    """
+    تحويل المسار النسبي إلى رابط كامل باستخدام النطاق الصحيح
+    """
+    # استخدام النطاق المخصص (nuzum.site) كافتراضي
+    base_url = os.environ.get('CUSTOM_DOMAIN', 'http://nuzum.site')
+    
+    # إزالة / في نهاية base_url إن وجدت
+    base_url = base_url.rstrip('/')
+    
+    # إزالة / في بداية relative_path إن وجدت  
+    relative_path = relative_path.lstrip('/')
+    
+    # التأكد من أن المسار يبدأ بـ static/
+    if not relative_path.startswith('static/'):
+        relative_path = f"static/{relative_path}"
+    
+    return f"{base_url}/{relative_path}"
 
 @api_bp.route('/employees')
 def get_employees():
@@ -174,6 +194,10 @@ def get_employee_vehicle_details(employee_id):
                 handover_record_id=handover.id
             ).all()
             
+            # إنشاء رابط PDF لنموذج التسليم/الاستلام
+            base_url = os.environ.get('CUSTOM_DOMAIN', 'http://nuzum.site')
+            pdf_link = f"{base_url.rstrip('/')}/vehicles/handover/{handover.id}/pdf/public"
+            
             handover_data = {
                 'id': handover.id,
                 'handover_type': handover.handover_type,
@@ -193,9 +217,10 @@ def get_employee_vehicle_details(employee_id):
                 'vehicle_status_summary': handover.vehicle_status_summary,
                 'form_link': handover.form_link,
                 'form_link_2': handover.form_link_2,
-                'driver_signature': url_for('static', filename=handover.driver_signature_path.replace('static/', ''), _external=True) if handover.driver_signature_path else None,
-                'supervisor_signature': url_for('static', filename=handover.supervisor_signature_path.replace('static/', ''), _external=True) if handover.supervisor_signature_path else None,
-                'damage_diagram': url_for('static', filename=handover.damage_diagram_path.replace('static/', ''), _external=True) if handover.damage_diagram_path else None,
+                'pdf_link': pdf_link,
+                'driver_signature': get_full_url(handover.driver_signature_path.replace('static/', '')) if handover.driver_signature_path else None,
+                'supervisor_signature': get_full_url(handover.supervisor_signature_path.replace('static/', '')) if handover.supervisor_signature_path else None,
+                'damage_diagram': get_full_url(handover.damage_diagram_path.replace('static/', '')) if handover.damage_diagram_path else None,
                 'checklist': {
                     'spare_tire': handover.has_spare_tire,
                     'fire_extinguisher': handover.has_fire_extinguisher,
@@ -216,7 +241,7 @@ def get_employee_vehicle_details(employee_id):
                 'images': [
                     {
                         'id': img.id,
-                        'url': url_for('static', filename=img.image_path.replace('static/', ''), _external=True) if img.image_path else None,
+                        'url': get_full_url(img.image_path.replace('static/', '')) if img.image_path else None,
                         'uploaded_at': img.uploaded_at.strftime('%Y-%m-%d %H:%M:%S') if img.uploaded_at else None
                     }
                     for img in handover_images
@@ -253,10 +278,10 @@ def get_employee_vehicle_details(employee_id):
                 'inspection_expiry_date': vehicle.inspection_expiry_date.strftime('%Y-%m-%d') if vehicle.inspection_expiry_date else None,
                 
                 # صور ووثائق السيارة
-                'registration_form_image': url_for('static', filename=vehicle.registration_form_image.replace('static/', ''), _external=True) if vehicle.registration_form_image else None,
-                'insurance_file': url_for('static', filename=vehicle.insurance_file.replace('static/', ''), _external=True) if vehicle.insurance_file else None,
-                'license_image': url_for('static', filename=vehicle.license_image.replace('static/', ''), _external=True) if vehicle.license_image else None,
-                'plate_image': url_for('static', filename=vehicle.plate_image.replace('static/', ''), _external=True) if vehicle.plate_image else None,
+                'registration_form_image': get_full_url(vehicle.registration_form_image.replace('static/', '')) if vehicle.registration_form_image else None,
+                'insurance_file': get_full_url(vehicle.insurance_file.replace('static/', '')) if vehicle.insurance_file else None,
+                'license_image': get_full_url(vehicle.license_image.replace('static/', '')) if vehicle.license_image else None,
+                'plate_image': get_full_url(vehicle.plate_image.replace('static/', '')) if vehicle.plate_image else None,
                 
                 # رابط Google Drive
                 'drive_folder_link': vehicle.drive_folder_link
@@ -379,10 +404,10 @@ def get_vehicle_details_by_id(vehicle_id):
                 'inspection_expiry_date': vehicle.inspection_expiry_date.strftime('%Y-%m-%d') if vehicle.inspection_expiry_date else None,
                 
                 # صور ووثائق السيارة
-                'registration_form_image': url_for('static', filename=vehicle.registration_form_image.replace('static/', ''), _external=True) if vehicle.registration_form_image else None,
-                'insurance_file': url_for('static', filename=vehicle.insurance_file.replace('static/', ''), _external=True) if vehicle.insurance_file else None,
-                'license_image': url_for('static', filename=vehicle.license_image.replace('static/', ''), _external=True) if vehicle.license_image else None,
-                'plate_image': url_for('static', filename=vehicle.plate_image.replace('static/', ''), _external=True) if vehicle.plate_image else None,
+                'registration_form_image': get_full_url(vehicle.registration_form_image.replace('static/', '')) if vehicle.registration_form_image else None,
+                'insurance_file': get_full_url(vehicle.insurance_file.replace('static/', '')) if vehicle.insurance_file else None,
+                'license_image': get_full_url(vehicle.license_image.replace('static/', '')) if vehicle.license_image else None,
+                'plate_image': get_full_url(vehicle.plate_image.replace('static/', '')) if vehicle.plate_image else None,
                 
                 # رابط Google Drive
                 'drive_folder_link': vehicle.drive_folder_link
