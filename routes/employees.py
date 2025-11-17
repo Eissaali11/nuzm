@@ -835,6 +835,12 @@ def view(id):
     # Get vehicle handover records
     vehicle_handovers = VehicleHandover.query.filter_by(employee_id=id).order_by(VehicleHandover.handover_date.desc()).all()
     
+    # Get current vehicle (last active handover without return date)
+    current_vehicle = VehicleHandover.query.filter_by(
+        employee_id=id,
+        return_date=None
+    ).order_by(VehicleHandover.handover_date.desc()).first()
+    
     # Get mobile devices assigned to this employee
     mobile_devices = MobileDevice.query.filter_by(employee_id=id).order_by(MobileDevice.assigned_date.desc()).all()
     
@@ -861,6 +867,7 @@ def view(id):
                           attendances=attendances,
                           salaries=salaries,
                           vehicle_handovers=vehicle_handovers,
+                          current_vehicle=current_vehicle,
                           mobile_devices=mobile_devices,
                           device_assignments=device_assignments,
                           departments=all_departments,
