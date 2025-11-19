@@ -28,13 +28,32 @@ def allowed_file(filename):
 
 def save_employee_image(file, employee_id, image_type):
     """حفظ صورة الموظف وإرجاع المسار"""
-    if file and allowed_file(file.filename):
+    if file and file.filename:
         # التأكد من وجود المجلد
         os.makedirs(UPLOAD_FOLDER, exist_ok=True)
         
         # إنشاء اسم ملف فريد
         filename = secure_filename(file.filename)
         name, ext = os.path.splitext(filename)
+        
+        # إذا لم يكن هناك امتداد، نستنتجه من نوع الملف
+        if not ext:
+            # محاولة استخراج الامتداد من content_type
+            content_type = file.content_type
+            if content_type:
+                if 'pdf' in content_type:
+                    ext = '.pdf'
+                elif 'jpeg' in content_type or 'jpg' in content_type:
+                    ext = '.jpg'
+                elif 'png' in content_type:
+                    ext = '.png'
+                elif 'gif' in content_type:
+                    ext = '.gif'
+                else:
+                    ext = '.jpg'  # افتراضي
+            else:
+                ext = '.jpg'  # افتراضي
+        
         unique_filename = f"{employee_id}_{image_type}_{datetime.now().strftime('%Y%m%d_%H%M%S')}{ext}"
         
         filepath = os.path.join(UPLOAD_FOLDER, unique_filename)
