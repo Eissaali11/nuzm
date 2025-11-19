@@ -6361,3 +6361,28 @@ def delete_handover_image(image_id):
                 db.session.rollback()
                 current_app.logger.error(f"خطأ في حذف صورة التسليم/الاستلام: {str(e)}")
                 return jsonify({'success': False, 'message': str(e)}), 500
+
+@vehicles_bp.route('/api/get_employee_info/<driver_name>')
+@login_required
+def get_employee_info(driver_name):
+        """API endpoint لجلب معلومات الموظف/السائق بناءً على الاسم"""
+        try:
+                from models import Employee
+                
+                # البحث عن الموظف بالاسم
+                employee = Employee.query.filter_by(name=driver_name).first()
+                
+                if employee:
+                        return jsonify({
+                                'success': True,
+                                'location': employee.location or '',
+                                'name': employee.name
+                        })
+                else:
+                        return jsonify({
+                                'success': False,
+                                'message': 'لم يتم العثور على الموظف'
+                        })
+        except Exception as e:
+                current_app.logger.error(f"خطأ في جلب معلومات الموظف: {str(e)}")
+                return jsonify({'success': False, 'message': str(e)}), 500

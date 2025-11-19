@@ -540,6 +540,36 @@ document.addEventListener('DOMContentLoaded', function() {
         statusSelect.addEventListener('change', updateStatusColor);
     }
     
+    // ملء المنطقة تلقائياً عند تغيير اسم السائق
+    const driverNameInput = document.getElementById('driver_name');
+    const regionInput = document.getElementById('region');
+    
+    if (driverNameInput && regionInput) {
+        driverNameInput.addEventListener('blur', function() {
+            const driverName = this.value.trim();
+            
+            if (driverName) {
+                // جلب معلومات الموظف من API
+                fetch(`/vehicles/api/get_employee_info/${encodeURIComponent(driverName)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success && data.location) {
+                            // ملء حقل المنطقة تلقائياً
+                            regionInput.value = data.location;
+                            // إضافة تأثير بصري للإشارة إلى التحديث
+                            regionInput.classList.add('border-success');
+                            setTimeout(() => {
+                                regionInput.classList.remove('border-success');
+                            }, 2000);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('خطأ في جلب معلومات الموظف:', error);
+                    });
+            }
+        });
+    }
+    
     console.log('تم تحميل صفحة تعديل السيارة بنجاح');
 });
 </script>
