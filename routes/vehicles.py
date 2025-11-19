@@ -6391,3 +6391,198 @@ def get_employee_info(driver_name):
         except Exception as e:
                 current_app.logger.error(f"خطأ في جلب معلومات الموظف: {str(e)}")
                 return jsonify({'success': False, 'message': str(e)}), 500
+
+@vehicles_bp.route('/export/pdf/english')
+@login_required
+def export_vehicles_pdf_english():
+        """تصدير قائمة المركبات بصيغة PDF إنجليزية احترافية مع الشعار"""
+        try:
+                from reportlab.lib import colors
+                from reportlab.lib.pagesizes import A4, landscape
+                from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image
+                from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+                from reportlab.lib.units import cm
+                from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
+                from reportlab.pdfbase import pdfmetrics
+                from reportlab.pdfbase.ttfonts import TTFont
+                from io import BytesIO
+                import os
+                
+                # جلب المركبات
+                vehicles = Vehicle.query.all()
+                
+                # إنشاء buffer للـ PDF
+                buffer = BytesIO()
+                
+                # إنشاء PDF بالوضع الأفقي
+                doc = SimpleDocTemplate(buffer, pagesize=landscape(A4), 
+                                      rightMargin=1*cm, leftMargin=1*cm,
+                                      topMargin=2*cm, bottomMargin=2*cm)
+                
+                # العناصر التي سيتم إضافتها للـ PDF
+                elements = []
+                
+                # إضافة الشعار
+                logo_path = 'static/images/logo.png'
+                if os.path.exists(logo_path):
+                        try:
+                                logo = Image(logo_path, width=3*cm, height=3*cm)
+                                elements.append(logo)
+                                elements.append(Spacer(1, 0.3*cm))
+                        except:
+                                pass
+                
+                # الأنماط
+                styles = getSampleStyleSheet()
+                
+                # عنوان التقرير
+                title_style = ParagraphStyle(
+                        'CustomTitle',
+                        parent=styles['Heading1'],
+                        fontSize=24,
+                        textColor=colors.HexColor('#18B2B0'),
+                        spaceAfter=12,
+                        alignment=TA_CENTER,
+                        fontName='Helvetica-Bold'
+                )
+                
+                title = Paragraph("<b>NUZUM FLEET MANAGEMENT SYSTEM</b>", title_style)
+                elements.append(title)
+                
+                subtitle_style = ParagraphStyle(
+                        'Subtitle',
+                        parent=styles['Normal'],
+                        fontSize=14,
+                        textColor=colors.HexColor('#666666'),
+                        spaceAfter=20,
+                        alignment=TA_CENTER,
+                        fontName='Helvetica'
+                )
+                
+                subtitle = Paragraph(f"Vehicles Fleet Report - {datetime.now().strftime('%Y-%m-%d')}", subtitle_style)
+                elements.append(subtitle)
+                elements.append(Spacer(1, 0.5*cm))
+                
+                # إعداد بيانات الجدول
+                data = [['#', 'Driver Name', 'ID Number', 'EMP', 'Private Phone', 'Work Phone', 
+                        'Plate Number', 'Owned By', 'Vehicle Type', 'Project', 'Location', 'Start Date']]
+                
+                for idx, vehicle in enumerate(vehicles, start=1):
+                        driver_name = vehicle.driver_name or ""
+                        employee_id_num = ""
+                        employee_num = ""
+                        private_num = ""
+                        work_num = ""
+                        project = vehicle.project or ""
+                        location = vehicle.region or ""
+                        start_date = ""
+                        owner = vehicle.owned_by or ""
+                        
+                        # جلب بيانات الموظف
+                        if driver_name:
+                                from models import Employee
+                                driver = Employee.query.filter_by(name=driver_name).first()
+                                if driver:
+                                        employee_id_num = driver.national_id or ""
+                                        employee_num = driver.employee_id or ""
+                                        private_num = driver.mobilePersonal or ""
+                                        work_num = driver.mobile or ""
+                        
+                        # جلب تاريخ البدء من المشروع
+                        if vehicle.project:
+                                from models import VehicleProject
+                                project_obj = VehicleProject.query.filter_by(project_name=vehicle.project).first()
+                                if project_obj and project_obj.start_date:
+                                        start_date = project_obj.start_date.strftime('%Y-%m-%d')
+                        
+                        # جلب المالك من سجلات الإيجار إذا لم يكن محددًا
+                        if not owner:
+                                from models import VehicleRental
+                                rental = VehicleRental.query.filter_by(vehicle_id=vehicle.id, is_active=True).first()
+                                if rental:
+                                        owner = rental.lessor_name or ""
+                        
+                        data.append([
+                                str(idx),
+                                driver_name[:25] if driver_name else "",
+                                employee_id_num[:15] if employee_id_num else "",
+                                employee_num[:10] if employee_num else "",
+                                private_num[:12] if private_num else "",
+                                work_num[:12] if work_num else "",
+                                vehicle.plate_number or "",
+                                owner[:15] if owner else "",
+                                f"{vehicle.make or ''} {vehicle.model or ''}"[:20],
+                                project[:15] if project else "",
+                                location[:12] if location else "",
+                                start_date
+                        ])
+                
+                # إنشاء الجدول
+                table = Table(data, repeatRows=1)
+                
+                # تنسيق الجدول
+                table.setStyle(TableStyle([
+                        # رأس الجدول
+                        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#18B2B0')),
+                        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                        ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+                        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                        ('FONTSIZE', (0, 0), (-1, 0), 10),
+                        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                        ('TOPPADDING', (0, 0), (-1, 0), 12),
+                        
+                        # محتوى الجدول
+                        ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+                        ('TEXTCOLOR', (0, 1), (-1, -1), colors.black),
+                        ('ALIGN', (0, 1), (-1, -1), 'CENTER'),
+                        ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+                        ('FONTSIZE', (0, 1), (-1, -1), 8),
+                        ('TOPPADDING', (0, 1), (-1, -1), 6),
+                        ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
+                        
+                        # الصفوف المتناوبة
+                        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#F2F2F2')]),
+                        
+                        # الحدود
+                        ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+                        ('BOX', (0, 0), (-1, -1), 2, colors.HexColor('#18B2B0')),
+                ]))
+                
+                elements.append(table)
+                
+                # إضافة تذييل
+                elements.append(Spacer(1, 1*cm))
+                footer_style = ParagraphStyle(
+                        'Footer',
+                        parent=styles['Normal'],
+                        fontSize=9,
+                        textColor=colors.HexColor('#999999'),
+                        alignment=TA_CENTER,
+                        fontName='Helvetica-Oblique'
+                )
+                
+                footer_text = f"Total Vehicles: {len(vehicles)} | Generated by NUZUM System | https://nuzum.site"
+                footer = Paragraph(footer_text, footer_style)
+                elements.append(footer)
+                
+                # بناء الـ PDF
+                doc.build(elements)
+                
+                # إعادة المؤشر إلى بداية الـ buffer
+                buffer.seek(0)
+                
+                # إرسال الملف
+                from flask import send_file
+                return send_file(
+                        buffer,
+                        mimetype='application/pdf',
+                        as_attachment=True,
+                        download_name=f'NUZUM_Vehicles_Fleet_{datetime.now().strftime("%Y%m%d")}.pdf'
+                )
+                
+        except Exception as e:
+                current_app.logger.error(f"خطأ في إنشاء تقرير PDF: {str(e)}")
+                import traceback
+                traceback.print_exc()
+                flash(f"حدث خطأ في إنشاء التقرير: {str(e)}", "danger")
+                return redirect(url_for('vehicles.index'))
