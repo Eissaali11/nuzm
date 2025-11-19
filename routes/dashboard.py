@@ -25,28 +25,23 @@ def index():
     # Get attendance for today
     today_attendance = Attendance.query.filter_by(date=today).count()
     
-    # Get documents statistics
-    all_documents = Document.query.all()
-    total_documents = len(all_documents)
+    # Get documents statistics using single aggregation query with CASE
+    expiry_threshold = today + timedelta(days=30)
     
-    # Calculate document expiry statistics
-    valid_documents = 0
-    expired_documents = 0
-    expiring_documents = 0
-    no_expiry_documents = 0
+    from sqlalchemy import case
+    doc_stats_result = db.session.query(
+        func.count().label('total'),
+        func.sum(case((Document.expiry_date < today, 1), else_=0)).label('expired'),
+        func.sum(case(((Document.expiry_date >= today) & (Document.expiry_date <= expiry_threshold), 1), else_=0)).label('expiring'),
+        func.sum(case((Document.expiry_date > expiry_threshold, 1), else_=0)).label('valid'),
+        func.sum(case((Document.expiry_date.is_(None), 1), else_=0)).label('no_expiry')
+    ).one()
     
-    for doc in all_documents:
-        if not doc.expiry_date:
-            no_expiry_documents += 1
-            continue
-            
-        days_remaining = (doc.expiry_date - today).days
-        if days_remaining < 0:
-            expired_documents += 1
-        elif days_remaining <= 30:
-            expiring_documents += 1
-        else:
-            valid_documents += 1
+    total_documents = doc_stats_result.total or 0
+    expired_documents = doc_stats_result.expired or 0
+    expiring_documents = doc_stats_result.expiring or 0
+    valid_documents = doc_stats_result.valid or 0
+    no_expiry_documents = doc_stats_result.no_expiry or 0
     
     # Document statistics for template
     document_stats = {

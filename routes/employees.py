@@ -1981,17 +1981,45 @@ def tracking():
     
     # جلب جميع الموظفين
     all_employees = query.all()
+    employee_ids = [emp.id for emp in all_employees]
     
-    # جلب آخر موقع لكل موظف وترتيبهم
+    # جلب آخر موقع لكل موظف باستخدام window function في استعلام واحد
+    from sqlalchemy import func as sql_func, and_
+    from sqlalchemy.orm import aliased
+    
+    # استخدام subquery مع ROW_NUMBER للحصول على آخر موقع لكل موظف
+    latest_locations_subq = db.session.query(
+        EmployeeLocation.employee_id,
+        EmployeeLocation.id.label('location_id'),
+        sql_func.row_number().over(
+            partition_by=EmployeeLocation.employee_id,
+            order_by=EmployeeLocation.recorded_at.desc()
+        ).label('rn')
+    ).filter(
+        EmployeeLocation.employee_id.in_(employee_ids)
+    ).subquery()
+    
+    # جلب المواقع الفعلية مع البيانات الكاملة
+    latest_locations_query = db.session.query(
+        EmployeeLocation
+    ).join(
+        latest_locations_subq,
+        and_(
+            EmployeeLocation.id == latest_locations_subq.c.location_id,
+            latest_locations_subq.c.rn == 1
+        )
+    ).all()
+    
+    # بناء dictionary للمواقع حسب employee_id
+    locations_by_employee = {loc.employee_id: loc for loc in latest_locations_query}
+    
+    # معالجة الموظفين وحساب الحالات
     employee_locations = {}
     employees_with_location = []
     employees_without_location = []
     
     for emp in all_employees:
-        # جلب أحدث موقع للموظف باستخدام employee.id
-        latest_location = EmployeeLocation.query.filter_by(
-            employee_id=emp.id
-        ).order_by(EmployeeLocation.recorded_at.desc()).first()
+        latest_location = locations_by_employee.get(emp.id)
         
         if latest_location:
             # حساب عمر الموقع بالدقائق والساعات
@@ -2000,20 +2028,19 @@ def tracking():
             age_hours = age_seconds / 3600
             
             # تحديد حالة الاتصال والألوان
-            # إذا لم يرسل موقع منذ 5 دقائق = غير متصل
             if age_minutes < 5:
                 color = 'green'
                 status_text = 'متصل'
                 connection_status = 'connected'
-            elif age_minutes < 30:  # بين 5-30 دقيقة
+            elif age_minutes < 30:
                 color = 'orange'
                 status_text = 'نشط مؤخراً'
                 connection_status = 'recently_active'
-            elif age_hours < 6:  # بين 30 دقيقة - 6 ساعات
+            elif age_hours < 6:
                 color = 'red'
                 status_text = 'غير متصل'
                 connection_status = 'disconnected'
-            else:  # أكثر من 6 ساعات
+            else:
                 color = 'gray'
                 status_text = 'غير نشط'
                 connection_status = 'inactive'
@@ -2027,7 +2054,8 @@ def tracking():
                 'age_hours': age_hours,
                 'color': color,
                 'status_text': status_text,
-                'connection_status': connection_status
+                'connection_status': connection_status,
+                'vehicle_id': latest_location.vehicle_id
             }
             employees_with_location.append(emp)
         else:
@@ -2035,6 +2063,46 @@ def tracking():
     
     # ترتيب: الموظفون الذين لديهم موقع أولاً
     employees = employees_with_location + employees_without_location
+    
+    # جلب كل الـ geofences النشطة مرة واحدة لتجنب N+1
+    all_geofences = Geofence.query.filter_by(is_active=True).all()
+    
+    # جلب كل الـ vehicles مرة واحدة
+    vehicle_ids = [loc_data['vehicle_id'] for loc_data in employee_locations.values() if loc_data.get('vehicle_id')]
+    vehicles_dict = {}
+    if vehicle_ids:
+        vehicles = Vehicle.query.filter(Vehicle.id.in_(vehicle_ids)).all()
+        vehicles_dict = {v.id: v for v in vehicles}
+    
+    # حساب المسافات للـ geofences لكل موظف
+    from math import radians, sin, cos, sqrt, atan2
+    
+    for emp_id, location_data in employee_locations.items():
+        # استخدام البيانات المحفوظة بدلاً من جلبها مرة أخرى
+        latest_location = locations_by_employee.get(emp_id)
+        
+        if latest_location:
+            # Check all geofences to see if employee is inside any of them
+            for gf in all_geofences:
+                # Calculate distance using Haversine formula
+                R = 6371000  # Earth radius in meters
+                lat1, lon1 = radians(float(latest_location.latitude)), radians(float(latest_location.longitude))
+                lat2, lon2 = radians(float(gf.center_latitude)), radians(float(gf.center_longitude))
+                dlat = lat2 - lat1
+                dlon = lon2 - lon1
+                a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
+                c = 2 * atan2(sqrt(a), sqrt(1-a))
+                distance = R * c
+                
+                # If employee is within geofence radius
+                if distance <= gf.radius_meters:
+                    location_data['geofence_name'] = gf.name
+                    break
+            
+            # Get vehicle name if assigned
+            if latest_location.vehicle_id and latest_location.vehicle_id in vehicles_dict:
+                vehicle = vehicles_dict[latest_location.vehicle_id]
+                location_data['vehicle_name'] = vehicle.plate_number
     
     # تحويل الموظفين إلى قواميس لكي يمكن تحويلها إلى JSON
     employees_data = []
@@ -2044,39 +2112,6 @@ def tracking():
         
         # Get location data if exists
         location_data = employee_locations.get(emp.id)
-        
-        if location_data:
-            # Check if employee is in a geofence by calculating distance
-            from math import radians, sin, cos, sqrt, atan2
-            
-            latest_location = EmployeeLocation.query.filter_by(
-                employee_id=emp.id
-            ).order_by(EmployeeLocation.recorded_at.desc()).first()
-            
-            if latest_location:
-                # Check all geofences to see if employee is inside any of them
-                all_geofences = Geofence.query.filter_by(is_active=True).all()
-                for gf in all_geofences:
-                    # Calculate distance using Haversine formula
-                    R = 6371000  # Earth radius in meters
-                    lat1, lon1 = radians(float(latest_location.latitude)), radians(float(latest_location.longitude))
-                    lat2, lon2 = radians(float(gf.center_latitude)), radians(float(gf.center_longitude))
-                    dlat = lat2 - lat1
-                    dlon = lon2 - lon1
-                    a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
-                    c = 2 * atan2(sqrt(a), sqrt(1-a))
-                    distance = R * c
-                    
-                    # If employee is within geofence radius
-                    if distance <= gf.radius_meters:
-                        location_data['geofence_name'] = gf.name
-                        break
-                
-                # Get vehicle name if assigned
-                if latest_location.vehicle_id:
-                    vehicle = Vehicle.query.get(latest_location.vehicle_id)
-                    if vehicle:
-                        location_data['vehicle_name'] = vehicle.plate_number
         
         photo_url = None
         if emp.profile_image:
@@ -2144,19 +2179,47 @@ def tracking():
 def tracking_dashboard():
     """لوحة تحكم مختصرة لإحصائيات التتبع المباشر"""
     from math import radians, sin, cos, sqrt, atan2
+    from sqlalchemy import func as sql_func, and_
     
     cutoff_time_active = datetime.utcnow() - timedelta(hours=1)
     cutoff_time_location = datetime.utcnow() - timedelta(hours=24)
     
-    all_employees = Employee.query.all()
+    # جلب جميع الموظفين مع الأقسام
+    all_employees = Employee.query.options(db.joinedload(Employee.departments)).all()
+    employee_ids = [emp.id for emp in all_employees]
+    
+    # جلب آخر موقع لكل موظف باستخدام window function
+    latest_locations_subq = db.session.query(
+        EmployeeLocation.employee_id,
+        EmployeeLocation.id.label('location_id'),
+        sql_func.row_number().over(
+            partition_by=EmployeeLocation.employee_id,
+            order_by=EmployeeLocation.recorded_at.desc()
+        ).label('rn')
+    ).filter(
+        EmployeeLocation.employee_id.in_(employee_ids)
+    ).subquery()
+    
+    latest_locations_query = db.session.query(
+        EmployeeLocation
+    ).join(
+        latest_locations_subq,
+        and_(
+            EmployeeLocation.id == latest_locations_subq.c.location_id,
+            latest_locations_subq.c.rn == 1
+        )
+    ).all()
+    
+    # بناء dictionary للمواقع
+    locations_by_employee = {loc.employee_id: loc for loc in latest_locations_query}
+    
+    # معالجة الموظفين
     active_employees = []
     inactive_employees = []
     employees_with_vehicles = []
     
     for emp in all_employees:
-        latest_location = EmployeeLocation.query.filter_by(
-            employee_id=emp.id
-        ).order_by(EmployeeLocation.recorded_at.desc()).first()
+        latest_location = locations_by_employee.get(emp.id)
         
         if latest_location and latest_location.recorded_at >= cutoff_time_active:
             active_employees.append({
@@ -2174,23 +2237,23 @@ def tracking_dashboard():
         else:
             inactive_employees.append(emp)
     
+    # جلب الـ geofences مرة واحدة
     all_geofences = Geofence.query.filter_by(is_active=True).all()
     
     employees_inside_geofences = []
     employees_outside_geofences = []
     geofence_stats = []
+    employees_inside_any_geofence = set()
     
+    # حساب المسافات لكل geofence
     for geofence in all_geofences:
         inside_count = 0
         inside_employees = []
         
         for emp in all_employees:
-            latest_location = EmployeeLocation.query.filter_by(
-                employee_id=emp.id
-            ).filter(EmployeeLocation.recorded_at >= cutoff_time_location
-            ).order_by(EmployeeLocation.recorded_at.desc()).first()
+            latest_location = locations_by_employee.get(emp.id)
             
-            if latest_location:
+            if latest_location and latest_location.recorded_at >= cutoff_time_location:
                 lat1, lon1 = float(latest_location.latitude), float(latest_location.longitude)
                 lat2, lon2 = float(geofence.center_latitude), float(geofence.center_longitude)
                 
@@ -2208,6 +2271,7 @@ def tracking_dashboard():
                         'location': latest_location,
                         'distance': distance
                     })
+                    employees_inside_any_geofence.add(emp.id)
         
         geofence_stats.append({
             'geofence': geofence,
@@ -2215,18 +2279,11 @@ def tracking_dashboard():
             'inside_employees': inside_employees
         })
     
-    employees_inside_any_geofence = set()
-    for stat in geofence_stats:
-        for emp_data in stat['inside_employees']:
-            employees_inside_any_geofence.add(emp_data['employee'].id)
-    
+    # تحديد الموظفين داخل وخارج الـ geofences
     for emp in all_employees:
-        latest_location = EmployeeLocation.query.filter_by(
-            employee_id=emp.id
-        ).filter(EmployeeLocation.recorded_at >= cutoff_time_location
-        ).order_by(EmployeeLocation.recorded_at.desc()).first()
+        latest_location = locations_by_employee.get(emp.id)
         
-        if latest_location:
+        if latest_location and latest_location.recorded_at >= cutoff_time_location:
             if emp.id in employees_inside_any_geofence:
                 if not any(e['employee'].id == emp.id for e in employees_inside_geofences):
                     employees_inside_geofences.append({
