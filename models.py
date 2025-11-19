@@ -94,6 +94,9 @@ class Employee(db.Model):
     profile_image = db.Column(db.String(255))  # الصورة الشخصية
     national_id_image = db.Column(db.String(255))  # صورة الهوية الوطنية
     license_image = db.Column(db.String(255))  # صورة رخصة القيادة
+    job_offer_file = db.Column(db.String(255))  # ملف العرض الوظيفي (صورة أو PDF)
+    passport_image_file = db.Column(db.String(255))  # صورة الجواز
+    national_address_file = db.Column(db.String(255))  # شهادة العنوان الوطني
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     contract_status = db.Column(db.String(50), nullable=True) # مثال: "ساري", "منتهي", "في فترة التجربة"
