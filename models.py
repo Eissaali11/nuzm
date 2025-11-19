@@ -695,6 +695,9 @@ class Vehicle(db.Model):
     # إضافة حقل الشركة المالكة
     owned_by = db.Column(db.String(100), nullable=True)  # الشركة المالكة للمركبة
     
+    # إضافة حقل المنطقة
+    region = db.Column(db.String(100), nullable=True)  # المنطقة التي تعمل بها المركبة
+    
     notes = db.Column(db.Text)  # ملاحظات
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

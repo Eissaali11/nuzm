@@ -837,8 +837,8 @@ def generate_vehicles_excel(vehicles, output=None):
         for col_idx, header in enumerate(english_headers, start=1):
             cell = english_sheet.cell(row=1, column=col_idx)
             cell.value = header
-            cell.font = Font(bold=True, color="000000", size=11, name='Calibri')
-            cell.fill = PatternFill(start_color="D9E1F2", end_color="D9E1F2", fill_type="solid")
+            cell.font = Font(bold=True, color="FFFFFF", size=11, name='Calibri')
+            cell.fill = PatternFill(start_color="18B2B0", end_color="18B2B0", fill_type="solid")
             cell.alignment = Alignment(horizontal='center', vertical='center')
             cell.border = border
         
