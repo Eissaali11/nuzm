@@ -1777,20 +1777,31 @@ def export_safety_check_pdf_english(check_id):
         elements.append(subtitle)
         elements.append(Spacer(1, 1*cm))
         
-        # بيانات المركبة والسائق
+        # دالة لتنظيف النص من الأحرف العربية وغير القابلة للطباعة
+        def clean_text_for_english_pdf(text):
+            if not text:
+                return 'N/A'
+            # إزالة الأحرف العربية والاحتفاظ بالأحرف الإنجليزية والأرقام فقط
+            import re
+            # الاحتفاظ بالأحرف الإنجليزية والأرقام والمسافات والرموز الأساسية
+            cleaned = re.sub(r'[^\x00-\x7F]+', ' ', str(text))
+            cleaned = ' '.join(cleaned.split())  # إزالة المسافات الزائدة
+            return cleaned if cleaned.strip() else 'N/A'
+        
+        # بيانات المركبة والسائق (تنظيف النصوص)
         info_data = [
             ['Vehicle Information', ''],
-            ['Plate Number:', safety_check.vehicle_plate_number or 'N/A'],
-            ['Make & Model:', safety_check.vehicle_make_model or 'N/A'],
-            ['Driver Name:', safety_check.driver_name or 'N/A'],
-            ['Department:', safety_check.driver_department or 'N/A'],
-            ['City:', safety_check.driver_city or 'N/A'],
-            ['National ID:', safety_check.driver_national_id or 'N/A'],
+            ['Plate Number:', clean_text_for_english_pdf(safety_check.vehicle_plate_number)],
+            ['Make & Model:', clean_text_for_english_pdf(safety_check.vehicle_make_model)],
+            ['Driver Name:', clean_text_for_english_pdf(safety_check.driver_name)],
+            ['Department:', clean_text_for_english_pdf(safety_check.driver_department)],
+            ['City:', clean_text_for_english_pdf(safety_check.driver_city)],
+            ['National ID:', clean_text_for_english_pdf(safety_check.driver_national_id)],
             ['', ''],
             ['Inspection Details', ''],
             ['Inspection Date:', safety_check.inspection_date.strftime('%Y-%m-%d') if safety_check.inspection_date else 'N/A'],
-            ['Status:', safety_check.approval_status or 'Pending'],
-            ['Notes:', safety_check.notes or 'No notes']
+            ['Status:', 'Approved' if safety_check.approval_status == 'approved' else 'Pending'],
+            ['Notes:', 'See safety inspection images below' if safety_check.notes else 'No notes']
         ]
         
         info_table = Table(info_data, colWidths=[7*cm, 10*cm])
@@ -1864,13 +1875,27 @@ def export_safety_check_pdf_english(check_id):
                     if image_url:
                         # تحميل الصورة
                         import requests
-                        response = requests.get(image_url, timeout=5)
+                        response = requests.get(image_url, timeout=10)
                         if response.status_code == 200:
+                            from PIL import Image as PILImage
                             img_buffer = BytesIO(response.content)
-                            img = RLImage(img_buffer, width=image_width, height=image_height)
+                            # فتح الصورة بواسطة PIL للتأكد من صحتها
+                            pil_img = PILImage.open(img_buffer)
+                            # تحويل إلى RGB إذا كانت RGBA
+                            if pil_img.mode == 'RGBA':
+                                pil_img = pil_img.convert('RGB')
+                            # حفظ في buffer جديد
+                            final_buffer = BytesIO()
+                            pil_img.save(final_buffer, format='JPEG', quality=85)
+                            final_buffer.seek(0)
+                            # إنشاء صورة ReportLab
+                            img = RLImage(final_buffer, width=image_width, height=image_height)
                             image_elements.append(img)
+                            current_app.logger.info(f"تم تحميل الصورة بنجاح: {safety_image.image_path}")
                 except Exception as e:
-                    current_app.logger.error(f"خطأ في تحميل الصورة: {str(e)}")
+                    current_app.logger.error(f"خطأ في تحميل الصورة {safety_image.image_path}: {str(e)}")
+                    import traceback
+                    traceback.print_exc()
                     continue
             
             # ترتيب الصور في جدول
