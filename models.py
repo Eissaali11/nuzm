@@ -182,6 +182,12 @@ class Employee(db.Model):
         back_populates='supervisor_employee',
         cascade="all, delete" # اختياري: نفس الملاحظة أعلاه
     )
+    
+    __table_args__ = (
+        db.Index('idx_employee_status', 'status'),
+        db.Index('idx_employee_id', 'employee_id'),
+    )
+    
     def __repr__(self):
         return f'<Employee {self.name} ({self.employee_id})>'
 
@@ -263,6 +269,11 @@ class Attendance(db.Model):
     # Relationships
     employee = db.relationship('Employee', back_populates='attendances')
     
+    __table_args__ = (
+        db.Index('idx_attendance_date', 'date'),
+        db.Index('idx_attendance_employee_date', 'employee_id', 'date'),
+    )
+    
     def __repr__(self):
         return f'<Attendance {self.employee.name} on {self.date}>'
 
@@ -315,6 +326,11 @@ class Document(db.Model):
     
     # Relationships
     employee = db.relationship('Employee', back_populates='documents')
+    
+    __table_args__ = (
+        db.Index('idx_document_expiry', 'expiry_date'),
+        db.Index('idx_document_employee', 'employee_id'),
+    )
     
     def __repr__(self):
         return f'<Document {self.document_type} for {self.employee.name}>'
