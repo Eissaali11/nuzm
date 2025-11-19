@@ -865,14 +865,16 @@ def generate_vehicles_excel(vehicles, output=None):
                     private_num = driver.mobilePersonal or ""
                     work_num = driver.mobile or ""
             
-            # محاولة الحصول على الموقع من المشروع
+            # الحصول على المنطقة من حقل region في المركبة
+            location = vehicle.region or ""
+            
+            # محاولة الحصول على تاريخ البدء من المشروع
             if vehicle.project:
                 from models import VehicleProject
                 project_obj = VehicleProject.query.filter_by(
                     project_name=vehicle.project
                 ).first()
                 if project_obj:
-                    location = project_obj.location or ""
                     if project_obj.start_date:
                         start_date = project_obj.start_date.strftime('%Y-%m-%d')
             
