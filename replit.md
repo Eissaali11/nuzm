@@ -7,6 +7,11 @@
 Preferred communication style: Simple, everyday language.
 
 ## Recent Updates
+- **Nov 19, 2025**: Performance optimization and data integrity fixes:
+  - Added database indexes on critical fields (Employee.status, Document.expiry_date, Attendance.date, composite index on employee_id+recorded_at) to improve query performance
+  - Fixed department employee count display issue by correcting employee status values from Arabic "يعمل" to standardized "active"
+  - Updated get_department_employees API endpoint to strictly filter by status='active' for consistent results
+  - All departments now display accurate employee counts (e.g., FLOW department correctly shows 20/20 employees)
 - **Nov 16, 2025**: Added Google Search Console verification files to resolve "deceptive site" warning. Files created in multiple locations (root, static folder, Flask route). Requires deployment/publish to take effect on live domain.
 
 ## System Architecture
