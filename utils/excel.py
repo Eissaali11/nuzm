@@ -419,7 +419,8 @@ def generate_employee_excel(employees, output=None):
             'السيارة الحاليه', 'الموقع', 'المشروع', 'البريد الإلكتروني',
             'الأقسام', 'تاريخ الانضمام', 'تاريخ الميلاد', 'نوع الموظف',
             'نوع العقد', 'الراتب الأساسي', 'حالة العقد', 'حالة الرخصة',
-            'حالة الكفالة', 'اسم الكفيل', 'رقم الإيبان', 'تفاصيل السكن', 'رابط موقع السكن'
+            'حالة الكفالة', 'اسم الكفيل', 'رقم الإيبان', 'تفاصيل السكن', 'رابط موقع السكن',
+            'ملف العرض الوظيفي', 'صورة الجواز', 'شهادة العنوان الوطني'
         ]
         
         for col_idx, header in enumerate(all_headers, start=1):
@@ -487,6 +488,11 @@ def generate_employee_excel(employees, output=None):
                 print(f"❌ خطأ في جلب بيانات الجهاز للموظف {employee.name} ({employee.id}): {str(e)}")
                 print(traceback.format_exc())
             
+            # إضافة روابط الملفات الجديدة
+            job_offer_link = f"https://nuzum.site/static/{getattr(employee, 'job_offer_file', '')}" if getattr(employee, 'job_offer_file', '') else '-'
+            passport_link = f"https://nuzum.site/static/{getattr(employee, 'passport_image_file', '')}" if getattr(employee, 'passport_image_file', '') else '-'
+            national_address_link = f"https://nuzum.site/static/{getattr(employee, 'national_address_file', '')}" if getattr(employee, 'national_address_file', '') else '-'
+            
             all_data = [
                 employee.name,  # 1. الاسم الكامل
                 employee.national_id or "",  # 2. رقم الهوية الوطنية
@@ -516,7 +522,10 @@ def generate_employee_excel(employees, output=None):
                 getattr(employee, 'current_sponsor_name', '') or '',  # 26. اسم الكفيل
                 getattr(employee, 'bank_iban', '') or '',  # 27. رقم الإيبان
                 getattr(employee, 'residence_details', '') or '',  # 28. تفاصيل السكن
-                getattr(employee, 'residence_location_url', '') or ''  # 29. رابط موقع السكن
+                getattr(employee, 'residence_location_url', '') or '',  # 29. رابط موقع السكن
+                job_offer_link,  # 30. ملف العرض الوظيفي
+                passport_link,  # 31. صورة الجواز
+                national_address_link  # 32. شهادة العنوان الوطني
             ]
             
             for col_idx, value in enumerate(all_data, start=1):
