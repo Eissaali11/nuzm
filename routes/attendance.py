@@ -1155,8 +1155,8 @@ def get_department_employees(department_id):
         # الحصول على القسم أولاً
         department = Department.query.get_or_404(department_id)
         
-        # استخدام العلاقة many-to-many للحصول على جميع الموظفين (استبعاد المنتهية خدمتهم فقط)
-        employees = [emp for emp in department.employees if emp.status not in ['terminated', 'inactive']]
+        # جلب جميع الموظفين النشطين في هذا القسم باستخدام العلاقة many-to-many
+        employees = [emp for emp in department.employees if emp.status == 'active']
         
         employee_data = []
         for employee in employees:
