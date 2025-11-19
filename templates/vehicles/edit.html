@@ -329,6 +329,12 @@
                 </div>
                 
                 <div class="mb-3">
+                    <label for="owned_by" class="form-label-enhanced">الشركة المالكة</label>
+                    <input type="text" class="form-control form-control-enhanced" id="owned_by" name="owned_by" value="{{ vehicle.owned_by or '' }}">
+                    <div class="form-text-enhanced">اختياري - اسم الشركة المالكة للمركبة</div>
+                </div>
+                
+                <div class="mb-3">
                     <label for="notes" class="form-label-enhanced">ملاحظات</label>
                     <textarea class="form-control form-control-enhanced" id="notes" name="notes" rows="3">{{ vehicle.notes }}</textarea>
                 </div>

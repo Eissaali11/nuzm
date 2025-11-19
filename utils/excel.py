@@ -876,14 +876,17 @@ def generate_vehicles_excel(vehicles, output=None):
                     if project_obj.start_date:
                         start_date = project_obj.start_date.strftime('%Y-%m-%d')
             
-            # محاولة الحصول على المالك من سجلات الإيجار
-            from models import VehicleRental
-            rental = VehicleRental.query.filter_by(
-                vehicle_id=vehicle.id, 
-                is_active=True
-            ).first()
-            if rental:
-                owner = rental.lessor_name or ""
+            # الحصول على الشركة المالكة من حقل owned_by أو من سجلات الإيجار
+            owner = vehicle.owned_by or ""
+            if not owner:
+                # إذا لم يتم تحديد الشركة المالكة، جرب من سجلات الإيجار
+                from models import VehicleRental
+                rental = VehicleRental.query.filter_by(
+                    vehicle_id=vehicle.id, 
+                    is_active=True
+                ).first()
+                if rental:
+                    owner = rental.lessor_name or ""
             
             # البيانات
             data_row = [

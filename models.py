@@ -692,6 +692,9 @@ class Vehicle(db.Model):
     # إضافة حقل رابط مجلد Google Drive
     drive_folder_link = db.Column(db.String(500), nullable=True)  # رابط مجلد Google Drive
     
+    # إضافة حقل الشركة المالكة
+    owned_by = db.Column(db.String(100), nullable=True)  # الشركة المالكة للمركبة
+    
     notes = db.Column(db.Text)  # ملاحظات
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

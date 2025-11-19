@@ -1091,6 +1091,7 @@ def create():
                 status = request.form.get('status')
                 notes = request.form.get('notes')
                 type_of_car = request.form.get('type_of_car')
+                owned_by = request.form.get('owned_by')
                 
                 # التحقق من عدم وجود سيارة بنفس رقم اللوحة
                 if Vehicle.query.filter_by(plate_number=plate_number).first():
@@ -1108,7 +1109,8 @@ def create():
                         status=status,
                         driver_name=driver_name,
                         notes=notes,
-                        type_of_car=type_of_car
+                        type_of_car=type_of_car,
+                        owned_by=owned_by
                 )
 
                 db.session.add(vehicle)
@@ -1726,6 +1728,7 @@ def edit(id):
                 # تحديث بيانات السيارة
                 driver_name = request.form.get('driver_name')
                 project = request.form.get('project')
+                owned_by = request.form.get('owned_by')
                 vehicle.plate_number = plate_number
                 vehicle.make = make
                 vehicle.model = model
@@ -1734,6 +1737,7 @@ def edit(id):
                 vehicle.status = status
                 vehicle.driver_name = driver_name
                 vehicle.project = project
+                vehicle.owned_by = owned_by
                 vehicle.notes = notes
                 vehicle.type_of_car = request.form.get('type_of_car')
                 vehicle.updated_at = datetime.utcnow()
