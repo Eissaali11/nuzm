@@ -774,7 +774,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <h6 class="text-muted mb-3">الصورة الشخصية</h6>
                         <div class="image-preview mb-3">
                             {% if employee.profile_image %}
-                                <img src="/{{ employee.profile_image }}" 
+                                <img src="/static/{{ employee.profile_image }}" 
                                      alt="الصورة الشخصية" 
                                      class="img-fluid rounded" 
                                      style="max-height: 180px; width: auto;"
@@ -804,7 +804,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <h6 class="text-muted mb-3">صورة الهوية الوطنية</h6>
                         <div class="image-preview mb-3">
                             {% if employee.national_id_image %}
-                                <img src="/{{ employee.national_id_image }}" 
+                                <img src="/static/{{ employee.national_id_image }}" 
                                      alt="صورة الهوية الوطنية" 
                                      class="img-fluid rounded" 
                                      style="max-height: 180px; width: auto;"
@@ -834,7 +834,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <h6 class="text-muted mb-3">صورة رخصة القيادة</h6>
                         <div class="image-preview mb-3">
                             {% if employee.license_image %}
-                                <img src="/{{ employee.license_image }}" 
+                                <img src="/static/{{ employee.license_image }}" 
                                      alt="صورة رخصة القيادة" 
                                      class="img-fluid rounded" 
                                      style="max-height: 180px; width: auto;"
