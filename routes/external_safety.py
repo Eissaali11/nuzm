@@ -1704,6 +1704,247 @@ def export_safety_check_pdf(check_id):
         flash('حدث خطأ في تصدير الطلب', 'error')
         return redirect(url_for('external_safety.admin_view_safety_check', check_id=check_id))
 
+@external_safety_bp.route('/admin/external-safety-check/<int:check_id>/pdf/english')
+def export_safety_check_pdf_english(check_id):
+    """تصدير طلب فحص السلامة كملف PDF إنجليزي احترافي مع الشعار"""
+    if not current_user.is_authenticated:
+        flash('يرجى تسجيل الدخول أولاً', 'error')
+        return redirect(url_for('external_safety.admin_external_safety_checks'))
+    
+    try:
+        from reportlab.lib import colors
+        from reportlab.lib.pagesizes import A4
+        from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image as RLImage, PageBreak
+        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+        from reportlab.lib.units import cm, mm
+        from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT, TA_JUSTIFY
+        from io import BytesIO
+        import os
+        
+        safety_check = VehicleExternalSafetyCheck.query.options(
+            db.selectinload(VehicleExternalSafetyCheck.safety_images)
+        ).get_or_404(check_id)
+        
+        # إنشاء buffer للـ PDF
+        buffer = BytesIO()
+        
+        # إنشاء PDF
+        doc = SimpleDocTemplate(buffer, pagesize=A4, 
+                              rightMargin=2*cm, leftMargin=2*cm,
+                              topMargin=2.5*cm, bottomMargin=2*cm)
+        
+        # العناصر
+        elements = []
+        
+        # الأنماط
+        styles = getSampleStyleSheet()
+        
+        # إضافة الشعار
+        logo_path = 'static/images/logo.png'
+        if os.path.exists(logo_path):
+            try:
+                logo = RLImage(logo_path, width=4*cm, height=4*cm)
+                elements.append(logo)
+                elements.append(Spacer(1, 0.5*cm))
+            except:
+                pass
+        
+        # عنوان التقرير
+        title_style = ParagraphStyle(
+            'CustomTitle',
+            parent=styles['Heading1'],
+            fontSize=22,
+            textColor=colors.HexColor('#18B2B0'),
+            spaceAfter=12,
+            alignment=TA_CENTER,
+            fontName='Helvetica-Bold'
+        )
+        
+        title = Paragraph("<b>NUZUM VEHICLE SAFETY INSPECTION REPORT</b>", title_style)
+        elements.append(title)
+        
+        subtitle_style = ParagraphStyle(
+            'Subtitle',
+            parent=styles['Normal'],
+            fontSize=12,
+            textColor=colors.HexColor('#666666'),
+            spaceAfter=20,
+            alignment=TA_CENTER,
+            fontName='Helvetica'
+        )
+        
+        subtitle = Paragraph(f"External Safety Check Report", subtitle_style)
+        elements.append(subtitle)
+        elements.append(Spacer(1, 1*cm))
+        
+        # بيانات المركبة والسائق
+        info_data = [
+            ['Vehicle Information', ''],
+            ['Plate Number:', safety_check.vehicle_plate_number or 'N/A'],
+            ['Make & Model:', safety_check.vehicle_make_model or 'N/A'],
+            ['Driver Name:', safety_check.driver_name or 'N/A'],
+            ['Department:', safety_check.driver_department or 'N/A'],
+            ['City:', safety_check.driver_city or 'N/A'],
+            ['National ID:', safety_check.driver_national_id or 'N/A'],
+            ['', ''],
+            ['Inspection Details', ''],
+            ['Inspection Date:', safety_check.inspection_date.strftime('%Y-%m-%d') if safety_check.inspection_date else 'N/A'],
+            ['Status:', safety_check.approval_status or 'Pending'],
+            ['Notes:', safety_check.notes or 'No notes']
+        ]
+        
+        info_table = Table(info_data, colWidths=[7*cm, 10*cm])
+        info_table.setStyle(TableStyle([
+            # رؤوس الأقسام
+            ('BACKGROUND', (0, 0), (1, 0), colors.HexColor('#18B2B0')),
+            ('TEXTCOLOR', (0, 0), (1, 0), colors.whitesmoke),
+            ('FONTNAME', (0, 0), (1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (1, 0), 14),
+            ('ALIGN', (0, 0), (1, 0), 'CENTER'),
+            ('SPAN', (0, 0), (1, 0)),
+            
+            ('BACKGROUND', (0, 8), (1, 8), colors.HexColor('#18B2B0')),
+            ('TEXTCOLOR', (0, 8), (1, 8), colors.whitesmoke),
+            ('FONTNAME', (0, 8), (1, 8), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 8), (1, 8), 14),
+            ('ALIGN', (0, 8), (1, 8), 'CENTER'),
+            ('SPAN', (0, 8), (1, 8)),
+            
+            # البيانات
+            ('FONTNAME', (0, 1), (0, -1), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 1), (-1, -1), 10),
+            ('ALIGN', (0, 1), (0, -1), 'LEFT'),
+            ('ALIGN', (1, 1), (1, -1), 'LEFT'),
+            
+            # الصفوف المتناوبة
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#F9FAFB')]),
+            
+            # الحدود
+            ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#E5E7EB')),
+            ('BOX', (0, 0), (-1, -1), 2, colors.HexColor('#18B2B0')),
+            
+            # المسافات
+            ('TOPPADDING', (0, 0), (-1, -1), 12),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 12),
+            ('LEFTPADDING', (0, 0), (-1, -1), 12),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 12),
+        ]))
+        
+        elements.append(info_table)
+        elements.append(Spacer(1, 1*cm))
+        
+        # إضافة الصور إذا وجدت
+        if safety_check.safety_images:
+            images_title_style = ParagraphStyle(
+                'ImagesTitle',
+                parent=styles['Heading2'],
+                fontSize=16,
+                textColor=colors.HexColor('#18B2B0'),
+                spaceAfter=12,
+                alignment=TA_LEFT,
+                fontName='Helvetica-Bold'
+            )
+            
+            images_title = Paragraph("<b>Vehicle Safety Images</b>", images_title_style)
+            elements.append(images_title)
+            elements.append(Spacer(1, 0.5*cm))
+            
+            # عرض الصور في شبكة
+            images_per_row = 2
+            image_width = 7*cm
+            image_height = 5*cm
+            
+            image_elements = []
+            for idx, safety_image in enumerate(safety_check.safety_images):
+                try:
+                    # محاولة الحصول على الصورة من Object Storage
+                    from utils.object_storage import get_image_url
+                    image_url = get_image_url(safety_image.image_path)
+                    
+                    if image_url:
+                        # تحميل الصورة
+                        import requests
+                        response = requests.get(image_url, timeout=5)
+                        if response.status_code == 200:
+                            img_buffer = BytesIO(response.content)
+                            img = RLImage(img_buffer, width=image_width, height=image_height)
+                            image_elements.append(img)
+                except Exception as e:
+                    current_app.logger.error(f"خطأ في تحميل الصورة: {str(e)}")
+                    continue
+            
+            # ترتيب الصور في جدول
+            if image_elements:
+                image_rows = []
+                for i in range(0, len(image_elements), images_per_row):
+                    row = image_elements[i:i+images_per_row]
+                    # إضافة خلايا فارغة إذا كان الصف غير مكتمل
+                    while len(row) < images_per_row:
+                        row.append('')
+                    image_rows.append(row)
+                
+                image_table = Table(image_rows, colWidths=[8*cm, 8*cm])
+                image_table.setStyle(TableStyle([
+                    ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                    ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                    ('LEFTPADDING', (0, 0), (-1, -1), 6),
+                    ('RIGHTPADDING', (0, 0), (-1, -1), 6),
+                    ('TOPPADDING', (0, 0), (-1, -1), 6),
+                    ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+                ]))
+                
+                elements.append(image_table)
+        
+        # التذييل
+        elements.append(Spacer(1, 2*cm))
+        footer_style = ParagraphStyle(
+            'Footer',
+            parent=styles['Normal'],
+            fontSize=9,
+            textColor=colors.HexColor('#999999'),
+            alignment=TA_CENTER,
+            fontName='Helvetica-Oblique'
+        )
+        
+        footer_text = f"Generated by NUZUM Fleet Management System | https://nuzum.site<br/>Report ID: {safety_check.id} | Date: {safety_check.created_at.strftime('%Y-%m-%d %H:%M')}"
+        footer = Paragraph(footer_text, footer_style)
+        elements.append(footer)
+        
+        # بناء الـ PDF
+        doc.build(elements)
+        
+        # تسجيل العملية
+        log_audit(
+            user_id=current_user.id,
+            action='export_pdf_english',
+            entity_type='VehicleExternalSafetyCheck',
+            entity_id=safety_check.id,
+            details=f'تم تصدير تقرير فحص السلامة (إنجليزي) للسيارة {safety_check.vehicle_plate_number}'
+        )
+        
+        # إعادة المؤشر
+        buffer.seek(0)
+        
+        # تنسيق اسم الملف
+        inspection_date = safety_check.inspection_date.strftime('%Y-%m-%d') if safety_check.inspection_date else 'no_date'
+        plate_number = safety_check.vehicle_plate_number.replace(' ', '_')
+        driver_name = safety_check.driver_name.replace(' ', '_') if safety_check.driver_name else 'unknown'
+        
+        # إرسال الملف
+        return send_file(
+            buffer,
+            mimetype='application/pdf',
+            as_attachment=True,
+            download_name=f'Safety_Check_{plate_number}_{driver_name}_{inspection_date}.pdf'
+        )
+        
+    except Exception as e:
+        current_app.logger.error(f"خطأ في تصدير تقرير فحص السلامة (إنجليزي): {str(e)}")
+        import traceback
+        traceback.print_exc()
+        flash('حدث خطأ في تصدير التقرير', 'error')
+        return redirect(url_for('external_safety.admin_view_safety_check', check_id=check_id))
+
 @external_safety_bp.route('/admin/bulk-delete-safety-checks', methods=['POST'])
 def bulk_delete_safety_checks():
     """حذف عدة طلبات فحص سلامة جماعياً"""
