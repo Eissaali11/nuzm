@@ -369,7 +369,17 @@ def generate_employee_comprehensive_excel(employee_id):
         except:
             pass
         
-        # البيانات الكاملة بالترتيب المطلوب (29 حقل)
+        # إضافة روابط الوثائق
+        job_offer_file = f"https://nuzum.site/static/{getattr(employee, 'job_offer_file', '')}" if getattr(employee, 'job_offer_file', '') else '-'
+        passport_file = f"https://nuzum.site/static/{getattr(employee, 'passport_image_file', '')}" if getattr(employee, 'passport_image_file', '') else '-'
+        national_address_file = f"https://nuzum.site/static/{getattr(employee, 'national_address_file', '')}" if getattr(employee, 'national_address_file', '') else '-'
+        
+        # الروابط الخارجية
+        job_offer_link = getattr(employee, 'job_offer_link', '') or '-'
+        passport_link = getattr(employee, 'passport_image_link', '') or '-'
+        national_address_link = getattr(employee, 'national_address_link', '') or '-'
+        
+        # البيانات الكاملة بالترتيب المطلوب (35 حقل)
         employee_full_data = [
             ("الاسم الكامل", employee.name),
             ("رقم الهوية الوطنية", employee.national_id or ""),
@@ -399,7 +409,13 @@ def generate_employee_comprehensive_excel(employee_id):
             ("اسم الكفيل", getattr(employee, 'current_sponsor_name', '') or ''),
             ("رقم الإيبان", getattr(employee, 'bank_iban', '') or ''),
             ("تفاصيل السكن", getattr(employee, 'residence_details', '') or ''),
-            ("رابط موقع السكن", getattr(employee, 'residence_location_url', '') or '')
+            ("رابط موقع السكن", getattr(employee, 'residence_location_url', '') or ''),
+            ("ملف العرض الوظيفي", job_offer_file),
+            ("صورة الجواز", passport_file),
+            ("شهادة العنوان الوطني", national_address_file),
+            ("رابط العرض الوظيفي الخارجي", job_offer_link),
+            ("رابط صورة الجواز الخارجي", passport_link),
+            ("رابط شهادة العنوان الخارجي", national_address_link)
         ]
         
         # كتابة البيانات
