@@ -823,6 +823,99 @@ def generate_vehicles_excel(vehicles, output=None):
         for idx in range(1, len(all_headers) + 1):
             full_data_sheet.column_dimensions[get_column_letter(idx)].width = 20
         
+        # ===== ورقة English Format =====
+        english_sheet = workbook.create_sheet(title="English Format")
+        
+        # العناوين بالإنجليزية
+        english_headers = [
+            '#', 'Name', 'ID Num', 'EMP', 'Private Num', 'Work Num', 
+            'Plate Num.', 'Owned By', 'TYPE OF VEHICLE', 'Project', 
+            'Location', 'Start Date'
+        ]
+        
+        # كتابة العناوين
+        for col_idx, header in enumerate(english_headers, start=1):
+            cell = english_sheet.cell(row=1, column=col_idx)
+            cell.value = header
+            cell.font = Font(bold=True, color="000000", size=11, name='Calibri')
+            cell.fill = PatternFill(start_color="D9E1F2", end_color="D9E1F2", fill_type="solid")
+            cell.alignment = Alignment(horizontal='center', vertical='center')
+            cell.border = border
+        
+        # كتابة البيانات
+        for row_idx, vehicle in enumerate(vehicles, start=2):
+            # الحصول على بيانات السائق والموظف المرتبط
+            driver_name = vehicle.driver_name or ""
+            employee_id_num = ""
+            employee_num = ""
+            private_num = ""
+            work_num = ""
+            project = vehicle.project or ""
+            location = ""
+            start_date = ""
+            owner = ""
+            
+            # محاولة الحصول على بيانات السائق من نموذج Employee بناءً على الاسم
+            if driver_name:
+                from models import Employee
+                driver = Employee.query.filter_by(name=driver_name).first()
+                if driver:
+                    employee_id_num = driver.national_id or ""
+                    employee_num = driver.employee_id or ""
+                    private_num = driver.mobilePersonal or ""
+                    work_num = driver.mobile or ""
+            
+            # محاولة الحصول على الموقع من المشروع
+            if vehicle.project:
+                from models import VehicleProject
+                project_obj = VehicleProject.query.filter_by(
+                    project_name=vehicle.project
+                ).first()
+                if project_obj:
+                    location = project_obj.location or ""
+                    if project_obj.start_date:
+                        start_date = project_obj.start_date.strftime('%Y-%m-%d')
+            
+            # محاولة الحصول على المالك من سجلات الإيجار
+            from models import VehicleRental
+            rental = VehicleRental.query.filter_by(
+                vehicle_id=vehicle.id, 
+                is_active=True
+            ).first()
+            if rental:
+                owner = rental.lessor_name or ""
+            
+            # البيانات
+            data_row = [
+                row_idx - 1,  # الرقم التسلسلي
+                driver_name,
+                employee_id_num,
+                employee_num,
+                private_num,
+                work_num,
+                vehicle.plate_number or "",
+                owner,  # شركة الإيجار أو المالك
+                f"{vehicle.make or ''} - {vehicle.model or ''}".strip(' -'),
+                project,
+                location,
+                start_date
+            ]
+            
+            for col_idx, value in enumerate(data_row, start=1):
+                cell = english_sheet.cell(row=row_idx, column=col_idx)
+                cell.value = value
+                cell.alignment = Alignment(horizontal='center', vertical='center')
+                cell.border = border
+                
+                # تلوين الصفوف بالتناوب
+                if row_idx % 2 == 0:
+                    cell.fill = PatternFill(start_color="F2F2F2", end_color="F2F2F2", fill_type="solid")
+        
+        # ضبط عرض الأعمدة
+        column_widths = [8, 30, 15, 12, 15, 15, 15, 20, 25, 18, 15, 15]
+        for idx, width in enumerate(column_widths, start=1):
+            english_sheet.column_dimensions[get_column_letter(idx)].width = width
+        
         # حفظ الملف
         workbook.save(output)
         output.seek(0)
