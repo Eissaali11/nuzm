@@ -1827,7 +1827,7 @@ def delete(id):
 
         try:
             # حذف السجلات المرتبطة يدوياً لتجنب مشاكل Foreign Key
-            from models import OperationRequest, OperationNotification
+            from models import OperationRequest, OperationNotification, ExternalAuthorization
             
             # حذف طلبات العمليات المرتبطة بهذه المركبة
             operation_requests = OperationRequest.query.filter_by(vehicle_id=id).all()
@@ -1839,6 +1839,11 @@ def delete(id):
                 
                 # ثم حذف طلب العملية
                 db.session.delete(operation_request)
+            
+            # حذف التفويضات الخارجية المرتبطة بهذه المركبة
+            external_authorizations = ExternalAuthorization.query.filter_by(vehicle_id=id).all()
+            for auth in external_authorizations:
+                db.session.delete(auth)
             
             # حذف المركبة
             db.session.delete(vehicle)
