@@ -409,6 +409,89 @@
             height: 40px !important;
             border-radius: 12px !important;
         }
+        
+        .map-legend {
+            position: absolute;
+            bottom: 30px;
+            right: 20px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.98) 100%);
+            backdrop-filter: blur(10px);
+            padding: 18px 22px;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            border: 2px solid rgba(129, 140, 248, 0.3);
+            font-family: 'Cairo', sans-serif;
+        }
+        
+        .map-legend h4 {
+            margin: 0 0 12px 0;
+            color: #1e1b4b;
+            font-size: 15px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 10px;
+            font-size: 13px;
+            color: #4b5563;
+        }
+        
+        .legend-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .legend-line {
+            width: 40px;
+            height: 4px;
+            border-radius: 2px;
+        }
+        
+        .legend-line.walking {
+            background: #10b981;
+            border: 2px dashed #10b981;
+            height: 2px;
+        }
+        
+        .legend-line.driving-slow {
+            background: #3b82f6;
+        }
+        
+        .legend-line.driving-medium {
+            background: #f59e0b;
+        }
+        
+        .legend-line.driving-fast {
+            background: #ef4444;
+        }
+        
+        .legend-icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+        
+        .legend-icon.walking {
+            background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+            color: #10b981;
+            border: 2px solid #10b981;
+        }
+        
+        .legend-icon.driving {
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+            color: #f59e0b;
+            border: 2px solid #f59e0b;
+        }
     </style>
 {% endblock %}
 
@@ -505,6 +588,26 @@
                 <div class="employee-map-info">
                     <h3>{{ employee.name }}</h3>
                     <p>{{ employee.employee_id }}</p>
+                </div>
+            </div>
+            
+            <div class="map-legend">
+                <h4><i class="fas fa-info-circle"></i> دليل المسارات</h4>
+                <div class="legend-item">
+                    <div class="legend-line walking"></div>
+                    <span>🚶 مشي (<10 كم/س)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-line driving-slow"></div>
+                    <span>🚗 قيادة بطيئة (<30 كم/س)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-line driving-medium"></div>
+                    <span>🚗 قيادة متوسطة (30-60 كم/س)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-line driving-fast"></div>
+                    <span>🚗 قيادة سريعة (>60 كم/س)</span>
                 </div>
             </div>
         </div>
@@ -632,139 +735,145 @@
             document.getElementById(layerType + 'Btn').classList.add('active');
         }
         
-        async function drawRoutedPath(coordinates, speeds) {
-            if (coordinates.length < 2) return null;
+        function classifyMovementSegments(locations) {
+            const WALKING_SPEED_THRESHOLD = 10;
+            const segments = [];
+            let currentSegment = {
+                type: 'walking',
+                points: [],
+                speeds: []
+            };
             
-            const MAX_POINTS_PER_REQUEST = 25;
-            const allRouteCoordinates = [];
-            const routeSegments = [];
-            
-            for (let i = 0; i < coordinates.length - 1; i += MAX_POINTS_PER_REQUEST - 1) {
-                const chunk = coordinates.slice(i, Math.min(i + MAX_POINTS_PER_REQUEST, coordinates.length));
+            locations.forEach((loc, index) => {
+                const speed = loc.speed || 0;
+                const isWalking = speed < WALKING_SPEED_THRESHOLD;
+                const movementType = isWalking ? 'walking' : 'driving';
                 
-                const coordString = chunk.map(coord => `${coord[1]},${coord[0]}`).join(';');
-                const url = `https://router.project-osrm.org/route/v1/driving/${coordString}?overview=full&geometries=geojson&steps=true`;
-                
-                try {
-                    const response = await fetch(url);
-                    const data = await response.json();
-                    
-                    if (data.code === 'Ok' && data.routes && data.routes.length > 0) {
-                        const routeCoords = data.routes[0].geometry.coordinates.map(coord => [coord[1], coord[0]]);
-                        allRouteCoordinates.push(...routeCoords);
-                    } else {
-                        allRouteCoordinates.push(...chunk);
+                if (index === 0) {
+                    currentSegment.type = movementType;
+                    currentSegment.points.push([loc.latitude, loc.longitude]);
+                    currentSegment.speeds.push(speed);
+                } else if (currentSegment.type === movementType) {
+                    currentSegment.points.push([loc.latitude, loc.longitude]);
+                    currentSegment.speeds.push(speed);
+                } else {
+                    if (currentSegment.points.length > 0) {
+                        segments.push({...currentSegment});
                     }
-                } catch (error) {
-                    console.warn('خطأ في جلب المسار، استخدام خط مباشر:', error);
-                    allRouteCoordinates.push(...chunk);
+                    currentSegment = {
+                        type: movementType,
+                        points: [[loc.latitude, loc.longitude]],
+                        speeds: [speed]
+                    };
                 }
-                
-                await new Promise(resolve => setTimeout(resolve, 150));
+            });
+            
+            if (currentSegment.points.length > 0) {
+                segments.push(currentSegment);
             }
             
-            const mainPolyline = L.polyline(allRouteCoordinates, {
-                color: '#818cf8',
-                weight: 6,
-                opacity: 0.9,
-                smoothFactor: 0.5,
-                lineCap: 'round',
-                lineJoin: 'round'
-            });
+            return segments;
+        }
+        
+        function getSegmentStyle(type, avgSpeed) {
+            if (type === 'walking') {
+                return {
+                    color: '#10b981',
+                    weight: 4,
+                    opacity: 0.8,
+                    dashArray: '10, 10',
+                    lineCap: 'round',
+                    lineJoin: 'round',
+                    smoothFactor: 1
+                };
+            } else {
+                const speedColor = avgSpeed > 60 ? '#ef4444' : (avgSpeed > 30 ? '#f59e0b' : '#3b82f6');
+                return {
+                    color: speedColor,
+                    weight: 7,
+                    opacity: 0.9,
+                    lineCap: 'round',
+                    lineJoin: 'round',
+                    smoothFactor: 0.5
+                };
+            }
+        }
+        
+        async function drawSegmentedPath(segments) {
+            const layerGroup = L.layerGroup();
+            const bounds = L.latLngBounds();
             
-            const outlinePolyline = L.polyline(allRouteCoordinates, {
-                color: '#312e81',
-                weight: 9,
-                opacity: 0.5,
-                smoothFactor: 0.5,
-                lineCap: 'round',
-                lineJoin: 'round'
-            });
-            
-            const arrowDecorator = L.polylineDecorator(mainPolyline, {
-                patterns: [
-                    {
-                        offset: '10%',
-                        repeat: 80,
-                        symbol: L.Symbol.arrowHead({
-                            pixelSize: 12,
-                            polygon: false,
-                            pathOptions: {
-                                stroke: true,
-                                weight: 3,
-                                color: '#a78bfa',
-                                fillOpacity: 1
+            for (let i = 0; i < segments.length; i++) {
+                const segment = segments[i];
+                const avgSpeed = segment.speeds.reduce((a, b) => a + b, 0) / segment.speeds.length;
+                const style = getSegmentStyle(segment.type, avgSpeed);
+                
+                const outline = L.polyline(segment.points, {
+                    color: '#1e1b4b',
+                    weight: style.weight + 3,
+                    opacity: 0.4,
+                    dashArray: style.dashArray,
+                    lineCap: style.lineCap,
+                    lineJoin: style.lineJoin,
+                    smoothFactor: style.smoothFactor
+                });
+                
+                const mainLine = L.polyline(segment.points, style);
+                
+                outline.addTo(layerGroup);
+                mainLine.addTo(layerGroup);
+                
+                segment.points.forEach(point => bounds.extend(point));
+                
+                if (segment.type === 'driving') {
+                    const decorator = L.polylineDecorator(mainLine, {
+                        patterns: [
+                            {
+                                offset: '5%',
+                                repeat: 100,
+                                symbol: L.Symbol.arrowHead({
+                                    pixelSize: 10,
+                                    polygon: false,
+                                    pathOptions: {
+                                        stroke: true,
+                                        weight: 2,
+                                        color: 'white',
+                                        fillOpacity: 1
+                                    }
+                                })
                             }
-                        })
-                    }
-                ]
-            });
+                        ]
+                    });
+                    decorator.addTo(layerGroup);
+                }
+            }
             
             return {
-                outline: outlinePolyline,
-                main: mainPolyline,
-                arrows: arrowDecorator
+                layer: layerGroup,
+                bounds: bounds
             };
         }
         
         if (locations && locations.length > 0) {
-            const pathCoordinates = locations.map(loc => [loc.latitude, loc.longitude]);
-            const speeds = locations.map(loc => loc.speed || 0);
-            
             const loadingDiv = document.createElement('div');
             loadingDiv.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(30, 27, 75, 0.95); color: white; padding: 20px 40px; border-radius: 15px; font-family: Cairo; font-size: 16px; font-weight: 600; z-index: 9999; box-shadow: 0 8px 32px rgba(0,0,0,0.4);';
-            loadingDiv.innerHTML = '<i class="fas fa-route" style="margin-left: 10px;"></i>جاري رسم المسار بدقة عالية على الطرق...';
+            loadingDiv.innerHTML = '<i class="fas fa-route" style="margin-left: 10px;"></i>جاري رسم المسار الاحترافي...';
             document.body.appendChild(loadingDiv);
             
             let maxSpeed = 0;
             let totalDistance = 0;
             let vehicleCount = 0;
             
-            drawRoutedPath(pathCoordinates, speeds).then(result => {
+            const segments = classifyMovementSegments(locations);
+            console.log(`تم تصنيف المسار إلى ${segments.length} مقطع:`, segments.map(s => s.type));
+            
+            drawSegmentedPath(segments).then(result => {
                 document.body.removeChild(loadingDiv);
                 
-                if (result) {
-                    result.outline.addTo(map);
-                    result.main.addTo(map);
-                    result.arrows.addTo(map);
-                    
-                    map.fitBounds(result.main.getBounds(), { 
-                        padding: [80, 80],
-                        maxZoom: 16
-                    });
-                    
-                    const routeCoords = result.main.getLatLngs();
-                    let routeDistance = 0;
-                    for (let i = 1; i < routeCoords.length; i++) {
-                        routeDistance += calculateDistance(
-                            routeCoords[i-1].lat, routeCoords[i-1].lng,
-                            routeCoords[i].lat, routeCoords[i].lng
-                        );
-                    }
-                    if (routeDistance > 0) {
-                        totalDistance = routeDistance;
-                        document.getElementById('totalDistance').textContent = totalDistance.toFixed(2) + ' كم';
-                    }
-                } else {
-                    const fallbackOutline = L.polyline(pathCoordinates, {
-                        color: '#312e81',
-                        weight: 9,
-                        opacity: 0.5,
-                        smoothFactor: 0.5,
-                        lineCap: 'round',
-                        lineJoin: 'round'
-                    }).addTo(map);
-                    
-                    const fallbackPolyline = L.polyline(pathCoordinates, {
-                        color: '#818cf8',
-                        weight: 6,
-                        opacity: 0.9,
-                        smoothFactor: 0.5,
-                        lineCap: 'round',
-                        lineJoin: 'round'
-                    }).addTo(map);
-                    
-                    map.fitBounds(fallbackPolyline.getBounds(), { 
+                result.layer.addTo(map);
+                
+                if (result.bounds.isValid()) {
+                    map.fitBounds(result.bounds, { 
                         padding: [80, 80],
                         maxZoom: 16
                     });
@@ -772,30 +881,9 @@
             }).catch(error => {
                 console.error('خطأ في رسم المسار:', error);
                 document.body.removeChild(loadingDiv);
-                
-                const fallbackOutline = L.polyline(pathCoordinates, {
-                    color: '#312e81',
-                    weight: 9,
-                    opacity: 0.5,
-                    smoothFactor: 0.5,
-                    lineCap: 'round',
-                    lineJoin: 'round'
-                }).addTo(map);
-                
-                const fallbackPolyline = L.polyline(pathCoordinates, {
-                    color: '#818cf8',
-                    weight: 6,
-                    opacity: 0.9,
-                    smoothFactor: 0.5,
-                    lineCap: 'round',
-                    lineJoin: 'round'
-                }).addTo(map);
-                
-                map.fitBounds(fallbackPolyline.getBounds(), { 
-                    padding: [80, 80],
-                    maxZoom: 16
-                });
             });
+            
+            const importantPoints = [];
             
             locations.forEach((loc, index) => {
                 if (loc.speed > maxSpeed) {
@@ -815,30 +903,55 @@
                     totalDistance += distance;
                 }
                 
+                const isFirst = index === 0;
+                const isLast = index === locations.length - 1;
+                const isStopPoint = loc.speed === 0 && (index === 0 || locations[index - 1]?.speed > 5);
+                const isTransition = index > 0 && (
+                    (loc.speed < 10 && locations[index - 1]?.speed >= 10) ||
+                    (loc.speed >= 10 && locations[index - 1]?.speed < 10)
+                );
+                
+                if (isFirst || isLast || isStopPoint || isTransition) {
+                    importantPoints.push({loc, index, isFirst, isLast, isStopPoint, isTransition});
+                }
+            });
+            
+            importantPoints.forEach(({loc, index, isFirst, isLast, isStopPoint, isTransition}) => {
                 const hasVehicle = loc.vehicle_id !== null;
-                const iconHtml = hasVehicle ? 
-                    '<i class="fas fa-car" style="font-size: 24px; color: #f59e0b;"></i>' :
-                    '<i class="fas fa-walking" style="font-size: 20px; color: #10b981;"></i>';
+                const speed = loc.speed || 0;
+                const isWalking = speed < 10;
+                
+                let iconHtml, borderColor, bgGradient;
+                
+                if (isWalking) {
+                    iconHtml = '<i class="fas fa-walking" style="font-size: 20px; color: #10b981;"></i>';
+                    borderColor = '#10b981';
+                    bgGradient = 'linear-gradient(135deg, #d1fae5, #a7f3d0)';
+                } else {
+                    iconHtml = '<i class="fas fa-car" style="font-size: 24px; color: #f59e0b;"></i>';
+                    borderColor = '#f59e0b';
+                    bgGradient = 'linear-gradient(135deg, #fef3c7, #fde68a)';
+                }
                 
                 const markerIcon = L.divIcon({
                     className: 'custom-marker',
                     html: `
                         <div style="
-                            width: 40px;
-                            height: 40px;
-                            background: white;
+                            width: 45px;
+                            height: 45px;
+                            background: ${bgGradient};
                             border-radius: 50%;
                             display: flex;
                             align-items: center;
                             justify-content: center;
-                            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-                            border: 3px solid ${hasVehicle ? '#f59e0b' : '#10b981'};
+                            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+                            border: 4px solid ${borderColor};
                         ">
                             ${iconHtml}
                         </div>
                     `,
-                    iconSize: [40, 40],
-                    iconAnchor: [20, 20]
+                    iconSize: [45, 45],
+                    iconAnchor: [22, 22]
                 });
                 
                 const marker = L.marker([loc.latitude, loc.longitude], {
@@ -855,22 +968,25 @@
                     photoHtml = `<div style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #818cf8 0%, #a78bfa 100%); display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 700; color: white; margin: 0 auto 10px auto; border: 3px solid rgba(255, 255, 255, 0.3); box-shadow: 0 4px 15px rgba(129, 140, 248, 0.4);">${employeeInitial}</div>`;
                 }
                 
+                const modeText = isWalking ? '🚶 مشي' : '🚗 قيادة';
+                const modeStyle = isWalking ? 
+                    'background: linear-gradient(135deg, #d1fae5, #a7f3d0); color: #065f46;' :
+                    'background: linear-gradient(135deg, #fef3c7, #fde68a); color: #92400e;';
+                
                 let popupContent = `
-                    <div style="text-align: center; font-family: 'Cairo', sans-serif; min-width: 240px; padding: 15px;">
+                    <div style="text-align: center; font-family: 'Cairo', sans-serif; min-width: 260px; padding: 15px;">
                         ${photoHtml}
                         <h4 style="margin: 0 0 10px 0; color: #1e1b4b; font-weight: 700;">${employeeName}</h4>
+                        <div style="margin: 8px 0; padding: 8px; ${modeStyle} border-radius: 8px; font-weight: 700;">
+                            ${modeText}
+                        </div>
                         <p style="margin: 5px 0; color: #4b5563; font-size: 13px;">
                             <strong>الوقت:</strong> ${loc.recorded_at}
                         </p>
-                `;
-                
-                if (loc.speed > 0) {
-                    popupContent += `
                         <p style="margin: 5px 0; color: #4b5563; font-size: 13px;">
-                            <strong>السرعة:</strong> ${loc.speed.toFixed(1)} كم/س
+                            <strong>السرعة:</strong> ${speed.toFixed(1)} كم/س
                         </p>
-                    `;
-                }
+                `;
                 
                 if (loc.vehicle) {
                     popupContent += `
@@ -888,20 +1004,20 @@
                 popupContent += '</div>';
                 marker.bindPopup(popupContent);
                 
-                if (index === 0) {
+                if (isFirst) {
                     const startIcon = L.divIcon({
                         className: 'start-marker',
-                        html: '<div style="background: #10b981; color: white; padding: 5px 10px; border-radius: 8px; font-family: Cairo; font-weight: 700; font-size: 12px; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);">البداية</div>',
-                        iconAnchor: [0, -15]
+                        html: '<div style="background: #10b981; color: white; padding: 6px 12px; border-radius: 10px; font-family: Cairo; font-weight: 700; font-size: 13px; box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5);">🚀 البداية</div>',
+                        iconAnchor: [0, -20]
                     });
                     L.marker([loc.latitude, loc.longitude], { icon: startIcon }).addTo(map);
                 }
                 
-                if (index === locations.length - 1) {
+                if (isLast) {
                     const endIcon = L.divIcon({
                         className: 'end-marker',
-                        html: '<div style="background: #ef4444; color: white; padding: 5px 10px; border-radius: 8px; font-family: Cairo; font-weight: 700; font-size: 12px; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);">النهاية</div>',
-                        iconAnchor: [0, -15]
+                        html: '<div style="background: #ef4444; color: white; padding: 6px 12px; border-radius: 10px; font-family: Cairo; font-weight: 700; font-size: 13px; box-shadow: 0 6px 20px rgba(239, 68, 68, 0.5);">🏁 النهاية</div>',
+                        iconAnchor: [0, -20]
                     });
                     L.marker([loc.latitude, loc.longitude], { icon: endIcon }).addTo(map);
                 }
