@@ -2931,6 +2931,7 @@ def create_handover(id):
             authorization_details = request.form.get('authorization_details')
             movement_officer_name = request.form.get('movement_officer_name')
             form_link = request.form.get('form_link')
+            form_link_2 = request.form.get('form_link_2')
             custom_company_name = request.form.get('custom_company_name', '').strip() or None
 
             # Checklist
@@ -2999,7 +3000,7 @@ def create_handover(id):
                 has_lights_issue=has_lights_issue, has_ac_issue=has_ac_issue,
                 movement_officer_name=movement_officer_name,
                 movement_officer_signature_path=movement_officer_signature_path,
-                damage_diagram_path=saved_diagram_path, form_link=form_link,
+                damage_diagram_path=saved_diagram_path, form_link=form_link, form_link_2=form_link_2,
                 custom_company_name=custom_company_name, custom_logo_path=saved_custom_logo_path
             )
 
@@ -3540,6 +3541,7 @@ def edit_handover(id):
                         fuel_level = request.form.get('fuel_level')
                         vehicle_condition = request.form.get('vehicle_condition')
                         form_link = request.form.get('form_link')
+                        form_link_2 = request.form.get('form_link_2')
                         notes = request.form.get('notes')
 
                         # معالجة مربعات الاختيار
@@ -3564,6 +3566,7 @@ def edit_handover(id):
                         handover.fuel_level = fuel_level
                         handover.vehicle_condition = vehicle_condition
                         handover.form_link = form_link
+                        handover.form_link_2 = form_link_2
                         handover.notes = notes
                         handover.has_spare_tire = has_spare_tire
                         handover.has_fire_extinguisher = has_fire_extinguisher

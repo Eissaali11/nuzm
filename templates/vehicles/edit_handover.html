@@ -282,6 +282,13 @@
                                    class="form-control" value="{{ handover.form_link or '' }}">
                             <small class="text-muted">اختياري - يمكن إضافة رابط لنموذج خارجي</small>
                         </div>
+                        
+                        <div class="mb-3">
+                            <label for="form_link_2" class="form-label">رابط نموذج خارجي (اختياري):</label>
+                            <input type="url" id="form_link_2" name="form_link_2" 
+                                   class="form-control" value="{{ handover.form_link_2 or '' }}">
+                            <small class="text-muted">اختياري - يمكن إضافة رابط ثاني لنموذج خارجي</small>
+                        </div>
                     </div>
                     
                     <div class="col-md-6">
