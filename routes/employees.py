@@ -297,6 +297,17 @@ def create():
                 employee.national_address_file = save_employee_image(national_address_file, employee.id, 'national_address')
                 db.session.commit()
             
+            # معالجة الروابط للوثائق
+            job_offer_link = request.form.get('job_offer_link', '').strip() or None
+            passport_image_link = request.form.get('passport_image_link', '').strip() or None
+            national_address_link = request.form.get('national_address_link', '').strip() or None
+            
+            if job_offer_link or passport_image_link or national_address_link:
+                employee.job_offer_link = job_offer_link
+                employee.passport_image_link = passport_image_link
+                employee.national_address_link = national_address_link
+                db.session.commit()
+            
             # Log the action
             log_activity('create', 'Employee', employee.id, f'تم إنشاء موظف جديد: {name}')
             
@@ -540,6 +551,11 @@ def edit(id):
                 
                 # حفظ الملف الجديد
                 employee.national_address_file = save_employee_image(national_address_file, id, 'national_address')
+            
+            # معالجة الروابط للوثائق
+            employee.job_offer_link = request.form.get('job_offer_link', '').strip() or None
+            employee.passport_image_link = request.form.get('passport_image_link', '').strip() or None
+            employee.national_address_link = request.form.get('national_address_link', '').strip() or None
             
             join_date_str = request.form.get('join_date')
             employee.join_date = parse_date(join_date_str) if join_date_str else None
