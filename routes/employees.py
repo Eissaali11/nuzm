@@ -279,6 +279,24 @@ def create():
                     employee.housing_images = ','.join(saved_images)
                     db.session.commit()
             
+            # معالجة رفع ملف العرض الوظيفي
+            job_offer_file = request.files.get('job_offer_file')
+            if job_offer_file and job_offer_file.filename:
+                employee.job_offer_file = save_employee_image(job_offer_file, employee.id, 'job_offer')
+                db.session.commit()
+            
+            # معالجة رفع صورة الجواز
+            passport_image_file = request.files.get('passport_image_file')
+            if passport_image_file and passport_image_file.filename:
+                employee.passport_image_file = save_employee_image(passport_image_file, employee.id, 'passport')
+                db.session.commit()
+            
+            # معالجة رفع شهادة العنوان الوطني
+            national_address_file = request.files.get('national_address_file')
+            if national_address_file and national_address_file.filename:
+                employee.national_address_file = save_employee_image(national_address_file, employee.id, 'national_address')
+                db.session.commit()
+            
             # Log the action
             log_activity('create', 'Employee', employee.id, f'تم إنشاء موظف جديد: {name}')
             
@@ -486,6 +504,42 @@ def edit(id):
                 
                 # حفظ الصورة الجديدة
                 employee.bank_iban_image = save_employee_image(bank_iban_image_file, id, 'iban')
+            
+            # معالجة رفع ملف العرض الوظيفي
+            job_offer_file = request.files.get('job_offer_file')
+            if job_offer_file and job_offer_file.filename:
+                # حذف الملف القديم إذا كان موجوداً
+                if employee.job_offer_file:
+                    old_file_path = os.path.join('static', employee.job_offer_file)
+                    if os.path.exists(old_file_path):
+                        os.remove(old_file_path)
+                
+                # حفظ الملف الجديد
+                employee.job_offer_file = save_employee_image(job_offer_file, id, 'job_offer')
+            
+            # معالجة رفع صورة الجواز
+            passport_image_file = request.files.get('passport_image_file')
+            if passport_image_file and passport_image_file.filename:
+                # حذف الصورة القديمة إذا كانت موجودة
+                if employee.passport_image_file:
+                    old_file_path = os.path.join('static', employee.passport_image_file)
+                    if os.path.exists(old_file_path):
+                        os.remove(old_file_path)
+                
+                # حفظ الصورة الجديدة
+                employee.passport_image_file = save_employee_image(passport_image_file, id, 'passport')
+            
+            # معالجة رفع شهادة العنوان الوطني
+            national_address_file = request.files.get('national_address_file')
+            if national_address_file and national_address_file.filename:
+                # حذف الملف القديم إذا كان موجوداً
+                if employee.national_address_file:
+                    old_file_path = os.path.join('static', employee.national_address_file)
+                    if os.path.exists(old_file_path):
+                        os.remove(old_file_path)
+                
+                # حفظ الملف الجديد
+                employee.national_address_file = save_employee_image(national_address_file, id, 'national_address')
             
             join_date_str = request.form.get('join_date')
             employee.join_date = parse_date(join_date_str) if join_date_str else None
