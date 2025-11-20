@@ -847,6 +847,164 @@ def upload_files(current_employee, request_id):
     }), 200
 
 
+@api_employee_requests.route('/requests/<int:request_id>/upload-inspection-image', methods=['POST'])
+@token_required
+def upload_inspection_image(current_employee, request_id):
+    """
+    رفع صورة واحدة لطلب فحص السيارة (متوافق مع تطبيق Flutter)
+    
+    Form Field:
+    - image: صورة واحدة
+    
+    Response:
+    {
+        "success": true,
+        "data": {
+            "media_id": 123,
+            "drive_url": "https://drive.google.com/..."
+        },
+        "message": "تم رفع الصورة بنجاح"
+    }
+    """
+    import tempfile
+    
+    emp_request = EmployeeRequest.query.filter_by(
+        id=request_id,
+        employee_id=current_employee.id
+    ).first()
+    
+    if not emp_request:
+        return jsonify({
+            'success': False,
+            'message': 'الطلب غير موجود'
+        }), 404
+    
+    if emp_request.request_type != RequestType.CAR_INSPECTION:
+        return jsonify({
+            'success': False,
+            'message': 'هذا الطلب ليس طلب فحص سيارة'
+        }), 400
+    
+    if 'image' not in request.files:
+        return jsonify({
+            'success': False,
+            'message': 'لا توجد صورة مرفقة'
+        }), 400
+    
+    file = request.files['image']
+    
+    if not file or not file.filename or file.filename == '':
+        return jsonify({
+            'success': False,
+            'message': 'الصورة فارغة'
+        }), 400
+    
+    if not allowed_file(file.filename):
+        return jsonify({
+            'success': False,
+            'message': 'نوع الملف غير مدعوم. الأنواع المدعومة: jpg, jpeg, png, heic'
+        }), 400
+    
+    drive_uploader = EmployeeRequestsDriveUploader()
+    
+    if not drive_uploader.is_available():
+        return jsonify({
+            'success': False,
+            'message': 'خدمة Google Drive غير متاحة حالياً'
+        }), 503
+    
+    vehicle_number = None
+    if emp_request.inspection_data and emp_request.inspection_data.vehicle:
+        vehicle_number = emp_request.inspection_data.vehicle.plate_number
+    
+    if not emp_request.google_drive_folder_id:
+        folder_result = drive_uploader.create_request_folder(
+            request_type='car_inspection',
+            request_id=emp_request.id,
+            employee_name=current_employee.name,
+            vehicle_number=vehicle_number if vehicle_number else ''
+        )
+        
+        if not folder_result:
+            return jsonify({
+                'success': False,
+                'message': 'فشل إنشاء مجلد على Google Drive'
+            }), 500
+        
+        emp_request.google_drive_folder_id = folder_result['folder_id']
+        emp_request.google_drive_folder_url = folder_result['folder_url']
+        db.session.commit()
+    
+    temp_file = None
+    temp_path = None
+    
+    try:
+        file_ext = file.filename.rsplit('.', 1)[1].lower() if '.' in file.filename else 'jpg'
+        
+        with tempfile.NamedTemporaryFile(delete=False, suffix=f'.{file_ext}') as temp_file:
+            file.save(temp_file.name)
+            temp_path = temp_file.name
+        
+        results = drive_uploader.upload_inspection_images_batch(
+            images_list=[temp_path],
+            folder_id=emp_request.google_drive_folder_id
+        )
+        
+        if not results or not results[0]:
+            return jsonify({
+                'success': False,
+                'message': 'فشل رفع الصورة إلى Google Drive'
+            }), 500
+        
+        result = results[0]
+        
+        media = CarInspectionMedia()
+        media.inspection_request_id = emp_request.inspection_data.id
+        media.file_type = FileType.IMAGE
+        media.drive_file_id = result['file_id']
+        media.drive_view_url = result['view_url']
+        media.drive_download_url = result.get('download_url')
+        media.original_filename = file.filename
+        media.file_size = result.get('file_size')
+        media.upload_status = 'completed'
+        media.upload_progress = 100
+        db.session.add(media)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'media_id': media.id,
+                'drive_url': result['view_url'],
+                'drive_file_id': result['file_id']
+            },
+            'message': 'تم رفع الصورة بنجاح'
+        }), 200
+    
+    except Exception as e:
+        logger.error(f"Error uploading inspection image: {str(e)}")
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'message': 'حدث خطأ أثناء رفع الصورة',
+            'error': str(e)
+        }), 500
+    
+    finally:
+        if temp_path and os.path.exists(temp_path):
+            try:
+                os.unlink(temp_path)
+            except:
+                pass
+
+
+@api_employee_requests.route('/requests/<int:request_id>/upload-image', methods=['POST'])
+@token_required
+def upload_image_alias(current_employee, request_id):
+    """مسار بديل لرفع صورة الفحص"""
+    return upload_inspection_image(current_employee, request_id)
+
+
 @api_employee_requests.route('/requests/statistics', methods=['GET'])
 @token_required
 def get_statistics(current_employee):
