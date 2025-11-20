@@ -852,6 +852,7 @@ def upload_files(current_employee, request_id):
 def upload_inspection_image(current_employee, request_id):
     """
     رفع صورة واحدة لطلب فحص السيارة (متوافق مع تطبيق Flutter)
+    يحفظ الصورة محلياً مباشرة
     
     Form Field:
     - image: صورة واحدة
@@ -861,12 +862,12 @@ def upload_inspection_image(current_employee, request_id):
         "success": true,
         "data": {
             "media_id": 123,
-            "drive_url": "https://drive.google.com/..."
+            "image_url": "https://nuzum.site/static/..."
         },
         "message": "تم رفع الصورة بنجاح"
     }
     """
-    import tempfile
+    import shutil
     
     emp_request = EmployeeRequest.query.filter_by(
         id=request_id,
@@ -905,78 +906,72 @@ def upload_inspection_image(current_employee, request_id):
             'message': 'نوع الملف غير مدعوم. الأنواع المدعومة: jpg, jpeg, png, heic'
         }), 400
     
-    drive_uploader = EmployeeRequestsDriveUploader()
-    
-    if not drive_uploader.is_available():
-        return jsonify({
-            'success': False,
-            'message': 'خدمة Google Drive غير متاحة حالياً'
-        }), 503
-    
-    vehicle_number = None
-    if emp_request.inspection_data and emp_request.inspection_data.vehicle:
-        vehicle_number = emp_request.inspection_data.vehicle.plate_number
-    
-    if not emp_request.google_drive_folder_id:
-        folder_result = drive_uploader.create_request_folder(
-            request_type='car_inspection',
-            request_id=emp_request.id,
-            employee_name=current_employee.name,
-            vehicle_number=vehicle_number if vehicle_number else ''
-        )
-        
-        if not folder_result:
-            return jsonify({
-                'success': False,
-                'message': 'فشل إنشاء مجلد على Google Drive'
-            }), 500
-        
-        emp_request.google_drive_folder_id = folder_result['folder_id']
-        emp_request.google_drive_folder_url = folder_result['folder_url']
-        db.session.commit()
-    
-    temp_file = None
-    temp_path = None
-    
     try:
-        file_ext = file.filename.rsplit('.', 1)[1].lower() if '.' in file.filename else 'jpg'
+        safe_filename = secure_filename(file.filename)
+        file_ext = safe_filename.rsplit('.', 1)[1].lower() if '.' in safe_filename else 'jpg'
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        unique_filename = f"inspection_{request_id}_{timestamp}_{uuid.uuid4().hex[:8]}.{file_ext}"
         
-        with tempfile.NamedTemporaryFile(delete=False, suffix=f'.{file_ext}') as temp_file:
-            file.save(temp_file.name)
-            temp_path = temp_file.name
+        upload_folder = os.path.join('static', 'uploads', 'car_inspections')
+        os.makedirs(upload_folder, exist_ok=True)
         
-        results = drive_uploader.upload_inspection_images_batch(
-            images_list=[temp_path],
-            folder_id=emp_request.google_drive_folder_id
-        )
+        filepath = os.path.join(upload_folder, unique_filename)
+        file.save(filepath)
         
-        if not results or not results[0]:
-            return jsonify({
-                'success': False,
-                'message': 'فشل رفع الصورة إلى Google Drive'
-            }), 500
-        
-        result = results[0]
+        file_size = os.path.getsize(filepath)
+        relative_path = f"uploads/car_inspections/{unique_filename}"
+        public_url = f"https://nuzum.site/static/{relative_path}"
         
         media = CarInspectionMedia()
         media.inspection_request_id = emp_request.inspection_data.id
         media.file_type = FileType.IMAGE
-        media.drive_file_id = result['file_id']
-        media.drive_view_url = result['view_url']
-        media.drive_download_url = result.get('download_url')
+        media.local_path = relative_path
         media.original_filename = file.filename
-        media.file_size = result.get('file_size')
+        media.file_size = file_size
         media.upload_status = 'completed'
         media.upload_progress = 100
         db.session.add(media)
         db.session.commit()
         
+        drive_uploader = EmployeeRequestsDriveUploader()
+        if drive_uploader.is_available():
+            try:
+                vehicle_number = None
+                if emp_request.inspection_data and emp_request.inspection_data.vehicle:
+                    vehicle_number = emp_request.inspection_data.vehicle.plate_number
+                
+                if not emp_request.google_drive_folder_id:
+                    folder_result = drive_uploader.create_request_folder(
+                        request_type='car_inspection',
+                        request_id=emp_request.id,
+                        employee_name=current_employee.name,
+                        vehicle_number=vehicle_number if vehicle_number else ''
+                    )
+                    if folder_result:
+                        emp_request.google_drive_folder_id = folder_result['folder_id']
+                        emp_request.google_drive_folder_url = folder_result['folder_url']
+                
+                if emp_request.google_drive_folder_id:
+                    results = drive_uploader.upload_inspection_images_batch(
+                        images_list=[filepath],
+                        folder_id=emp_request.google_drive_folder_id
+                    )
+                    if results and results[0]:
+                        media.drive_file_id = results[0]['file_id']
+                        media.drive_view_url = results[0]['view_url']
+                        media.drive_download_url = results[0].get('download_url')
+                
+                db.session.commit()
+            except Exception as drive_error:
+                logger.warning(f"Google Drive upload failed (non-blocking): {str(drive_error)}")
+        
         return jsonify({
             'success': True,
             'data': {
                 'media_id': media.id,
-                'drive_url': result['view_url'],
-                'drive_file_id': result['file_id']
+                'image_url': public_url,
+                'local_path': relative_path,
+                'drive_url': media.drive_view_url if media.drive_view_url else None
             },
             'message': 'تم رفع الصورة بنجاح'
         }), 200
@@ -989,13 +984,6 @@ def upload_inspection_image(current_employee, request_id):
             'message': 'حدث خطأ أثناء رفع الصورة',
             'error': str(e)
         }), 500
-    
-    finally:
-        if temp_path and os.path.exists(temp_path):
-            try:
-                os.unlink(temp_path)
-            except:
-                pass
 
 
 @api_employee_requests.route('/requests/<int:request_id>/upload-image', methods=['POST'])
