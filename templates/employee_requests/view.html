@@ -321,7 +321,13 @@
                                         <div class="col-md-4 col-sm-6">
                                             <div class="card shadow-sm hover-scale">
                                                 <div class="position-relative">
-                                                    {% set image_url = media.drive_view_url if media.drive_view_url else url_for('static', filename=media.local_path) %}
+                                                    {% if media.drive_view_url %}
+                                                        {% set image_url = media.drive_view_url %}
+                                                    {% elif media.local_path %}
+                                                        {% set image_url = url_for('uploaded_file', filename=media.local_path.replace('uploads/', '')) %}
+                                                    {% else %}
+                                                        {% set image_url = url_for('static', filename='images/no-image.png') %}
+                                                    {% endif %}
                                                     <img src="{{ image_url }}" 
                                                          class="card-img-top car-wash-image" 
                                                          alt="{{ media.original_filename }}"

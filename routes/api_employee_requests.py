@@ -919,8 +919,8 @@ def upload_inspection_image(current_employee, request_id):
         file.save(filepath)
         
         file_size = os.path.getsize(filepath)
-        relative_path = f"uploads/car_inspections/{unique_filename}"
-        public_url = f"https://nuzum.site/static/{relative_path}"
+        relative_path = f"static/uploads/car_inspections/{unique_filename}"
+        public_url = f"https://nuzum.site/{relative_path}"
         
         media = CarInspectionMedia()
         media.inspection_request_id = emp_request.inspection_data.id
