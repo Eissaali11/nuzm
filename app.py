@@ -397,6 +397,7 @@ with app.app_context():
     from routes.google_drive_settings import google_drive_settings_bp
     from routes.employee_requests import employee_requests
     from routes.api_employee_requests import api_employee_requests
+    from routes.api_external_safety import api_external_safety
     from routes.drive_browser import drive_browser_bp
     from routes.attendance_api import attendance_api_bp
 
@@ -406,6 +407,7 @@ with app.app_context():
 
     csrf.exempt(api_external_bp)  # API خارجي بدون CSRF
     csrf.exempt(api_employee_requests)  # API طلبات الموظفين
+    csrf.exempt(api_external_safety)  # API فحص السلامة الخارجية
     csrf.exempt(attendance_api_bp)  # API الحضور بدون CSRF
     app.register_blueprint(dashboard_bp, url_prefix='/dashboard')
     app.register_blueprint(employees_bp, url_prefix='/employees')
@@ -446,6 +448,7 @@ with app.app_context():
     app.register_blueprint(geofences_bp)  # الدوائر الجغرافية
     app.register_blueprint(employee_requests)  # طلبات الموظفين
     app.register_blueprint(api_employee_requests)  # API طلبات الموظفين
+    app.register_blueprint(api_external_safety)  # API فحص السلامة الخارجية
     app.register_blueprint(drive_browser_bp, url_prefix='/drive')  # مستعرض Google Drive
     app.register_blueprint(attendance_api_bp)  # API الحضور
     
