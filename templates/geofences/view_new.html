@@ -392,15 +392,33 @@
                 </div>
             </div>
             <div class="header-actions">
-                <button class="btn" onclick="autoRecordAttendance()">
-                    <i class="fas fa-user-check"></i> تسجيل حضور تلقائي
-                </button>
-                <button class="btn btn-warning" onclick="editSettings()">
-                    <i class="fas fa-cog"></i> الإعدادات
-                </button>
-                <button class="btn btn-secondary" onclick="history.back()">
-                    <i class="fas fa-arrow-right"></i> عودة
-                </button>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <div class="dropdown" style="position: relative; display: inline-block;">
+                        <button class="btn" style="background: linear-gradient(135deg, #10B981 0%, #059669 100%);" onclick="toggleExportMenu()">
+                            <i class="fas fa-download"></i> تصدير
+                        </button>
+                        <div id="exportMenu" style="display: none; position: absolute; background: rgba(15, 23, 42, 0.95); border: 1px solid rgba(129, 140, 248, 0.3); border-radius: 12px; padding: 12px; min-width: 220px; top: 100%; left: 0; backdrop-filter: blur(20px); z-index: 1000;">
+                            <a href="/employees/geofences/{{ geofence.id }}/export-entry-data" style="display: block; color: #e0e7ff; padding: 10px; text-decoration: none; border-radius: 8px; transition: all 0.3s;" onmouseover="this.style.background='rgba(129, 140, 248, 0.2)'" onmouseout="this.style.background='transparent'">
+                                <i class="fas fa-door-open"></i> تصدير دخول الدائرة
+                            </a>
+                            <a href="/employees/geofences/{{ geofence.id }}/export-daily-attendance" style="display: block; color: #e0e7ff; padding: 10px; text-decoration: none; border-radius: 8px; transition: all 0.3s;" onmouseover="this.style.background='rgba(129, 140, 248, 0.2)'" onmouseout="this.style.background='transparent'">
+                                <i class="fas fa-calendar-day"></i> تصدير حضور اليوم
+                            </a>
+                            <a href="/employees/geofences/{{ geofence.id }}/export-entry-timeline" style="display: block; color: #e0e7ff; padding: 10px; text-decoration: none; border-radius: 8px; transition: all 0.3s;" onmouseover="this.style.background='rgba(129, 140, 248, 0.2)'" onmouseout="this.style.background='transparent'">
+                                <i class="fas fa-clock"></i> الدخول بحسب الوقت
+                            </a>
+                        </div>
+                    </div>
+                    <button class="btn" onclick="autoRecordAttendance()">
+                        <i class="fas fa-user-check"></i> تسجيل حضور تلقائي
+                    </button>
+                    <button class="btn btn-warning" onclick="editSettings()">
+                        <i class="fas fa-cog"></i> الإعدادات
+                    </button>
+                    <button class="btn btn-secondary" onclick="history.back()">
+                        <i class="fas fa-arrow-right"></i> عودة
+                    </button>
+                </div>
             </div>
         </div>
         
@@ -643,6 +661,18 @@
     </div>
     
     <script>
+        function toggleExportMenu() {
+            const menu = document.getElementById('exportMenu');
+            menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+        }
+        
+        document.addEventListener('click', function(event) {
+            const menu = document.getElementById('exportMenu');
+            if (menu && !event.target.closest('.dropdown')) {
+                menu.style.display = 'none';
+            }
+        });
+        
         function saveSettings() {
             const startTime = document.getElementById('startTime').value;
             const requiredMinutes = document.getElementById('requiredMinutes').value;

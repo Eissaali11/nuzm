@@ -6,6 +6,9 @@ from utils.geofence_session_manager import SessionManager
 from sqlalchemy import func, desc
 import re
 import requests
+from openpyxl import Workbook
+from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+from io import BytesIO
 
 geofences_bp = Blueprint('geofences', __name__, url_prefix='/employees/geofences')
 
@@ -537,6 +540,170 @@ def auto_record_attendance(geofence_id):
             'success': False,
             'message': f'خطأ: {str(e)}'
         }), 400
+
+
+@geofences_bp.route('/<int:geofence_id>/export-entry-data', methods=['GET'])
+@login_required
+def export_entry_data(geofence_id):
+    """تصدير بيانات دخول الدائرة"""
+    try:
+        geofence = Geofence.query.get_or_404(geofence_id)
+        
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "دخول الدائرة"
+        
+        # الرأس
+        headers = ['الموظف', 'رقم الموظف', 'وقت الدخول', 'وقت الخروج', 'المدة (دقيقة)', 'القسم', 'الدائرة']
+        ws.append(headers)
+        
+        for cell in ws[1]:
+            cell.font = Font(bold=True, color="FFFFFF")
+            cell.fill = PatternFill(start_color="4F46E5", end_color="4F46E5", fill_type="solid")
+        
+        # البيانات
+        sessions = GeofenceSession.query.filter_by(geofence_id=geofence_id).order_by(GeofenceSession.entry_time.desc()).limit(500).all()
+        
+        for session in sessions:
+            ws.append([
+                session.employee.name,
+                session.employee.employee_id,
+                session.entry_time.strftime('%Y-%m-%d %H:%M:%S') if session.entry_time else '-',
+                session.exit_time.strftime('%Y-%m-%d %H:%M:%S') if session.exit_time else 'في الداخل',
+                session.duration_minutes or '-',
+                geofence.department.name if geofence.department else '-',
+                geofence.name
+            ])
+        
+        for col in range(1, 8):
+            ws.column_dimensions[ws.cell(row=1, column=col).column_letter].width = 20
+        
+        output = BytesIO()
+        wb.save(output)
+        output.seek(0)
+        
+        filename = f"دخول_{geofence.name}_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.xlsx"
+        return send_file(output, mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                        as_attachment=True, download_name=filename)
+    except Exception as e:
+        flash(f'خطأ في التصدير: {str(e)}', 'danger')
+        return redirect(url_for('geofences.view', geofence_id=geofence_id))
+
+
+@geofences_bp.route('/<int:geofence_id>/export-daily-attendance', methods=['GET'])
+@login_required
+def export_daily_attendance(geofence_id):
+    """تصدير حضور اليوم"""
+    try:
+        geofence = Geofence.query.get_or_404(geofence_id)
+        today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+        today_end = today_start + timedelta(days=1)
+        
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "حضور اليوم"
+        
+        headers = ['الموظف', 'رقم الموظف', 'وقت الدخول', 'الحالة', 'المدة (دقيقة)', 'الملاحظات']
+        ws.append(headers)
+        
+        for cell in ws[1]:
+            cell.font = Font(bold=True, color="FFFFFF")
+            cell.fill = PatternFill(start_color="10B981", end_color="10B981", fill_type="solid")
+        
+        # جلب الحضور لليوم
+        attendances = Attendance.query.filter(
+            Attendance.check_in_time >= today_start,
+            Attendance.check_in_time < today_end
+        ).join(Employee).all()
+        
+        # جلب الجلسات لليوم
+        sessions = GeofenceSession.query.filter(
+            GeofenceSession.geofence_id == geofence_id,
+            GeofenceSession.entry_time >= today_start,
+            GeofenceSession.entry_time < today_end
+        ).all()
+        
+        for session in sessions:
+            status = geofence.get_attendance_status(session)
+            status_ar = 'في الوقت' if status == 'on_time' else ('متأخر' if status.startswith('late_') else 'موجود')
+            
+            ws.append([
+                session.employee.name,
+                session.employee.employee_id,
+                session.entry_time.strftime('%H:%M:%S') if session.entry_time else '-',
+                status_ar,
+                session.duration_minutes or '-',
+                geofence.name
+            ])
+        
+        for col in range(1, 7):
+            ws.column_dimensions[ws.cell(row=1, column=col).column_letter].width = 18
+        
+        output = BytesIO()
+        wb.save(output)
+        output.seek(0)
+        
+        filename = f"حضور_اليوم_{geofence.name}_{datetime.utcnow().strftime('%Y%m%d')}.xlsx"
+        return send_file(output, mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                        as_attachment=True, download_name=filename)
+    except Exception as e:
+        flash(f'خطأ في التصدير: {str(e)}', 'danger')
+        return redirect(url_for('geofences.view', geofence_id=geofence_id))
+
+
+@geofences_bp.route('/<int:geofence_id>/export-entry-timeline', methods=['GET'])
+@login_required
+def export_entry_timeline(geofence_id):
+    """تصدير الموظفين الذين دخلوا اليوم بحسب الوقت"""
+    try:
+        geofence = Geofence.query.get_or_404(geofence_id)
+        today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+        today_end = today_start + timedelta(days=1)
+        
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "الدخول بحسب الوقت"
+        
+        headers = ['الترتيب', 'الموظف', 'رقم الموظف', 'وقت الدخول', 'القسم', 'الحالة']
+        ws.append(headers)
+        
+        for cell in ws[1]:
+            cell.font = Font(bold=True, color="FFFFFF")
+            cell.fill = PatternFill(start_color="F59E0B", end_color="F59E0B", fill_type="solid")
+        
+        # جلب الدخول بترتيب زمني
+        sessions = GeofenceSession.query.filter(
+            GeofenceSession.geofence_id == geofence_id,
+            GeofenceSession.entry_time >= today_start,
+            GeofenceSession.entry_time < today_end
+        ).order_by(GeofenceSession.entry_time.asc()).all()
+        
+        for idx, session in enumerate(sessions, 1):
+            status = geofence.get_attendance_status(session)
+            status_ar = 'في الوقت' if status == 'on_time' else ('متأخر' if status.startswith('late_') else 'موجود')
+            
+            ws.append([
+                idx,
+                session.employee.name,
+                session.employee.employee_id,
+                session.entry_time.strftime('%H:%M:%S') if session.entry_time else '-',
+                geofence.department.name if geofence.department else '-',
+                status_ar
+            ])
+        
+        for col in range(1, 7):
+            ws.column_dimensions[ws.cell(row=1, column=col).column_letter].width = 18
+        
+        output = BytesIO()
+        wb.save(output)
+        output.seek(0)
+        
+        filename = f"دخول_بالوقت_{geofence.name}_{datetime.utcnow().strftime('%Y%m%d')}.xlsx"
+        return send_file(output, mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                        as_attachment=True, download_name=filename)
+    except Exception as e:
+        flash(f'خطأ في التصدير: {str(e)}', 'danger')
+        return redirect(url_for('geofences.view', geofence_id=geofence_id))
 
 
 @geofences_bp.route('/<int:geofence_id>/update', methods=['PUT'])
