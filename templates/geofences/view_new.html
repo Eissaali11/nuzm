@@ -148,7 +148,7 @@
         
         .sections-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1fr;
             gap: 25px;
         }
         
@@ -359,6 +359,12 @@
         }
         
         @media (max-width: 1200px) {
+            .sections-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (min-width: 1201px) {
             .sections-grid {
                 grid-template-columns: 1fr;
             }
