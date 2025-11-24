@@ -807,6 +807,24 @@
         {% block extra_js %}{% endblock %}
 
         <script>
+            // دالة لتحديث دائرة إشعارات المركبات
+            function updateVehicleAlertsBadge() {
+                fetch('{{ url_for("vehicles.get_vehicle_alerts_count") }}')
+                    .then(response => response.json())
+                    .then(data => {
+                        const badge = document.getElementById('vehicleAlertBadge');
+                        if (badge) {
+                            if (data.success && data.total_alerts > 0) {
+                                badge.textContent = data.total_alerts;
+                                badge.style.display = 'inline-block';
+                            } else {
+                                badge.style.display = 'none';
+                            }
+                        }
+                    })
+                    .catch(error => console.error('خطأ في تحديث إشعارات المركبات:', error));
+            }
+
             // Set current year for footer
             document.addEventListener("DOMContentLoaded", function () {
                 const footerYear = document.querySelector(
@@ -822,6 +840,12 @@
 
                 // Load calendar preference
                 loadCalendarPreference();
+                
+                // تحديث دائرة إشعارات المركبات
+                updateVehicleAlertsBadge();
+                
+                // تحديث الإشعارات كل دقيقة
+                setInterval(updateVehicleAlertsBadge, 60000);
             });
         </script>
 
