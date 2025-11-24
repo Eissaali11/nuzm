@@ -529,7 +529,7 @@
                                     {% endif %}
                                 </div>
                             </div>
-                            {% if hasattr(session, 'attendance_status') %}
+                            {% if session.attendance_status is defined %}
                                 {% if session.attendance_status == 'on_time' %}
                                 <span class="status-badge status-ontime">
                                     <i class="fas fa-check-circle"></i> في الوقت
