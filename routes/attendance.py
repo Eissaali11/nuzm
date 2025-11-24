@@ -2717,9 +2717,11 @@ def department_attendance_view():
 
 @attendance_bp.route('/department/export-data', methods=['GET'])
 def export_department_data():
-    """تصدير بيانات الحضور حسب الفلاتر (الموظف، القسم، الحالة، الفترة الزمنية)"""
+    """تصدير بيانات الحضور حسب الفلاتر مع تصميم احترافي"""
     from openpyxl import Workbook
     from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+    from openpyxl.chart import PieChart, BarChart, Reference
+    from openpyxl.utils import get_column_letter
     from io import BytesIO
     
     try:
@@ -2766,46 +2768,181 @@ def export_department_data():
         
         attendances = query.order_by(Attendance.date.desc(), Employee.name).all()
         
+        # حساب الإحصائيات
+        total_count = len(attendances)
+        present_count = sum(1 for a in attendances if a.status == 'present')
+        absent_count = sum(1 for a in attendances if a.status == 'absent')
+        leave_count = sum(1 for a in attendances if a.status == 'leave')
+        sick_count = sum(1 for a in attendances if a.status == 'sick')
+        
         # إنشاء ملف Excel
         wb = Workbook()
+        
+        # ========== شيت البيانات الرئيسي ==========
         ws = wb.active
         ws.title = "بيانات الحضور"
+        
+        # تحديد عرض الأعمدة
+        ws.column_dimensions['A'].width = 22
+        ws.column_dimensions['B'].width = 16
+        ws.column_dimensions['C'].width = 16
+        ws.column_dimensions['D'].width = 26
+        ws.column_dimensions['E'].width = 14
+        ws.column_dimensions['F'].width = 14
+        ws.column_dimensions['G'].width = 14
+        ws.column_dimensions['H'].width = 14
+        ws.column_dimensions['I'].width = 22
         
         # رأس الجدول
         headers = ['الموظف', 'رقم الموظف', 'رقم الهوية', 'القسم', 'التاريخ', 'الحالة', 'الدخول', 'الخروج', 'الملاحظات']
         ws.append(headers)
         
-        # تنسيق الرأس
+        # تنسيق الرأس الاحترافي
+        header_fill = PatternFill(start_color="4F46E5", end_color="4F46E5", fill_type="solid")
+        header_font = Font(bold=True, color="FFFFFF", size=12)
+        thin_border = Border(
+            left=Side(style='thin', color='FFFFFF'),
+            right=Side(style='thin', color='FFFFFF'),
+            top=Side(style='thin', color='FFFFFF'),
+            bottom=Side(style='thin', color='FFFFFF')
+        )
+        
         for cell in ws[1]:
-            cell.font = Font(bold=True, color="FFFFFF")
-            cell.fill = PatternFill(start_color="4F46E5", end_color="4F46E5", fill_type="solid")
-            cell.alignment = Alignment(horizontal='center', vertical='center')
+            cell.font = header_font
+            cell.fill = header_fill
+            cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+            cell.border = thin_border
+        
+        ws.row_dimensions[1].height = 28
+        
+        # ألوان الحالات
+        status_colors = {
+            'present': 'D4EDDA',  # أخضر فاتح
+            'absent': 'F8D7DA',   # أحمر فاتح
+            'leave': 'FFF3CD',    # أصفر فاتح
+            'sick': 'D1ECF1'      # أزرق فاتح
+        }
+        
+        status_text_colors = {
+            'present': '155724',  # أخضر غامق
+            'absent': '721C24',   # أحمر غامق
+            'leave': '856404',    # أصفر غامق
+            'sick': '0C5460'      # أزرق غامق
+        }
         
         # إضافة البيانات
+        row_num = 2
         for att in attendances:
             department_name = ', '.join([d.name for d in att.employee.departments]) if att.employee.departments else '-'
+            status = att.status or '-'
+            
+            # الحصول على لون الحالة
+            bg_color = status_colors.get(status, 'FFFFFF')
+            text_color = status_text_colors.get(status, '000000')
+            
             ws.append([
                 att.employee.name,
                 att.employee.employee_id,
                 att.employee.national_id if hasattr(att.employee, 'national_id') else '-',
                 department_name,
                 att.date.strftime('%Y-%m-%d') if att.date else '-',
-                att.status or '-',
+                status,
                 att.check_in.strftime('%H:%M') if att.check_in else '-',
                 att.check_out.strftime('%H:%M') if att.check_out else '-',
                 att.notes or '-'
             ])
+            
+            # تنسيق الصفوف
+            for idx, cell in enumerate(ws[row_num], 1):
+                cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+                cell.border = Border(
+                    left=Side(style='thin', color='E0E0E0'),
+                    right=Side(style='thin', color='E0E0E0'),
+                    top=Side(style='thin', color='E0E0E0'),
+                    bottom=Side(style='thin', color='E0E0E0')
+                )
+                
+                # تلوين الخلايا حسب الحالة (عمود الحالة فقط)
+                if idx == 6:  # عمود الحالة
+                    cell.fill = PatternFill(start_color=bg_color, end_color=bg_color, fill_type="solid")
+                    cell.font = Font(bold=True, color=text_color, size=11)
+                else:
+                    if row_num % 2 == 0:
+                        cell.fill = PatternFill(start_color="F8F9FA", end_color="F8F9FA", fill_type="solid")
+                    if idx == 1:  # عمود الموظف
+                        cell.font = Font(bold=True)
+            
+            ws.row_dimensions[row_num].height = 22
+            row_num += 1
         
-        # تعديل عرض الأعمدة
-        ws.column_dimensions['A'].width = 20
-        ws.column_dimensions['B'].width = 15
-        ws.column_dimensions['C'].width = 15
-        ws.column_dimensions['D'].width = 25
-        ws.column_dimensions['E'].width = 12
-        ws.column_dimensions['F'].width = 12
-        ws.column_dimensions['G'].width = 12
-        ws.column_dimensions['H'].width = 12
-        ws.column_dimensions['I'].width = 20
+        # ========== شيت الإحصائيات ==========
+        stats_ws = wb.create_sheet("الإحصائيات")
+        
+        # عنوان الإحصائيات
+        stats_ws.merge_cells('A1:D1')
+        title_cell = stats_ws['A1']
+        title_cell.value = "ملخص إحصائيات الحضور"
+        title_cell.font = Font(bold=True, size=16, color="FFFFFF")
+        title_cell.fill = PatternFill(start_color="4F46E5", end_color="4F46E5", fill_type="solid")
+        title_cell.alignment = Alignment(horizontal='center', vertical='center')
+        stats_ws.row_dimensions[1].height = 32
+        
+        # إعدادات الأعمدة
+        stats_ws.column_dimensions['A'].width = 25
+        stats_ws.column_dimensions['B'].width = 18
+        stats_ws.column_dimensions['C'].width = 18
+        stats_ws.column_dimensions['D'].width = 18
+        
+        # البيانات الإحصائية
+        stats_data = [
+            ['', 'العدد', 'النسبة %', 'الحالة'],
+            ['إجمالي السجلات', total_count, '100%', 'total'],
+            ['موظفون حاضرون', present_count, f'{int((present_count/max(total_count,1))*100)}%', 'present'],
+            ['موظفون غائبون', absent_count, f'{int((absent_count/max(total_count,1))*100)}%', 'absent'],
+            ['إجازات', leave_count, f'{int((leave_count/max(total_count,1))*100)}%', 'leave'],
+            ['مرضي', sick_count, f'{int((sick_count/max(total_count,1))*100)}%', 'sick']
+        ]
+        
+        # إضافة البيانات الإحصائية
+        for idx, row_data in enumerate(stats_data, 2):
+            for col_idx, value in enumerate(row_data[:3], 1):
+                cell = stats_ws.cell(row=idx, column=col_idx)
+                cell.value = value
+                cell.alignment = Alignment(horizontal='center', vertical='center')
+                
+                if idx == 2:  # رأس الإحصائيات
+                    cell.font = Font(bold=True, color="FFFFFF", size=12)
+                    cell.fill = PatternFill(start_color="667EEA", end_color="667EEA", fill_type="solid")
+                elif row_data[3] == 'total':
+                    cell.font = Font(bold=True, size=12)
+                    cell.fill = PatternFill(start_color="E0E7FF", end_color="E0E7FF", fill_type="solid")
+                elif row_data[3] == 'present':
+                    cell.fill = PatternFill(start_color="D4EDDA", end_color="D4EDDA", fill_type="solid")
+                    cell.font = Font(bold=True, color="155724")
+                elif row_data[3] == 'absent':
+                    cell.fill = PatternFill(start_color="F8D7DA", end_color="F8D7DA", fill_type="solid")
+                    cell.font = Font(bold=True, color="721C24")
+                elif row_data[3] == 'leave':
+                    cell.fill = PatternFill(start_color="FFF3CD", end_color="FFF3CD", fill_type="solid")
+                    cell.font = Font(bold=True, color="856404")
+                elif row_data[3] == 'sick':
+                    cell.fill = PatternFill(start_color="D1ECF1", end_color="D1ECF1", fill_type="solid")
+                    cell.font = Font(bold=True, color="0C5460")
+                
+                stats_ws.row_dimensions[idx].height = 26
+        
+        # إنشاء رسم بياني دائري للإحصائيات
+        if total_count > 0:
+            pie = PieChart()
+            pie.title = "توزيع حالات الحضور"
+            pie.style = 10
+            labels = Reference(stats_ws, min_col=1, min_row=3, max_row=6)
+            data = Reference(stats_ws, min_col=2, min_row=2, max_row=6)
+            pie.add_data(data, titles_from_data=True)
+            pie.set_categories(labels)
+            pie.height = 12
+            pie.width = 16
+            stats_ws.add_chart(pie, "A9")
         
         output = BytesIO()
         wb.save(output)
@@ -2816,6 +2953,7 @@ def export_department_data():
                         as_attachment=True, download_name=filename)
     
     except Exception as e:
+        logger.error(f"خطأ في تصدير البيانات: {str(e)}")
         flash(f'خطأ في التصدير: {str(e)}', 'error')
         return redirect(url_for('attendance.department_attendance_view'))
 
