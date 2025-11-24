@@ -6599,7 +6599,7 @@ def get_vehicle_alerts_count():
         try:
                 # 1. عدد الفحوصات الخارجية الجديدة (pending)
                 pending_external_checks = db.session.query(func.count(VehicleExternalSafetyCheck.id)).filter(
-                        VehicleExternalSafetyCheck.status == 'pending'
+                        VehicleExternalSafetyCheck.approval_status == 'pending'
                 ).scalar() or 0
                 
                 # 2. عدد التفويضات المنتهية أو القريبة من الانتهاء
