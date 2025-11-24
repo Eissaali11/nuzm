@@ -1662,6 +1662,25 @@ def delete_safety_check(check_id):
         return redirect(url_for('external_safety.admin_view_safety_check', check_id=check_id))
 
 @external_safety_bp.route('/admin/external-safety-check/<int:check_id>/pdf')
+def view_safety_check_pdf(check_id):
+    """عرض صفحة جميلة لفحص السلامة مع زر تحميل PDF"""
+    if not current_user.is_authenticated:
+        flash('يرجى تسجيل الدخول أولاً', 'error')
+        return redirect(url_for('external_safety.admin_external_safety_checks'))
+    
+    try:
+        safety_check = VehicleExternalSafetyCheck.query.options(
+            db.selectinload(VehicleExternalSafetyCheck.safety_images)
+        ).get_or_404(check_id)
+        
+        return render_template('external_safety_check_view.html', safety_check=safety_check)
+        
+    except Exception as e:
+        current_app.logger.error(f"خطأ في عرض صفحة فحص السلامة: {str(e)}")
+        flash('حدث خطأ في عرض الطلب', 'error')
+        return redirect(url_for('external_safety.admin_external_safety_checks'))
+
+@external_safety_bp.route('/admin/external-safety-check/<int:check_id>/pdf/download')
 def export_safety_check_pdf(check_id):
     """تصدير طلب فحص السلامة كملف PDF بتصميم احترافي"""
     if not current_user.is_authenticated:
