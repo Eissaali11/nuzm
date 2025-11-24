@@ -414,6 +414,35 @@ def api_list():
         }), 400
 
 
+@geofences_bp.route('/<int:geofence_id>/update-settings', methods=['POST'])
+@login_required
+def update_settings(geofence_id):
+    """تحديث إعدادات الحضور للدائرة"""
+    try:
+        geofence = Geofence.query.get_or_404(geofence_id)
+        data = request.get_json()
+        
+        if 'attendance_start_time' in data:
+            geofence.attendance_start_time = data['attendance_start_time']
+        if 'attendance_required_minutes' in data:
+            geofence.attendance_required_minutes = data['attendance_required_minutes']
+        
+        geofence.updated_at = datetime.utcnow()
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'تم تحديث إعدادات الحضور بنجاح'
+        })
+    
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'message': f'خطأ: {str(e)}'
+        }), 400
+
+
 @geofences_bp.route('/<int:geofence_id>/update', methods=['PUT'])
 @login_required
 def update(geofence_id):

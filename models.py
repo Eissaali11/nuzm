@@ -2202,6 +2202,8 @@ class Geofence(db.Model):
     department_id = db.Column(db.Integer, db.ForeignKey('department.id', ondelete='CASCADE'), nullable=False)
     notify_on_entry = db.Column(db.Boolean, default=False)
     notify_on_exit = db.Column(db.Boolean, default=False)
+    attendance_start_time = db.Column(db.String(5), default='08:00')  # وقت البداية HH:MM
+    attendance_required_minutes = db.Column(db.Integer, default=30)  # الحد الأدنى للبقاء
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
