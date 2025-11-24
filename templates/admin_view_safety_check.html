@@ -1,899 +1,416 @@
 {% extends "layout.html" %}
 
-{% block title %}تفاصيل طلب فحص السلامة #{{ safety_check.id }}{% endblock %}
-
-{% block styles %}
+{% block content %}
 <style>
-    /* تحسين الألوان لتتطابق مع النظام */
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+    
     body {
-        background: linear-gradient(135deg, #1e3a5c 0%, #2d4a6b 100%) !important;
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%) !important;
+    }
+    
+    .safety-check-container {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
         min-height: 100vh;
+        padding: 40px 20px;
+        direction: rtl;
     }
     
-    .container-fluid {
-        background: linear-gradient(135deg, #1e3a5c 0%, #2d4a6b 100%) !important;
-        min-height: 100vh;
+    .header-section {
+        max-width: 1000px;
+        margin: 0 auto 40px;
+        text-align: center;
     }
     
-    .card-header.bg-primary {
-        background: linear-gradient(135deg, #1e3a5c 0%, #2d4a6b 100%) !important;
-        color: white !important;
-        border-bottom: 2px solid #fff !important;
+    .header-section h1 {
+        color: #18b2b0;
+        font-size: 2.5em;
+        margin-bottom: 10px;
+        text-shadow: 0 2px 10px rgba(24, 178, 176, 0.3);
     }
     
-    .card-header.bg-info {
-        background: linear-gradient(135deg, #3498db 0%, #2980b9 100%) !important;
-        color: white !important;
-        border-bottom: 2px solid #fff !important;
+    .breadcrumb {
+        color: #94a3b8;
+        font-size: 14px;
+        margin-bottom: 20px;
     }
     
-    .card-header.bg-warning {
-        background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%) !important;
-        color: white !important;
-        border-bottom: 2px solid #fff !important;
+    .action-buttons {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+        margin-bottom: 30px;
+        flex-wrap: wrap;
     }
     
-    .card-header.bg-secondary {
-        background: linear-gradient(135deg, #6c757d 0%, #495057 100%) !important;
-        color: white !important;
-        border-bottom: 2px solid #fff !important;
-    }
-    
-    .card-header.bg-success {
-        background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%) !important;
-        color: white !important;
-        border-bottom: 2px solid #fff !important;
-    }
-    
-    .card-header.bg-danger {
-        background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%) !important;
-        color: white !important;
-        border-bottom: 2px solid #fff !important;
-    }
-    
-    .card {
-        background: linear-gradient(135deg, #1e3a5c 0%, #2d4a6b 100%) !important;
-        color: white !important;
-        border: none !important;
-        border-radius: 15px !important;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
-    }
-    
-    .card-body {
-        background: linear-gradient(135deg, #1e3a5c 0%, #2d4a6b 100%) !important;
-        color: white !important;
-    }
-    
-    .table {
-        color: white !important;
-        background: linear-gradient(135deg, #2d4a6b 0%, #1e3a5c 100%) !important;
-    }
-    
-    .table th {
-        background: linear-gradient(135deg, #1e3a5c 0%, #2d4a6b 100%) !important;
-        color: white !important;
-        border-color: #4a6b8a !important;
-    }
-    
-    .table td {
-        background-color: rgba(45, 74, 107, 0.8) !important;
-        color: white !important;
-        border-color: #4a6b8a !important;
-    }
-    
-    .table-borderless th,
-    .table-borderless td {
-        border: none !important;
+    .btn-primary, .btn-secondary {
+        padding: 12px 28px;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none;
     }
     
     .btn-primary {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-        border: none !important;
-        color: white !important;
+        background: linear-gradient(135deg, #18b2b0 0%, #0d9488 100%);
+        color: white;
+        box-shadow: 0 4px 15px rgba(24, 178, 176, 0.3);
     }
     
     .btn-primary:hover {
-        background: linear-gradient(135deg, #5a6fd8 0%, #654d8f 100%) !important;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(24, 178, 176, 0.4);
     }
     
     .btn-secondary {
-        background-color: #6c757d !important;
-        border-color: #6c757d !important;
+        background: rgba(148, 163, 184, 0.1);
+        color: #cbd5e1;
+        border: 1px solid rgba(148, 163, 184, 0.3);
     }
     
-    .btn-success {
-        background-color: #28a745 !important;
-        border-color: #28a745 !important;
+    .btn-secondary:hover {
+        background: rgba(148, 163, 184, 0.2);
     }
     
-    .btn-danger {
-        background-color: #dc3545 !important;
-        border-color: #dc3545 !important;
+    .main-card {
+        max-width: 1000px;
+        margin: 0 auto;
+        background: rgba(15, 23, 42, 0.8);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(148, 163, 184, 0.2);
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
     }
     
-    .btn-warning {
-        background-color: #ffc107 !important;
-        border-color: #ffc107 !important;
-        color: #212529 !important;
+    .card-header {
+        background: linear-gradient(135deg, rgba(24, 178, 176, 0.1) 0%, rgba(13, 148, 136, 0.1) 100%);
+        border-bottom: 2px solid rgba(24, 178, 176, 0.3);
+        padding: 30px;
     }
     
-    .btn-info {
-        background-color: #17a2b8 !important;
-        border-color: #17a2b8 !important;
+    .card-header h2 {
+        color: #18b2b0;
+        font-size: 1.8em;
+        margin-bottom: 5px;
     }
     
-    .badge-lg {
-        font-size: 1rem !important;
-        padding: 0.5rem 1rem !important;
+    .status-badge {
+        display: inline-block;
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        margin-top: 10px;
     }
     
-    .badge-warning {
-        background-color: #ffc107 !important;
-        color: #212529 !important;
+    .status-approved {
+        background: rgba(34, 197, 94, 0.2);
+        color: #86efac;
+        border: 1px solid rgba(34, 197, 94, 0.3);
     }
     
-    .badge-success {
-        background-color: #28a745 !important;
-        color: white !important;
+    .status-pending {
+        background: rgba(245, 158, 11, 0.2);
+        color: #fcd34d;
+        border: 1px solid rgba(245, 158, 11, 0.3);
     }
     
-    .badge-danger {
-        background-color: #dc3545 !important;
-        color: white !important;
+    .status-rejected {
+        background: rgba(239, 68, 68, 0.2);
+        color: #fca5a5;
+        border: 1px solid rgba(239, 68, 68, 0.3);
     }
     
-    .text-muted {
-        color: #adb5bd !important;
+    .card-body {
+        padding: 40px;
     }
     
-    .card-text {
-        color: #ffffff !important;
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 25px;
+        margin-bottom: 40px;
     }
     
-    .small {
-        color: #adb5bd !important;
+    .info-item {
+        background: rgba(71, 85, 105, 0.2);
+        padding: 20px;
+        border-radius: 12px;
+        border-left: 4px solid #18b2b0;
+        transition: all 0.3s ease;
     }
     
-    /* تحسين النافذة المنبثقة */
-    .modal-content {
-        background-color: #1e3a5c !important;
-        color: white !important;
-        border: none !important;
+    .info-item:hover {
+        background: rgba(71, 85, 105, 0.35);
+        transform: translateX(-4px);
     }
     
-    .modal-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-        color: white !important;
-        border-bottom: none !important;
+    .info-label {
+        color: #94a3b8;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 8px;
     }
     
-    .modal-body {
-        background-color: #1e3a5c !important;
-        color: white !important;
+    .info-value {
+        color: #f1f5f9;
+        font-size: 16px;
+        font-weight: 600;
     }
     
-    .modal-title {
-        color: white !important;
+    .section-title {
+        color: #18b2b0;
+        font-size: 1.4em;
+        margin-bottom: 20px;
+        margin-top: 30px;
+        padding-bottom: 12px;
+        border-bottom: 2px solid rgba(24, 178, 176, 0.3);
     }
     
-    .btn-outline-secondary {
-        color: #6c757d !important;
-        border-color: #6c757d !important;
+    .images-gallery {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 15px;
+        margin-bottom: 40px;
     }
     
-    .btn-outline-secondary:hover {
-        background-color: #6c757d !important;
-        border-color: #6c757d !important;
-        color: white !important;
+    .image-card {
+        aspect-ratio: 1;
+        border-radius: 12px;
+        overflow: hidden;
+        border: 2px solid rgba(24, 178, 176, 0.3);
+        cursor: pointer;
+        transition: all 0.3s ease;
     }
     
-    .close {
-        color: white !important;
-        opacity: 1 !important;
+    .image-card:hover {
+        border-color: #18b2b0;
+        box-shadow: 0 0 20px rgba(24, 178, 176, 0.3);
+        transform: scale(1.05);
     }
     
-    .close:hover {
-        color: #ccc !important;
+    .image-card img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
     }
     
-    /* تحسين الصور */
-    .card-img-top {
-        border-radius: 8px !important;
-        transition: transform 0.3s ease !important;
+    .notes-section {
+        background: rgba(24, 178, 176, 0.1);
+        padding: 20px;
+        border-radius: 12px;
+        border-left: 4px solid #18b2b0;
     }
     
-    .card-img-top:hover {
-        transform: scale(1.05) !important;
+    .notes-section h3 {
+        color: #18b2b0;
+        margin-bottom: 12px;
     }
     
-    /* تحسين الروابط */
-    a {
-        color: #667eea !important;
+    .notes-section p {
+        color: #cbd5e1;
+        line-height: 1.6;
     }
     
-    a:hover {
-        color: #5a6fd8 !important;
+    .empty-notes {
+        color: #64748b;
+        font-style: italic;
     }
     
-    /* تحسين التدرجات */
-    .bg-gradient-primary {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    .footer-section {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        padding: 30px;
+        border-top: 1px solid rgba(148, 163, 184, 0.2);
+        flex-wrap: wrap;
     }
     
-    .bg-gradient-info {
-        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%) !important;
+    @media print {
+        body {
+            background: white;
+        }
+        .safety-check-container {
+            background: white;
+            padding: 20px;
+        }
+        .action-buttons, .footer-section {
+            display: none;
+        }
+        .main-card {
+            border: none;
+            box-shadow: none;
+        }
     }
     
-    .bg-gradient-warning {
-        background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%) !important;
-    }
-    
-    .bg-gradient-secondary {
-        background: linear-gradient(135deg, #6c757d 0%, #495057 100%) !important;
-    }
-    
-    .bg-gradient-success {
-        background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
-    }
-    
-    .bg-gradient-danger {
-        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%) !important;
-    }
-    
-    /* تحسين الحدود */
-    .border-info {
-        border-color: #17a2b8 !important;
-    }
-    
-    .border-warning {
-        border-color: #ffc107 !important;
-    }
-    
-    .border-secondary {
-        border-color: #6c757d !important;
-    }
-    
-    .border-success {
-        border-color: #28a745 !important;
-    }
-    
-    .border-danger {
-        border-color: #dc3545 !important;
-    }
-    
-    /* تحسين الظلال */
-    .shadow {
-        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1) !important;
-    }
-    
-    /* تحسين الأيقونات */
-    .fas {
-        color: inherit !important;
-    }
-    
-    .card-header .fas {
-        color: white !important;
+    @media (max-width: 768px) {
+        .header-section h1 {
+            font-size: 1.8em;
+        }
+        .info-grid {
+            grid-template-columns: 1fr;
+        }
+        .action-buttons {
+            flex-direction: column;
+        }
+        .btn-primary, .btn-secondary {
+            width: 100%;
+            justify-content: center;
+        }
     }
 </style>
-{% endblock %}
 
-{% block content %}
-<div class="container-fluid py-4">
-    <div class="row">
-        <div class="col-12">
-            <div class="card shadow">
-                <div class="card-header bg-primary text-white">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h3 class="card-title mb-0">
-                            <i class="fas fa-shield-alt ml-2"></i>
-                            تفاصيل طلب فحص السلامة #{{ safety_check.id }}
-                        </h3>
-                        <div>
-                            {% if safety_check.is_pending %}
-                                <span class="badge badge-warning badge-lg">قيد المراجعة</span>
-                            {% elif safety_check.is_approved %}
-                                <span class="badge badge-success badge-lg">معتمدة</span>
-                            {% elif safety_check.is_rejected %}
-                                <span class="badge badge-danger badge-lg">مرفوضة</span>
-                            {% endif %}
-                        </div>
+<div class="safety-check-container">
+    <div class="header-section">
+        <div class="breadcrumb">
+            <i class="fas fa-shield-alt"></i> فحص السلامة الخارجي
+        </div>
+        <h1>🚗 تقرير فحص السلامة</h1>
+    </div>
+    
+    <div class="action-buttons">
+        <button onclick="window.print()" class="btn-secondary">
+            <i class="fas fa-print"></i> طباعة الصفحة
+        </button>
+        <a href="{{ url_for('external_safety.export_safety_check_pdf', check_id=safety_check.id) }}" class="btn-primary">
+            <i class="fas fa-file-pdf"></i> تحميل PDF
+        </a>
+        <a href="{{ url_for('external_safety.edit_safety_check', check_id=safety_check.id) }}" class="btn-secondary">
+            <i class="fas fa-edit"></i> تعديل
+        </a>
+        <a href="{{ url_for('external_safety.admin_external_safety_checks') }}" class="btn-secondary">
+            <i class="fas fa-arrow-right"></i> عودة
+        </a>
+    </div>
+    
+    <div class="main-card">
+        <div class="card-header">
+            <h2>معلومات المركبة والسائق</h2>
+            <div>
+                {% if safety_check.approval_status == 'approved' %}
+                <span class="status-badge status-approved">
+                    <i class="fas fa-check-circle"></i> موافق عليه
+                </span>
+                {% elif safety_check.approval_status == 'pending' %}
+                <span class="status-badge status-pending">
+                    <i class="fas fa-clock"></i> قيد الانتظار
+                </span>
+                {% else %}
+                <span class="status-badge status-rejected">
+                    <i class="fas fa-times-circle"></i> مرفوض
+                </span>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="card-body">
+            <!-- معلومات المركبة والسائق -->
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">رقم اللوحة</div>
+                    <div class="info-value">{{ safety_check.vehicle_plate_number }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">موديل المركبة</div>
+                    <div class="info-value">{{ safety_check.vehicle_make_model or 'غير محدد' }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">اسم السائق</div>
+                    <div class="info-value">{{ safety_check.driver_name or 'غير محدد' }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">رقم الهوية</div>
+                    <div class="info-value">{{ safety_check.driver_national_id or 'غير محدد' }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">القسم</div>
+                    <div class="info-value">{{ safety_check.driver_department or 'غير محدد' }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">المدينة</div>
+                    <div class="info-value">{{ safety_check.driver_city or 'غير محدد' }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">تاريخ الفحص</div>
+                    <div class="info-value">
+                        {{ safety_check.inspection_date.strftime('%d/%m/%Y') if safety_check.inspection_date else 'غير محدد' }}
                     </div>
                 </div>
-                
-                <div class="card-body">
-                    <div class="row">
-                        <!-- معلومات السيارة -->
-                        <div class="col-md-6 mb-4">
-                            <div class="card border-info">
-                                <div class="card-header bg-info text-white">
-                                    <h5 class="mb-0">
-                                        <i class="fas fa-car"></i> معلومات السيارة
-                                    </h5>
-                                </div>
-                                <div class="card-body">
-                                    <table class="table table-borderless">
-                                        <tr>
-                                            <td><strong>رقم اللوحة:</strong></td>
-                                            <td>{{ safety_check.vehicle_plate_number }}</td>
-                                        </tr>
-                                        <tr>
-                                            <td><strong>نوع السيارة:</strong></td>
-                                            <td>{{ safety_check.vehicle_make_model }}</td>
-                                        </tr>
-                                        <tr>
-                                            <td><strong>المفوض الحالي:</strong></td>
-                                            <td>{{ safety_check.current_delegate or 'غير محدد' }}</td>
-                                        </tr>
-                                        <tr>
-                                            <td><strong>تاريخ الفحص:</strong></td>
-                                            <td>{{ safety_check.inspection_date.strftime('%Y-%m-%d %H:%M') }}</td>
-                                        </tr>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- معلومات السائق -->
-                        <div class="col-md-6 mb-4">
-                            <div class="card border-success">
-                                <div class="card-header bg-success text-white">
-                                    <h5 class="mb-0">
-                                        <i class="fas fa-user"></i> معلومات السائق
-                                    </h5>
-                                </div>
-                                <div class="card-body">
-                                    <table class="table table-borderless">
-                                        <tr>
-                                            <td><strong>اسم السائق:</strong></td>
-                                            <td>{{ safety_check.driver_name }}</td>
-                                        </tr>
-                                        <tr>
-                                            <td><strong>رقم الهوية:</strong></td>
-                                            <td>{{ safety_check.driver_national_id }}</td>
-                                        </tr>
-                                        <tr>
-                                            <td><strong>القسم:</strong></td>
-                                            <td>{{ safety_check.driver_department }}</td>
-                                        </tr>
-                                        <tr>
-                                            <td><strong>المدينة:</strong></td>
-                                            <td>{{ safety_check.driver_city }}</td>
-                                        </tr>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- الصور المرفقة -->
-                    {% if safety_check.safety_images %}
-                    <div class="row mb-4">
-                        <div class="col-12">
-                            <div class="card border-warning">
-                                <div class="card-header bg-warning text-white">
-                                    <h5 class="mb-0">
-                                        <i class="fas fa-images"></i> صور فحص السلامة ({{ safety_check.safety_images | length }})
-                                    </h5>
-                                </div>
-                                <div class="card-body">
-                                    <div class="row">
-                                        {% for image in safety_check.safety_images %}
-                                        <div class="col-md-3 mb-3">
-                                            <div class="card">
-                                                {% if image.image_path.startswith('/') %}
-                                                    {% set image_url = image.image_path %}
-                                                {% elif image.image_path.startswith('uploads/') %}
-                                                    {% set image_url = '/' + image.image_path %}
-                                                {% elif image.image_path.startswith('static/') %}
-                                                    {% set image_url = '/' + image.image_path %}
-                                                {% else %}
-                                                    {% set image_url = '/uploads/safety_checks/' + image.image_path %}
-                                                {% endif %}
-                                                <img src="{{ image_url }}" 
-                                                     class="card-img-top" 
-                                                     alt="صورة فحص السلامة" 
-                                                     style="height: 200px; object-fit: cover; cursor: pointer;"
-                                                     onclick="showImageModal('{{ image_url }}', '{{ image.image_description or 'بدون وصف' }}')"
-                                                     onerror="this.style.display='none'; this.parentElement.querySelector('.image-error').style.display='block';">
-                                                <div class="image-error" style="display: none; text-align: center; padding: 20px; background-color: #f8f9fa; border: 2px dashed #dee2e6; border-radius: 8px;">
-                                                    <i class="fas fa-exclamation-triangle text-warning"></i>
-                                                    <p class="text-muted small mb-0">خطأ في تحميل الصورة</p>
-                                                    <small class="text-muted">المسار: {{ image.image_path }}</small>
-                                                </div>
-                                                <div class="card-body p-2">
-                                                    <!-- أزرار عرض الصورة -->
-                                                    <div class="btn-group btn-group-sm w-100 mb-2">
-                                                        <button type="button" class="btn btn-primary btn-sm" 
-                                                                onclick="showImageModal('{{ image_url }}', '{{ image.image_description or 'بدون وصف' }}')">
-                                                            <i class="fas fa-search-plus"></i> عرض مكبر
-                                                        </button>
-                                                        <a href="{{ image_url }}" target="_blank" class="btn btn-info btn-sm">
-                                                            <i class="fas fa-external-link-alt"></i> فتح في تبويب جديد
-                                                        </a>
-                                                        <a href="{{ image_url }}" download class="btn btn-success btn-sm">
-                                                            <i class="fas fa-download"></i> تنزيل
-                                                        </a>
-                                                    </div>
-                                                    <p class="card-text small text-muted">
-                                                        {{ image.image_description or 'بدون وصف' }}
-                                                    </p>
-                                                    <small class="text-muted">
-                                                        {{ image.uploaded_at.strftime('%Y-%m-%d %H:%M') }}
-                                                    </small>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        {% endfor %}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    {% endif %}
-                    
-                    <!-- ملف PDF المرفق -->
-                    {% if safety_check.pdf_file_path %}
-                    <div class="row mb-4">
-                        <div class="col-12">
-                            <div class="card border-danger">
-                                <div class="card-header bg-danger text-white">
-                                    <h5 class="mb-0">
-                                        <i class="fas fa-file-pdf"></i> ملف PDF المرفق
-                                    </h5>
-                                </div>
-                                <div class="card-body">
-                                    <div class="d-flex align-items-center justify-content-between">
-                                        <div>
-                                            <i class="fas fa-file-pdf fa-3x text-danger"></i>
-                                            <span class="mr-3 font-weight-bold">ملف PDF مرفق</span>
-                                        </div>
-                                        <div>
-                                            {% if safety_check.pdf_file_path.startswith('static/') %}
-                                                {% set pdf_url = '/' + safety_check.pdf_file_path %}
-                                            {% else %}
-                                                {% set pdf_url = '/uploads/safety_checks_pdfs/' + safety_check.pdf_file_path %}
-                                            {% endif %}
-                                            <a href="{{ pdf_url }}" target="_blank" class="btn btn-info btn-lg ml-2">
-                                                <i class="fas fa-eye"></i> عرض الملف
-                                            </a>
-                                            <a href="{{ pdf_url }}" download class="btn btn-success btn-lg">
-                                                <i class="fas fa-download"></i> تحميل الملف
-                                            </a>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    {% endif %}
-                    
-                    <!-- الملاحظات -->
-                    {% if safety_check.notes %}
-                    <div class="row mb-4">
-                        <div class="col-12">
-                            <div class="card border-secondary">
-                                <div class="card-header bg-secondary text-white">
-                                    <h5 class="mb-0">
-                                        <i class="fas fa-sticky-note"></i> ملاحظات إضافية
-                                    </h5>
-                                </div>
-                                <div class="card-body">
-                                    <p class="mb-0">{{ safety_check.notes }}</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    {% endif %}
-                    
-                    <!-- معلومات الاعتماد -->
-                    {% if safety_check.approved_by %}
-                    <div class="row mb-4">
-                        <div class="col-12">
-                            <div class="card border-{% if safety_check.is_approved %}success{% else %}danger{% endif %}">
-                                <div class="card-header bg-{% if safety_check.is_approved %}success{% else %}danger{% endif %} text-white">
-                                    <h5 class="mb-0">
-                                        <i class="fas fa-{% if safety_check.is_approved %}check{% else %}times{% endif %}-circle"></i> 
-                                        معلومات الاعتماد
-                                    </h5>
-                                </div>
-                                <div class="card-body">
-                                    <table class="table table-borderless">
-                                        <tr>
-                                            <td><strong>الحالة:</strong></td>
-                                            <td>
-                                                {% if safety_check.is_approved %}
-                                                    <span class="badge badge-success">معتمدة</span>
-                                                {% else %}
-                                                    <span class="badge badge-danger">مرفوضة</span>
-                                                {% endif %}
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td><strong>تاريخ الاعتماد:</strong></td>
-                                            <td>{{ safety_check.approved_at.strftime('%Y-%m-%d %H:%M') }}</td>
-                                        </tr>
-                                        <tr>
-                                            <td><strong>تم بواسطة:</strong></td>
-                                            <td>{{ safety_check.approver.name if safety_check.approver else 'غير محدد' }}</td>
-                                        </tr>
-                                        {% if safety_check.rejection_reason %}
-                                        <tr>
-                                            <td><strong>سبب الرفض:</strong></td>
-                                            <td>{{ safety_check.rejection_reason }}</td>
-                                        </tr>
-                                        {% endif %}
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    {% endif %}
-                    
-                    <!-- أزرار الإجراءات -->
-                    <div class="row">
-                        <div class="col-12">
-                            <div class="btn-group" role="group">
-                                <a href="{{ url_for('external_safety.admin_external_safety_checks') }}" 
-                                   class="btn btn-secondary">
-                                    <i class="fas fa-arrow-left"></i> العودة للقائمة
-                                </a>
-                                
-                                <!-- زر التعديل -->
-                                <a href="{{ url_for('external_safety.edit_safety_check', check_id=safety_check.id) }}" 
-                                   class="btn btn-warning">
-                                    <i class="fas fa-edit"></i> تعديل الفحص
-                                </a>
-                                
-                                <!-- زر الحذف -->
-                                <a href="{{ url_for('external_safety.delete_external_safety_check', check_id=safety_check.id) }}" 
-                                   class="btn btn-danger">
-                                    <i class="fas fa-trash"></i> حذف الفحص
-                                </a>
-                                
-                                <!-- زر تصدير PDF -->
-                                <a href="{{ url_for('external_safety.export_safety_check_pdf', check_id=safety_check.id) }}" 
-                                   class="btn btn-info" target="_blank">
-                                    <i class="fas fa-file-pdf"></i> تصدير PDF
-                                </a>
-                                
-                                {% if safety_check.is_pending %}
-                                <form method="POST" 
-                                      action="{{ url_for('external_safety.approve_safety_check', check_id=safety_check.id) }}" 
-                                      style="display: inline-block;">
-                                    <button type="submit" 
-                                            class="btn btn-success" 
-                                            onclick="return confirm('هل أنت متأكد من اعتماد هذا الطلب؟')">
-                                        <i class="fas fa-check"></i> اعتماد الطلب
-                                    </button>
-                                </form>
-                                
-                                <a href="{{ url_for('external_safety.reject_safety_check_page', check_id=safety_check.id) }}" 
-                                   class="btn btn-danger">
-                                    <i class="fas fa-times"></i> رفض الطلب
-                                </a>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
+                <div class="info-item">
+                    <div class="info-label">الموكل الحالي</div>
+                    <div class="info-value">{{ safety_check.current_delegate or 'غير محدد' }}</div>
                 </div>
             </div>
+            
+            <!-- صور الفحص -->
+            {% if safety_check.safety_images %}
+            <h3 class="section-title">📸 صور الفحص</h3>
+            <div class="images-gallery">
+                {% for image in safety_check.safety_images %}
+                <div class="image-card">
+                    <img src="{{ url_for('static', filename='uploads/' + image.image_path) }}" 
+                         alt="صورة الفحص" 
+                         onclick="openModal('{{ url_for('static', filename='uploads/' + image.image_path) }}')">
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            
+            <!-- الملاحظات -->
+            {% if safety_check.notes %}
+            <h3 class="section-title">📝 الملاحظات</h3>
+            <div class="notes-section">
+                <p>{{ safety_check.notes }}</p>
+            </div>
+            {% endif %}
+            
+            <!-- سبب الرفض إن وجد -->
+            {% if safety_check.rejection_reason %}
+            <h3 class="section-title">❌ سبب الرفض</h3>
+            <div class="notes-section" style="border-left-color: #ef4444;">
+                <p>{{ safety_check.rejection_reason }}</p>
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="footer-section">
+            <button onclick="history.back()" class="btn-secondary">
+                <i class="fas fa-arrow-right"></i> عودة
+            </button>
         </div>
     </div>
 </div>
 
-<!-- نافذة منبثقة لعرض الصورة مع تكبير/تصغير -->
-<div class="modal fade" id="imageModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog modal-xl" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="imageModalTitle">صورة فحص السلامة</h5>
-                <div class="ml-auto">
-                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="zoomImage(-0.2)">
-                        <i class="fas fa-search-minus"></i> تصغير
-                    </button>
-                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="zoomImage(0.2)">
-                        <i class="fas fa-search-plus"></i> تكبير
-                    </button>
-                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="resetZoom()">
-                        <i class="fas fa-expand-arrows-alt"></i> إعادة تعيين
-                    </button>
-                    <button type="button" class="close" data-dismiss="modal" onclick="closeImageModal()">
-                        <span>&times;</span>
-                    </button>
-                </div>
-            </div>
-            <div class="modal-body text-center" style="max-height: 70vh; overflow: auto;">
-                <div id="imageContainer" style="position: relative; display: inline-block;">
-                    <img id="modalImage" 
-                         src="" 
-                         alt="صورة فحص السلامة" 
-                         style="max-width: 100%; height: auto; cursor: grab; transition: transform 0.2s;">
-                </div>
-                <p id="modalDescription" class="mt-3 text-muted"></p>
-            </div>
-        </div>
-    </div>
+<!-- Modal للصور -->
+<div id="imageModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.9); z-index:1000; align-items:center; justify-content:center;">
+    <img id="modalImage" style="max-width:90%; max-height:90%; border-radius:8px;" />
+    <button onclick="document.getElementById('imageModal').style.display='none'" 
+            style="position:absolute; top:20px; right:20px; background:white; border:none; width:40px; height:40px; border-radius:50%; cursor:pointer; font-size:24px; display:flex; align-items:center; justify-content:center;">
+        ✕
+    </button>
 </div>
-
-
-
-
 
 <script>
-    let currentZoom = 1;
-    let isDragging = false;
-    let startX, startY, initialX, initialY;
-    
-    function showImageModal(imageSrc, description) {
-        console.log('showImageModal called with:', imageSrc, description);
-        
-        // التحقق من وجود مسار الصورة
-        if (!imageSrc) {
-            console.error('No image source provided');
-            alert('خطأ: لا يوجد مسار للصورة');
-            return;
-        }
-        
-        // تحقق من وجود العناصر المطلوبة
-        const modalImageElement = document.getElementById('modalImage');
-        const modalDescElement = document.getElementById('modalDescription');
-        const modalElement = document.getElementById('imageModal');
-        
-        console.log('Modal elements found:', {
-            modalImage: !!modalImageElement,
-            modalDescription: !!modalDescElement,
-            modal: !!modalElement
-        });
-        
-        if (!modalImageElement || !modalDescElement || !modalElement) {
-            console.error('Modal elements not found, opening in new tab as fallback');
-            window.open(imageSrc, '_blank');
-            return;
-        }
-        
-        // إعداد الصورة والوصف
-        modalImageElement.src = imageSrc;
-        modalImageElement.onload = function() {
-            console.log('Image loaded successfully');
-        };
-        modalImageElement.onerror = function() {
-            console.error('Error loading image:', imageSrc);
-            modalDescElement.innerHTML = '<span class="text-danger">خطأ في تحميل الصورة: ' + imageSrc + '</span>';
-        };
-        modalDescElement.textContent = description || 'بدون وصف';
-        resetZoom();
-        
-        // عرض النافذة المنبثقة
-        try {
-            if (typeof $ !== 'undefined' && $('#imageModal').length > 0) {
-                console.log('Using jQuery Bootstrap modal');
-                $('#imageModal').modal('show');
-            } else if (typeof bootstrap !== 'undefined') {
-                console.log('Using Bootstrap 5 modal');
-                const modal = new bootstrap.Modal(modalElement);
-                modal.show();
-            } else {
-                console.log('Bootstrap not available, using fallback');
-                modalElement.style.display = 'block';
-                modalElement.classList.add('show');
-                modalElement.style.backgroundColor = 'rgba(0,0,0,0.5)';
-                document.body.classList.add('modal-open');
-            }
-        } catch (error) {
-            console.error('Error showing modal:', error);
-            window.open(imageSrc, '_blank');
-        }
-        
-        // الكود القديم للنافذة المنبثقة محفوظ للاستخدام لاحقاً
-        /* 
-        // تحقق من وجود العناصر المطلوبة
-        const modalImageElement = document.getElementById('modalImage');
-        const modalDescElement = document.getElementById('modalDescription');
-        const modalElement = document.getElementById('imageModal');
-        
-        console.log('Modal elements found:', {
-            modalImage: !!modalImageElement,
-            modalDescription: !!modalDescElement,
-            modal: !!modalElement
-        });
-        
-        if (!modalImageElement || !modalDescElement || !modalElement) {
-            console.error('Modal elements not found, opening in new tab');
-            window.open(imageSrc, '_blank');
-            return;
-        }
-        
-        // إعداد الصورة والوصف
-        modalImageElement.src = imageSrc;
-        modalDescElement.textContent = description || 'بدون وصف';
-        resetZoom();
-        
-        // عرض النافذة المنبثقة
-        try {
-            if (typeof $ !== 'undefined' && $('#imageModal').length > 0) {
-                console.log('Using jQuery Bootstrap modal');
-                $('#imageModal').modal('show');
-            } else if (typeof bootstrap !== 'undefined') {
-                console.log('Using Bootstrap 5 modal');
-                const modal = new bootstrap.Modal(modalElement);
-                modal.show();
-            } else {
-                console.log('Bootstrap not available, using fallback');
-                modalElement.style.display = 'block';
-                modalElement.classList.add('show');
-                document.body.classList.add('modal-open');
-                
-                const backdrop = document.createElement('div');
-                backdrop.className = 'modal-backdrop fade show';
-                backdrop.id = 'imageModalBackdrop';
-                document.body.appendChild(backdrop);
-                
-                backdrop.addEventListener('click', function() {
-                    closeImageModal();
-                });
-            }
-        } catch (error) {
-            console.error('Error showing modal:', error);
-            window.open(imageSrc, '_blank');
-        }
-        */
+    function openModal(src) {
+        document.getElementById('modalImage').src = src;
+        document.getElementById('imageModal').style.display = 'flex';
     }
     
-    function closeImageModal() {
-        const modalElement = document.getElementById('imageModal');
-        const backdrop = document.getElementById('imageModalBackdrop');
-        
-        if (modalElement) {
-            modalElement.style.display = 'none';
-            modalElement.classList.remove('show');
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            document.getElementById('imageModal').style.display = 'none';
         }
-        
-        if (backdrop) {
-            backdrop.remove();
-        }
-        
-        document.body.classList.remove('modal-open');
-    }
-    
-    function zoomImage(deltaZoom) {
-        currentZoom += deltaZoom;
-        if (currentZoom < 0.5) currentZoom = 0.5;
-        if (currentZoom > 3) currentZoom = 3;
-        
-        const img = document.getElementById('modalImage');
-        img.style.transform = `scale(${currentZoom})`;
-        img.style.cursor = currentZoom > 1 ? 'grab' : 'grab';
-    }
-    
-    function resetZoom() {
-        currentZoom = 1;
-        const img = document.getElementById('modalImage');
-        img.style.transform = 'scale(1)';
-        img.style.cursor = 'grab';
-    }
-    
-    function openImageInNewTab() {
-        const img = document.getElementById('modalImage');
-        if (img && img.src) {
-            window.open(img.src, '_blank');
-        }
-    }
-    
-
-    
-    // إضافة دعم السحب والإفلات للصور المكبرة
-    document.addEventListener('DOMContentLoaded', function() {
-        console.log('DOM loaded, initializing image modal...');
-        const modalImage = document.getElementById('modalImage');
-        
-        if (!modalImage) {
-            console.error('Modal image element not found on page load');
-            return;
-        }
-        
-        modalImage.addEventListener('mousedown', function(e) {
-            if (currentZoom > 1) {
-                isDragging = true;
-                startX = e.clientX - initialX;
-                startY = e.clientY - initialY;
-                modalImage.style.cursor = 'grabbing';
-            }
-        });
-        
-        modalImage.addEventListener('mousemove', function(e) {
-            if (isDragging && currentZoom > 1) {
-                e.preventDefault();
-                initialX = e.clientX - startX;
-                initialY = e.clientY - startY;
-                modalImage.style.transform = `scale(${currentZoom}) translate(${initialX}px, ${initialY}px)`;
-            }
-        });
-        
-        modalImage.addEventListener('mouseup', function() {
-            isDragging = false;
-            modalImage.style.cursor = currentZoom > 1 ? 'grab' : 'grab';
-        });
-        
-        modalImage.addEventListener('mouseleave', function() {
-            isDragging = false;
-            modalImage.style.cursor = currentZoom > 1 ? 'grab' : 'grab';
-        });
-        
-        // دعم التكبير/التصغير بالماوس
-        modalImage.addEventListener('wheel', function(e) {
-            e.preventDefault();
-            const delta = e.deltaY > 0 ? -0.1 : 0.1;
-            zoomImage(delta);
-        });
-        
-        // دعم اللمس للأجهزة المحمولة
-        let touchDistance = 0;
-        let touchStartDistance = 0;
-        
-        modalImage.addEventListener('touchstart', function(e) {
-            if (e.touches.length === 2) {
-                touchStartDistance = Math.hypot(
-                    e.touches[0].clientX - e.touches[1].clientX,
-                    e.touches[0].clientY - e.touches[1].clientY
-                );
-                touchDistance = touchStartDistance;
-            }
-        });
-        
-        modalImage.addEventListener('touchmove', function(e) {
-            if (e.touches.length === 2) {
-                e.preventDefault();
-                const currentDistance = Math.hypot(
-                    e.touches[0].clientX - e.touches[1].clientX,
-                    e.touches[0].clientY - e.touches[1].clientY
-                );
-                
-                const delta = (currentDistance - touchDistance) / 100;
-                zoomImage(delta);
-                touchDistance = currentDistance;
-            }
-        });
-        
-        // إعادة تعيين الموضع عند إغلاق النافذة
-        const imageModal = document.getElementById('imageModal');
-        if (imageModal) {
-            imageModal.addEventListener('hidden.bs.modal', function () {
-                resetZoom();
-                initialX = 0;
-                initialY = 0;
-            });
-        }
-        
-        // إضافة دعم لضغط مفتاح Escape لإغلاق النافذة
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                closeImageModal();
-            }
-        });
     });
 </script>
-
-<style>
-    .badge-lg {
-        font-size: 1rem;
-        padding: 0.5rem 1rem;
-    }
-    
-    .card {
-        margin-bottom: 1rem;
-    }
-    
-    .table td {
-        padding: 0.5rem;
-    }
-    
-    .modal-lg {
-        max-width: 80%;
-    }
-    
-    #modalImage {
-        max-height: 70vh;
-        object-fit: contain;
-    }
-</style>
 {% endblock %}
