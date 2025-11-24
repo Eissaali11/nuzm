@@ -2799,13 +2799,17 @@ def export_department_data():
             attendance_map[key] = att.status
         
         # تحديد عرض الأعمدة
-        ws.column_dimensions['A'].width = 20
+        ws.column_dimensions['A'].width = 20  # الاسم
+        ws.column_dimensions['B'].width = 16  # الرقم الوظيفي
+        ws.column_dimensions['C'].width = 16  # رقم الهوية
+        ws.column_dimensions['D'].width = 22  # القسم
+        
         for col_idx in range(len(all_dates)):
-            col_letter = get_column_letter(col_idx + 2)
+            col_letter = get_column_letter(col_idx + 5)
             ws.column_dimensions[col_letter].width = 4
         
-        # إنشاء رأس الجدول مع التواريخ
-        header_row = ['الموظف'] + [d.strftime('%d/%m') for d in all_dates]
+        # إنشاء رأس الجدول
+        header_row = ['الموظف', 'الرقم الوظيفي', 'رقم الهوية', 'القسم'] + [d.strftime('%d/%m') for d in all_dates]
         ws.append(header_row)
         
         # تنسيق الرأس الاحترافي
@@ -2829,7 +2833,14 @@ def export_department_data():
         # إضافة بيانات الموظفين
         row_num = 2
         for emp in sorted_employees:
-            row_data = [emp.name]
+            department_name = ', '.join([d.name for d in emp.departments]) if emp.departments else '-'
+            
+            row_data = [
+                emp.name,
+                emp.employee_id or '-',
+                emp.national_id if hasattr(emp, 'national_id') and emp.national_id else '-',
+                department_name
+            ]
             
             for date in all_dates:
                 status = attendance_map.get((emp.id, date), '')
@@ -2845,7 +2856,7 @@ def export_department_data():
             ws.append(row_data)
             
             # تنسيق الصفوف
-            for col_idx, cell in enumerate(ws[row_num], 1):
+            for col_idx in range(1, len(row_data) + 1):
                 cell_obj = ws.cell(row=row_num, column=col_idx)
                 cell_obj.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
                 cell_obj.border = Border(
@@ -2855,13 +2866,13 @@ def export_department_data():
                     bottom=Side(style='thin', color='E0E0E0')
                 )
                 
-                if col_idx == 1:
-                    # عمود الموظف
-                    cell_obj.font = Font(bold=True)
+                if col_idx <= 4:
+                    # أعمدة بيانات الموظف (الاسم، الرقم الوظيفي، رقم الهوية، القسم)
+                    cell_obj.font = Font(bold=True if col_idx == 1 else False)
                     if row_num % 2 == 0:
                         cell_obj.fill = PatternFill(start_color="F8F9FA", end_color="F8F9FA", fill_type="solid")
                 else:
-                    # أعمدة الحضور
+                    # أعمدة الحضور (P/A)
                     value = cell_obj.value
                     if value == 'P':
                         cell_obj.fill = PatternFill(start_color="D4EDDA", end_color="D4EDDA", fill_type="solid")
