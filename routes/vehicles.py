@@ -6586,3 +6586,50 @@ def export_vehicles_pdf_english():
                 traceback.print_exc()
                 flash(f"حدث خطأ في إنشاء التقرير: {str(e)}", "danger")
                 return redirect(url_for('vehicles.index'))
+
+@vehicles_bp.route('/api/alerts-count', methods=['GET'])
+@login_required
+def get_vehicle_alerts_count():
+        """API endpoint لحساب عدد إشعارات المركبات المعلقة"""
+        from datetime import datetime, timedelta
+        today = datetime.now().date()
+        alert_threshold_days = 14
+        future_date = today + timedelta(days=alert_threshold_days)
+        
+        try:
+                # 1. عدد الفحوصات الخارجية الجديدة (pending)
+                pending_external_checks = db.session.query(func.count(VehicleExternalSafetyCheck.id)).filter(
+                        VehicleExternalSafetyCheck.status == 'pending'
+                ).scalar() or 0
+                
+                # 2. عدد التفويضات المنتهية أو القريبة من الانتهاء
+                expiring_authorizations = db.session.query(func.count(Vehicle.id)).filter(
+                        Vehicle.authorization_expiry_date.isnot(None),
+                        Vehicle.authorization_expiry_date >= today,
+                        Vehicle.authorization_expiry_date <= future_date
+                ).scalar() or 0
+                
+                # 3. عدد الفحوصات الدورية المنتهية أو القريبة من الانتهاء
+                expiring_inspections = db.session.query(func.count(Vehicle.id)).filter(
+                        Vehicle.inspection_expiry_date.isnot(None),
+                        Vehicle.inspection_expiry_date >= today,
+                        Vehicle.inspection_expiry_date <= future_date
+                ).scalar() or 0
+                
+                # 4. إجمالي الإشعارات
+                total_alerts = pending_external_checks + expiring_authorizations + expiring_inspections
+                
+                return jsonify({
+                        'success': True,
+                        'total_alerts': total_alerts,
+                        'pending_external_checks': pending_external_checks,
+                        'expiring_authorizations': expiring_authorizations,
+                        'expiring_inspections': expiring_inspections
+                })
+        except Exception as e:
+                current_app.logger.error(f"خطأ في حساب إشعارات المركبات: {str(e)}")
+                return jsonify({
+                        'success': False,
+                        'total_alerts': 0,
+                        'error': str(e)
+                }), 500
