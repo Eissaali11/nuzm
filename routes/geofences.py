@@ -128,16 +128,27 @@ def view(geofence_id):
     # جلب الجلسات النشطة (الموظفون داخل الدائرة الآن)
     active_sessions = SessionManager.get_active_sessions(geofence_id=geofence_id)
     
-    # حساب حالة الحضور لكل جلسة نشطة
-    for session in active_sessions:
-        session.attendance_status = geofence.get_attendance_status(session)
-    
-    # حساب الموظفين الغائبين (المرتبطين بالدائرة لكن لم يدخلوا اليوم)
-    today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    # حساب حالة الحضور لكل جلسة نشطة وتحويلها إلى قاموس
+    active_sessions_data = []
     employees_with_sessions_today = set()
     for session in active_sessions:
+        session.attendance_status = geofence.get_attendance_status(session)
         employees_with_sessions_today.add(session.employee_id)
+        active_sessions_data.append({
+            'id': session.id,
+            'employee_id': session.employee_id,
+            'employee': {
+                'id': session.employee.id,
+                'name': session.employee.name,
+                'employee_id': session.employee.employee_id
+            },
+            'entry_time': session.entry_time.isoformat() if session.entry_time else None,
+            'exit_time': session.exit_time.isoformat() if session.exit_time else None,
+            'duration_minutes': session.duration_minutes,
+            'attendance_status': session.attendance_status
+        })
     
+    # حساب الموظفين الغائبين (المرتبطين بالدائرة لكن لم يدخلوا اليوم)
     absent_employees = [emp for emp in geofence.assigned_employees 
                        if emp.id not in employees_with_sessions_today]
     
@@ -231,7 +242,8 @@ def view(geofence_id):
         stats=stats,
         employee_stats=employee_stats,
         all_sessions=all_sessions,
-        active_sessions=active_sessions
+        active_sessions=active_sessions,
+        active_sessions_data=active_sessions_data
     )
 
 

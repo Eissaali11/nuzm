@@ -664,7 +664,7 @@
             name: '{{ geofence.name }}'
         };
         
-        const activeSessions = {{ active_sessions|tojson|safe }};
+        const activeSessions = {{ active_sessions_data|tojson|safe }};
         
         // تهيئة الخريطة
         const map = L.map('map').setView([geofenceData.latitude, geofenceData.longitude], 16);
