@@ -478,9 +478,13 @@
                 <div class="card-body">
                     {% for employee in absent_employees %}
                     <div class="employee-item">
+                        {% if employee.profile_image %}
+                        <img src="{{ url_for('static', filename='uploads/' + employee.profile_image) }}" alt="{{ employee.name }}" class="employee-photo" style="object-fit: cover; border: 2px solid rgba(239, 68, 68, 0.5);">
+                        {% else %}
                         <div class="employee-photo" style="background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 18px;">
                             {{ employee.name[0] if employee.name else 'M' }}
                         </div>
+                        {% endif %}
                         <div class="employee-info">
                             <div class="employee-name">{{ employee.name }}</div>
                             <div class="employee-details">
@@ -511,9 +515,13 @@
                     {% if active_sessions %}
                         {% for session in active_sessions %}
                         <div class="employee-item">
+                            {% if session.employee.profile_image %}
+                            <img src="{{ url_for('static', filename='uploads/' + session.employee.profile_image) }}" alt="{{ session.employee.name }}" class="employee-photo" style="object-fit: cover; border: 2px solid rgba(99, 102, 241, 0.5);">
+                            {% else %}
                             <div class="employee-photo" style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 18px;">
                                 {{ session.employee.name[0] if session.employee.name else 'M' }}
                             </div>
+                            {% endif %}
                             <div class="employee-info">
                                 <div class="employee-name">{{ session.employee.name }}</div>
                                 <div class="employee-details">
@@ -575,9 +583,13 @@
                         {% for session in all_sessions %}
                         <div class="employee-item" style="flex-direction: column; align-items: stretch;">
                             <div style="display: flex; align-items: center; gap: 12px;">
+                                {% if session.employee.profile_image %}
+                                <img src="{{ url_for('static', filename='uploads/' + session.employee.profile_image) }}" alt="{{ session.employee.name }}" class="employee-photo" style="object-fit: cover; border: 2px solid rgba(99, 102, 241, 0.3);">
+                                {% else %}
                                 <div class="employee-photo" style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 16px;">
                                     {{ session.employee.name[0] if session.employee.name else 'M' }}
                                 </div>
+                                {% endif %}
                                 <div class="employee-info">
                                     <div class="employee-name">{{ session.employee.name }}</div>
                                     <div class="employee-details">
