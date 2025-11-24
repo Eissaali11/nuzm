@@ -2204,8 +2204,6 @@ class Geofence(db.Model):
     notify_on_exit = db.Column(db.Boolean, default=False)
     attendance_start_time = db.Column(db.String(5), default='08:00')  # وقت البداية HH:MM
     attendance_required_minutes = db.Column(db.Integer, default=30)  # الحد الأدنى للبقاء
-    early_arrival_allowed_minutes = db.Column(db.Integer, default=15)  # دقائق الحضور المبكر المسموح
-    late_arrival_allowed_minutes = db.Column(db.Integer, default=0)  # دقائق التأخر المسموح
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

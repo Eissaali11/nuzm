@@ -297,8 +297,8 @@ def view(geofence_id):
         geofence_settings={
             'attendance_start_time': geofence.attendance_start_time,
             'attendance_required_minutes': geofence.attendance_required_minutes,
-            'early_arrival_minutes': geofence.early_arrival_allowed_minutes,
-            'late_arrival_minutes': geofence.late_arrival_allowed_minutes
+            'early_arrival_minutes': 15,
+            'late_arrival_minutes': 0
         }
     )
 
