@@ -1109,6 +1109,7 @@ def confirm_delete(id):
 @require_module_access(Module.EMPLOYEES, Permission.DELETE)
 def delete(id):
     """Delete an employee"""
+    from models import EmployeeRequest
     employee = Employee.query.get_or_404(id)
     name = employee.name
     
@@ -1124,8 +1125,21 @@ def delete(id):
         return redirect(url_for('employees.view', id=id))
     
     try:
+        # التحقق من وجود طلبات معلقة للموظف
+        pending_requests = EmployeeRequest.query.filter_by(
+            employee_id=id,
+            status='PENDING'
+        ).count()
+        
+        if pending_requests > 0:
+            flash(f'لا يمكن حذف الموظف لديه {pending_requests} طلب(ات) معلقة. يرجى حذف الطلبات أولاً', 'danger')
+            return redirect(url_for('employees.view', id=id))
+        
         # حذف جميع تعيينات الأجهزة المرتبطة بالموظف
         DeviceAssignment.query.filter_by(employee_id=id).delete()
+        
+        # حذف جميع الطلبات المرتبطة بالموظف
+        EmployeeRequest.query.filter_by(employee_id=id).delete()
         
         db.session.delete(employee)
         db.session.commit()

@@ -187,14 +187,30 @@ def mobile_devices():
 @admin_required
 def delete_employee(id):
     """حذف موظف"""
+    from models import EmployeeRequest
     employee = Employee.query.get_or_404(id)
     try:
+        # التحقق من وجود طلبات معلقة للموظف
+        pending_requests = EmployeeRequest.query.filter_by(
+            employee_id=id,
+            status='PENDING'
+        ).count()
+        
+        if pending_requests > 0:
+            return jsonify({
+                'success': False, 
+                'message': f'لا يمكن حذف الموظف لديه {pending_requests} طلب(ات) معلقة. يرجى حذف الطلبات أولاً'
+            }), 400
+        
+        # حذف جميع الطلبات المرتبطة بالموظف
+        EmployeeRequest.query.filter_by(employee_id=id).delete()
+        
         db.session.delete(employee)
         db.session.commit()
         return jsonify({'success': True, 'message': 'تم حذف الموظف بنجاح'})
     except Exception as e:
         db.session.rollback()
-        return jsonify({'success': False, 'message': 'حدث خطأ في حذف الموظف'}), 500
+        return jsonify({'success': False, 'message': f'حدث خطأ في حذف الموظف: {str(e)}'}), 500
 
 @admin_dashboard_bp.route('/api/vehicle/<int:id>', methods=['DELETE'])
 @login_required
