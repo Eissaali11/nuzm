@@ -2778,28 +2778,39 @@ def export_department_data():
         # إنشاء ملف Excel
         wb = Workbook()
         
-        # ========== شيت البيانات الرئيسي ==========
+        # ========== شيت البيانات الرئيسي - نموذج P/A ==========
         ws = wb.active
         ws.title = "بيانات الحضور"
         
-        # تحديد عرض الأعمدة
-        ws.column_dimensions['A'].width = 22
-        ws.column_dimensions['B'].width = 16
-        ws.column_dimensions['C'].width = 16
-        ws.column_dimensions['D'].width = 26
-        ws.column_dimensions['E'].width = 14
-        ws.column_dimensions['F'].width = 14
-        ws.column_dimensions['G'].width = 14
-        ws.column_dimensions['H'].width = 14
-        ws.column_dimensions['I'].width = 22
+        # الحصول على جميع التواريخ والموظفين الفريدين
+        all_dates = sorted(set(att.date for att in attendances if att.date))
+        employees_dict = {}
+        for att in attendances:
+            if att.employee.id not in employees_dict:
+                employees_dict[att.employee.id] = att.employee
         
-        # رأس الجدول
-        headers = ['الموظف', 'رقم الموظف', 'رقم الهوية', 'القسم', 'التاريخ', 'الحالة', 'الدخول', 'الخروج', 'الملاحظات']
-        ws.append(headers)
+        # ترتيب الموظفين حسب الاسم
+        sorted_employees = sorted(employees_dict.values(), key=lambda e: e.name)
+        
+        # بناء قاموس للوصول السريع: (employee_id, date) -> status
+        attendance_map = {}
+        for att in attendances:
+            key = (att.employee.id, att.date)
+            attendance_map[key] = att.status
+        
+        # تحديد عرض الأعمدة
+        ws.column_dimensions['A'].width = 20
+        for col_idx in range(len(all_dates)):
+            col_letter = get_column_letter(col_idx + 2)
+            ws.column_dimensions[col_letter].width = 4
+        
+        # إنشاء رأس الجدول مع التواريخ
+        header_row = ['الموظف'] + [d.strftime('%d/%m') for d in all_dates]
+        ws.append(header_row)
         
         # تنسيق الرأس الاحترافي
         header_fill = PatternFill(start_color="4F46E5", end_color="4F46E5", fill_type="solid")
-        header_font = Font(bold=True, color="FFFFFF", size=12)
+        header_font = Font(bold=True, color="FFFFFF", size=11)
         thin_border = Border(
             left=Side(style='thin', color='FFFFFF'),
             right=Side(style='thin', color='FFFFFF'),
@@ -2815,64 +2826,54 @@ def export_department_data():
         
         ws.row_dimensions[1].height = 28
         
-        # ألوان الحالات
-        status_colors = {
-            'present': 'D4EDDA',  # أخضر فاتح
-            'absent': 'F8D7DA',   # أحمر فاتح
-            'leave': 'FFF3CD',    # أصفر فاتح
-            'sick': 'D1ECF1'      # أزرق فاتح
-        }
-        
-        status_text_colors = {
-            'present': '155724',  # أخضر غامق
-            'absent': '721C24',   # أحمر غامق
-            'leave': '856404',    # أصفر غامق
-            'sick': '0C5460'      # أزرق غامق
-        }
-        
-        # إضافة البيانات
+        # إضافة بيانات الموظفين
         row_num = 2
-        for att in attendances:
-            department_name = ', '.join([d.name for d in att.employee.departments]) if att.employee.departments else '-'
-            status = att.status or '-'
+        for emp in sorted_employees:
+            row_data = [emp.name]
             
-            # الحصول على لون الحالة
-            bg_color = status_colors.get(status, 'FFFFFF')
-            text_color = status_text_colors.get(status, '000000')
+            for date in all_dates:
+                status = attendance_map.get((emp.id, date), '')
+                
+                # تحويل الحالة إلى P أو A
+                if status == 'present':
+                    row_data.append('P')
+                elif status == 'absent':
+                    row_data.append('A')
+                else:
+                    row_data.append('')
             
-            ws.append([
-                att.employee.name,
-                att.employee.employee_id,
-                att.employee.national_id if hasattr(att.employee, 'national_id') else '-',
-                department_name,
-                att.date.strftime('%Y-%m-%d') if att.date else '-',
-                status,
-                att.check_in.strftime('%H:%M') if att.check_in else '-',
-                att.check_out.strftime('%H:%M') if att.check_out else '-',
-                att.notes or '-'
-            ])
+            ws.append(row_data)
             
             # تنسيق الصفوف
-            for idx, cell in enumerate(ws[row_num], 1):
-                cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
-                cell.border = Border(
+            for col_idx, cell in enumerate(ws[row_num], 1):
+                cell_obj = ws.cell(row=row_num, column=col_idx)
+                cell_obj.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+                cell_obj.border = Border(
                     left=Side(style='thin', color='E0E0E0'),
                     right=Side(style='thin', color='E0E0E0'),
                     top=Side(style='thin', color='E0E0E0'),
                     bottom=Side(style='thin', color='E0E0E0')
                 )
                 
-                # تلوين الخلايا حسب الحالة (عمود الحالة فقط)
-                if idx == 6:  # عمود الحالة
-                    cell.fill = PatternFill(start_color=bg_color, end_color=bg_color, fill_type="solid")
-                    cell.font = Font(bold=True, color=text_color, size=11)
-                else:
+                if col_idx == 1:
+                    # عمود الموظف
+                    cell_obj.font = Font(bold=True)
                     if row_num % 2 == 0:
-                        cell.fill = PatternFill(start_color="F8F9FA", end_color="F8F9FA", fill_type="solid")
-                    if idx == 1:  # عمود الموظف
-                        cell.font = Font(bold=True)
+                        cell_obj.fill = PatternFill(start_color="F8F9FA", end_color="F8F9FA", fill_type="solid")
+                else:
+                    # أعمدة الحضور
+                    value = cell_obj.value
+                    if value == 'P':
+                        cell_obj.fill = PatternFill(start_color="D4EDDA", end_color="D4EDDA", fill_type="solid")
+                        cell_obj.font = Font(bold=True, color="155724", size=12)
+                    elif value == 'A':
+                        cell_obj.fill = PatternFill(start_color="F8D7DA", end_color="F8D7DA", fill_type="solid")
+                        cell_obj.font = Font(bold=True, color="721C24", size=12)
+                    else:
+                        if row_num % 2 == 0:
+                            cell_obj.fill = PatternFill(start_color="F8F9FA", end_color="F8F9FA", fill_type="solid")
             
-            ws.row_dimensions[row_num].height = 22
+            ws.row_dimensions[row_num].height = 20
             row_num += 1
         
         # ========== شيت الإحصائيات ==========
