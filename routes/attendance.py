@@ -2808,15 +2808,9 @@ def export_department_data():
             col_letter = get_column_letter(col_idx + 5)
             ws.column_dimensions[col_letter].width = 4
         
-        # إنشاء رأس الجدول - مع اسم الشهر واليوم
-        month_names_ar = {
-            'Jan': 'يناير', 'Feb': 'فبراير', 'Mar': 'مارس', 'Apr': 'أبريل',
-            'May': 'مايو', 'Jun': 'يونيو', 'Jul': 'يوليو', 'Aug': 'أغسطس',
-            'Sep': 'سبتمبر', 'Oct': 'أكتوبر', 'Nov': 'نوفمبر', 'Dec': 'ديسمبر'
-        }
-        
+        # إنشاء رأس الجدول - مع اسم الشهر (3 حروف) واليوم بالإنجليزي
         header_row = ['الموظف', 'الرقم الوظيفي', 'رقم الهوية', 'القسم'] + [
-            f"{month_names_ar[d.strftime('%b')]} {d.strftime('%d')}" for d in all_dates
+            d.strftime('%b %d') for d in all_dates
         ]
         ws.append(header_row)
         
