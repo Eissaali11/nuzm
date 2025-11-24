@@ -2715,6 +2715,111 @@ def department_attendance_view():
                           sick_count=sick_count,
                           working_days_required=working_days_required)
 
+@attendance_bp.route('/department/export-data', methods=['GET'])
+def export_department_data():
+    """تصدير بيانات الحضور حسب الفلاتر (الموظف، القسم، الحالة، الفترة الزمنية)"""
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+    from io import BytesIO
+    
+    try:
+        department_id = request.args.get('department_id', '')
+        search_query = request.args.get('search_query', '').strip()
+        status_filter = request.args.get('status_filter', '')
+        start_date_str = request.args.get('start_date', '')
+        end_date_str = request.args.get('end_date', '')
+        
+        # تحديد التواريخ
+        if not start_date_str:
+            start_date = datetime.now().date() - timedelta(days=30)
+        else:
+            start_date = parse_date(start_date_str)
+        
+        if not end_date_str:
+            end_date = datetime.now().date()
+        else:
+            end_date = parse_date(end_date_str)
+        
+        # بناء الاستعلام
+        query = Attendance.query.join(Employee).filter(
+            Attendance.date >= start_date,
+            Attendance.date <= end_date
+        )
+        
+        # تطبيق الفلاتر
+        if department_id:
+            query = query.join(employee_departments).filter(
+                employee_departments.c.department_id == int(department_id)
+            )
+        
+        if search_query:
+            query = query.filter(
+                or_(
+                    Employee.name.ilike(f'%{search_query}%'),
+                    Employee.employee_id.ilike(f'%{search_query}%'),
+                    Employee.national_id.ilike(f'%{search_query}%')
+                )
+            )
+        
+        if status_filter:
+            query = query.filter(Attendance.status == status_filter)
+        
+        attendances = query.order_by(Attendance.date.desc(), Employee.name).all()
+        
+        # إنشاء ملف Excel
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "بيانات الحضور"
+        
+        # رأس الجدول
+        headers = ['الموظف', 'رقم الموظف', 'رقم الهوية', 'القسم', 'التاريخ', 'الحالة', 'الدخول', 'الخروج', 'الملاحظات']
+        ws.append(headers)
+        
+        # تنسيق الرأس
+        for cell in ws[1]:
+            cell.font = Font(bold=True, color="FFFFFF")
+            cell.fill = PatternFill(start_color="4F46E5", end_color="4F46E5", fill_type="solid")
+            cell.alignment = Alignment(horizontal='center', vertical='center')
+        
+        # إضافة البيانات
+        for att in attendances:
+            department_name = ', '.join([d.name for d in att.employee.departments]) if att.employee.departments else '-'
+            ws.append([
+                att.employee.name,
+                att.employee.employee_id,
+                att.employee.national_id if hasattr(att.employee, 'national_id') else '-',
+                department_name,
+                att.date.strftime('%Y-%m-%d') if att.date else '-',
+                att.status or '-',
+                att.check_in.strftime('%H:%M') if att.check_in else '-',
+                att.check_out.strftime('%H:%M') if att.check_out else '-',
+                att.notes or '-'
+            ])
+        
+        # تعديل عرض الأعمدة
+        ws.column_dimensions['A'].width = 20
+        ws.column_dimensions['B'].width = 15
+        ws.column_dimensions['C'].width = 15
+        ws.column_dimensions['D'].width = 25
+        ws.column_dimensions['E'].width = 12
+        ws.column_dimensions['F'].width = 12
+        ws.column_dimensions['G'].width = 12
+        ws.column_dimensions['H'].width = 12
+        ws.column_dimensions['I'].width = 20
+        
+        output = BytesIO()
+        wb.save(output)
+        output.seek(0)
+        
+        filename = f"حضور_{start_date.strftime('%Y%m%d')}_{end_date.strftime('%Y%m%d')}.xlsx"
+        return send_file(output, mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                        as_attachment=True, download_name=filename)
+    
+    except Exception as e:
+        flash(f'خطأ في التصدير: {str(e)}', 'error')
+        return redirect(url_for('attendance.department_attendance_view'))
+
+
 @attendance_bp.route('/department/export-period', methods=['GET'])
 def export_department_period():
     """تصدير حضور قسم خلال فترة زمنية إلى Excel مع dashboard احترافي"""
