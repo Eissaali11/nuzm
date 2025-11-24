@@ -614,67 +614,146 @@
             <!-- الموظفون الحاليون في الدائرة -->
             <div class="card">
                 <div class="card-header">
-                    <h2>
-                        <i class="fas fa-user-clock"></i>
-                        الموظفون في الدائرة الآن
-                    </h2>
-                    <span style="background: rgba(129, 140, 248, 0.3); color: #c7d2fe; padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: 700;">
-                        {{ active_sessions|length }}
-                    </span>
+                    <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                        <h2>
+                            <i class="fas fa-user-clock"></i>
+                            الموظفون في الدائرة الآن
+                        </h2>
+                        <div style="display: flex; gap: 8px;">
+                            <button onclick="filterEmployees('active')" id="btnActive" class="filter-btn active" style="background: rgba(34, 197, 94, 0.2); color: #86efac; border: 1px solid rgba(34, 197, 94, 0.3); padding: 6px 12px; border-radius: 20px; cursor: pointer; font-size: 13px; font-weight: 700; transition: all 0.3s;">
+                                <i class="fas fa-check-circle"></i> نشط ({{ active_sessions|length }})
+                            </button>
+                            <button onclick="filterEmployees('inactive')" id="btnInactive" class="filter-btn" style="background: rgba(239, 68, 68, 0.2); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.3); padding: 6px 12px; border-radius: 20px; cursor: pointer; font-size: 13px; font-weight: 700; transition: all 0.3s;">
+                                <i class="fas fa-times-circle"></i> غير نشط ({{ absent_employees|length }})
+                            </button>
+                            <button onclick="filterEmployees('all')" id="btnAll" class="filter-btn" style="background: rgba(129, 140, 248, 0.2); color: #c7d2fe; border: 1px solid rgba(129, 140, 248, 0.3); padding: 6px 12px; border-radius: 20px; cursor: pointer; font-size: 13px; font-weight: 700; transition: all 0.3s;">
+                                <i class="fas fa-list"></i> الكل ({{ assigned_employees|length }})
+                            </button>
+                        </div>
+                    </div>
                 </div>
                 <div class="card-body">
-                    {% if active_sessions %}
-                        {% for session in active_sessions %}
-                        <div class="employee-item">
-                            {% if session.employee.profile_image %}
-                            <img src="{{ url_for('static', filename='uploads/' + session.employee.profile_image) }}" alt="{{ session.employee.name }}" class="employee-photo" style="object-fit: cover; border: 2px solid rgba(99, 102, 241, 0.5);">
-                            {% else %}
-                            <div class="employee-photo" style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 18px;">
-                                {{ session.employee.name[0] if session.employee.name else 'M' }}
-                            </div>
-                            {% endif %}
-                            <div class="employee-info">
-                                <div class="employee-name">{{ session.employee.name }}</div>
-                                <div class="employee-details">
-                                    <span><i class="fas fa-id-card"></i> {{ session.employee.employee_id }}</span>
-                                    <span><i class="fas fa-sign-in-alt"></i> {{ session.entry_time.strftime('%H:%M') }}</span>
-                                    {% if session.duration_minutes %}
-                                    <span><i class="fas fa-clock"></i> {{ session.duration_minutes }} دقيقة</span>
-                                    {% endif %}
+                    <!-- الموظفون النشطون -->
+                    <div id="activeContainer" class="employees-container">
+                        {% if active_sessions %}
+                            {% for session in active_sessions %}
+                            <div class="employee-item" data-filter="active">
+                                {% if session.employee.profile_image %}
+                                <img src="{{ url_for('static', filename='uploads/' + session.employee.profile_image) }}" alt="{{ session.employee.name }}" class="employee-photo" style="object-fit: cover; border: 2px solid rgba(99, 102, 241, 0.5);">
+                                {% else %}
+                                <div class="employee-photo" style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 18px;">
+                                    {{ session.employee.name[0] if session.employee.name else 'M' }}
                                 </div>
-                            </div>
-                            {% if session.attendance_status is defined %}
-                                {% if session.attendance_status == 'on_time' %}
-                                <span class="status-badge status-ontime">
-                                    <i class="fas fa-check-circle"></i> في الوقت
-                                </span>
-                                {% elif session.attendance_status.startswith('late_') %}
-                                <span class="status-badge status-late">
-                                    <i class="fas fa-clock"></i> متأخر {{ session.attendance_status.split('_')[1] }} د
-                                </span>
-                                {% elif session.attendance_status == 'insufficient_time' %}
-                                <span class="status-badge" style="background: rgba(239, 68, 68, 0.2); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.3);">
-                                    <i class="fas fa-hourglass-half"></i> مدة غير كافية
-                                </span>
+                                {% endif %}
+                                <div class="employee-info">
+                                    <div class="employee-name">{{ session.employee.name }}</div>
+                                    <div class="employee-details">
+                                        <span><i class="fas fa-id-card"></i> {{ session.employee.employee_id }}</span>
+                                        <span><i class="fas fa-sign-in-alt"></i> {{ session.entry_time.strftime('%H:%M') }}</span>
+                                        {% if session.duration_minutes %}
+                                        <span><i class="fas fa-clock"></i> {{ session.duration_minutes }} دقيقة</span>
+                                        {% endif %}
+                                        {% if session.transportation_mode %}
+                                        <span><i class="fas fa-car"></i> {{ 'قيادة' if session.transportation_mode == 'driving' else 'مشي' }}</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% if session.attendance_status is defined %}
+                                    {% if session.attendance_status == 'on_time' %}
+                                    <span class="status-badge status-ontime">
+                                        <i class="fas fa-check-circle"></i> في الوقت
+                                    </span>
+                                    {% elif session.attendance_status.startswith('late_') %}
+                                    <span class="status-badge status-late">
+                                        <i class="fas fa-clock"></i> متأخر {{ session.attendance_status.split('_')[1] }} د
+                                    </span>
+                                    {% elif session.attendance_status == 'insufficient_time' %}
+                                    <span class="status-badge" style="background: rgba(239, 68, 68, 0.2); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.3);">
+                                        <i class="fas fa-hourglass-half"></i> مدة غير كافية
+                                    </span>
+                                    {% else %}
+                                    <span class="status-badge status-inside">
+                                        <i class="fas fa-dot-circle"></i> موجود
+                                    </span>
+                                    {% endif %}
                                 {% else %}
                                 <span class="status-badge status-inside">
                                     <i class="fas fa-dot-circle"></i> موجود
                                 </span>
                                 {% endif %}
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                        <div class="empty-state" id="emptyActive" style="display: none;">
+                            <i class="fas fa-user-slash"></i>
+                            <h3>لا يوجد موظفين نشطين</h3>
+                            <p>لم يدخل أحد الدائرة حالياً</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- الموظفون غير النشطين -->
+                    <div id="inactiveContainer" class="employees-container" style="display: none;">
+                        {% if absent_employees %}
+                            {% for employee in absent_employees %}
+                            <div class="employee-item" data-filter="inactive">
+                                {% if employee.profile_image %}
+                                <img src="{{ url_for('static', filename='uploads/' + employee.profile_image) }}" alt="{{ employee.name }}" class="employee-photo" style="object-fit: cover; border: 2px solid rgba(239, 68, 68, 0.3);">
+                                {% else %}
+                                <div class="employee-photo" style="background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 18px;">
+                                    {{ employee.name[0] if employee.name else 'M' }}
+                                </div>
+                                {% endif %}
+                                <div class="employee-info">
+                                    <div class="employee-name">{{ employee.name }}</div>
+                                    <div class="employee-details">
+                                        <span><i class="fas fa-id-card"></i> {{ employee.employee_id }}</span>
+                                    </div>
+                                </div>
+                                <span class="status-badge status-absent">
+                                    <i class="fas fa-times-circle"></i> غائب
+                                </span>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                        <div class="empty-state" id="emptyInactive">
+                            <i class="fas fa-check-double"></i>
+                            <h3>جميع الموظفين حاضرين!</h3>
+                            <p>لا يوجد موظفين غائبين</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- جميع الموظفين -->
+                    <div id="allContainer" class="employees-container" style="display: none;">
+                        {% for employee in assigned_employees %}
+                        <div class="employee-item" data-filter="all">
+                            {% if employee.profile_image %}
+                            <img src="{{ url_for('static', filename='uploads/' + employee.profile_image) }}" alt="{{ employee.name }}" class="employee-photo" style="object-fit: cover;">
                             {% else %}
+                            <div class="employee-photo" style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 18px;">
+                                {{ employee.name[0] if employee.name else 'M' }}
+                            </div>
+                            {% endif %}
+                            <div class="employee-info">
+                                <div class="employee-name">{{ employee.name }}</div>
+                                <div class="employee-details">
+                                    <span><i class="fas fa-id-card"></i> {{ employee.employee_id }}</span>
+                                </div>
+                            </div>
+                            {% set is_active = employee in active_sessions|map(attribute='employee')|list %}
+                            {% if is_active %}
                             <span class="status-badge status-inside">
-                                <i class="fas fa-dot-circle"></i> موجود
+                                <i class="fas fa-dot-circle"></i> نشط
+                            </span>
+                            {% else %}
+                            <span class="status-badge status-absent">
+                                <i class="fas fa-times-circle"></i> غير نشط
                             </span>
                             {% endif %}
                         </div>
                         {% endfor %}
-                    {% else %}
-                    <div class="empty-state">
-                        <i class="fas fa-user-slash"></i>
-                        <h3>لا يوجد موظفين</h3>
-                        <p>لم يدخل أحد الدائرة حالياً</p>
                     </div>
-                    {% endif %}
                 </div>
             </div>
             
@@ -779,6 +858,50 @@
     </div>
     
     <script>
+        // دالة فلترة الموظفين
+        function filterEmployees(filter) {
+            const activeBtn = document.getElementById('btnActive');
+            const inactiveBtn = document.getElementById('btnInactive');
+            const allBtn = document.getElementById('btnAll');
+            
+            const activeContainer = document.getElementById('activeContainer');
+            const inactiveContainer = document.getElementById('inactiveContainer');
+            const allContainer = document.getElementById('allContainer');
+            
+            // إعادة تعيين الأزرار
+            activeBtn.style.background = 'rgba(34, 197, 94, 0.2)';
+            activeBtn.style.color = '#86efac';
+            activeBtn.style.borderColor = 'rgba(34, 197, 94, 0.3)';
+            
+            inactiveBtn.style.background = 'rgba(239, 68, 68, 0.2)';
+            inactiveBtn.style.color = '#fca5a5';
+            inactiveBtn.style.borderColor = 'rgba(239, 68, 68, 0.3)';
+            
+            allBtn.style.background = 'rgba(129, 140, 248, 0.2)';
+            allBtn.style.color = '#c7d2fe';
+            allBtn.style.borderColor = 'rgba(129, 140, 248, 0.3)';
+            
+            // إخفاء الحاويات
+            activeContainer.style.display = 'none';
+            inactiveContainer.style.display = 'none';
+            allContainer.style.display = 'none';
+            
+            // عرض الحاوية المختارة وتحديث الزر
+            if (filter === 'active') {
+                activeContainer.style.display = 'block';
+                activeBtn.style.background = 'rgba(34, 197, 94, 0.3)';
+                activeBtn.style.boxShadow = '0 0 10px rgba(34, 197, 94, 0.5)';
+            } else if (filter === 'inactive') {
+                inactiveContainer.style.display = 'block';
+                inactiveBtn.style.background = 'rgba(239, 68, 68, 0.3)';
+                inactiveBtn.style.boxShadow = '0 0 10px rgba(239, 68, 68, 0.5)';
+            } else {
+                allContainer.style.display = 'block';
+                allBtn.style.background = 'rgba(129, 140, 248, 0.3)';
+                allBtn.style.boxShadow = '0 0 10px rgba(129, 140, 248, 0.5)';
+            }
+        }
+        
         // إعدادات الخريطة
         const geofenceData = {
             latitude: {{ geofence.center_latitude }},
