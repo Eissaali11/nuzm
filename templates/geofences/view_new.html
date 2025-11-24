@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap');
@@ -457,13 +458,7 @@
                     الموقع على الخريطة
                 </h2>
             </div>
-            <div style="height: 600px; overflow: hidden; border-radius: 0 0 20px 20px;">
-                <!-- إضافة خريطة هنا -->
-                <div style="background: rgba(255, 255, 255, 0.05); height: 100%; display: flex; align-items: center; justify-content: center; color: #c7d2fe; font-size: 16px;">
-                    <i class="fas fa-map" style="font-size: 40px; margin-left: 15px; opacity: 0.5;"></i>
-                    الخريطة التفاعلية
-                </div>
-            </div>
+            <div id="map" style="height: 600px; overflow: hidden; border-radius: 0 0 20px 20px; background: rgba(255, 255, 255, 0.02);"></div>
         </div>
         
         <!-- الأقسام الأخرى أسفل الخريطة -->
@@ -661,6 +656,59 @@
     </div>
     
     <script>
+        // إعدادات الخريطة
+        const geofenceData = {
+            latitude: {{ geofence.center_latitude }},
+            longitude: {{ geofence.center_longitude }},
+            radius: {{ geofence.radius_meters }},
+            name: '{{ geofence.name }}'
+        };
+        
+        const activeSessions = {{ active_sessions|tojson|safe }};
+        
+        // تهيئة الخريطة
+        const map = L.map('map').setView([geofenceData.latitude, geofenceData.longitude], 16);
+        
+        // إضافة طبقة الخريطة
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap',
+            maxZoom: 20
+        }).addTo(map);
+        
+        // إضافة دائرة الدائرة الجغرافية
+        const circle = L.circle([geofenceData.latitude, geofenceData.longitude], {
+            color: '#818cf8',
+            fillColor: '#818cf8',
+            fillOpacity: 0.15,
+            weight: 2,
+            radius: geofenceData.radius,
+            dashArray: '5, 5'
+        }).addTo(map);
+        
+        // إضافة علامة المركز
+        L.marker([geofenceData.latitude, geofenceData.longitude], {
+            icon: L.icon({
+                iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/svgs/solid/map-pin.svg',
+                iconSize: [32, 32],
+                iconAnchor: [16, 32],
+                popupAnchor: [0, -32]
+            })
+        }).addTo(map).bindPopup(`<strong>${geofenceData.name}</strong><br/>مركز الدائرة`);
+        
+        // إضافة الموظفين الموجودين
+        activeSessions.forEach(function(session) {
+            if (session.employee && session.employee.name) {
+                L.marker([geofenceData.latitude, geofenceData.longitude], {
+                    icon: L.divIcon({
+                        className: 'employee-marker',
+                        html: `<div style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 16px; border: 2px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3);">${session.employee.name.charAt(0)}</div>`,
+                        iconSize: [35, 35],
+                        iconAnchor: [17, 17]
+                    })
+                }).addTo(map).bindPopup(`<strong>${session.employee.name}</strong><br/>الموظف: ${session.employee.employee_id}<br/>الدخول: ${session.entry_time}`);
+            }
+        });
+        
         function toggleExportMenu() {
             const menu = document.getElementById('exportMenu');
             menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
