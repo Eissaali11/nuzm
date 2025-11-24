@@ -268,6 +268,12 @@
             border: 1px solid rgba(59, 130, 246, 0.3);
         }
         
+        .status-absent {
+            background: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+        
         .empty-state {
             text-align: center;
             padding: 40px 20px;
@@ -444,6 +450,39 @@
         
         <!-- الأقسام الأخرى أسفل الخريطة -->
         <div class="sections-grid">
+            <!-- الموظفون الغائبون -->
+            {% if absent_employees %}
+            <div class="card">
+                <div class="card-header">
+                    <h2>
+                        <i class="fas fa-user-slash"></i>
+                        الموظفون الغائبون
+                    </h2>
+                    <span style="background: rgba(239, 68, 68, 0.3); color: #fca5a5; padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: 700;">
+                        {{ absent_employees|length }}
+                    </span>
+                </div>
+                <div class="card-body">
+                    {% for employee in absent_employees %}
+                    <div class="employee-item">
+                        <div class="employee-photo" style="background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 18px;">
+                            {{ employee.name[0] if employee.name else 'M' }}
+                        </div>
+                        <div class="employee-info">
+                            <div class="employee-name">{{ employee.name }}</div>
+                            <div class="employee-details">
+                                <span><i class="fas fa-id-card"></i> {{ employee.employee_id }}</span>
+                            </div>
+                        </div>
+                        <span class="status-badge status-absent">
+                            <i class="fas fa-times-circle"></i> غائب
+                        </span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            
             <!-- الموظفون الحاليون في الدائرة -->
             <div class="card">
                 <div class="card-header">

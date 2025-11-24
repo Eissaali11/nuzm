@@ -129,6 +129,15 @@ def view(geofence_id):
     for session in active_sessions:
         session.attendance_status = geofence.get_attendance_status(session)
     
+    # حساب الموظفين الغائبين (المرتبطين بالدائرة لكن لم يدخلوا اليوم)
+    today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    employees_with_sessions_today = set()
+    for session in active_sessions:
+        employees_with_sessions_today.add(session.employee_id)
+    
+    absent_employees = [emp for emp in geofence.assigned_employees 
+                       if emp.id not in employees_with_sessions_today]
+    
     # جلب جميع الجلسات مع تفاصيل الموظفين
     all_sessions = GeofenceSession.query.filter_by(
         geofence_id=geofence_id
@@ -208,13 +217,14 @@ def view(geofence_id):
     }
     
     return render_template(
-        'geofences/view.html',
+        'geofences/view_new.html',
         geofence=geofence,
         employees_inside=employees_inside,
         all_employees=all_employees,
         recent_events=recent_events,
         assigned_employees=geofence.assigned_employees,
         available_employees=available_employees,
+        absent_employees=absent_employees,
         stats=stats,
         employee_stats=employee_stats,
         all_sessions=all_sessions,
