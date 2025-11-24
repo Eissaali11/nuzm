@@ -178,13 +178,23 @@ def view(geofence_id):
     # إحصائيات الحضور
     today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
     week_start = today_start - timedelta(days=7)
+    month_start = today_start - timedelta(days=30)
     
     total_assigned = len(geofence.assigned_employees)
-    # حساب فقط الموظفين المعينين للدائرة والموجودين داخلها
     assigned_ids = {emp.id for emp in geofence.assigned_employees}
     present_count = len([s for s in active_sessions if s.employee_id in assigned_ids])
     absent_count = total_assigned - present_count
     attendance_rate = (present_count / total_assigned * 100) if total_assigned > 0 else 0
+    
+    # إحصائيات متقدمة: تأخر، في الوقت، إلخ
+    late_count = 0
+    on_time_count = 0
+    for session in active_sessions:
+        status = geofence.get_attendance_status(session)
+        if isinstance(status, str) and status.startswith('late'):
+            late_count += 1
+        elif status == 'on_time':
+            on_time_count += 1
     
     # إحصائيات آخر 24 ساعة (كل ساعة)
     hourly_data = []
@@ -221,10 +231,48 @@ def view(geofence_id):
             'count': events_count
         })
     
+    # تقرير الانتظامية الشهرية
+    monthly_report = {}
+    for emp in geofence.assigned_employees:
+        emp_sessions = GeofenceSession.query.filter(
+            GeofenceSession.geofence_id == geofence_id,
+            GeofenceSession.employee_id == emp.id,
+            GeofenceSession.entry_time >= month_start
+        ).all()
+        monthly_report[emp.id] = len(emp_sessions)
+    
+    # أكثر موظف حضوراً
+    top_attendees = sorted(monthly_report.items(), key=lambda x: x[1], reverse=True)[:5]
+    top_attendees_data = []
+    for emp_id, count in top_attendees:
+        emp = next((e for e in geofence.assigned_employees if e.id == emp_id), None)
+        if emp:
+            top_attendees_data.append({'employee': emp, 'attendance_count': count})
+    
+    # موظفون متأخرون متكررون
+    late_employees = {}
+    for emp in geofence.assigned_employees:
+        late_sessions = GeofenceSession.query.filter(
+            GeofenceSession.geofence_id == geofence_id,
+            GeofenceSession.employee_id == emp.id,
+            GeofenceSession.entry_time >= month_start
+        ).all()
+        late_count_emp = 0
+        for session in late_sessions:
+            status = geofence.get_attendance_status(session)
+            if isinstance(status, str) and status.startswith('late'):
+                late_count_emp += 1
+        if late_count_emp > 0:
+            late_employees[emp.id] = late_count_emp
+    
+    frequent_late = sorted(late_employees.items(), key=lambda x: x[1], reverse=True)[:5]
+    
     stats = {
         'total_assigned': total_assigned,
         'present_count': present_count,
         'absent_count': absent_count,
+        'late_count': late_count,
+        'on_time_count': on_time_count,
         'attendance_rate': round(attendance_rate, 1),
         'hourly_data': json.dumps(hourly_data),
         'weekly_data': json.dumps(weekly_data)
@@ -243,7 +291,15 @@ def view(geofence_id):
         employee_stats=employee_stats,
         all_sessions=all_sessions,
         active_sessions=active_sessions,
-        active_sessions_data=active_sessions_data
+        active_sessions_data=active_sessions_data,
+        top_attendees=top_attendees_data,
+        frequent_late=frequent_late,
+        geofence_settings={
+            'attendance_start_time': geofence.attendance_start_time,
+            'attendance_required_minutes': geofence.attendance_required_minutes,
+            'early_arrival_minutes': geofence.early_arrival_allowed_minutes,
+            'late_arrival_minutes': geofence.late_arrival_allowed_minutes
+        }
     )
 
 

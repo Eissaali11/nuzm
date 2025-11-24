@@ -448,7 +448,118 @@
                 <div class="kpi-value">{{ stats.attendance_rate }}%</div>
                 <div class="kpi-label">نسبة الحضور</div>
             </div>
+            
+            <div class="kpi-card">
+                <div class="kpi-icon present"><i class="fas fa-clock"></i></div>
+                <div class="kpi-value">{{ stats.on_time_count }}</div>
+                <div class="kpi-label">في الوقت</div>
+            </div>
+            
+            <div class="kpi-card">
+                <div class="kpi-icon absent"><i class="fas fa-hourglass-end"></i></div>
+                <div class="kpi-value">{{ stats.late_count }}</div>
+                <div class="kpi-label">متأخر</div>
+            </div>
         </div>
+        
+        <!-- الإعدادات والأوقات المرنة -->
+        <div class="card">
+            <div class="card-header">
+                <h2>
+                    <i class="fas fa-cog"></i>
+                    إعدادات الحضور
+                </h2>
+            </div>
+            <div class="card-body" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; padding: 20px;">
+                <div style="background: rgba(99, 102, 241, 0.1); padding: 15px; border-radius: 12px; border: 1px solid rgba(99, 102, 241, 0.3);">
+                    <div style="color: #818cf8; font-size: 12px; font-weight: 600;">وقت البداية</div>
+                    <div style="color: #fff; font-size: 20px; font-weight: 900; margin-top: 8px;">{{ geofence_settings.attendance_start_time }}</div>
+                </div>
+                <div style="background: rgba(10, 185, 128, 0.1); padding: 15px; border-radius: 12px; border: 1px solid rgba(10, 185, 128, 0.3);">
+                    <div style="color: #6ee7b7; font-size: 12px; font-weight: 600;">الحد الأدنى للبقاء</div>
+                    <div style="color: #fff; font-size: 20px; font-weight: 900; margin-top: 8px;">{{ geofence_settings.attendance_required_minutes }} دقيقة</div>
+                </div>
+                <div style="background: rgba(168, 85, 247, 0.1); padding: 15px; border-radius: 12px; border: 1px solid rgba(168, 85, 247, 0.3);">
+                    <div style="color: #d8b4fe; font-size: 12px; font-weight: 600;">الحضور المبكر المسموح</div>
+                    <div style="color: #fff; font-size: 20px; font-weight: 900; margin-top: 8px;">{{ geofence_settings.early_arrival_minutes }} دقيقة</div>
+                </div>
+                <div style="background: rgba(249, 115, 22, 0.1); padding: 15px; border-radius: 12px; border: 1px solid rgba(249, 115, 22, 0.3);">
+                    <div style="color: #fed7aa; font-size: 12px; font-weight: 600;">التأخر المسموح</div>
+                    <div style="color: #fff; font-size: 20px; font-weight: 900; margin-top: 8px;">{{ geofence_settings.late_arrival_minutes }} دقيقة</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- أكثر الموظفين حضوراً -->
+        {% if top_attendees %}
+        <div class="card">
+            <div class="card-header">
+                <h2>
+                    <i class="fas fa-trophy"></i>
+                    أكثر الموظفين حضوراً (آخر 30 يوم)
+                </h2>
+            </div>
+            <div class="card-body">
+                {% for item in top_attendees %}
+                <div class="employee-item">
+                    {% if item.employee.profile_image %}
+                    <img src="{{ url_for('static', filename='uploads/' + item.employee.profile_image) }}" alt="{{ item.employee.name }}" class="employee-photo" style="object-fit: cover; border: 2px solid rgba(16, 185, 129, 0.5);">
+                    {% else %}
+                    <div class="employee-photo" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 18px;">
+                        {{ item.employee.name[0] if item.employee.name else 'M' }}
+                    </div>
+                    {% endif %}
+                    <div class="employee-info">
+                        <div class="employee-name">{{ item.employee.name }}</div>
+                        <div class="employee-details">
+                            <span><i class="fas fa-id-card"></i> {{ item.employee.employee_id }}</span>
+                        </div>
+                    </div>
+                    <span style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: 700;">
+                        <i class="fas fa-check-circle"></i> {{ item.attendance_count }} مرة
+                    </span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- الموظفون المتأخرون المتكررون -->
+        {% if frequent_late %}
+        <div class="card">
+            <div class="card-header">
+                <h2>
+                    <i class="fas fa-exclamation-circle"></i>
+                    الموظفون المتأخرون المتكررون (آخر 30 يوم)
+                </h2>
+            </div>
+            <div class="card-body">
+                {% for item in frequent_late %}
+                {% set emp = geofence.assigned_employees | selectattr('id', 'equalto', item[0]) | first %}
+                {% if emp %}
+                <div class="employee-item">
+                    {% if emp.profile_image %}
+                    <img src="{{ url_for('static', filename='uploads/' + emp.profile_image) }}" alt="{{ emp.name }}" class="employee-photo" style="object-fit: cover; border: 2px solid rgba(239, 68, 68, 0.5);">
+                    {% else %}
+                    <div class="employee-photo" style="background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 18px;">
+                        {{ emp.name[0] if emp.name else 'M' }}
+                    </div>
+                    {% endif %}
+                    <div class="employee-info">
+                        <div class="employee-name">{{ emp.name }}</div>
+                        <div class="employee-details">
+                            <span><i class="fas fa-id-card"></i> {{ emp.employee_id }}</span>
+                        </div>
+                    </div>
+                    <span style="background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%); color: white; padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: 700;">
+                        <i class="fas fa-clock"></i> {{ item[1] }} مرات متأخر
+                    </span>
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
         
         <!-- الخريطة -->
         <div class="card">
