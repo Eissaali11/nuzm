@@ -818,17 +818,35 @@
             })
         }).addTo(map).bindPopup(`<strong>${geofenceData.name}</strong><br/>مركز الدائرة`);
         
-        // إضافة الموظفين الموجودين
+        // إضافة الموظفين الموجودين مع كشف نمط النقل
         activeSessions.forEach(function(session) {
             if (session.employee && session.employee.name) {
-                L.marker([geofenceData.latitude, geofenceData.longitude], {
+                const lat = session.latitude || geofenceData.latitude;
+                const lng = session.longitude || geofenceData.longitude;
+                
+                // تحديد الرمز بناءً على نمط النقل
+                let icon = '🚶';
+                let modeText = 'مشي';
+                let backgroundColor = '#6366f1';
+                
+                if (session.transportation_mode === 'driving') {
+                    icon = '🚗';
+                    modeText = 'قيادة سيارة';
+                    backgroundColor = '#10b981';
+                } else if (session.transportation_mode === 'walking') {
+                    icon = '🚶';
+                    modeText = 'مشي';
+                    backgroundColor = '#f59e0b';
+                }
+                
+                L.marker([lat, lng], {
                     icon: L.divIcon({
                         className: 'employee-marker',
-                        html: `<div style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 16px; border: 2px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3);">${session.employee.name.charAt(0)}</div>`,
-                        iconSize: [35, 35],
-                        iconAnchor: [17, 17]
+                        html: `<div style="background: linear-gradient(135deg, ${backgroundColor} 0%, ${backgroundColor} 100%); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 20px; border: 2px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3);">${icon}</div>`,
+                        iconSize: [40, 40],
+                        iconAnchor: [20, 20]
                     })
-                }).addTo(map).bindPopup(`<strong>${session.employee.name}</strong><br/>الموظف: ${session.employee.employee_id}<br/>الدخول: ${session.entry_time}`);
+                }).addTo(map).bindPopup(`<strong>${session.employee.name}</strong><br/>الموظف: ${session.employee.employee_id}<br/>النقل: ${modeText}<br/>الدخول: ${session.entry_time}`);
             }
         });
         

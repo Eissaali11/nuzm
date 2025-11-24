@@ -125,6 +125,35 @@ def view(geofence_id):
     assigned_employee_ids = [emp.id for emp in geofence.assigned_employees]
     available_employees = [emp for emp in department_employees if emp.id not in assigned_employee_ids]
     
+    # دالة لحساب السرعة وتحديد نمط النقل
+    def get_transportation_mode(employee_id):
+        """حساب السرعة وتحديد ما إذا كان الموظف يمشي أو يقود"""
+        locations = EmployeeLocation.query.filter_by(
+            employee_id=employee_id
+        ).order_by(EmployeeLocation.recorded_at.desc()).limit(2).all()
+        
+        if len(locations) < 2:
+            return 'unknown'
+        
+        loc1 = locations[0]
+        loc2 = locations[1]
+        
+        time_diff = (loc1.recorded_at - loc2.recorded_at).total_seconds() / 3600
+        if time_diff == 0:
+            return 'unknown'
+        
+        # حساب المسافة بين النقطتين (Haversine formula)
+        from math import radians, cos, sin, asin, sqrt
+        lon1, lat1, lon2, lat2 = float(loc1.longitude), float(loc1.latitude), float(loc2.longitude), float(loc2.latitude)
+        dlon = lon2 - lon1
+        dlat = lat2 - lat1
+        a = sin(radians(dlat)/2)**2 + cos(radians(lat1)) * cos(radians(lat2)) * sin(radians(dlon)/2)**2
+        c = 2 * asin(sqrt(a))
+        km = 6371 * c
+        
+        speed = km / time_diff
+        return 'driving' if speed > 5 else 'walking'
+    
     # جلب الجلسات النشطة (الموظفون داخل الدائرة الآن)
     active_sessions = SessionManager.get_active_sessions(geofence_id=geofence_id)
     
@@ -134,6 +163,14 @@ def view(geofence_id):
     for session in active_sessions:
         session.attendance_status = geofence.get_attendance_status(session)
         employees_with_sessions_today.add(session.employee_id)
+        
+        # الحصول على آخر موقع للموظف
+        latest_location = EmployeeLocation.query.filter_by(
+            employee_id=session.employee_id
+        ).order_by(EmployeeLocation.recorded_at.desc()).first()
+        
+        transportation_mode = get_transportation_mode(session.employee_id)
+        
         active_sessions_data.append({
             'id': session.id,
             'employee_id': session.employee_id,
@@ -145,7 +182,10 @@ def view(geofence_id):
             'entry_time': session.entry_time.isoformat() if session.entry_time else None,
             'exit_time': session.exit_time.isoformat() if session.exit_time else None,
             'duration_minutes': session.duration_minutes,
-            'attendance_status': session.attendance_status
+            'attendance_status': session.attendance_status,
+            'transportation_mode': transportation_mode,
+            'latitude': float(latest_location.latitude) if latest_location else None,
+            'longitude': float(latest_location.longitude) if latest_location else None
         })
     
     # حساب الموظفين الغائبين (المرتبطين بالدائرة لكن لم يدخلوا اليوم)
