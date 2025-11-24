@@ -2815,7 +2815,7 @@ def export_department_data():
         ws.append(header_row)
         
         # تنسيق الرأس الاحترافي
-        header_fill = PatternFill(start_color="4F46E5", end_color="4F46E5", fill_type="solid")
+        header_fill = PatternFill(start_color="18B2B0", end_color="18B2B0", fill_type="solid")
         header_font = Font(bold=True, color="FFFFFF", size=11)
         thin_border = Border(
             left=Side(style='thin', color='FFFFFF'),
@@ -2902,7 +2902,7 @@ def export_department_data():
         title_cell = stats_ws['A1']
         title_cell.value = "ملخص إحصائيات الحضور"
         title_cell.font = Font(bold=True, size=16, color="FFFFFF")
-        title_cell.fill = PatternFill(start_color="4F46E5", end_color="4F46E5", fill_type="solid")
+        title_cell.fill = PatternFill(start_color="18B2B0", end_color="18B2B0", fill_type="solid")
         title_cell.alignment = Alignment(horizontal='center', vertical='center')
         stats_ws.row_dimensions[1].height = 32
         
@@ -2931,7 +2931,7 @@ def export_department_data():
                 
                 if idx == 2:  # رأس الإحصائيات
                     cell.font = Font(bold=True, color="FFFFFF", size=12)
-                    cell.fill = PatternFill(start_color="667EEA", end_color="667EEA", fill_type="solid")
+                    cell.fill = PatternFill(start_color="18B2B0", end_color="18B2B0", fill_type="solid")
                 elif row_data[3] == 'total':
                     cell.font = Font(bold=True, size=12)
                     cell.fill = PatternFill(start_color="E0E7FF", end_color="E0E7FF", fill_type="solid")
