@@ -386,6 +386,9 @@
                 </div>
             </div>
             <div class="header-actions">
+                <button class="btn" onclick="autoRecordAttendance()">
+                    <i class="fas fa-user-check"></i> تسجيل حضور تلقائي
+                </button>
                 <button class="btn btn-warning" onclick="editSettings()">
                     <i class="fas fa-cog"></i> الإعدادات
                 </button>
@@ -464,11 +467,34 @@
                                 <div class="employee-details">
                                     <span><i class="fas fa-id-card"></i> {{ session.employee.employee_id }}</span>
                                     <span><i class="fas fa-sign-in-alt"></i> {{ session.entry_time.strftime('%H:%M') }}</span>
+                                    {% if session.duration_minutes %}
+                                    <span><i class="fas fa-clock"></i> {{ session.duration_minutes }} دقيقة</span>
+                                    {% endif %}
                                 </div>
                             </div>
+                            {% if hasattr(session, 'attendance_status') %}
+                                {% if session.attendance_status == 'on_time' %}
+                                <span class="status-badge status-ontime">
+                                    <i class="fas fa-check-circle"></i> في الوقت
+                                </span>
+                                {% elif session.attendance_status.startswith('late_') %}
+                                <span class="status-badge status-late">
+                                    <i class="fas fa-clock"></i> متأخر {{ session.attendance_status.split('_')[1] }} د
+                                </span>
+                                {% elif session.attendance_status == 'insufficient_time' %}
+                                <span class="status-badge" style="background: rgba(239, 68, 68, 0.2); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.3);">
+                                    <i class="fas fa-hourglass-half"></i> مدة غير كافية
+                                </span>
+                                {% else %}
+                                <span class="status-badge status-inside">
+                                    <i class="fas fa-dot-circle"></i> موجود
+                                </span>
+                                {% endif %}
+                            {% else %}
                             <span class="status-badge status-inside">
                                 <i class="fas fa-dot-circle"></i> موجود
                             </span>
+                            {% endif %}
                         </div>
                         {% endfor %}
                     {% else %}
@@ -606,6 +632,29 @@
         
         function editSettings() {
             document.querySelector('.settings-section').scrollIntoView({behavior: 'smooth'});
+        }
+        
+        function autoRecordAttendance() {
+            if(!confirm('هل تريد تسجيل الحضور التلقائي لجميع الموظفين الذين استوفوا الشروط؟')) {
+                return;
+            }
+            
+            fetch('/employees/geofences/{{ geofence.id }}/auto-record-attendance', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) {
+                    alert(`✅ ${data.message}\n\nتفاصيل:\n- مسجلون: ${data.recorded_count}\n- مسجلون مسبقاً: ${data.already_recorded}\n- وقت غير كافٍ: ${data.insufficient_time}`);
+                    location.reload();
+                } else {
+                    alert('خطأ: ' + data.message);
+                }
+            })
+            .catch(err => alert('خطأ في الاتصال'));
         }
     </script>
 </body>

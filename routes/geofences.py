@@ -125,6 +125,10 @@ def view(geofence_id):
     # جلب الجلسات النشطة (الموظفون داخل الدائرة الآن)
     active_sessions = SessionManager.get_active_sessions(geofence_id=geofence_id)
     
+    # حساب حالة الحضور لكل جلسة نشطة
+    for session in active_sessions:
+        session.attendance_status = geofence.get_attendance_status(session)
+    
     # جلب جميع الجلسات مع تفاصيل الموظفين
     all_sessions = GeofenceSession.query.filter_by(
         geofence_id=geofence_id
@@ -433,6 +437,88 @@ def update_settings(geofence_id):
         return jsonify({
             'success': True,
             'message': 'تم تحديث إعدادات الحضور بنجاح'
+        })
+    
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'message': f'خطأ: {str(e)}'
+        }), 400
+
+
+@geofences_bp.route('/<int:geofence_id>/auto-record-attendance', methods=['POST'])
+@login_required
+def auto_record_attendance(geofence_id):
+    """تسجيل حضور تلقائي للموظفين الذين استوفوا الشروط"""
+    try:
+        geofence = Geofence.query.get_or_404(geofence_id)
+        
+        # جلب جميع الجلسات النشطة
+        active_sessions = SessionManager.get_active_sessions(geofence_id=geofence_id)
+        
+        recorded_count = 0
+        already_recorded = 0
+        insufficient_time = 0
+        
+        today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+        
+        for session in active_sessions:
+            # التحقق من أن الموظف مرتبط بهذه الدائرة
+            if session.employee not in geofence.assigned_employees:
+                continue
+            
+            # التحقق من أن المدة كافية
+            if not session.duration_minutes or session.duration_minutes < geofence.attendance_required_minutes:
+                insufficient_time += 1
+                continue
+            
+            # التحقق من عدم وجود حضور مسجل مسبقاً اليوم
+            existing_attendance = Attendance.query.filter(
+                Attendance.employee_id == session.employee_id,
+                Attendance.check_in_time >= today_start
+            ).first()
+            
+            if existing_attendance:
+                already_recorded += 1
+                continue
+            
+            # حساب حالة الحضور
+            status = geofence.get_attendance_status(session)
+            
+            # تسجيل الحضور
+            attendance = Attendance(
+                employee_id=session.employee_id,
+                check_in_time=session.entry_time,
+                status='present',
+                notes=f'تسجيل تلقائي من دائرة: {geofence.name} - الحالة: {status}'
+            )
+            db.session.add(attendance)
+            db.session.flush()
+            
+            # تسجيل حدث
+            event = GeofenceEvent(
+                geofence_id=geofence.id,
+                employee_id=session.employee_id,
+                event_type='auto_attendance',
+                location_latitude=geofence.center_latitude,
+                location_longitude=geofence.center_longitude,
+                source='auto',
+                attendance_id=attendance.id,
+                notes=f'تسجيل حضور تلقائي - المدة: {session.duration_minutes} دقيقة - الحالة: {status}'
+            )
+            db.session.add(event)
+            
+            recorded_count += 1
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'recorded_count': recorded_count,
+            'already_recorded': already_recorded,
+            'insufficient_time': insufficient_time,
+            'message': f'تم تسجيل حضور {recorded_count} موظف'
         })
     
     except Exception as e:

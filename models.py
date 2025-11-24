@@ -2212,6 +2212,29 @@ class Geofence(db.Model):
     events = db.relationship('GeofenceEvent', backref='geofence', cascade='all, delete-orphan')
     assigned_employees = db.relationship('Employee', secondary=employee_geofences, back_populates='assigned_geofences')
     
+    def get_attendance_status(self, session):
+        """حساب حالة حضور موظف بناءً على الجلسة"""
+        if not session or not session.entry_time:
+            return 'absent'
+        
+        # التحقق من المدة
+        if session.duration_minutes and session.duration_minutes < self.attendance_required_minutes:
+            return 'insufficient_time'
+        
+        # حساب إذا كان في الوقت أو متأخر
+        if self.attendance_start_time:
+            start_hour, start_minute = map(int, self.attendance_start_time.split(':'))
+            entry_time = session.entry_time
+            scheduled_time = entry_time.replace(hour=start_hour, minute=start_minute, second=0, microsecond=0)
+            
+            if entry_time <= scheduled_time:
+                return 'on_time'
+            else:
+                delay_minutes = int((entry_time - scheduled_time).total_seconds() / 60)
+                return f'late_{delay_minutes}'
+        
+        return 'present'
+    
     def get_department_employees_inside(self):
         """جلب موظفي القسم المرتبط الموجودين داخل الدائرة فقط"""
         employees_inside = []
