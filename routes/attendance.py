@@ -2847,13 +2847,13 @@ def export_department_data():
             for date in all_dates:
                 status = attendance_map.get((emp.id, date), '')
                 
-                # تحويل الحالة إلى P أو A أو SKL
+                # تحويل الحالة إلى P أو A أو S
                 if status == 'present':
                     row_data.append('P')
                 elif status == 'absent':
                     row_data.append('A')
                 elif status == 'leave' or status == 'sick':
-                    row_data.append('SKL')
+                    row_data.append('S')
                 else:
                     row_data.append('')
             
@@ -2876,7 +2876,7 @@ def export_department_data():
                     if row_num % 2 == 0:
                         cell_obj.fill = PatternFill(start_color="F8F9FA", end_color="F8F9FA", fill_type="solid")
                 else:
-                    # أعمدة الحضور (P/A/SKL)
+                    # أعمدة الحضور (P/A/S)
                     value = cell_obj.value
                     if value == 'P':
                         cell_obj.fill = PatternFill(start_color="D4EDDA", end_color="D4EDDA", fill_type="solid")
@@ -2884,7 +2884,7 @@ def export_department_data():
                     elif value == 'A':
                         cell_obj.fill = PatternFill(start_color="F8D7DA", end_color="F8D7DA", fill_type="solid")
                         cell_obj.font = Font(bold=True, color="721C24", size=11)
-                    elif value == 'SKL':
+                    elif value == 'S':
                         cell_obj.fill = PatternFill(start_color="FFF3CD", end_color="FFF3CD", fill_type="solid")
                         cell_obj.font = Font(bold=True, color="856404", size=11)
                     else:
