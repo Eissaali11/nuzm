@@ -3728,7 +3728,6 @@ def update_attendance_page(id):
 
 @attendance_bp.route('/departments-circles-overview')
 @login_required
-@module_access_required(Module.ATTENDANCE)
 def departments_circles_overview():
     """لوحة تحكم شاملة تعرض الأقسام والدوائر وبيانات الحضور مع فلاتر"""
     date_str = request.args.get('date')
