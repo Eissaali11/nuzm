@@ -514,6 +514,112 @@
             font-size: 0.7rem;
             color: #9ca3af;
         }
+        
+        .filters-card {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .filters-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .filters-header h3 {
+            font-size: 1rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #fff;
+        }
+        
+        .filters-header h3 i {
+            color: #818cf8;
+        }
+        
+        .date-input-wrapper {
+            position: relative;
+        }
+        
+        .date-input {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            padding: 8px 12px;
+            color: #e0e7ff;
+            font-family: 'Cairo', sans-serif;
+            font-size: 0.85rem;
+            width: 140px;
+        }
+        
+        .date-input::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+            cursor: pointer;
+        }
+        
+        .filter-tabs {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        
+        .filter-tab {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            padding: 10px 14px;
+            color: #c7d2fe;
+            font-family: 'Cairo', sans-serif;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+        }
+        
+        .filter-tab:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.25);
+        }
+        
+        .filter-tab.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-color: transparent;
+            color: #fff;
+        }
+        
+        .filter-tab .count {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.7rem;
+        }
+        
+        .filter-tab.active .count {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .filter-tab.success { border-color: rgba(16, 185, 129, 0.4); }
+        .filter-tab.success.active { background: linear-gradient(135deg, #10b981, #059669); }
+        
+        .filter-tab.warning { border-color: rgba(245, 158, 11, 0.4); }
+        .filter-tab.warning.active { background: linear-gradient(135deg, #f59e0b, #d97706); }
+        
+        .filter-tab.danger { border-color: rgba(239, 68, 68, 0.4); }
+        .filter-tab.danger.active { background: linear-gradient(135deg, #ef4444, #dc2626); }
+        
+        .filter-tab.info { border-color: rgba(59, 130, 246, 0.4); }
+        .filter-tab.info.active { background: linear-gradient(135deg, #3b82f6, #2563eb); }
     </style>
 </head>
 <body>
@@ -580,11 +686,47 @@
             </div>
             <div class="stat-card success">
                 <div class="stat-value">{{ stats.today_entries }}</div>
-                <div class="stat-label">دخول اليوم</div>
+                <div class="stat-label">دخول</div>
             </div>
             <div class="stat-card danger">
                 <div class="stat-value">{{ stats.today_exits }}</div>
-                <div class="stat-label">خروج اليوم</div>
+                <div class="stat-label">خروج</div>
+            </div>
+        </div>
+        
+        <div class="filters-card">
+            <div class="filters-header">
+                <h3><i class="fas fa-filter"></i> الفلاتر</h3>
+                <div class="date-input-wrapper">
+                    <input type="date" class="date-input" id="filter-date" value="{{ filter_date }}" onchange="applyDateFilter()">
+                </div>
+            </div>
+            <div class="filter-tabs">
+                <a href="?filter=all&date={{ filter_date }}" class="filter-tab {{ 'active' if filter_type == 'all' else '' }}">
+                    <i class="fas fa-users"></i>
+                    الكل
+                    <span class="count">{{ stats.total_assigned }}</span>
+                </a>
+                <a href="?filter=active&date={{ filter_date }}" class="filter-tab success {{ 'active' if filter_type == 'active' else '' }}">
+                    <i class="fas fa-signal"></i>
+                    نشط
+                    <span class="count">{{ stats.active_count }}</span>
+                </a>
+                <a href="?filter=inactive&date={{ filter_date }}" class="filter-tab warning {{ 'active' if filter_type == 'inactive' else '' }}">
+                    <i class="fas fa-moon"></i>
+                    غير نشط
+                    <span class="count">{{ stats.inactive_count }}</span>
+                </a>
+                <a href="?filter=entered&date={{ filter_date }}" class="filter-tab info {{ 'active' if filter_type == 'entered' else '' }}">
+                    <i class="fas fa-sign-in-alt"></i>
+                    دخلوا
+                    <span class="count">{{ stats.entered_today }}</span>
+                </a>
+                <a href="?filter=not_entered&date={{ filter_date }}" class="filter-tab danger {{ 'active' if filter_type == 'not_entered' else '' }}">
+                    <i class="fas fa-user-slash"></i>
+                    لم يدخلوا
+                    <span class="count">{{ stats.not_entered_today }}</span>
+                </a>
             </div>
         </div>
         
@@ -600,79 +742,45 @@
             <div id="map"></div>
         </div>
         
-        {% if employees_inside %}
+        {% macro render_employee_list(employees_list, title, icon, icon_color, badge_gradient, show_status_tag=true, status_tag_type='inside') %}
+        {% if employees_list %}
         <div class="section-card">
             <div class="section-header">
-                <h3><i class="fas fa-check-circle" style="color: #10b981;"></i> داخل الدائرة</h3>
-                <span class="section-badge" style="background: linear-gradient(135deg, #10b981, #059669);">{{ employees_inside|length }}</span>
+                <h3><i class="fas fa-{{ icon }}" style="color: {{ icon_color }};"></i> {{ title }}</h3>
+                <span class="section-badge" style="background: linear-gradient(135deg, {{ badge_gradient }});">{{ employees_list|length }}</span>
             </div>
             <div class="employee-list">
-                {% for emp_data in employees_inside %}
-                <div class="employee-item" onclick="focusOnEmployee({{ emp_data.location.latitude }}, {{ emp_data.location.longitude }})">
+                {% for emp_data in employees_list %}
+                <div class="employee-item" {% if emp_data.location %}onclick="focusOnEmployee({{ emp_data.location.latitude }}, {{ emp_data.location.longitude }})"{% endif %}>
                     {% if emp_data.employee.profile_image %}
                     <img src="/static/{{ emp_data.employee.profile_image.replace('static/', '') }}" class="employee-avatar" alt="">
                     {% else %}
-                    <div class="employee-avatar-placeholder" style="background: linear-gradient(135deg, #10b981, #059669);">
+                    <div class="employee-avatar-placeholder" style="background: linear-gradient(135deg, {{ badge_gradient }});">
                         {{ emp_data.employee.name[0] if emp_data.employee.name else '?' }}
                     </div>
                     {% endif %}
                     <div class="employee-info">
                         <div class="employee-name">{{ emp_data.employee.name }}</div>
                         <div class="employee-meta">
-                            <span class="meta-tag inside">
-                                <i class="fas fa-check"></i>
-                                داخل
+                            {% if show_status_tag %}
+                            <span class="meta-tag {{ status_tag_type }}">
+                                <i class="fas fa-{{ 'check' if status_tag_type == 'inside' else 'times' }}"></i>
+                                {{ 'داخل' if status_tag_type == 'inside' else 'خارج' }}
                             </span>
-                            <span class="meta-tag distance">
-                                <i class="fas fa-ruler"></i>
-                                {{ emp_data.distance }} م
-                            </span>
-                            <span class="meta-tag time">
-                                <i class="fas fa-clock"></i>
-                                {{ emp_data.age_minutes }} د
-                            </span>
-                        </div>
-                    </div>
-                    <div class="status-dot {{ 'active' if emp_data.is_active else 'warning' }}"></div>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-        {% endif %}
-        
-        {% if employees_outside %}
-        <div class="section-card">
-            <div class="section-header">
-                <h3><i class="fas fa-exclamation-triangle" style="color: #f59e0b;"></i> خارج الدائرة</h3>
-                <span class="section-badge" style="background: linear-gradient(135deg, #f59e0b, #ef4444);">{{ employees_outside|length }}</span>
-            </div>
-            <div class="employee-list">
-                {% for emp_data in employees_outside %}
-                <div class="employee-item" {% if emp_data.location %}onclick="focusOnEmployee({{ emp_data.location.latitude }}, {{ emp_data.location.longitude }})"{% endif %}>
-                    {% if emp_data.employee.profile_image %}
-                    <img src="/static/{{ emp_data.employee.profile_image.replace('static/', '') }}" class="employee-avatar" style="border-color: #f59e0b;" alt="">
-                    {% else %}
-                    <div class="employee-avatar-placeholder" style="background: linear-gradient(135deg, #f59e0b, #ef4444); border-color: #f59e0b;">
-                        {{ emp_data.employee.name[0] if emp_data.employee.name else '?' }}
-                    </div>
-                    {% endif %}
-                    <div class="employee-info">
-                        <div class="employee-name">{{ emp_data.employee.name }}</div>
-                        <div class="employee-meta">
-                            <span class="meta-tag outside">
-                                <i class="fas fa-times"></i>
-                                خارج
-                            </span>
+                            {% endif %}
                             {% if emp_data.distance %}
                             <span class="meta-tag distance">
                                 <i class="fas fa-ruler"></i>
                                 {{ emp_data.distance }} م
                             </span>
+                            {% endif %}
+                            {% if emp_data.age_minutes is not none %}
                             <span class="meta-tag time">
                                 <i class="fas fa-clock"></i>
                                 {{ emp_data.age_minutes }} د
                             </span>
-                            {% else %}
+                            {% endif %}
+                            {% if not emp_data.location %}
                             <span class="meta-tag" style="background: rgba(107, 114, 128, 0.2); color: #d1d5db; border: 1px solid rgba(107, 114, 128, 0.3);">
                                 <i class="fas fa-question"></i>
                                 لا يوجد موقع
@@ -680,11 +788,25 @@
                             {% endif %}
                         </div>
                     </div>
-                    <div class="status-dot {{ 'warning' if emp_data.location else 'inactive' }}"></div>
+                    <div class="status-dot {{ 'active' if emp_data.is_active else ('warning' if emp_data.location else 'inactive') }}"></div>
                 </div>
                 {% endfor %}
             </div>
         </div>
+        {% endif %}
+        {% endmacro %}
+        
+        {% if filter_type == 'all' %}
+            {{ render_employee_list(employees_inside, 'داخل الدائرة', 'check-circle', '#10b981', '#10b981, #059669', true, 'inside') }}
+            {{ render_employee_list(employees_outside, 'خارج الدائرة', 'exclamation-triangle', '#f59e0b', '#f59e0b, #ef4444', true, 'outside') }}
+        {% elif filter_type == 'active' %}
+            {{ render_employee_list(employees_active, 'الموظفون النشطون', 'signal', '#10b981', '#10b981, #059669', false) }}
+        {% elif filter_type == 'inactive' %}
+            {{ render_employee_list(employees_inactive, 'الموظفون غير النشطين', 'moon', '#f59e0b', '#f59e0b, #d97706', false) }}
+        {% elif filter_type == 'entered' %}
+            {{ render_employee_list(employees_entered_today, 'دخلوا الدائرة', 'sign-in-alt', '#3b82f6', '#3b82f6, #2563eb', false) }}
+        {% elif filter_type == 'not_entered' %}
+            {{ render_employee_list(employees_not_entered_today, 'لم يدخلوا الدائرة', 'user-slash', '#ef4444', '#ef4444, #dc2626', false) }}
         {% endif %}
         
         {% if recent_events %}
@@ -855,6 +977,12 @@
                 map.setView([lat, lng], 17, { animate: true });
                 document.getElementById('map').scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
+        }
+        
+        function applyDateFilter() {
+            const date = document.getElementById('filter-date').value;
+            const currentFilter = '{{ filter_type }}';
+            window.location.href = `?filter=${currentFilter}&date=${date}`;
         }
         
         document.addEventListener('DOMContentLoaded', initMap);

@@ -552,8 +552,13 @@ def geofence_details(geofence_id):
     """عرض تفاصيل دائرة جغرافية معينة"""
     from models import Geofence, EmployeeLocation, GeofenceSession, GeofenceEvent
     from math import radians, sin, cos, sqrt, atan2
+    from datetime import timedelta
     
     geofence = Geofence.query.get_or_404(geofence_id)
+    
+    # الحصول على الفلاتر من query parameters
+    filter_type = request.args.get('filter', 'all')  # all, active, inactive, entered, not_entered
+    filter_date = request.args.get('date', '')
     
     # جلب الموظفين المعينين لهذه الدائرة
     assigned_employees = geofence.assigned_employees
@@ -561,6 +566,9 @@ def geofence_details(geofence_id):
     # حساب من هو داخل الدائرة حالياً
     employees_inside = []
     employees_outside = []
+    employees_active = []
+    employees_inactive = []
+    employees_no_location = []
     
     def calculate_distance(lat1, lon1, lat2, lon2):
         R = 6371000  # نصف قطر الأرض بالمتر
@@ -581,31 +589,91 @@ def geofence_details(geofence_id):
         if location and location.latitude and location.longitude:
             distance = calculate_distance(center_lat, center_lng, float(location.latitude), float(location.longitude))
             age_minutes = (datetime.utcnow() - location.recorded_at).total_seconds() / 60
+            is_active = age_minutes < 30
             
             emp_data = {
                 'employee': emp,
                 'location': location,
                 'distance': int(distance),
                 'age_minutes': int(age_minutes),
-                'is_active': age_minutes < 30
+                'is_active': is_active
             }
             
             if distance <= radius:
                 employees_inside.append(emp_data)
             else:
                 employees_outside.append(emp_data)
+            
+            if is_active:
+                employees_active.append(emp_data)
+            else:
+                employees_inactive.append(emp_data)
         else:
-            employees_outside.append({
+            emp_data = {
                 'employee': emp,
                 'location': None,
                 'distance': None,
                 'age_minutes': None,
                 'is_active': False
-            })
+            }
+            employees_outside.append(emp_data)
+            employees_inactive.append(emp_data)
+            employees_no_location.append(emp_data)
     
-    # جلب آخر الأحداث (دخول/خروج)
-    from datetime import timedelta
-    recent_events_raw = GeofenceEvent.query.filter_by(geofence_id=geofence_id).order_by(GeofenceEvent.recorded_at.desc()).limit(20).all()
+    # تحديد التاريخ للفلتر
+    if filter_date:
+        try:
+            selected_date = datetime.strptime(filter_date, '%Y-%m-%d').date()
+        except:
+            selected_date = datetime.utcnow().date()
+    else:
+        selected_date = datetime.utcnow().date()
+    
+    date_start = datetime.combine(selected_date, datetime.min.time())
+    date_end = datetime.combine(selected_date, datetime.max.time())
+    
+    # الموظفين الذين دخلوا الدائرة في التاريخ المحدد
+    entered_employee_ids = db.session.query(GeofenceEvent.employee_id).filter(
+        GeofenceEvent.geofence_id == geofence_id,
+        GeofenceEvent.event_type == 'enter',
+        GeofenceEvent.recorded_at >= date_start,
+        GeofenceEvent.recorded_at <= date_end
+    ).distinct().all()
+    entered_ids = [eid[0] for eid in entered_employee_ids]
+    
+    employees_entered_today = []
+    employees_not_entered_today = []
+    
+    for emp in assigned_employees:
+        emp_data = None
+        for e in employees_inside + employees_outside:
+            if e['employee'].id == emp.id:
+                emp_data = e
+                break
+        
+        if emp_data is None:
+            emp_data = {
+                'employee': emp,
+                'location': None,
+                'distance': None,
+                'age_minutes': None,
+                'is_active': False
+            }
+        
+        if emp.id in entered_ids:
+            employees_entered_today.append(emp_data)
+        else:
+            employees_not_entered_today.append(emp_data)
+    
+    # جلب آخر الأحداث (دخول/خروج) مع فلتر التاريخ
+    if filter_date:
+        recent_events_raw = GeofenceEvent.query.filter(
+            GeofenceEvent.geofence_id == geofence_id,
+            GeofenceEvent.recorded_at >= date_start,
+            GeofenceEvent.recorded_at <= date_end
+        ).order_by(GeofenceEvent.recorded_at.desc()).limit(50).all()
+    else:
+        recent_events_raw = GeofenceEvent.query.filter_by(geofence_id=geofence_id).order_by(GeofenceEvent.recorded_at.desc()).limit(20).all()
     
     # تحويل الوقت لتوقيت السعودية (+3 ساعات)
     recent_events = []
@@ -616,29 +684,32 @@ def geofence_details(geofence_id):
     # جلب الجلسات النشطة
     active_sessions = GeofenceSession.query.filter_by(geofence_id=geofence_id, is_active=True).all()
     
-    # إحصائيات اليوم
-    today = datetime.utcnow().date()
-    today_start = datetime.combine(today, datetime.min.time())
-    
+    # إحصائيات اليوم المحدد
     today_entries = GeofenceEvent.query.filter(
         GeofenceEvent.geofence_id == geofence_id,
         GeofenceEvent.event_type == 'enter',
-        GeofenceEvent.recorded_at >= today_start
+        GeofenceEvent.recorded_at >= date_start,
+        GeofenceEvent.recorded_at <= date_end
     ).count()
     
     today_exits = GeofenceEvent.query.filter(
         GeofenceEvent.geofence_id == geofence_id,
         GeofenceEvent.event_type == 'exit',
-        GeofenceEvent.recorded_at >= today_start
+        GeofenceEvent.recorded_at >= date_start,
+        GeofenceEvent.recorded_at <= date_end
     ).count()
     
     stats = {
         'total_assigned': len(assigned_employees),
         'inside_count': len(employees_inside),
         'outside_count': len(employees_outside),
+        'active_count': len(employees_active),
+        'inactive_count': len(employees_inactive),
         'active_sessions': len(active_sessions),
         'today_entries': today_entries,
-        'today_exits': today_exits
+        'today_exits': today_exits,
+        'entered_today': len(employees_entered_today),
+        'not_entered_today': len(employees_not_entered_today)
     }
     
     # بيانات JSON للخريطة
@@ -652,15 +723,22 @@ def geofence_details(geofence_id):
                 'longitude': float(emp_data['location'].longitude),
                 'photo_url': emp_data['employee'].profile_image,
                 'is_inside': emp_data['distance'] <= radius if emp_data['distance'] else False,
-                'distance': emp_data['distance']
+                'distance': emp_data['distance'],
+                'is_active': emp_data['is_active']
             })
     
     return render_template('mobile/geofence_details.html',
                           geofence=geofence,
                           employees_inside=employees_inside,
                           employees_outside=employees_outside,
+                          employees_active=employees_active,
+                          employees_inactive=employees_inactive,
+                          employees_entered_today=employees_entered_today,
+                          employees_not_entered_today=employees_not_entered_today,
                           recent_events=recent_events,
                           stats=stats,
+                          filter_type=filter_type,
+                          filter_date=filter_date or selected_date.strftime('%Y-%m-%d'),
                           employees_json=json.dumps(employees_locations_json),
                           now=datetime.utcnow())
 
