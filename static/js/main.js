@@ -623,4 +623,4 @@ function formatEmployeeSelection(employee) {
             (employeeId ? '<span class="ms-2 small text-muted">(' + employeeId + ')</span>' : '') +
         '</span>'
     );
-};
+}

@@ -21,6 +21,48 @@ logger = logging.getLogger(__name__)
 
 api_accident_reports = Blueprint('api_accident_reports', __name__, url_prefix='/api/v1/accident-reports')
 
+# دالة لإنشاء إشعار الحادثة
+def create_accident_notification(user_id, vehicle_plate, driver_name, accident_id, severity='normal'):
+    """إشعار حادثة سير جديدة"""
+    from models import Notification
+    from flask import url_for
+    
+    severity_labels = {
+        'minor': 'بسيطة',
+        'moderate': 'متوسطة',
+        'severe': 'حادة',
+        'critical': 'حرجة',
+        'بسيط': 'بسيطة',
+        'متوسط': 'متوسطة',
+        'حاد': 'حادة',
+    }
+    
+    severity_priority = {
+        'minor': 'low',
+        'moderate': 'normal',
+        'severe': 'high',
+        'critical': 'critical',
+        'بسيط': 'low',
+        'متوسط': 'normal',
+        'حاد': 'high',
+    }
+    
+    severity_label = severity_labels.get(severity, severity)
+    
+    notification = Notification(
+        user_id=user_id,
+        notification_type='accident',
+        title=f'حادثة سير - السيارة {vehicle_plate}',
+        description=f'تم تسجيل حادثة سير {severity_label} للسيارة {vehicle_plate} من قبل السائق {driver_name}. يرجى المراجعة والموافقة.',
+        related_entity_type='accident',
+        related_entity_id=accident_id,
+        priority=severity_priority.get(severity, 'normal'),
+        action_url=url_for('operations.list_accident_reports')
+    )
+    db.session.add(notification)
+    db.session.commit()
+    return notification
+
 SECRET_KEY = os.environ.get('SESSION_SECRET')
 if not SECRET_KEY:
     raise RuntimeError("SESSION_SECRET environment variable is required for JWT authentication")
@@ -294,6 +336,19 @@ def submit_accident_report(current_employee):
                     logger.info(f"Added accident image to database: {relative_path}")
         
         db.session.commit()
+        
+        # إنشاء إشعار عند تسجيل حادثة جديدة
+        try:
+            if current_employee and current_employee.user_id:
+                create_accident_notification(
+                    user_id=current_employee.user_id,
+                    vehicle_plate=vehicle.plate_number,
+                    driver_name=driver_name,
+                    accident_id=accident.id,
+                    severity=request.form.get('severity', 'متوسط')
+                )
+        except Exception as e:
+            logger.error(f'خطأ في إنشاء إشعار الحادثة: {str(e)}')
         
         logger.info(f"Accident report {accident.id} submitted by employee {current_employee.employee_id} for vehicle {vehicle.plate_number}")
         
