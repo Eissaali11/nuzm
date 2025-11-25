@@ -221,6 +221,21 @@ def contact():
     """صفحة التواصل"""
     return render_template('landing/contact.html')
 
+@landing_bp.route('/about')
+def about():
+    """صفحة من نحن"""
+    return render_template('about.html')
+
+@landing_bp.route('/privacy')
+def privacy():
+    """صفحة سياسة الخصوصية"""
+    return render_template('privacy.html')
+
+@landing_bp.route('/contact')
+def contact_page():
+    """صفحة اتصل بنا"""
+    return render_template('contact.html')
+
 @landing_bp.route('/nuzum/demo')
 def demo():
     """صفحة عرض توضيحي"""
