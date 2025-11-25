@@ -21,6 +21,46 @@ logger = logging.getLogger(__name__)
 
 api_accident_reports = Blueprint('api_accident_reports', __name__, url_prefix='/api/v1/accident-reports')
 
+
+@api_accident_reports.route('/test-notifications', methods=['GET', 'POST'])
+def test_accident_notifications():
+    """اختبار إنشاء إشعارات الحوادث لجميع المستخدمين"""
+    try:
+        from models import User, Vehicle
+        
+        # الحصول على آخر حادثة
+        last_accident = VehicleAccident.query.order_by(VehicleAccident.id.desc()).first()
+        
+        if not last_accident:
+            return jsonify({'success': False, 'message': 'لا توجد حوادث'}), 404
+        
+        vehicle = Vehicle.query.get(last_accident.vehicle_id)
+        all_users = User.query.all()
+        
+        notification_count = 0
+        for user in all_users:
+            try:
+                create_accident_notification(
+                    user_id=user.id,
+                    vehicle_plate=vehicle.plate_number if vehicle else 'غير محدد',
+                    driver_name=last_accident.driver_name or 'غير محدد',
+                    accident_id=last_accident.id,
+                    severity=last_accident.severity or 'متوسط'
+                )
+                notification_count += 1
+            except Exception as e:
+                logger.error(f'خطأ في إنشاء إشعار للمستخدم {user.id}: {str(e)}')
+        
+        return jsonify({
+            'success': True,
+            'message': f'تم إنشاء {notification_count} إشعار للحادثة {last_accident.id}',
+            'accident_id': last_accident.id,
+            'users_count': len(all_users)
+        })
+    except Exception as e:
+        logger.error(f'خطأ في اختبار الإشعارات: {str(e)}')
+        return jsonify({'success': False, 'message': str(e)}), 500
+
 # دالة لإنشاء إشعار الحادثة
 def create_accident_notification(user_id, vehicle_plate, driver_name, accident_id, severity='normal'):
     """إشعار حادثة سير جديدة"""
@@ -339,24 +379,23 @@ def submit_accident_report(current_employee):
         
         # إنشاء إشعارات للمسؤولين عند تسجيل حادثة جديدة
         try:
-            from routes.notifications import create_accident_notification
-            from models import User
-            
             # الحصول على جميع المستخدمين
             all_users = User.query.all()
-            logger.info(f"Found {len(all_users)} users for notifications")
+            logger.info(f"Found {len(all_users)} users for accident notifications")
+            
+            severity_val = request.form.get('severity', 'متوسط')
             
             for user in all_users:
                 try:
+                    # استخدام الدالة المحلية create_accident_notification
                     create_accident_notification(
                         user_id=user.id,
                         vehicle_plate=vehicle.plate_number,
                         driver_name=driver_name,
-                        accident_type=request.form.get('severity', 'متوسط'),
                         accident_id=accident.id,
-                        severity=request.form.get('severity', 'متوسط')
+                        severity=severity_val
                     )
-                    logger.info(f"Created notification for user {user.id}")
+                    logger.info(f"Created accident notification for user {user.id}")
                 except Exception as e:
                     logger.error(f'خطأ في إنشاء إشعار للمستخدم {user.id}: {str(e)}')
         except Exception as e:
