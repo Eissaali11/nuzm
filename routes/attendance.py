@@ -4084,12 +4084,9 @@ def circle_accessed_details(department_id, circle_name):
     except ValueError:
         selected_date = datetime.now().date()
     
-    # حساب نطاق التواريخ
-    now = datetime.now()
-    today_date = datetime.now().date()
-    eighteen_hours_ago_date = (now - timedelta(hours=18)).date()
-    start_date = min(selected_date, eighteen_hours_ago_date)
-    end_date = today_date
+    # حساب نطاق التواريخ - من التاريخ المختار إلى اليوم
+    start_date = selected_date
+    end_date = datetime.now().date()
     
     dept = Department.query.get(department_id)
     if not dept:
@@ -4213,12 +4210,9 @@ def export_circle_details_excel(department_id, circle_name):
     except ValueError:
         selected_date = datetime.now().date()
     
-    # حساب نطاق التواريخ
-    now = datetime.now()
-    today_date = datetime.now().date()
-    eighteen_hours_ago_date = (now - timedelta(hours=18)).date()
-    start_date = min(selected_date, eighteen_hours_ago_date)
-    end_date = today_date
+    # حساب نطاق التواريخ - من التاريخ المختار إلى اليوم
+    start_date = selected_date
+    end_date = datetime.now().date()
     
     dept = Department.query.get(department_id)
     if not dept:
