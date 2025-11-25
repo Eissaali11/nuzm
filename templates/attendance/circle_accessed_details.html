@@ -159,49 +159,15 @@
                                 </div>
 
                                 <!-- ساعات العمل الكلية -->
-                                {% if emp.morning_check_in != '-' and emp.evening_check_out != '-' %}
+                                {% if emp.work_hours_display != '-' %}
                                 <div class="alert alert-info mb-0" style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(59, 130, 246, 0.1) 100%); border: 2px solid #3b82f6; border-radius: 10px;">
                                     <div class="text-center">
                                         <i class="fas fa-clock" style="font-size: 1.2rem; color: #1e40af; margin-bottom: 5px;"></i>
                                         <div class="fw-bold" style="font-size: 1.3rem; color: #1e40af;">ساعات العمل الكلية</div>
-                                        <div class="fw-bold" style="font-size: 1.1rem; color: #1e40af;" id="work-hours-{{ emp.employee_id }}">--</div>
+                                        <div class="fw-bold" style="font-size: 1.1rem; color: #1e40af;">{{ emp.work_hours_display }}</div>
                                         <small class="text-muted">من {{ emp.morning_check_in }} إلى {{ emp.evening_check_out }}</small>
                                     </div>
                                 </div>
-                                <script>
-                                    document.addEventListener('DOMContentLoaded', function() {
-                                        var morningCheckIn = "{{ emp.morning_check_in }}";
-                                        var eveningCheckOut = "{{ emp.evening_check_out }}";
-                                        
-                                        if (morningCheckIn !== '-' && eveningCheckOut !== '-') {
-                                            // استخراج الوقت من النص (مثل "7:30:00 ص")
-                                            var morningParts = morningCheckIn.split(' ');
-                                            var eveningParts = eveningCheckOut.split(' ');
-                                            
-                                            var morningTime = morningParts[0]; // "7:30:00"
-                                            var eveningTime = eveningParts[0]; // "5:00:00"
-                                            
-                                            var [morningHours, morningMins, morningSecs] = morningTime.split(':').map(Number);
-                                            var [eveningHours, eveningMins, eveningSecs] = eveningTime.split(':').map(Number);
-                                            
-                                            // تحويل إلى دقائق
-                                            var morningTotalMins = morningHours * 60 + morningMins;
-                                            var eveningTotalMins = eveningHours * 60 + eveningMins;
-                                            
-                                            var diffMins = eveningTotalMins - morningTotalMins;
-                                            var hours = Math.floor(diffMins / 60);
-                                            var mins = diffMins % 60;
-                                            
-                                            if (diffMins < 0) {
-                                                hours = 0;
-                                                mins = 0;
-                                            }
-                                            
-                                            var display = hours + ' س ' + mins + ' د';
-                                            document.getElementById('work-hours-{{ emp.employee_id }}').textContent = display;
-                                        }
-                                    });
-                                </script>
                                 {% endif %}
                             </div>
 

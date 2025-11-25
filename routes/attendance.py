@@ -4161,6 +4161,15 @@ def circle_accessed_details(department_id, circle_name):
             entry_time_sa = (latest_geo.entry_time + saudi_tz) if latest_geo.entry_time else None
             exit_time_sa = (latest_geo.exit_time + saudi_tz) if latest_geo.exit_time else None
             
+            # حساب ساعات العمل من الدخول الصباحي إلى الخروج المسائي
+            work_hours = 0
+            work_minutes = 0
+            if morning_check_in and evening_check_out:
+                total_seconds = (evening_check_out - morning_check_in).total_seconds()
+                if total_seconds > 0:
+                    work_hours = int(total_seconds // 3600)
+                    work_minutes = int((total_seconds % 3600) // 60)
+            
             employees_accessed.append({
                 'name': emp.name,
                 'employee_id': emp.employee_id,
@@ -4168,9 +4177,16 @@ def circle_accessed_details(department_id, circle_name):
                 'check_in': '-',
                 'check_out': '-',
                 'morning_check_in': format_time_12h_ar_short(morning_check_in) if morning_check_in else '-',
+                'morning_check_in_hours': morning_check_in.hour if morning_check_in else None,
+                'morning_check_in_minutes': morning_check_in.minute if morning_check_in else None,
                 'morning_check_out': format_time_12h_ar_short(morning_check_out) if morning_check_out else '-',
                 'evening_check_in': format_time_12h_ar_short(evening_check_in) if evening_check_in else '-',
                 'evening_check_out': format_time_12h_ar_short(evening_check_out) if evening_check_out else '-',
+                'evening_check_out_hours': evening_check_out.hour if evening_check_out else None,
+                'evening_check_out_minutes': evening_check_out.minute if evening_check_out else None,
+                'work_hours': work_hours,
+                'work_minutes': work_minutes,
+                'work_hours_display': f'{work_hours} س {work_minutes} د' if (work_hours > 0 or work_minutes > 0) else '-',
                 'circle_enter_time': format_time_12h_ar(entry_time_sa) if entry_time_sa else None,
                 'circle_exit_time': format_time_12h_ar(exit_time_sa) if exit_time_sa else None,
                 'duration_minutes': duration_minutes,
