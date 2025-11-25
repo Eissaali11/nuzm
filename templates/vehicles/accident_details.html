@@ -1,0 +1,639 @@
+{% extends 'layout.html' %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --danger-gradient: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        --card-shadow-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
+
+    .accident-header {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 12px;
+        margin-bottom: 2rem;
+        box-shadow: var(--card-shadow-hover);
+    }
+
+    .accident-header h1 {
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+
+    .detail-card {
+        background: white;
+        border-radius: 12px;
+        border-left: 4px solid #ef4444;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: var(--card-shadow);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .detail-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--card-shadow-hover);
+    }
+
+    .detail-card h5 {
+        color: #ef4444;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .detail-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .detail-item {
+        padding: 1rem;
+        background: #f8f9fa;
+        border-radius: 8px;
+        border-right: 3px solid #ef4444;
+    }
+
+    .detail-item label {
+        display: block;
+        font-weight: 600;
+        color: #495057;
+        font-size: 0.875rem;
+        margin-bottom: 0.5rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .detail-item .value {
+        font-size: 1.1rem;
+        color: #212529;
+        word-break: break-word;
+    }
+
+    .detail-item .badge {
+        display: inline-block;
+        margin-top: 0.5rem;
+    }
+
+    .image-gallery {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+
+    .image-item {
+        position: relative;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: var(--card-shadow);
+        cursor: pointer;
+        transition: transform 0.2s ease;
+    }
+
+    .image-item:hover {
+        transform: scale(1.05);
+    }
+
+    .image-item img {
+        width: 100%;
+        height: 150px;
+        object-fit: cover;
+    }
+
+    .image-item a {
+        display: block;
+        width: 100%;
+        height: 100%;
+    }
+
+    .location-map {
+        width: 100%;
+        height: 400px;
+        border-radius: 8px;
+        margin-top: 1rem;
+    }
+
+    .status-badge {
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.875rem;
+    }
+
+    .badge-approved {
+        background-color: #d1fae5;
+        color: #065f46;
+    }
+
+    .badge-pending {
+        background-color: #fef3c7;
+        color: #92400e;
+    }
+
+    .badge-rejected {
+        background-color: #fee2e2;
+        color: #7f1d1d;
+    }
+
+    .badge-under-review {
+        background-color: #dbeafe;
+        color: #0c2340;
+    }
+
+    .severity-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .severity-icon {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 12px;
+        font-weight: 700;
+    }
+
+    .severity-simple {
+        background-color: #fbbf24;
+    }
+
+    .severity-medium {
+        background-color: #f97316;
+    }
+
+    .severity-severe {
+        background-color: #ef4444;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+        flex-wrap: wrap;
+    }
+
+    .btn-custom {
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 600;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-custom:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--card-shadow-hover);
+    }
+
+    .btn-back {
+        background-color: #6b7280;
+        color: white;
+    }
+
+    .btn-back:hover {
+        background-color: #4b5563;
+        color: white;
+        text-decoration: none;
+    }
+
+    .btn-edit {
+        background-color: #f59e0b;
+        color: white;
+    }
+
+    .btn-edit:hover {
+        background-color: #d97706;
+        color: white;
+        text-decoration: none;
+    }
+
+    .btn-export {
+        background-color: #3b82f6;
+        color: white;
+    }
+
+    .btn-export:hover {
+        background-color: #1d4ed8;
+        color: white;
+        text-decoration: none;
+    }
+
+    @media (max-width: 768px) {
+        .detail-row {
+            grid-template-columns: 1fr;
+        }
+
+        .accident-header {
+            padding: 1.5rem;
+        }
+
+        .image-gallery {
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        }
+
+        .location-map {
+            height: 300px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- رأس الصفحة -->
+    <div class="accident-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1>
+                    <i class="fas fa-car-crash ms-2"></i>
+                    تقرير الحادث المروري
+                </h1>
+                <p class="mb-0 mt-2">رقم الحادث: <strong>#{{ accident.id }}</strong></p>
+            </div>
+            <div>
+                <span class="status-badge badge-{{ accident.review_status }}">
+                    {% if accident.review_status == 'approved' %}
+                    <i class="fas fa-check-circle ms-2"></i>معتمد
+                    {% elif accident.review_status == 'pending' %}
+                    <i class="fas fa-clock ms-2"></i>قيد الانتظار
+                    {% elif accident.review_status == 'rejected' %}
+                    <i class="fas fa-times-circle ms-2"></i>مرفوض
+                    {% elif accident.review_status == 'under_review' %}
+                    <i class="fas fa-search ms-2"></i>قيد المراجعة
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- معلومات الحادث الأساسية -->
+        <div class="col-lg-6">
+            <div class="detail-card">
+                <h5><i class="fas fa-info-circle"></i> معلومات الحادث</h5>
+                <div class="detail-row">
+                    <div class="detail-item">
+                        <label>تاريخ الحادث</label>
+                        <div class="value">{{ accident.accident_date|display_date }}</div>
+                    </div>
+                    <div class="detail-item">
+                        <label>وقت الحادث</label>
+                        <div class="value">{{ accident.accident_time or 'غير محدد' }}</div>
+                    </div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-item">
+                        <label>حالة الحادث</label>
+                        <div class="value">
+                            {% if accident.accident_status == 'قيد المعالجة' %}
+                            <span class="badge bg-warning text-dark">قيد المعالجة</span>
+                            {% elif accident.accident_status == 'مغلق' %}
+                            <span class="badge bg-success">مغلق</span>
+                            {% elif accident.accident_status == 'معلق' %}
+                            <span class="badge bg-secondary">معلق</span>
+                            {% elif accident.accident_status == 'في التأمين' %}
+                            <span class="badge bg-info">في التأمين</span>
+                            {% else %}
+                            <span class="badge bg-secondary">{{ accident.accident_status }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="detail-item">
+                        <label>حالة السيارة</label>
+                        <div class="value">{{ accident.vehicle_condition or 'غير محدد' }}</div>
+                    </div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-item">
+                        <label>درجة الخطورة</label>
+                        <div class="value">
+                            {% if accident.severity == 'بسيط' %}
+                            <div class="severity-indicator">
+                                <div class="severity-icon severity-simple">!</div>
+                                <span>بسيط</span>
+                            </div>
+                            {% elif accident.severity == 'متوسط' %}
+                            <div class="severity-indicator">
+                                <div class="severity-icon severity-medium">!!</div>
+                                <span>متوسط</span>
+                            </div>
+                            {% elif accident.severity == 'شديد' %}
+                            <div class="severity-indicator">
+                                <div class="severity-icon severity-severe">!!!</div>
+                                <span>شديد</span>
+                            </div>
+                            {% else %}
+                            <span>{{ accident.severity or 'غير محدد' }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="detail-item">
+                        <label>موقع الحادث</label>
+                        <div class="value">{{ accident.location or 'غير محدد' }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- معلومات السائق -->
+            <div class="detail-card">
+                <h5><i class="fas fa-user-tie"></i> معلومات السائق</h5>
+                <div class="detail-row">
+                    <div class="detail-item">
+                        <label>اسم السائق</label>
+                        <div class="value">{{ accident.driver_name }}</div>
+                    </div>
+                    <div class="detail-item">
+                        <label>رقم الهاتف</label>
+                        <div class="value">{{ accident.driver_phone or 'غير محدد' }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- معلومات المسؤولية والخصم -->
+            <div class="detail-card">
+                <h5><i class="fas fa-balance-scale"></i> المسؤولية والخصم</h5>
+                <div class="detail-row">
+                    <div class="detail-item">
+                        <label>نسبة التحمل</label>
+                        <div class="value">
+                            {% if accident.liability_percentage == 0 %}
+                            <span class="badge bg-light text-dark">لا يوجد تحمل (0%)</span>
+                            {% elif accident.liability_percentage == 25 %}
+                            <span class="badge bg-info">تحمل جزئي (25%)</span>
+                            {% elif accident.liability_percentage == 50 %}
+                            <span class="badge bg-warning text-dark">تحمل متوسط (50%)</span>
+                            {% elif accident.liability_percentage == 75 %}
+                            <span class="badge bg-danger">تحمل كبير (75%)</span>
+                            {% elif accident.liability_percentage == 100 %}
+                            <span class="badge bg-dark">تحمل كامل (100%)</span>
+                            {% else %}
+                            <span class="badge bg-secondary">{{ accident.liability_percentage }}%</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="detail-item">
+                        <label>مبلغ الخصم</label>
+                        <div class="value">
+                            {% if accident.deduction_amount > 0 %}
+                            <strong style="color: #ef4444;">{{ "{:,.2f}".format(accident.deduction_amount) }} ريال</strong>
+                            {% else %}
+                            <span class="text-muted">لا يوجد خصم</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-item">
+                        <label>حالة الخصم</label>
+                        <div class="value">
+                            {% if accident.deduction_amount > 0 %}
+                            {% if accident.deduction_status %}
+                            <span class="badge bg-success">تم الخصم ✓</span>
+                            {% else %}
+                            <span class="badge bg-danger">لم يتم الخصم ✗</span>
+                            {% endif %}
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- معلومات الجانب الأيمن -->
+        <div class="col-lg-6">
+            <!-- معلومات المركبة -->
+            <div class="detail-card">
+                <h5><i class="fas fa-car"></i> معلومات المركبة</h5>
+                <div class="detail-row">
+                    <div class="detail-item">
+                        <label>رقم المركبة</label>
+                        <div class="value">{{ vehicle.plate_number }}</div>
+                    </div>
+                    <div class="detail-item">
+                        <label>نوع المركبة</label>
+                        <div class="value">{{ vehicle.vehicle_type or 'غير محدد' }}</div>
+                    </div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-item">
+                        <label>الموديل</label>
+                        <div class="value">{{ vehicle.model or 'غير محدد' }}</div>
+                    </div>
+                    <div class="detail-item">
+                        <label>السنة</label>
+                        <div class="value">{{ vehicle.year or 'غير محدد' }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- معلومات الإبلاغ والمراجعة -->
+            <div class="detail-card">
+                <h5><i class="fas fa-file-contract"></i> معلومات الإبلاغ والمراجعة</h5>
+                <div class="detail-row">
+                    <div class="detail-item">
+                        <label>طريقة الإبلاغ</label>
+                        <div class="value">
+                            {% if accident.reported_via == 'mobile_app' %}
+                            <span class="badge bg-primary">تطبيق الهاتف</span>
+                            {% elif accident.reported_via == 'web' %}
+                            <span class="badge bg-info">الويب</span>
+                            {% elif accident.reported_via == 'manual' %}
+                            <span class="badge bg-secondary">يدوي</span>
+                            {% else %}
+                            {{ accident.reported_via }}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% if accident.reviewed_at %}
+                <div class="detail-row">
+                    <div class="detail-item">
+                        <label>تاريخ المراجعة</label>
+                        <div class="value">{{ accident.reviewed_at|display_date }}</div>
+                    </div>
+                </div>
+                {% endif %}
+                {% if accident.reviewer_notes %}
+                <div class="detail-item">
+                    <label>ملاحظات المراجع</label>
+                    <div class="value">{{ accident.reviewer_notes }}</div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- معلومات الشرطة والتأمين -->
+            <div class="detail-card">
+                <h5><i class="fas fa-gavel"></i> الجهات الرسمية</h5>
+                <div class="detail-row">
+                    <div class="detail-item">
+                        <label>محضر شرطة</label>
+                        <div class="value">
+                            {% if accident.police_report %}
+                            <span class="badge bg-success">نعم ✓</span>
+                            {% if accident.police_report_number %}
+                            <div class="mt-2">الرقم: <strong>{{ accident.police_report_number }}</strong></div>
+                            {% endif %}
+                            {% else %}
+                            <span class="badge bg-secondary">لا</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="detail-item">
+                        <label>مطالبة تأمين</label>
+                        <div class="value">
+                            {% if accident.insurance_claim %}
+                            <span class="badge bg-success">نعم ✓</span>
+                            {% if accident.insurance_claim_number %}
+                            <div class="mt-2">الرقم: <strong>{{ accident.insurance_claim_number }}</strong></div>
+                            {% endif %}
+                            {% else %}
+                            <span class="badge bg-secondary">لا</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- وصف الحادث -->
+            {% if accident.description %}
+            <div class="detail-card">
+                <h5><i class="fas fa-align-left"></i> وصف الحادث</h5>
+                <div class="detail-item">
+                    <div class="value" style="line-height: 1.6;">{{ accident.description }}</div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- المستندات والصور -->
+    <div class="detail-card mt-4">
+        <h5><i class="fas fa-images"></i> المستندات والصور</h5>
+        
+        {% if accident.driver_id_image or accident.driver_license_image or accident.accident_report_file %}
+        <div class="row mb-3">
+            {% if accident.driver_id_image %}
+            <div class="col-md-4 mb-3">
+                <label class="d-block mb-2 fw-bold">صورة الهوية</label>
+                <a href="{{ accident.driver_id_image }}" target="_blank" class="img-thumbnail d-block">
+                    <i class="fas fa-file-pdf me-2"></i>عرض الملف
+                </a>
+            </div>
+            {% endif %}
+            
+            {% if accident.driver_license_image %}
+            <div class="col-md-4 mb-3">
+                <label class="d-block mb-2 fw-bold">صورة الرخصة</label>
+                <a href="{{ accident.driver_license_image }}" target="_blank" class="img-thumbnail d-block">
+                    <i class="fas fa-file-pdf me-2"></i>عرض الملف
+                </a>
+            </div>
+            {% endif %}
+            
+            {% if accident.accident_report_file %}
+            <div class="col-md-4 mb-3">
+                <label class="d-block mb-2 fw-bold">تقرير الحادث</label>
+                <a href="{{ accident.accident_report_file }}" target="_blank" class="img-thumbnail d-block">
+                    <i class="fas fa-file-pdf me-2"></i>عرض الملف
+                </a>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        {% if accident.accident_file_link %}
+        <div class="detail-item mb-3">
+            <label>رابط ملف الحادث</label>
+            <div class="value">
+                <a href="{{ accident.accident_file_link }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                    <i class="fas fa-external-link-alt me-2"></i>فتح الملف
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- خريطة الموقع -->
+    {% if accident.latitude and accident.longitude %}
+    <div class="detail-card mt-4">
+        <h5><i class="fas fa-map-marker-alt"></i> موقع الحادث</h5>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+            <div class="detail-item">
+                <label>خط العرض</label>
+                <div class="value">{{ accident.latitude }}</div>
+            </div>
+            <div class="detail-item">
+                <label>خط الطول</label>
+                <div class="value">{{ accident.longitude }}</div>
+            </div>
+        </div>
+        <div id="accident-map" class="location-map"></div>
+    </div>
+    {% endif %}
+
+    <!-- أزرار الإجراءات -->
+    <div class="action-buttons">
+        <a href="{{ url_for('vehicles.view', id=vehicle.id) }}" class="btn btn-custom btn-back">
+            <i class="fas fa-arrow-left"></i> العودة
+        </a>
+        <a href="{{ url_for('vehicles.edit_accident', id=accident.id) }}" class="btn btn-custom btn-edit">
+            <i class="fas fa-edit"></i> تعديل
+        </a>
+        {% if current_user.is_admin or current_user.role == 'operations' %}
+        <a href="{{ url_for('operations.export_accident_report_pdf', id=accident.id) }}" class="btn btn-custom btn-export">
+            <i class="fas fa-file-pdf"></i> تحميل PDF
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Leaflet Map Script -->
+{% if accident.latitude and accident.longitude %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const lat = {{ accident.latitude }};
+        const lng = {{ accident.longitude }};
+        
+        const map = L.map('accident-map').setView([lat, lng], 15);
+        
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors',
+            maxZoom: 19
+        }).addTo(map);
+        
+        L.marker([lat, lng], {
+            icon: L.icon({
+                iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
+                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+                iconSize: [25, 41],
+                shadowSize: [41, 41],
+                iconAnchor: [12, 41],
+                popupAnchor: [1, -34]
+            })
+        }).addTo(map).bindPopup('موقع الحادث');
+    });
+</script>
+{% endif %}
+{% endblock %}

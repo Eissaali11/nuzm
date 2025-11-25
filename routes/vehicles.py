@@ -6595,6 +6595,22 @@ def export_vehicles_pdf_english():
                 flash(f"حدث خطأ في إنشاء التقرير: {str(e)}", "danger")
                 return redirect(url_for('vehicles.index'))
 
+@vehicles_bp.route('/accident/<int:id>', methods=['GET'])
+@login_required
+def view_accident_details(id):
+    """عرض صفحة تفاصيل الحادثة المرورية"""
+    try:
+        accident = VehicleAccident.query.get_or_404(id)
+        vehicle = Vehicle.query.get(accident.vehicle_id)
+        
+        return render_template('vehicles/accident_details.html', 
+                             accident=accident, 
+                             vehicle=vehicle)
+    except Exception as e:
+        current_app.logger.error(f"خطأ في عرض تفاصيل الحادثة: {str(e)}")
+        flash("حدث خطأ في عرض تفاصيل الحادثة", "danger")
+        return redirect(url_for('vehicles.index'))
+
 @vehicles_bp.route('/api/alerts-count', methods=['GET'])
 @login_required
 def get_vehicle_alerts_count():
