@@ -105,16 +105,30 @@
         .navbar-nav .nav-link {
             color: rgba(255, 255, 255, 0.85) !important;
             font-weight: 500;
-            font-size: 0.95rem;
-            margin: 0 8px;
-            padding: 12px 22px !important;
+            font-size: 0.85rem;
+            margin: 0 5px;
+            padding: 12px 18px !important;
             border-radius: 12px;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
             display: flex;
+            flex-direction: column;
             align-items: center;
+            justify-content: center;
             text-decoration: none;
             overflow: hidden;
+            gap: 6px;
+            min-width: 80px;
+        }
+
+        .navbar-nav .nav-link i {
+            font-size: 1.3rem;
+            transition: all 0.3s ease;
+        }
+
+        .navbar-nav .nav-link:hover i {
+            transform: scale(1.15);
+            color: #60a5fa;
         }
 
         .navbar-nav .nav-link::before {
@@ -132,7 +146,7 @@
         
         .navbar-nav .nav-link:hover {
             color: #ffffff !important;
-            transform: translateY(-2px);
+            transform: translateY(-3px);
         }
 
         .navbar-nav .nav-link:hover::before {
@@ -144,6 +158,10 @@
             background: linear-gradient(135deg, rgba(96, 165, 250, 0.3), rgba(167, 139, 250, 0.3));
             border: 1px solid rgba(150, 180, 255, 0.3);
             box-shadow: 0 0 20px rgba(100, 150, 255, 0.2), inset 0 0 20px rgba(100, 150, 255, 0.05);
+        }
+
+        .navbar-nav .nav-link.active i {
+            color: #60a5fa;
         }
 
         .navbar-toggler {
@@ -251,13 +269,18 @@
             
             .navbar-nav .nav-link {
                 margin: 5px 0;
-                font-size: 1rem;
+                font-size: 0.95rem;
                 padding: 14px 25px !important;
                 border-radius: 12px;
                 width: 100%;
-                justify-content: center;
+                flex-direction: row;
+                gap: 10px;
                 background: rgba(100, 150, 255, 0.08);
                 border: 1px solid rgba(100, 150, 255, 0.1);
+            }
+
+            .navbar-nav .nav-link i {
+                font-size: 1.1rem;
             }
             
             .navbar-nav .nav-link:hover,
@@ -374,36 +397,35 @@
                 <ul class="navbar-nav mx-auto">
                     <li class="nav-item">
                         <a class="nav-link" href="/nuzum">
-                            <i class="fas fa-home me-2"></i>الرئيسية
+                            <i class="fas fa-home"></i>
+                            <span>الرئيسية</span>
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="/nuzum/features">
-                            <i class="fas fa-star me-2"></i>الميزات
+                            <i class="fas fa-star"></i>
+                            <span>الميزات</span>
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="/nuzum/demo">
-                            <i class="fas fa-play-circle me-2"></i>عرض توضيحي
+                            <i class="fas fa-play-circle"></i>
+                            <span>عرض توضيحي</span>
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="/nuzum/pricing">
-                            <i class="fas fa-tags me-2"></i>الأسعار
+                            <i class="fas fa-tags"></i>
+                            <span>الأسعار</span>
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="/nuzum/contact">
-                            <i class="fas fa-envelope me-2"></i>تواصل معنا
+                            <i class="fas fa-envelope"></i>
+                            <span>تواصل معنا</span>
                         </a>
                     </li>
                 </ul>
-                
-                <div class="d-flex gap-2">
-                    <a href="/login" class="btn btn-outline-primary">
-                        <i class="fas fa-sign-in-alt me-1"></i>دخول
-                    </a>
-                </div>
             </div>
         </div>
     </nav>
