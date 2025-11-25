@@ -34,6 +34,9 @@
                 <a href="{{ url_for('notifications.index', type='operations') }}" class="btn btn-outline-secondary {% if request.args.get('type') == 'operations' %}active{% endif %}">
                     العمليات
                 </a>
+                <a href="{{ url_for('notifications.index', type='safety_check') }}" class="btn btn-outline-secondary {% if request.args.get('type') == 'safety_check' %}active{% endif %}">
+                    فحص السلامة
+                </a>
             </div>
         </div>
     </div>
@@ -57,6 +60,8 @@
                                         <span class="badge bg-warning p-2"><i class="fas fa-exclamation-triangle fa-lg"></i></span>
                                     {% elif notification.notification_type == 'operations' %}
                                         <span class="badge bg-info p-2"><i class="fas fa-cogs fa-lg"></i></span>
+                                    {% elif notification.notification_type == 'safety_check' or notification.notification_type == 'safety_check_review' %}
+                                        <span class="badge bg-success p-2"><i class="fas fa-shield-alt fa-lg"></i></span>
                                     {% else %}
                                         <span class="badge bg-secondary p-2"><i class="fas fa-bell fa-lg"></i></span>
                                     {% endif %}

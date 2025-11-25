@@ -154,7 +154,8 @@ def create_operations_notification(user_id, operation_title, operation_descripti
     action_urls = {
         'vehicle': url_for('vehicles.index'),
         'accident': url_for('vehicle_operations.vehicle_operations_list'),
-        'employee_request': url_for('employee_requests.index')
+        'employee_request': url_for('employee_requests.index'),
+        'safety_check': url_for('external_safety.admin_external_safety_checks')
     }
     
     return create_notification(
@@ -166,6 +167,59 @@ def create_operations_notification(user_id, operation_title, operation_descripti
         related_entity_id=entity_id,
         priority='normal',
         action_url=action_urls.get(entity_type, '/')
+    )
+
+
+def create_safety_check_notification(user_id, vehicle_plate, supervisor_name, check_status, check_id):
+    """إشعار فحص السلامة الخارجية"""
+    status_labels = {
+        'pending': 'قيد الانتظار',
+        'under_review': 'قيد المراجعة',
+        'approved': 'موافق عليه',
+        'rejected': 'مرفوض'
+    }
+    
+    priority_map = {
+        'pending': 'high',
+        'under_review': 'normal',
+        'approved': 'normal',
+        'rejected': 'critical'
+    }
+    
+    status_label = status_labels.get(check_status, check_status)
+    
+    return create_notification(
+        user_id=user_id,
+        notification_type='safety_check',
+        title=f'فحص السلامة - السيارة {vehicle_plate}',
+        description=f'طلب فحص السلامة الخارجية للسيارة {vehicle_plate} من قبل {supervisor_name} - الحالة: {status_label}',
+        related_entity_type='safety_check',
+        related_entity_id=check_id,
+        priority=priority_map.get(check_status, 'normal'),
+        action_url=url_for('external_safety.admin_external_safety_checks')
+    )
+
+
+def create_safety_check_review_notification(user_id, vehicle_plate, action, reviewer_name, check_id):
+    """إشعار بمراجعة/موافقة فحص السلامة"""
+    action_labels = {
+        'approved': 'تمت الموافقة على',
+        'rejected': 'تم رفض',
+        'under_review': 'قيد المراجعة'
+    }
+    
+    priority = 'high' if action in ['rejected'] else 'normal'
+    action_label = action_labels.get(action, action)
+    
+    return create_notification(
+        user_id=user_id,
+        notification_type='safety_check_review',
+        title=f'{action_label} فحص السلامة - {vehicle_plate}',
+        description=f'تمت مراجعة فحص السلامة للسيارة {vehicle_plate} بواسطة {reviewer_name}: {action_label}',
+        related_entity_type='safety_check',
+        related_entity_id=check_id,
+        priority=priority,
+        action_url=url_for('external_safety.admin_external_safety_checks')
     )
 
 
@@ -258,8 +312,33 @@ def create_demo_notifications():
         days_left=15
     )
     
+    # 7. إشعارات فحص السلامة الخارجية
+    create_safety_check_notification(
+        user_id=user_id,
+        vehicle_plate='ABC-1234',
+        supervisor_name='أحمد محمد',
+        check_status='pending',
+        check_id=1
+    )
+    
+    create_safety_check_notification(
+        user_id=user_id,
+        vehicle_plate='XYZ-5678',
+        supervisor_name='فاطمة علي',
+        check_status='under_review',
+        check_id=2
+    )
+    
+    create_safety_check_review_notification(
+        user_id=user_id,
+        vehicle_plate='DEF-9012',
+        action='approved',
+        reviewer_name='سلمان الدعيع',
+        check_id=3
+    )
+    
     return jsonify({
         'success': True,
-        'message': 'تم إنشاء 8 إشعارات تجريبية بنجاح',
+        'message': 'تم إنشاء 11 إشعار تجريبي بنجاح (شامل إشعارات فحص السلامة)',
         'redirect_url': url_for('notifications.index')
     })
