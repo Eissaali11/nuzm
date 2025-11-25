@@ -12,6 +12,11 @@
         @page {
             size: A4;
             margin: 0;
+            padding: 0;
+        }
+        
+        @page :first {
+            margin: 0;
         }
         
         body {
@@ -160,12 +165,12 @@
         }
         
         .image-page {
-            width: 210mm;
-            height: 297mm;
+            width: 100%;
             padding: 1.5cm;
             display: flex;
             flex-direction: column;
-            page-break-after: avoid;
+            page-break-before: always;
+            page-break-inside: avoid;
             background: white;
         }
         
