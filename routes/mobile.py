@@ -604,7 +604,14 @@ def geofence_details(geofence_id):
             })
     
     # جلب آخر الأحداث (دخول/خروج)
-    recent_events = GeofenceEvent.query.filter_by(geofence_id=geofence_id).order_by(GeofenceEvent.recorded_at.desc()).limit(20).all()
+    from datetime import timedelta
+    recent_events_raw = GeofenceEvent.query.filter_by(geofence_id=geofence_id).order_by(GeofenceEvent.recorded_at.desc()).limit(20).all()
+    
+    # تحويل الوقت لتوقيت السعودية (+3 ساعات)
+    recent_events = []
+    for event in recent_events_raw:
+        event.recorded_at_local = event.recorded_at + timedelta(hours=3) if event.recorded_at else None
+        recent_events.append(event)
     
     # جلب الجلسات النشطة
     active_sessions = GeofenceSession.query.filter_by(geofence_id=geofence_id, is_active=True).all()

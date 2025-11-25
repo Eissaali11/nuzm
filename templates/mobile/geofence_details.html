@@ -703,7 +703,7 @@
                         <div class="event-name">{{ event.employee.name if event.employee else 'غير معروف' }}</div>
                         <div class="event-time">
                             <i class="fas fa-clock"></i>
-                            {{ event.recorded_at.strftime('%Y-%m-%d %H:%M') }}
+                            {{ event.recorded_at_local.strftime('%Y-%m-%d %H:%M') if event.recorded_at_local else event.recorded_at.strftime('%Y-%m-%d %H:%M') }}
                             - {{ 'دخول' if event.event_type == 'enter' else 'خروج' }}
                         </div>
                     </div>
