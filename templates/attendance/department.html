@@ -1,415 +1,513 @@
 {% extends 'layout.html' %}
 
-{% block styles %}
+{% block title %}إدارة الأقسام - سجل الحضور{% endblock %}
+
+{% block extra_css %}
 <style>
-    /* تنسيقات العناصر */
-    .department-select {
-        height: 44px;
-        font-size: 16px;
-        border-width: 2px;
+    :root {
+        --primary: #667eea;
+        --secondary: #764ba2;
+        --success: #11998e;
+        --danger: #ef4444;
+        --warning: #f59e0b;
+        --info: #3b82f6;
     }
-    
-    .department-select:focus {
-        border-color: #4a6fdc;
-        box-shadow: 0 0 0 0.25rem rgba(74, 111, 220, 0.25);
+
+    .page-wrapper {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        min-height: 100vh;
+        padding: 2rem 0;
     }
-    
-    /* تنسيقات أزرار الحضور */
-    .attendance-status-btn {
-        transition: all 0.3s ease;
-        min-width: 120px;
-        margin: 5px !important;
-    }
-    
-    .attendance-status-btn.active {
-        transform: scale(1.05);
-        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-    }
-    
-    /* تنسيقات جدول الموظفين */
-    #department-employees-container {
-        transition: all 0.3s ease;
-    }
-    
-    .highlight-new {
-        animation: highlight 2s ease-in-out;
-    }
-    
-    @keyframes highlight {
-        0% { background-color: rgba(74, 111, 220, 0.2); }
-        100% { background-color: transparent; }
-    }
-    
-    /* تنسيقات حالات الحضور */
-    .status-present {
-        background-color: rgba(40, 167, 69, 0.1);
-    }
-    
-    .status-absent {
-        background-color: rgba(220, 53, 69, 0.1);
-    }
-    
-    .status-leave {
-        background-color: rgba(255, 193, 7, 0.1);
-    }
-    
-    .status-sick {
-        background-color: rgba(23, 162, 184, 0.1);
-    }
-    
-    /* تنسيقات البحث عن الموظفين */
-    .employee-search-container {
+
+    .header-card {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+        color: white;
+        border-radius: 20px;
+        padding: 3rem;
+        margin-bottom: 3rem;
+        box-shadow: 0 20px 40px rgba(102, 126, 234, 0.2);
         position: relative;
-        margin: 10px 0 15px;
-    }
-    
-    .search-input-group {
-        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        border-radius: 4px;
         overflow: hidden;
     }
-    
-    #employee_search {
-        height: 44px;
-        font-size: 16px;
-        border-width: 2px;
+
+    .header-card::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 300px;
+        height: 300px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
     }
-    
-    #employee_search:focus {
-        border-color: #4a6fdc;
-        box-shadow: 0 0 0 0.25rem rgba(74, 111, 220, 0.25);
+
+    .header-content {
+        position: relative;
+        z-index: 1;
     }
-    
-    .input-group-text {
-        background-color: #4a6fdc;
+
+    .header-content h1 {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin-bottom: 0.5rem;
+    }
+
+    .header-content p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 3rem;
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s ease;
+        border-left: 4px solid var(--primary);
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+    }
+
+    .stat-card.success { border-left-color: var(--success); }
+    .stat-card.danger { border-left-color: var(--danger); }
+    .stat-card.warning { border-left-color: var(--warning); }
+    .stat-card.info { border-left-color: var(--info); }
+
+    .stat-icon {
+        font-size: 2rem;
+        margin-bottom: 1rem;
+    }
+
+    .stat-label {
+        color: #6c757d;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .department-card {
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s ease;
+        margin-bottom: 2rem;
+    }
+
+    .department-card:hover {
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+        transform: translateY(-3px);
+    }
+
+    .department-header {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
         color: white;
+        padding: 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .department-name {
+        font-size: 1.5rem;
+        font-weight: 700;
+    }
+
+    .department-badge {
+        background: rgba(255, 255, 255, 0.2);
+        padding: 0.5rem 1.5rem;
+        border-radius: 50px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        backdrop-filter: blur(10px);
+    }
+
+    .department-body {
+        padding: 2rem;
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .info-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .info-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+        color: white;
+    }
+
+    .info-content h4 {
+        margin: 0;
+        font-size: 0.85rem;
+        color: #6c757d;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 0.3rem;
+    }
+
+    .info-content p {
+        margin: 0;
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: var(--primary);
+    }
+
+    .attendance-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        margin-top: 1rem;
+    }
+
+    .attendance-table thead th {
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+        padding: 1.2rem;
+        text-align: right;
+        font-weight: 600;
+        color: var(--primary);
+        border-bottom: 2px solid rgba(102, 126, 234, 0.2);
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .attendance-table tbody td {
+        padding: 1rem 1.2rem;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .attendance-table tbody tr:hover {
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+    }
+
+    .employee-name {
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        border-radius: 50px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .status-present {
+        background: linear-gradient(135deg, rgba(17, 153, 142, 0.1), rgba(56, 239, 125, 0.1));
+        color: #11998e;
+    }
+
+    .status-absent {
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.1));
+        color: #dc2626;
+    }
+
+    .status-leave {
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(217, 119, 6, 0.1));
+        color: #d97706;
+    }
+
+    .status-sick {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(29, 78, 216, 0.1));
+        color: #1d4ed8;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+        flex-wrap: wrap;
+    }
+
+    .btn-action {
+        padding: 0.75rem 1.5rem;
+        border-radius: 10px;
         border: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        text-decoration: none;
+    }
+
+    .btn-action:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    .btn-primary-action {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+        color: white;
+    }
+
+    .btn-secondary-action {
+        background: white;
+        color: var(--primary);
+        border: 2px solid var(--primary);
+    }
+
+    .btn-secondary-action:hover {
+        background: var(--primary);
+        color: white;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+    }
+
+    .empty-state-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.3;
+    }
+
+    .empty-state-title {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+    }
+
+    .empty-state-text {
+        color: #6c757d;
+        margin-bottom: 2rem;
+    }
+
+    @media (max-width: 768px) {
+        .header-card {
+            padding: 2rem;
+        }
+
+        .header-content h1 {
+            font-size: 1.8rem;
+        }
+
+        .info-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .action-buttons {
+            flex-direction: column;
+        }
+
+        .btn-action {
+            width: 100%;
+            justify-content: center;
+        }
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1>تسجيل حضور قسم بالكامل</h1>
-        <a href="{{ url_for('attendance.index') }}" class="btn btn-secondary">
-            <i class="fas fa-arrow-right me-1"></i> العودة للقائمة
-        </a>
-    </div>
-
-    <div class="row">
-        <div class="col-lg-8 mx-auto">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">تسجيل حضور لجميع موظفي القسم</h5>
-                </div>
-                <div class="card-body">
-                    <form action="{{ url_for('attendance.department_attendance') }}" method="post">
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="department_id" class="form-label required-field">القسم</label>
-                                <select class="form-select" id="department_id" name="department_id" required onchange="loadDepartmentEmployees(this.value)">
-                                    <option value="">اختر القسم</option>
-                                    {% for department in departments %}
-                                    <option value="{{ department.id }}">
-                                        {{ department.name }} ({{ department.employees|length }} موظف)
-                                    </option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            
-                            <div class="col-md-3 mb-3">
-                                <label for="date" class="form-label required-field">التاريخ</label>
-                                <input type="date" class="form-control date-picker" id="date" name="date" 
-                                       value="{{ today.strftime('%Y-%m-%d') }}" required>
-                                <div class="mt-1">
-                                    <span class="gregorian-date">{{ gregorian_date }}</span>
-                                    <span class="hijri-date" style="display: none;">{{ hijri_date }}</span>
-                                </div>
-                            </div>
-                            
-                            <div class="col-md-3 mb-3">
-                                <label class="form-label">&nbsp;</label>
-                                <div class="d-grid gap-2">
-                                    <a href="{{ url_for('attendance.department_bulk_attendance') }}" class="btn btn-success">
-                                        <i class="fas fa-calendar-plus me-1"></i> تسجيل فترة
-                                    </a>
-                                    <a href="{{ url_for('attendance.department_attendance_view') }}" class="btn btn-info">
-                                        <i class="fas fa-calendar-alt me-1"></i> عرض فترة
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label class="form-label required-field">حالة الحضور للقسم بالكامل</label>
-                            <div class="d-flex justify-content-between align-items-center flex-wrap">
-                                <button type="button" class="btn btn-success btn-lg attendance-status-btn m-1 active" data-status="present" onclick="setDepartmentAttendance('present')">
-                                    <i class="fas fa-check-circle me-1"></i> حاضر
-                                </button>
-                                <button type="button" class="btn btn-danger btn-lg attendance-status-btn m-1" data-status="absent" onclick="setDepartmentAttendance('absent')">
-                                    <i class="fas fa-times-circle me-1"></i> غائب
-                                </button>
-                                <button type="button" class="btn btn-warning btn-lg attendance-status-btn m-1" data-status="leave" onclick="setDepartmentAttendance('leave')">
-                                    <i class="fas fa-calendar-minus me-1"></i> إجازة
-                                </button>
-                                <button type="button" class="btn btn-info btn-lg attendance-status-btn m-1" data-status="sick" onclick="setDepartmentAttendance('sick')">
-                                    <i class="fas fa-procedures me-1"></i> مرضي
-                                </button>
-                            </div>
-                            <!-- حقل مخفي لتخزين القيمة المختارة -->
-                            <input type="hidden" id="status" name="status" value="present">
-                        </div>
-                        
-                        <!-- عرض موظفي القسم المختار -->
-                        <div id="department-employees-container" class="mb-4 mt-4" style="display: none;">
-                            <div class="card shadow-sm">
-                                <div class="card-header bg-primary text-white">
-                                    <h5 class="card-title mb-0">
-                                        <i class="fas fa-users me-2"></i>
-                                        قائمة موظفي القسم
-                                        <span id="employee-count" class="filter-result-count badge bg-light text-dark ms-2"></span>
-                                    </h5>
-                                </div>
-                                <!-- إضافة مربع بحث للموظفين -->
-                                <div class="card-body py-2 bg-light">
-                                    <div class="employee-search-container">
-                                        <div class="input-group search-input-group">
-                                            <input type="text" class="form-control" id="employee_search" placeholder="ابحث عن موظف بالاسم أو الرقم الوظيفي..." autocomplete="off">
-                                            <span class="input-group-text"><i class="fas fa-search"></i></span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="card-body p-0">
-                                    <div class="table-horizontal-scroll">
-                                        <table class="table table-hover m-0">
-                                            <thead>
-                                                <tr>
-                                                    <th>الاسم</th>
-                                                    <th>الرقم الوظيفي</th>
-                                                    <th>المسمى الوظيفي</th>
-                                                    <th>الحالة</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody id="department-employees-list">
-                                                <!-- سيتم ملؤها بواسطة جافاسكريبت -->
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="alert alert-info">
-                            <i class="fas fa-info-circle me-1"></i>
-                            <strong>ملاحظة:</strong> هذا الإجراء سيؤثر على جميع موظفي القسم المحدد. سيتم تعيين حالة الحضور المختارة لجميع الموظفين النشطين في القسم.
-                        </div>
-                        
-                        <div id="no-department-selected-alert" class="alert alert-warning" style="display: none;">
-                            <i class="fas fa-exclamation-triangle me-1"></i>
-                            <strong>تنبيه:</strong> الرجاء اختيار قسم لعرض الموظفين وتسجيل الحضور.
-                        </div>
-                        
-                        <div class="mt-4">
-                            <button id="submit-btn" type="submit" class="btn btn-primary btn-lg" disabled>
-                                <i class="fas fa-save me-1"></i> تسجيل الحضور للقسم
-                            </button>
-                            <button type="reset" class="btn btn-secondary">
-                                <i class="fas fa-undo me-1"></i> إعادة تعيين
-                            </button>
-                        </div>
-                    </form>
-                </div>
+<div class="page-wrapper">
+    <div class="container-lg">
+        <!-- Header -->
+        <div class="header-card">
+            <div class="header-content">
+                <h1><i class="fas fa-building me-3"></i>إدارة الأقسام</h1>
+                <p>عرض وإدارة سجلات الحضور حسب الأقسام</p>
             </div>
         </div>
+
+        <!-- Stats Cards -->
+        {% if stats %}
+        <div class="stats-grid">
+            <div class="stat-card success">
+                <div class="stat-icon"><i class="fas fa-check-circle text-success"></i></div>
+                <div class="stat-label">الحاضرون</div>
+                <div class="stat-value">{{ stats.present }}</div>
+            </div>
+            <div class="stat-card danger">
+                <div class="stat-icon"><i class="fas fa-times-circle text-danger"></i></div>
+                <div class="stat-label">الغائبون</div>
+                <div class="stat-value">{{ stats.absent }}</div>
+            </div>
+            <div class="stat-card warning">
+                <div class="stat-icon"><i class="fas fa-calendar-times text-warning"></i></div>
+                <div class="stat-label">الإجازات</div>
+                <div class="stat-value">{{ stats.leave }}</div>
+            </div>
+            <div class="stat-card info">
+                <div class="stat-icon"><i class="fas fa-hospital-user text-info"></i></div>
+                <div class="stat-label">المرضى</div>
+                <div class="stat-value">{{ stats.sick }}</div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Departments List -->
+        {% if departments %}
+            {% for department in departments %}
+            <div class="department-card">
+                <!-- Department Header -->
+                <div class="department-header">
+                    <div>
+                        <div class="department-name">
+                            <i class="fas fa-sitemap me-2"></i>{{ department.name }}
+                        </div>
+                    </div>
+                    <div class="department-badge">
+                        👥 {{ department.employee_count }} موظف
+                    </div>
+                </div>
+
+                <!-- Department Body -->
+                <div class="department-body">
+                    <!-- Department Stats -->
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-icon" style="background: linear-gradient(135deg, #11998e, #38ef7d);">
+                                <i class="fas fa-user-check"></i>
+                            </div>
+                            <div class="info-content">
+                                <h4>الحاضرون</h4>
+                                <p>{{ department.present_count }}</p>
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-icon" style="background: linear-gradient(135deg, #ef4444, #dc2626);">
+                                <i class="fas fa-user-times"></i>
+                            </div>
+                            <div class="info-content">
+                                <h4>الغائبون</h4>
+                                <p>{{ department.absent_count }}</p>
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                                <i class="fas fa-calendar"></i>
+                            </div>
+                            <div class="info-content">
+                                <h4>معدل الحضور</h4>
+                                <p>{{ ((department.present_count / department.employee_count * 100)|round(1))|string + '%' if department.employee_count > 0 else '0%' }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Attendance Table -->
+                    {% if department.employees %}
+                    <table class="attendance-table">
+                        <thead>
+                            <tr>
+                                <th><i class="fas fa-user me-2"></i>الموظف</th>
+                                <th><i class="fas fa-id-card me-2"></i>الرقم الوظيفي</th>
+                                <th><i class="fas fa-check me-2"></i>الحالة</th>
+                                <th><i class="fas fa-clock me-2"></i>وقت الدخول</th>
+                                <th><i class="fas fa-clock me-2"></i>وقت الخروج</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for employee in department.employees %}
+                            <tr>
+                                <td class="employee-name">{{ employee.name }}</td>
+                                <td>{{ employee.employee_id }}</td>
+                                <td>
+                                    <span class="status-badge status-{{ employee.status|lower }}">
+                                        {% if employee.status == 'present' %}
+                                            <i class="fas fa-check-circle me-1"></i>حاضر
+                                        {% elif employee.status == 'absent' %}
+                                            <i class="fas fa-times-circle me-1"></i>غائب
+                                        {% elif employee.status == 'leave' %}
+                                            <i class="fas fa-calendar-times me-1"></i>إجازة
+                                        {% elif employee.status == 'sick' %}
+                                            <i class="fas fa-hospital-user me-1"></i>مرضي
+                                        {% else %}
+                                            <i class="fas fa-question-circle me-1"></i>غير محدد
+                                        {% endif %}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if employee.check_in %}
+                                        <span style="color: var(--success); font-weight: 600;">
+                                            <i class="fas fa-arrow-circle-down me-1"></i>{{ employee.check_in }}
+                                        </span>
+                                    {% else %}
+                                        <span style="color: #6c757d;">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if employee.check_out %}
+                                        <span style="color: var(--danger); font-weight: 600;">
+                                            <i class="fas fa-arrow-circle-up me-1"></i>{{ employee.check_out }}
+                                        </span>
+                                    {% else %}
+                                        <span style="color: #6c757d;">-</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <div class="empty-state">
+                        <div class="empty-state-icon"><i class="fas fa-inbox"></i></div>
+                        <div class="empty-state-title">لا توجد بيانات موظفين</div>
+                        <div class="empty-state-text">هذا القسم لا يحتوي على موظفين حالياً</div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Action Buttons -->
+                    <div class="action-buttons">
+                        <a href="{{ url_for('attendance.department_attendance') }}?department_id={{ department.id }}" class="btn-action btn-primary-action">
+                            <i class="fas fa-edit"></i> تعديل الحضور
+                        </a>
+                        <a href="{{ url_for('attendance.export_page') }}?department_id={{ department.id }}" class="btn-action btn-secondary-action">
+                            <i class="fas fa-download"></i> تصدير التقرير
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+        <div class="department-card">
+            <div class="empty-state">
+                <div class="empty-state-icon"><i class="fas fa-inbox"></i></div>
+                <div class="empty-state-title">لا توجد أقسام</div>
+                <div class="empty-state-text">لا يوجد أي أقسام مسجلة في النظام</div>
+            </div>
+        </div>
+        {% endif %}
     </div>
 </div>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-    // عند تحميل الصفحة، نتحقق إذا كان القسم محدد أم لا
-    window.addEventListener('DOMContentLoaded', function() {
-        const departmentSelect = document.getElementById('department_id');
-        const noDepartmentAlert = document.getElementById('no-department-selected-alert');
-        const submitBtn = document.getElementById('submit-btn');
-        
-        // إذا لم يكن هناك قسم محدد، نعرض تنبيه للمستخدم ونعطل زر الإرسال
-        if (!departmentSelect.value) {
-            noDepartmentAlert.style.display = 'block';
-            submitBtn.disabled = true;
-        } else {
-            // إذا كان هناك قسم محدد بالفعل، نقوم بتحميل الموظفين مباشرة
-            loadDepartmentEmployees(departmentSelect.value);
-        }
-        
-        // إضافة مستمع للحدث عند إعادة تعيين النموذج
-        document.querySelector('form').addEventListener('reset', function() {
-            setTimeout(function() {
-                // تأخير قصير لإعطاء النموذج وقتًا لإعادة التعيين
-                noDepartmentAlert.style.display = 'block';
-                document.getElementById('department-employees-container').style.display = 'none';
-                submitBtn.disabled = true;
-            }, 50);
-        });
-    });
-    
-    // تحميل موظفي القسم عند اختياره
-    function loadDepartmentEmployees(departmentId) {
-        const noDepartmentAlert = document.getElementById('no-department-selected-alert');
-        const submitBtn = document.getElementById('submit-btn');
-        
-        if (!departmentId) {
-            document.getElementById('department-employees-container').style.display = 'none';
-            noDepartmentAlert.style.display = 'block';
-            submitBtn.disabled = true;
-            return;
-        }
-        
-        // إخفاء تنبيه عدم اختيار القسم وتمكين زر الإرسال
-        noDepartmentAlert.style.display = 'none';
-        submitBtn.disabled = false;
-        
-        // الحصول على عنصر الواجهة لعرض القائمة
-        const employeesList = document.getElementById('department-employees-list');
-        const employeeCount = document.getElementById('employee-count');
-        const container = document.getElementById('department-employees-container');
-        
-        // إظهار رسالة تحميل
-        employeesList.innerHTML = '<tr><td colspan="4" class="text-center py-3"><i class="fas fa-spinner fa-spin me-2"></i> جاري تحميل الموظفين...</td></tr>';
-        
-        // تأكد من أن حاوية الموظفين مرئية
-        container.style.display = 'block';
-        
-        console.log("تحميل موظفي القسم بمعرف: ", departmentId);
-        
-        // إرسال طلب للحصول على بيانات موظفي القسم
-        fetch(`/attendance/api/departments/${departmentId}/employees`)
-            .then(response => {
-                console.log("استجابة API:", response);
-                if (!response.ok) {
-                    throw new Error('فشل في الحصول على بيانات الموظفين');
-                }
-                return response.json();
-            })
-            .then(employees => {
-                // عرض عدد الموظفين
-                employeeCount.textContent = employees.length + ' موظف';
-                
-                if (employees.length === 0) {
-                    employeesList.innerHTML = '<tr><td colspan="4" class="text-center py-3">لا يوجد موظفين في هذا القسم</td></tr>';
-                    return;
-                }
-                
-                // إعادة إنشاء جدول الموظفين
-                let html = '';
-                employees.forEach(employee => {
-                    let statusBadge = '';
-                    if (employee.status === 'active') {
-                        statusBadge = '<span class="badge bg-success">نشط</span>';
-                    } else if (employee.status === 'inactive') {
-                        statusBadge = '<span class="badge bg-danger">غير نشط</span>';
-                    } else if (employee.status === 'on_leave') {
-                        statusBadge = '<span class="badge bg-warning">في إجازة</span>';
-                    }
-                    
-                    html += `
-                        <tr class="highlight-new">
-                            <td>${employee.name}</td>
-                            <td>${employee.employee_id}</td>
-                            <td>${employee.job_title}</td>
-                            <td>${statusBadge}</td>
-                        </tr>
-                    `;
-                });
-                
-                employeesList.innerHTML = html;
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                employeesList.innerHTML = `<tr><td colspan="4" class="text-center text-danger py-3"><i class="fas fa-exclamation-circle me-2"></i> حدث خطأ: ${error.message}</td></tr>`;
-            });
-    }
-    
-    // إضافة أحداث إضافية عند اختيار حالة الحضور
-    document.querySelectorAll('.attendance-status-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const status = this.getAttribute('data-status');
-            // تحديث ظهور الأزرار
-            document.querySelectorAll('.attendance-status-btn').forEach(b => {
-                b.classList.remove('active');
-            });
-            this.classList.add('active');
-            
-            // تحديث الحالة في النموذج
-            document.getElementById('status').value = status;
-            
-            // تحديث شكل جدول الموظفين ليعكس الحالة المختارة
-            const employeesList = document.getElementById('department-employees-list');
-            if (employeesList) {
-                const rows = employeesList.querySelectorAll('tr');
-                rows.forEach(row => {
-                    // إزالة كافة فئات الحالة
-                    row.classList.remove('status-present', 'status-absent', 'status-leave', 'status-sick');
-                    // إضافة فئة الحالة الجديدة
-                    row.classList.add('status-' + status);
-                });
-            }
-        });
-    });
-    
-    // تعيين الحالة الافتراضية (حاضر) كنشطة عند تحميل الصفحة
-    document.querySelector('.attendance-status-btn[data-status="present"]').classList.add('active');
-    
-    // إضافة وظيفة البحث في قائمة الموظفين
-    document.addEventListener('DOMContentLoaded', function() {
-        const employeeSearch = document.getElementById('employee_search');
-        if (employeeSearch) {
-            employeeSearch.addEventListener('input', function() {
-                const searchText = this.value.trim().toLowerCase();
-                console.log('البحث عن:', searchText);
-                
-                const tableRows = document.querySelectorAll('#department-employees-list tr');
-                let matchCount = 0;
-                
-                tableRows.forEach(row => {
-                    // نتخطى صفوف الرسائل/التحميل
-                    if (row.cells.length < 2) return;
-                    
-                    const employeeName = row.cells[0].textContent.toLowerCase();
-                    const employeeId = row.cells[1].textContent.toLowerCase();
-                    const jobTitle = row.cells[2].textContent.toLowerCase();
-                    
-                    // البحث في كل الحقول
-                    if (employeeName.includes(searchText) || 
-                        employeeId.includes(searchText) || 
-                        jobTitle.includes(searchText)) {
-                        row.style.display = '';
-                        matchCount++;
-                    } else {
-                        row.style.display = 'none';
-                    }
-                });
-                
-                // عرض عدد النتائج المطابقة
-                const employeeCount = document.getElementById('employee-count');
-                if (employeeCount) {
-                    if (searchText) {
-                        employeeCount.textContent = matchCount + ' موظف مطابق';
-                    } else {
-                        // إعادة العدد الأصلي إذا كان حقل البحث فارغاً
-                        employeeCount.textContent = tableRows.length + ' موظف';
-                    }
-                }
-            });
-            
-            // تنظيف البحث عند إعادة تحميل الموظفين
-            document.getElementById('department_id').addEventListener('change', function() {
-                if (employeeSearch) {
-                    employeeSearch.value = '';
-                }
-            });
-        }
-    });
-</script>
 {% endblock %}
