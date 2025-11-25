@@ -262,141 +262,143 @@ def create_accident_notification(user_id, vehicle_plate, driver_name, accident_t
     )
 
 
+def get_all_admin_users():
+    """الحصول على جميع المستخدمين الإداريين"""
+    from models import User
+    return User.query.all()
+
+
 @notifications_bp.route('/test/create-demo-notifications', methods=['GET', 'POST'])
 def create_demo_notifications():
-    """إنشاء إشعارات تجريبية لاختبار النظام"""
+    """إنشاء إشعارات تجريبية لاختبار النظام - لجميع المستخدمين الإداريين"""
     from models import User
     
-    # الحصول على معرف المستخدم - استخدام المستخدم الحالي أو أول مستخدم
-    if current_user.is_authenticated:
-        user_id = current_user.id
-    else:
-        # استخدام أول مستخدم موجود
-        first_user = User.query.first()
-        if not first_user:
-            return jsonify({'error': 'لا يوجد مستخدمين في النظام', 'redirect_url': url_for('auth.login')}), 404
-        user_id = first_user.id
+    # الحصول على جميع المستخدمين الإداريين
+    admin_users = get_all_admin_users()
+    if not admin_users:
+        return jsonify({'error': 'لا يوجد مستخدمين في النظام', 'redirect_url': url_for('auth.login')}), 404
     
-    # حذف الإشعارات التجريبية القديمة (اختياري)
-    # Notification.query.filter_by(user_id=user_id).delete()
-    # db.session.commit()
+    # إنشاء الإشعارات لجميع المستخدمين الإداريين
+    for admin_user in admin_users:
+        user_id = admin_user.id
+        
+        # 1. إنشاء إشعار غياب موظف
+        create_absence_notification(
+            user_id=user_id,
+            employee_name='محمد علي',
+            department_name='قسم التسويق'
+        )
+        
+        # 2. إنشاء إشعار انتهاء إقامة
+        create_document_expiry_notification(
+            user_id=user_id,
+            employee_name='أحمد محمود',
+            doc_type='الإقامة',
+            days_left=5
+        )
+        
+        # 3. إنشاء إشعار انتهاء تفويض
+        create_document_expiry_notification(
+            user_id=user_id,
+            employee_name='فاطمة عبدالرحمن',
+            doc_type='التفويض',
+            days_left=3
+        )
+        
+        # 4. إنشاء إشعار انتهاء فحص دوري
+        create_document_expiry_notification(
+            user_id=user_id,
+            employee_name='سيارة رقم 123',
+            doc_type='الفحص الدوري',
+            days_left=10
+        )
+        
+        # 5. إنشاء إشعارات عمليات متنوعة
+        create_operations_notification(
+            user_id=user_id,
+            operation_title='حادثة سير جديدة',
+            operation_description='تم تسجيل حادثة سير جديدة للسيارة رقم ABC-1234. يرجى المراجعة والموافقة.',
+            entity_type='accident',
+            entity_id=1
+        )
+        
+        create_operations_notification(
+            user_id=user_id,
+            operation_title='طلب سيارة جديد',
+            operation_description='تم استلام طلب تخصيص سيارة جديد من قسم العمليات.',
+            entity_type='vehicle',
+            entity_id=5
+        )
+        
+        create_operations_notification(
+            user_id=user_id,
+            operation_title='طلب سلفة مالية',
+            operation_description='تم تقديم طلب سلفة مالية جديد من الموظف أحمد محمود بقيمة 5000 ريال.',
+            entity_type='employee_request',
+            entity_id=3
+        )
+        
+        # 6. إشعارات إضافية
+        create_absence_notification(
+            user_id=user_id,
+            employee_name='سارة إبراهيم',
+            department_name='قسم الموارد البشرية'
+        )
+        
+        create_document_expiry_notification(
+            user_id=user_id,
+            employee_name='عمر خالد',
+            doc_type='جواز السفر',
+            days_left=15
+        )
+        
+        # 7. إشعارات فحص السلامة الخارجية
+        create_safety_check_notification(
+            user_id=user_id,
+            vehicle_plate='ABC-1234',
+            supervisor_name='أحمد محمد',
+            check_status='pending',
+            check_id=1
+        )
+        
+        create_safety_check_notification(
+            user_id=user_id,
+            vehicle_plate='XYZ-5678',
+            supervisor_name='فاطمة علي',
+            check_status='under_review',
+            check_id=2
+        )
+        
+        create_safety_check_review_notification(
+            user_id=user_id,
+            vehicle_plate='DEF-9012',
+            action='approved',
+            reviewer_name='سلمان الدعيع',
+            check_id=3
+        )
+        
+        # 8. إشعارات الحوادث
+        create_accident_notification(
+            user_id=user_id,
+            vehicle_plate='ABC-1234',
+            driver_name='محمد عبدالله',
+            accident_type='moderate',
+            accident_id=10,
+            severity='moderate'
+        )
+        
+        create_accident_notification(
+            user_id=user_id,
+            vehicle_plate='XYZ-5678',
+            driver_name='فاطمة احمد',
+            accident_type='severe',
+            accident_id=11,
+            severity='severe'
+        )
     
-    # 1. إنشاء إشعار غياب موظف
-    create_absence_notification(
-        user_id=user_id,
-        employee_name='محمد علي',
-        department_name='قسم التسويق'
-    )
-    
-    # 2. إنشاء إشعار انتهاء إقامة
-    create_document_expiry_notification(
-        user_id=user_id,
-        employee_name='أحمد محمود',
-        doc_type='الإقامة',
-        days_left=5
-    )
-    
-    # 3. إنشاء إشعار انتهاء تفويض
-    create_document_expiry_notification(
-        user_id=user_id,
-        employee_name='فاطمة عبدالرحمن',
-        doc_type='التفويض',
-        days_left=3
-    )
-    
-    # 4. إنشاء إشعار انتهاء فحص دوري
-    create_document_expiry_notification(
-        user_id=user_id,
-        employee_name='سيارة رقم 123',
-        doc_type='الفحص الدوري',
-        days_left=10
-    )
-    
-    # 5. إنشاء إشعارات عمليات متنوعة
-    create_operations_notification(
-        user_id=user_id,
-        operation_title='حادثة سير جديدة',
-        operation_description='تم تسجيل حادثة سير جديدة للسيارة رقم ABC-1234. يرجى المراجعة والموافقة.',
-        entity_type='accident',
-        entity_id=1
-    )
-    
-    create_operations_notification(
-        user_id=user_id,
-        operation_title='طلب سيارة جديد',
-        operation_description='تم استلام طلب تخصيص سيارة جديد من قسم العمليات.',
-        entity_type='vehicle',
-        entity_id=5
-    )
-    
-    create_operations_notification(
-        user_id=user_id,
-        operation_title='طلب سلفة مالية',
-        operation_description='تم تقديم طلب سلفة مالية جديد من الموظف أحمد محمود بقيمة 5000 ريال.',
-        entity_type='employee_request',
-        entity_id=3
-    )
-    
-    # 6. إشعارات إضافية
-    create_absence_notification(
-        user_id=user_id,
-        employee_name='سارة إبراهيم',
-        department_name='قسم الموارد البشرية'
-    )
-    
-    create_document_expiry_notification(
-        user_id=user_id,
-        employee_name='عمر خالد',
-        doc_type='جواز السفر',
-        days_left=15
-    )
-    
-    # 7. إشعارات فحص السلامة الخارجية
-    create_safety_check_notification(
-        user_id=user_id,
-        vehicle_plate='ABC-1234',
-        supervisor_name='أحمد محمد',
-        check_status='pending',
-        check_id=1
-    )
-    
-    create_safety_check_notification(
-        user_id=user_id,
-        vehicle_plate='XYZ-5678',
-        supervisor_name='فاطمة علي',
-        check_status='under_review',
-        check_id=2
-    )
-    
-    create_safety_check_review_notification(
-        user_id=user_id,
-        vehicle_plate='DEF-9012',
-        action='approved',
-        reviewer_name='سلمان الدعيع',
-        check_id=3
-    )
-    
-    # 8. إشعارات الحوادث
-    create_accident_notification(
-        user_id=user_id,
-        vehicle_plate='ABC-1234',
-        driver_name='محمد عبدالله',
-        accident_type='moderate',
-        accident_id=10,
-        severity='moderate'
-    )
-    
-    create_accident_notification(
-        user_id=user_id,
-        vehicle_plate='XYZ-5678',
-        driver_name='فاطمة احمد',
-        accident_type='severe',
-        accident_id=11,
-        severity='severe'
-    )
-    
+    total_notifications = len(admin_users) * 13
     return jsonify({
         'success': True,
-        'message': 'تم إنشاء 13 إشعار تجريبي بنجاح (شامل إشعارات فحص السلامة والحوادث)',
+        'message': f'تم إنشاء {total_notifications} إشعار تجريبي بنجاح لـ {len(admin_users)} مستخدم',
         'redirect_url': url_for('notifications.index')
     })
