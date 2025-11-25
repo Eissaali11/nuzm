@@ -148,8 +148,10 @@
         width: 80%;
         height: auto;
         max-width: 500px;
-        filter: drop-shadow(0 10px 30px rgba(0, 0, 0, 0.2));
+        backdrop-filter: blur(10px);
+        filter: blur(0.5px) drop-shadow(0 10px 30px rgba(0, 0, 0, 0.1));
         animation: slideInRight 0.8s ease 0.2s both;
+        opacity: 0.85;
     }
 
     @keyframes slideInRight {
