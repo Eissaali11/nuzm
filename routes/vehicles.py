@@ -1869,6 +1869,14 @@ def create_accident(id):
         form = VehicleAccidentForm()
         form.vehicle_id.data = id
 
+        if request.method == 'POST':
+                current_app.logger.info(f"محاولة إضافة حادث للمركبة {id}")
+                if not form.validate():
+                        current_app.logger.error(f"أخطاء النموذج: {form.errors}")
+                        for field, errors in form.errors.items():
+                                for error in errors:
+                                        flash(f'خطأ في {getattr(form, field).label.text}: {error}', 'danger')
+
         if form.validate_on_submit():
                 accident = VehicleAccident(
                         vehicle_id=id,

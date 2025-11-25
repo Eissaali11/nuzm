@@ -38,7 +38,7 @@ class VehicleAccidentForm(FlaskForm):
         ('75', 'تحمل كبير (75%)'),
         ('100', 'تحمل كامل (100%)')
     ], default='0', coerce=int)
-    accident_file_link = StringField('رابط ملف الحادث', validators=[Optional(), URL()])
+    accident_file_link = StringField('رابط ملف الحادث', validators=[Optional()])
     location = StringField('موقع الحادث', validators=[Optional(), Length(max=255)])
     police_report = BooleanField('تم عمل محضر شرطة')
     insurance_claim = BooleanField('تم رفع مطالبة للتأمين')
