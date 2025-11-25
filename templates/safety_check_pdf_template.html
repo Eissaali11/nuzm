@@ -190,56 +190,68 @@
             font-weight: 500;
         }
         
+        .image-content-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: linear-gradient(135deg, #ffffff 0%, #f8feff 100%);
+            border-radius: 8px;
+            border: 1px solid #e0eeee;
+            padding: 18px;
+            margin: 12px 0;
+            box-shadow: 0 4px 16px rgba(24, 178, 176, 0.08);
+        }
+        
         .image-container {
             flex: 1;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 15px 0;
-            min-height: 120mm;
+            margin-bottom: 18px;
+            min-height: 100mm;
         }
         
         .image-container img {
-            max-width: 95%;
-            max-height: 95%;
+            max-width: 100%;
+            max-height: 100%;
             object-fit: contain;
-            border: 2px solid #ddd;
-            border-radius: 6px;
-            box-shadow: 0 3px 12px rgba(24, 178, 176, 0.15);
-        }
-        
-        .image-notes-wrapper {
-            margin-top: auto;
-            margin-bottom: 10px;
+            border: 2px solid #d0e8e7;
+            border-radius: 8px;
+            box-shadow: 0 6px 20px rgba(24, 178, 176, 0.2);
+            background: white;
+            padding: 8px;
         }
         
         .image-notes {
-            background: linear-gradient(135deg, #f0f9f9 0%, #e8f5f6 100%);
-            padding: 13px 14px;
-            border-radius: 5px;
-            border-left: 5px solid #18b2b0;
-            border-top: 1px solid #d0e8e7;
-            box-shadow: 0 2px 6px rgba(24, 178, 176, 0.08);
+            background: linear-gradient(135deg, #18b2b0 0%, #159e9c 100%);
+            padding: 14px 16px;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(24, 178, 176, 0.25);
+            border-top: 2px solid rgba(255,255,255, 0.3);
         }
         
         .image-notes-title {
-            color: #18b2b0;
+            color: #ffffff;
             font-weight: 700;
-            font-size: 11px;
-            margin-bottom: 6px;
+            font-size: 12px;
+            margin-bottom: 8px;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.6px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
         }
         
         .image-notes-content {
-            color: #333;
-            font-size: 11px;
-            line-height: 1.65;
+            color: #ffffff;
+            font-size: 12px;
+            line-height: 1.7;
             word-wrap: break-word;
-            background: rgba(255,255,255, 0.6);
-            padding: 8px 10px;
-            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.15);
+            padding: 10px 12px;
+            border-radius: 5px;
             font-weight: 500;
+            border-left: 3px solid rgba(255,255,255, 0.4);
         }
         
         .image-page-footer {
@@ -394,18 +406,18 @@
                 <div class="image-counter">صورة {{ loop.index }} من {{ safety_check.safety_images|length }}</div>
             </div>
             
-            <div class="image-container">
-                <img src="data:image/png;base64,{{ image.image_base64 }}" alt="صورة الفحص {{ loop.index }}">
-            </div>
-            
-            <div class="image-notes-wrapper">
+            <div class="image-content-wrapper">
+                <div class="image-container">
+                    <img src="data:image/png;base64,{{ image.image_base64 }}" alt="صورة الفحص {{ loop.index }}">
+                </div>
+                
                 <div class="image-notes">
-                    <div class="image-notes-title">📌 ملاحظات الصورة:</div>
+                    <div class="image-notes-title">📝 ملاحظات الصورة</div>
                     <div class="image-notes-content">
                         {% if image.notes %}
                             {{ image.notes }}
                         {% else %}
-                            <span style="color: #bbb; font-style: italic;">لا توجد ملاحظات محددة لهذه الصورة</span>
+                            <span style="opacity: 0.8; font-style: italic;">لا توجد ملاحظات محددة لهذه الصورة</span>
                         {% endif %}
                     </div>
                 </div>
