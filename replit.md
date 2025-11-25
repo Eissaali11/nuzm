@@ -7,6 +7,17 @@
 Preferred communication style: Simple, everyday language.
 
 ## Recent Updates
+- **Nov 25, 2025**: Vehicle Accident Reporting System:
+  - Implemented comprehensive accident reporting API for Flutter mobile app integration
+  - Added support for uploading driver ID card, driver license, accident report (PDF/image), and multiple accident photos
+  - Created approval workflow system (pending → under_review → approved/rejected) for operations management
+  - Extended VehicleAccident model with review_status, driver_phone, latitude/longitude tracking, and Absher phone number
+  - Added VehicleAccidentImage model for storing multiple accident photos
+  - Created API endpoint `/api/v1/accident-reports/submit` with JWT authentication
+  - Automatic image compression (1920x1920, 85% quality) and HEIC support
+  - File size limit: 50MB per file, organized storage in `static/uploads/accidents/{accident_id}/`
+  - Operations management routes for reviewing/approving accident reports
+  - Complete API documentation in `API_ACCIDENT_REPORTS.md` with Flutter/Dart examples
 - **Nov 19, 2025**: Performance optimization and data integrity fixes:
   - Added database indexes on critical fields (Employee.status, Document.expiry_date, Attendance.date, composite index on employee_id+recorded_at) to improve query performance
   - Fixed department employee count display issue by correcting employee status values from Arabic "يعمل" to standardized "active"
@@ -35,7 +46,7 @@ Preferred communication style: Simple, everyday language.
 
 ### Key Features & Design Decisions
 - **Employee Management**: CRUD, document management with expiry tracking, profile image/ID uploads, bulk import/export. Includes comprehensive housing documentation with multi-image upload (HEIC support) and Google Drive links integration.
-- **Vehicle Management**: Registration, tracking, handover/return, workshop records, reports, document management, external safety checks, and automated return system.
+- **Vehicle Management**: Registration, tracking, handover/return, workshop records, reports, document management, external safety checks, and automated return system. Includes comprehensive accident reporting system with mobile app integration, review workflow, and multi-file upload support (ID card, license, accident report PDF/image, accident photos).
 - **Attendance System**: Daily tracking, overtime, monthly/weekly reports, Hijri calendar integration, department-based filtering, and enhanced dashboard with dual-calendar display. Includes comprehensive geofence session tracking with real-time analytics.
 - **GPS Employee Tracking**: Real-time location tracking with high-precision interactive maps using Leaflet 1.9.4. Features include intelligent road-based route drawing via OSRM API, directional arrows, dual-layer maps, enhanced route lines, zoom levels up to 20, metric scale display, auto-fitting bounds, speed-based color coding, and seamless 24-hour movement history visualization.
 - **Smart Attendance System (Future)**: Mobile-based attendance with face recognition (ML Kit), geofencing, mock location detection, real-time verification, shift management, and web-based admin dashboard.
