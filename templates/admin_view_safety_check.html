@@ -361,10 +361,12 @@
                 <div class="image-card" style="cursor:pointer; transition:all 0.3s ease; position:relative;">
                     <img src="{{ url_for('static', filename='uploads/' + image.image_path) }}" 
                          alt="صورة الفحص"
+                         data-notes="{{ image.image_description or 'لا توجد ملاحظات' }}"
+                         data-image-number="{{ loop.index }}"
                          style="cursor:pointer; transition:transform 0.3s ease;"
                          onmouseover="this.style.transform='scale(1.05)'"
                          onmouseout="this.style.transform='scale(1)'"
-                         onclick="openModal('{{ url_for('static', filename='uploads/' + image.image_path) }}', '{{ image.image_description or 'لا توجد ملاحظات' }}', {{ loop.index }})">
+                         onclick="openModalFromElement(this)">
                     
                     {% if image.image_description %}
                     <div class="image-notes" style="margin-top: 12px; padding: 12px; background: linear-gradient(135deg, #f0f9f9 0%, #e8f5f6 100%); border-right: 4px solid #18b2b0; border-radius: 5px; font-size: 12px; color: #333; box-shadow: 0 2px 8px rgba(24, 178, 176, 0.1);">
@@ -436,6 +438,13 @@
 </div>
 
 <script>
+    function openModalFromElement(element) {
+        const src = element.src;
+        const notes = element.getAttribute('data-notes');
+        const imageNumber = element.getAttribute('data-image-number');
+        openModal(src, notes, imageNumber);
+    }
+    
     function openModal(src, notes, imageNumber) {
         const modal = document.getElementById('imageModal');
         const img = document.getElementById('modalImage');
