@@ -3865,6 +3865,8 @@ def departments_circles_overview():
                     accessed_count += 1
                     accessed_employees.append(emp.name)
                 
+                duration_minutes = geo_session.duration_minutes if geo_session and geo_session.duration_minutes else 0
+                
                 emp_data = {
                     'id': emp.id,
                     'name': emp.name,
@@ -3878,8 +3880,10 @@ def departments_circles_overview():
                     'gps_recorded_at': emp_location.recorded_at if emp_location else None,
                     # بيانات الوصول إلى الدائرة
                     'accessed_circle': accessed,
-                    'circle_enter_time': geo_session.entry_time if geo_session else None,
-                    'circle_exit_time': geo_session.exit_time if geo_session else None,
+                    'circle_enter_time': geo_session.entry_time.strftime('%H:%M:%S') if geo_session and geo_session.entry_time else None,
+                    'circle_exit_time': geo_session.exit_time.strftime('%H:%M:%S') if geo_session and geo_session.exit_time else None,
+                    'duration_minutes': duration_minutes,
+                    'duration_display': f'{duration_minutes // 60}س {duration_minutes % 60}د' if duration_minutes > 0 else '-',
                 }
                 employees_details.append(emp_data)
             

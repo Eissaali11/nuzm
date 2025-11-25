@@ -246,12 +246,18 @@
                                             <!-- بيانات الوصول إلى الدوائر -->
                                             <div class="row g-2 mb-3">
                                                 <div class="col-12">
-                                                    <div style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%); padding: 12px; border-radius: 8px; border-left: 4px solid #8b5cf6;">
-                                                        <i class="fas fa-door-open text-primary me-2"></i>
-                                                        <strong>الوصول إلى الدائرة:</strong>
-                                                        <span class="badge bg-primary ms-2">{{ circle.accessed_count }} داخل</span>
-                                                        <div class="mt-2 small text-muted">
-                                                            <strong>الداخلون:</strong> {{ circle.accessed_employees }}
+                                                    <div style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%); padding: 15px; border-radius: 8px; border-left: 4px solid #8b5cf6;">
+                                                        <div class="d-flex justify-content-between align-items-center">
+                                                            <div>
+                                                                <i class="fas fa-door-open text-primary me-2"></i>
+                                                                <strong>الوصول إلى الدائرة:</strong>
+                                                                <span class="badge bg-primary ms-2">{{ circle.accessed_count }} داخل</span>
+                                                            </div>
+                                                            {% if circle.accessed_count > 0 %}
+                                                            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#accessed-modal-{{ dept.id }}-{{ loop.index }}">
+                                                                <i class="fas fa-eye me-1"></i> عرض التفاصيل
+                                                            </button>
+                                                            {% endif %}
                                                         </div>
                                                     </div>
                                                 </div>
@@ -350,6 +356,102 @@
                                         </div>
                                     </div>
                                 </div>
+                                
+                                <!-- Modal تفاصيل الموظفين الواصلين للدائرة -->
+                                {% set accessed_employees_list = [emp for emp in circle.employees if emp.accessed_circle] %}
+                                {% if accessed_employees_list %}
+                                <div class="modal fade" id="accessed-modal-{{ dept.id }}-{{ loop.index }}" tabindex="-1">
+                                    <div class="modal-dialog modal-lg">
+                                        <div class="modal-content border-0 shadow-lg">
+                                            <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none;">
+                                                <h5 class="modal-title text-white fw-bold">
+                                                    <i class="fas fa-map-marked-alt me-2"></i>
+                                                    الموظفين الواصلين إلى الدائرة: {{ circle.name }}
+                                                </h5>
+                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+                                                <div class="row g-3">
+                                                    {% for emp in accessed_employees_list %}
+                                                    <div class="col-12">
+                                                        <div class="card border-start border-5" style="border-color: #8b5cf6;">
+                                                            <div class="card-body">
+                                                                <div class="row">
+                                                                    <!-- معلومات الموظف -->
+                                                                    <div class="col-md-3 border-end">
+                                                                        <div class="text-center">
+                                                                            <div class="avatar mb-2" style="width: 50px; height: 50px; margin: 0 auto;">
+                                                                                <i class="fas fa-user-circle fa-3x text-primary"></i>
+                                                                            </div>
+                                                                            <h6 class="card-title mb-1">{{ emp.name }}</h6>
+                                                                            <small class="text-muted">{{ emp.employee_id }}</small>
+                                                                            <div class="mt-2">
+                                                                                <span class="badge bg-primary">{{ emp.status }}</span>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                    
+                                                                    <!-- أوقات الدخول والخروج -->
+                                                                    <div class="col-md-4">
+                                                                        <div class="mb-3">
+                                                                            <label class="small fw-bold text-muted">⏰ وقت الدخول</label>
+                                                                            <div class="fs-6 text-success fw-bold">
+                                                                                {% if emp.circle_enter_time %}
+                                                                                    {{ emp.circle_enter_time }}
+                                                                                {% else %}
+                                                                                    <span class="text-muted">-</span>
+                                                                                {% endif %}
+                                                                            </div>
+                                                                        </div>
+                                                                        
+                                                                        <div class="mb-3">
+                                                                            <label class="small fw-bold text-muted">🚪 وقت الخروج</label>
+                                                                            <div class="fs-6 text-danger fw-bold">
+                                                                                {% if emp.circle_exit_time %}
+                                                                                    {{ emp.circle_exit_time }}
+                                                                                {% else %}
+                                                                                    <span class="badge bg-success">لا يزال داخل الدائرة</span>
+                                                                                {% endif %}
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                    
+                                                                    <!-- المدة الزمنية -->
+                                                                    <div class="col-md-5">
+                                                                        <div class="alert alert-info mb-3" style="background: linear-gradient(135deg, rgba(96, 165, 250, 0.1) 0%, rgba(96, 165, 250, 0.05) 100%); border: 1px solid #60a5fa;">
+                                                                            <div class="d-flex align-items-center justify-content-center" style="min-height: 60px;">
+                                                                                <div class="text-center">
+                                                                                    <i class="fas fa-hourglass-half text-info me-2" style="font-size: 1.5rem;"></i>
+                                                                                    <div class="fw-bold" style="font-size: 1.3rem;">{{ emp.duration_display }}</div>
+                                                                                    <small class="text-muted">المدة داخل الدائرة</small>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                        
+                                                                        {% if emp.gps_latitude and emp.gps_longitude %}
+                                                                        <div class="alert alert-light">
+                                                                            <small class="fw-bold text-muted">📍 إحداثيات GPS</small>
+                                                                            <div class="small text-monospace" style="font-size: 0.85rem;">
+                                                                                📍 {{ "%.4f"|format(emp.gps_latitude|float) }}<br>
+                                                                                📍 {{ "%.4f"|format(emp.gps_longitude|float) }}
+                                                                            </div>
+                                                                        </div>
+                                                                        {% endif %}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    {% endfor %}
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer border-top">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
                                 {% endfor %}
                             </div>
                         {% else %}
