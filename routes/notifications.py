@@ -270,13 +270,8 @@ def get_all_admin_users():
 
 @notifications_bp.route('/test/create-demo-notifications', methods=['GET', 'POST'])
 def create_demo_notifications():
-    """إنشاء إشعارات من بيانات حقيقية في النظام"""
-    from models import User, Employee, Vehicle, Document, VehicleAccident
-    from sqlalchemy import and_, or_
-    
-    # حذف الإشعارات القديمة
-    Notification.query.delete()
-    db.session.commit()
+    """إنشاء إشعارات تجريبية لاختبار النظام - لجميع المستخدمين"""
+    from models import User
     
     # الحصول على جميع المستخدمين
     admin_users = get_all_admin_users()
@@ -285,61 +280,140 @@ def create_demo_notifications():
     
     notification_count = 0
     
-    # إنشاء إشعارات لجميع المستخدمين من بيانات حقيقية
+    # إنشاء الإشعارات لجميع المستخدمين الإداريين
     for admin_user in admin_users:
         user_id = admin_user.id
         
-        # 1. إشعارات الموظفين والغياب من البيانات الحقيقية
-        employees = Employee.query.limit(3).all()
-        for emp in employees:
-            create_absence_notification(
-                user_id=user_id,
-                employee_name=emp.name,
-                department_name=emp.department.name if emp.department else 'غير محدد'
-            )
-            notification_count += 1
+        # 1. إشعار غياب موظف
+        create_absence_notification(
+            user_id=user_id,
+            employee_name='محمد علي',
+            department_name='قسم التسويق'
+        )
+        notification_count += 1
         
-        # 2. إشعارات انتهاء الصلاحيات من المستندات الحقيقية
-        documents = Document.query.filter(Document.expiry_date.isnot(None)).limit(3).all()
-        for doc in documents:
-            from datetime import datetime
-            days_left = (doc.expiry_date - datetime.utcnow().date()).days
-            if days_left > 0:
-                create_document_expiry_notification(
-                    user_id=user_id,
-                    employee_name=doc.employee.name if doc.employee else 'غير محدد',
-                    doc_type=doc.document_type,
-                    days_left=days_left
-                )
-                notification_count += 1
+        # 2. إشعار انتهاء إقامة
+        create_document_expiry_notification(
+            user_id=user_id,
+            employee_name='أحمد محمود',
+            doc_type='الإقامة',
+            days_left=5
+        )
+        notification_count += 1
         
-        # 3. إشعارات المركبات من البيانات الحقيقية
-        vehicles = Vehicle.query.limit(2).all()
-        for idx, vehicle in enumerate(vehicles):
-            create_operations_notification(
-                user_id=user_id,
-                operation_title=f'معلومات المركبة {vehicle.plate_number}',
-                operation_description=f'المركبة {vehicle.plate_number} - {vehicle.model} - الحالة: {vehicle.status or "نشطة"}',
-                entity_type='vehicle',
-                entity_id=vehicle.id
-            )
-            notification_count += 1
+        # 3. إشعار انتهاء تفويض
+        create_document_expiry_notification(
+            user_id=user_id,
+            employee_name='فاطمة عبدالرحمن',
+            doc_type='التفويض',
+            days_left=3
+        )
+        notification_count += 1
         
-        # 4. إشعارات الحوادث من البيانات الحقيقية
-        accidents = VehicleAccident.query.limit(2).all()
-        for accident in accidents:
-            create_accident_notification(
-                user_id=user_id,
-                vehicle_plate=accident.vehicle.plate_number if accident.vehicle else 'غير محدد',
-                driver_name=accident.driver_name or 'غير محدد',
-                accident_type=accident.accident_type or 'متوسطة',
-                accident_id=accident.id,
-                severity=accident.accident_type or 'normal'
-            )
-            notification_count += 1
+        # 4. إشعار انتهاء فحص دوري
+        create_document_expiry_notification(
+            user_id=user_id,
+            employee_name='سيارة رقم 123',
+            doc_type='الفحص الدوري',
+            days_left=10
+        )
+        notification_count += 1
+        
+        # 5. إشعارات عمليات متنوعة
+        create_operations_notification(
+            user_id=user_id,
+            operation_title='حادثة سير جديدة',
+            operation_description='تم تسجيل حادثة سير جديدة للسيارة رقم ABC-1234. يرجى المراجعة والموافقة.',
+            entity_type='accident',
+            entity_id=1
+        )
+        notification_count += 1
+        
+        create_operations_notification(
+            user_id=user_id,
+            operation_title='طلب سيارة جديد',
+            operation_description='تم استلام طلب تخصيص سيارة جديد من قسم العمليات.',
+            entity_type='vehicle',
+            entity_id=5
+        )
+        notification_count += 1
+        
+        create_operations_notification(
+            user_id=user_id,
+            operation_title='طلب سلفة مالية',
+            operation_description='تم تقديم طلب سلفة مالية جديد من الموظف أحمد محمود بقيمة 5000 ريال.',
+            entity_type='employee_request',
+            entity_id=3
+        )
+        notification_count += 1
+        
+        # 6. إشعار غياب آخر
+        create_absence_notification(
+            user_id=user_id,
+            employee_name='سارة إبراهيم',
+            department_name='قسم الموارد البشرية'
+        )
+        notification_count += 1
+        
+        create_document_expiry_notification(
+            user_id=user_id,
+            employee_name='عمر خالد',
+            doc_type='جواز السفر',
+            days_left=15
+        )
+        notification_count += 1
+        
+        # 7. إشعارات فحص السلامة الخارجية
+        create_safety_check_notification(
+            user_id=user_id,
+            vehicle_plate='ABC-1234',
+            supervisor_name='أحمد محمد',
+            check_status='pending',
+            check_id=1
+        )
+        notification_count += 1
+        
+        create_safety_check_notification(
+            user_id=user_id,
+            vehicle_plate='XYZ-5678',
+            supervisor_name='فاطمة علي',
+            check_status='under_review',
+            check_id=2
+        )
+        notification_count += 1
+        
+        create_safety_check_review_notification(
+            user_id=user_id,
+            vehicle_plate='DEF-9012',
+            action='approved',
+            reviewer_name='سلمان الدعيع',
+            check_id=3
+        )
+        notification_count += 1
+        
+        # 8. إشعارات الحوادث
+        create_accident_notification(
+            user_id=user_id,
+            vehicle_plate='ABC-1234',
+            driver_name='محمد عبدالله',
+            accident_type='moderate',
+            accident_id=10,
+            severity='moderate'
+        )
+        notification_count += 1
+        
+        create_accident_notification(
+            user_id=user_id,
+            vehicle_plate='XYZ-5678',
+            driver_name='فاطمة احمد',
+            accident_type='severe',
+            accident_id=11,
+            severity='severe'
+        )
+        notification_count += 1
     
     return jsonify({
         'success': True,
-        'message': f'تم إنشاء {notification_count} إشعار من بيانات حقيقية لـ {len(admin_users)} مستخدم',
+        'message': f'تم إنشاء {notification_count} إشعار تجريبي لـ {len(admin_users)} مستخدم',
         'redirect_url': url_for('notifications.index')
     })
