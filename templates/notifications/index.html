@@ -49,11 +49,12 @@
     <div class="row">
         <div class="col-md-12">
             {% for notification in notifications.items %}
-            <div class="card mb-3 notification-card {% if not notification.is_read %}border-primary{% endif %}" data-notification-id="{{ notification.id }}">
+            <div class="card mb-3 notification-card {% if not notification.is_read %}border-primary{% endif %}" data-notification-id="{{ notification.id }}" 
+                 {% if notification.action_url %}style="cursor: pointer;" onclick="navigateToDetails(event, '{{ notification.action_url }}');"{% endif %}>
                 <div class="card-body">
                     <div class="row align-items-start">
                         <!-- ICON & CONTENT -->
-                        <div class="col-md-10">
+                        <div class="col-md-10" onclick="event.stopPropagation();">
                             <div class="d-flex align-items-start">
                                 <!-- ICON -->
                                 <div class="me-3">
@@ -90,13 +91,8 @@
                         </div>
 
                         <!-- ACTIONS -->
-                        <div class="col-md-2 text-end">
+                        <div class="col-md-2 text-end" onclick="event.stopPropagation();">
                             <div class="btn-group-vertical w-100" role="group">
-                                {% if notification.action_url %}
-                                <a href="{{ notification.action_url }}" class="btn btn-sm btn-primary mb-2">
-                                    <i class="fas fa-arrow-left me-1"></i>عرض التفاصيل
-                                </a>
-                                {% endif %}
                                 {% if not notification.is_read %}
                                 <button class="btn btn-sm btn-outline-secondary mark-as-read-btn mb-2" data-id="{{ notification.id }}">
                                     <i class="fas fa-check me-1"></i>تحديد كمقروء
@@ -170,6 +166,15 @@
     </div>
     {% endif %}
 </div>
+
+<script>
+function navigateToDetails(event, url) {
+    if (event.target.closest('button') || event.target.closest('a')) {
+        return;
+    }
+    window.location.href = url;
+}
+</script>
 
 <style>
     .notification-card {
