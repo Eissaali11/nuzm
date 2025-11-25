@@ -590,8 +590,11 @@ with app.app_context():
 
     # Create database tables if they don't exist
     logger.info("Creating database tables...")
-    db.create_all()
-    logger.info("Database tables created successfully.")
+    try:
+        db.create_all()
+        logger.info("Database tables created successfully.")
+    except Exception as e:
+        logger.info(f"Database tables already exist: {str(e)}")
 
 @app.before_request
 def before_request():
