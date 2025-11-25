@@ -17,7 +17,16 @@ Preferred communication style: Simple, everyday language.
   - Automatic image compression (1920x1920, 85% quality) and HEIC support
   - File size limit: 50MB per file, organized storage in `static/uploads/accidents/{accident_id}/`
   - Operations management routes for reviewing/approving accident reports
+  - **Professional PDF Export**: Implemented comprehensive accident report PDF generation with FPDF2 library featuring:
+    - Full Arabic text support with Cairo font and proper RTL rendering
+    - Professional layout with vehicle info, driver details, accident data, and review information
+    - Smart document handling: PDF files displayed as clickable links with icons, images embedded inline
+    - Includes all accident photos (up to 3 per page) with proper formatting
+    - Automatic filename generation: `accident_report_{id}_{plate}_{date}.pdf`
+    - Error handling with safe fallbacks for missing or corrupted files
+    - PDF export button on accident details page with audit logging
   - Complete API documentation in `API_ACCIDENT_REPORTS.md` with Flutter/Dart examples
+  - Bulk delete functionality with select-all checkbox, dynamic count, and automatic file cleanup
 - **Nov 19, 2025**: Performance optimization and data integrity fixes:
   - Added database indexes on critical fields (Employee.status, Document.expiry_date, Attendance.date, composite index on employee_id+recorded_at) to improve query performance
   - Fixed department employee count display issue by correcting employee status values from Arabic "يعمل" to standardized "active"
