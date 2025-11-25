@@ -3941,11 +3941,52 @@ def departments_circles_overview():
             'circles': circles_data
         })
     
+    # جلب بيانات التتبع الجغرافي للموظفين
+    from models import EmployeeLocation
+    from datetime import datetime as dt
+    from sqlalchemy import and_
+    
+    # جلب آخر موقع لكل موظف نشط
+    from sqlalchemy.orm import aliased
+    from sqlalchemy import func as sql_func
+    
+    all_active_emp_ids = [e.id for dept in departments_data for circle in dept['circles'] for e_data in circle['employees']]
+    
+    # بناء dictionary لبيانات التتبع
+    locations_by_employee = {}
+    if all_active_emp_ids:
+        latest_locations_subq = db.session.query(
+            EmployeeLocation.employee_id,
+            EmployeeLocation.id.label('location_id'),
+            sql_func.row_number().over(
+                partition_by=EmployeeLocation.employee_id,
+                order_by=EmployeeLocation.recorded_at.desc()
+            ).label('rn')
+        ).filter(
+            EmployeeLocation.employee_id.in_(all_active_emp_ids)
+        ).subquery()
+        
+        latest_locations = db.session.query(EmployeeLocation).join(
+            latest_locations_subq,
+            and_(
+                EmployeeLocation.id == latest_locations_subq.c.location_id,
+                latest_locations_subq.c.rn == 1
+            )
+        ).all()
+        
+        for loc in latest_locations:
+            locations_by_employee[loc.employee_id] = {
+                'latitude': loc.latitude,
+                'longitude': loc.longitude,
+                'recorded_at': loc.recorded_at
+            }
+    
     return render_template(
         'attendance/departments_circles_overview.html',
         departments_data=departments_data,
         all_departments=all_departments,
         selected_date=selected_date,
         selected_date_formatted=format_date_hijri(selected_date),
-        selected_department_id=int(department_filter) if department_filter else None
+        selected_department_id=int(department_filter) if department_filter else None,
+        locations_by_employee=locations_by_employee
     )
