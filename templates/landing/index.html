@@ -20,13 +20,14 @@
     /* ========== HERO SECTION ========== */
     .landing-hero {
         min-height: 100vh;
-        background: linear-gradient(135deg, rgba(10, 14, 39, 0.5) 0%, rgba(26, 31, 58, 0.5) 50%, rgba(45, 27, 78, 0.5) 100%), url('/static/images/hero-nuzum.png') center/cover no-repeat;
+        background: linear-gradient(to left, rgba(10, 14, 39, 0.3) 0%, rgba(26, 31, 58, 0.2) 40%, rgba(45, 27, 78, 0) 100%), url('/static/images/hero-nuzum.png') center/cover no-repeat;
         background-attachment: fixed;
         position: relative;
         overflow: hidden;
         display: flex;
         align-items: center;
-        padding: 0;
+        justify-content: flex-start;
+        padding: 0 5%;
     }
 
     .orb-hero-1 {
@@ -87,12 +88,16 @@
         backdrop-filter: blur(12px);
         border: 1px solid rgba(102, 126, 234, 0.35);
         box-shadow: 0 0 50px rgba(102, 126, 234, 0.15), inset 0 0 25px rgba(255, 255, 255, 0.05);
-        animation: fadeInUp 1s ease 0.3s both;
+        animation: fadeInLeft 1s ease 0.3s both;
         border-left: 1px solid rgba(255, 255, 255, 0.2);
         border-top: 1px solid rgba(255, 255, 255, 0.2);
-        text-align: center;
-        max-width: 600px;
-        margin: 0 auto;
+        text-align: right;
+        max-width: 550px;
+    }
+
+    @keyframes fadeInLeft {
+        from { opacity: 0; transform: translateX(-50px); }
+        to { opacity: 1; transform: translateX(0); }
     }
 
     .hero-badge {
@@ -157,7 +162,7 @@
         gap: 1.5rem;
         flex-wrap: wrap;
         animation: fadeInUp 1s ease 0.8s both;
-        justify-content: center;
+        justify-content: flex-end;
     }
 
     .btn-hero {
@@ -791,50 +796,44 @@
     <div class="orb-hero-2"></div>
     <div class="orb-hero-3"></div>
     
-    <div class="container">
-        <div class="row align-items-center justify-content-center">
-            <div class="col-lg-8 col-xl-7">
-                <div class="hero-content">
-                    <div class="hero-badge">
-                        ⭐ الحل الأول في المملكة العربية السعودية
-                    </div>
-                    
-                    <h1 class="hero-title">
-                        نُظم<br>
-                        مستقبل إدارة الأعمال
-                    </h1>
-                    
-                    <p class="hero-subtitle">
-                        نظام شامل ومتكامل لإدارة الموظفين والمركبات مع واجهة عربية متطورة وذكاء اصطناعي متقدم. حوّل إدارة مؤسستك إلى تجربة سلسة واحترافية
-                    </p>
-                    
-                    <div class="hero-features-list">
-                        <div class="feature-check">
-                            <i class="fas fa-check-circle"></i>
-                            <span>إدارة شاملة للموظفين مع نظام حضور ذكي متقدم</span>
-                        </div>
-                        <div class="feature-check">
-                            <i class="fas fa-check-circle"></i>
-                            <span>تتبع وإدارة أسطول المركبات بكفاءة عالية</span>
-                        </div>
-                        <div class="feature-check">
-                            <i class="fas fa-check-circle"></i>
-                            <span>تحليلات ذكية وتوصيات استراتيجية بالذكاء الاصطناعي</span>
-                        </div>
-                    </div>
-                    
-                    <div class="hero-buttons">
-                        <a href="/nuzum/demo" class="btn-hero btn-hero-primary">
-                            <i class="fas fa-rocket"></i>
-                            ابدأ تجربتك المجانية
-                        </a>
-                        <a href="/nuzum/features" class="btn-hero btn-hero-secondary">
-                            <i class="fas fa-sparkles"></i>
-                            استكشف المزايا
-                        </a>
-                    </div>
-                </div>
+    <div class="hero-content" style="max-width: 500px; margin-right: auto;">
+        <div class="hero-badge">
+            ⭐ الحل الأول في المملكة العربية السعودية
+        </div>
+        
+        <h1 class="hero-title">
+            نُظم<br>
+            مستقبل إدارة الأعمال
+        </h1>
+        
+        <p class="hero-subtitle">
+            نظام شامل ومتكامل لإدارة الموظفين والمركبات مع واجهة عربية متطورة وذكاء اصطناعي متقدم. حوّل إدارة مؤسستك إلى تجربة سلسة واحترافية
+        </p>
+        
+        <div class="hero-features-list">
+            <div class="feature-check">
+                <i class="fas fa-check-circle"></i>
+                <span>إدارة شاملة للموظفين مع نظام حضور ذكي متقدم</span>
             </div>
+            <div class="feature-check">
+                <i class="fas fa-check-circle"></i>
+                <span>تتبع وإدارة أسطول المركبات بكفاءة عالية</span>
+            </div>
+            <div class="feature-check">
+                <i class="fas fa-check-circle"></i>
+                <span>تحليلات ذكية وتوصيات استراتيجية بالذكاء الاصطناعي</span>
+            </div>
+        </div>
+        
+        <div class="hero-buttons">
+            <a href="/nuzum/demo" class="btn-hero btn-hero-primary">
+                <i class="fas fa-rocket"></i>
+                ابدأ تجربتك المجانية
+            </a>
+            <a href="/nuzum/features" class="btn-hero btn-hero-secondary">
+                <i class="fas fa-sparkles"></i>
+                استكشف المزايا
+            </a>
         </div>
     </div>
 </section>
