@@ -4154,8 +4154,7 @@ def export_circle_details_excel(department_id, circle_name):
     # إذا كان هناك فلتر موظف معين
     if export_type == 'single' and employee_id_filter:
         try:
-            employee_id_filter = int(employee_id_filter)
-            active_employees = [emp for emp in active_employees if emp.id == employee_id_filter]
+            active_employees = [emp for emp in active_employees if emp.employee_id == str(employee_id_filter)]
         except:
             pass
     
