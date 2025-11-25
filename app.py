@@ -400,6 +400,7 @@ with app.app_context():
     from routes.api_external_safety import api_external_safety
     from routes.drive_browser import drive_browser_bp
     from routes.attendance_api import attendance_api_bp
+    from routes.api_accident_reports import api_accident_reports
 
     # تعطيل حماية CSRF لطرق معينة
     csrf.exempt(voicehub_bp)
@@ -408,6 +409,7 @@ with app.app_context():
     csrf.exempt(api_external_bp)  # API خارجي بدون CSRF
     csrf.exempt(api_employee_requests)  # API طلبات الموظفين
     csrf.exempt(api_external_safety)  # API فحص السلامة الخارجية
+    csrf.exempt(api_accident_reports)  # API تقارير الحوادث
     csrf.exempt(attendance_api_bp)  # API الحضور بدون CSRF
     app.register_blueprint(dashboard_bp, url_prefix='/dashboard')
     app.register_blueprint(employees_bp, url_prefix='/employees')
@@ -451,6 +453,7 @@ with app.app_context():
     app.register_blueprint(api_external_safety)  # API فحص السلامة الخارجية
     app.register_blueprint(drive_browser_bp, url_prefix='/drive')  # مستعرض Google Drive
     app.register_blueprint(attendance_api_bp)  # API الحضور
+    app.register_blueprint(api_accident_reports)  # API تقارير حوادث السيارات
     
     # استيراد وتسجيل مسار صفحة الهبوط - مسار منفصل عن النظام
     from routes.landing import landing_bp

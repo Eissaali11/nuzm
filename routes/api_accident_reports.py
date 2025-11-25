@@ -1,0 +1,356 @@
+import os
+import logging
+import uuid
+from flask import Blueprint, request, jsonify
+from werkzeug.utils import secure_filename
+from functools import wraps
+from datetime import datetime, date, time
+from app import db
+from models import (
+    Vehicle, VehicleAccident, VehicleAccidentImage,
+    Employee, User
+)
+from utils.storage_helper import upload_image
+from PIL import Image
+from pillow_heif import register_heif_opener
+import jwt
+
+register_heif_opener()
+
+logger = logging.getLogger(__name__)
+
+api_accident_reports = Blueprint('api_accident_reports', __name__, url_prefix='/api/v1/accident-reports')
+
+SECRET_KEY = os.environ.get('SESSION_SECRET')
+if not SECRET_KEY:
+    raise RuntimeError("SESSION_SECRET environment variable is required for JWT authentication")
+
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'heic', 'heif'}
+MAX_FILE_SIZE = 50 * 1024 * 1024
+
+
+def allowed_file(filename):
+    if not filename or not isinstance(filename, str):
+        return False
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+def compress_image(filepath, max_size=(1920, 1920), quality=85):
+    """ضغط الصورة وتحويلها إلى JPEG"""
+    try:
+        with Image.open(filepath) as img:
+            if img.mode in ('RGBA', 'LA', 'P'):
+                background = Image.new('RGB', img.size, (255, 255, 255))
+                if img.mode == 'P':
+                    img = img.convert('RGBA')
+                background.paste(img, mask=img.split()[-1] if img.mode in ('RGBA', 'LA') else None)
+                img = background
+            elif img.mode != 'RGB':
+                img = img.convert('RGB')
+            
+            img.thumbnail(max_size, Image.Resampling.LANCZOS)
+            img.save(filepath, 'JPEG', quality=quality, optimize=True)
+            return True
+    except Exception as e:
+        logger.error(f"Error compressing image: {str(e)}")
+        return False
+
+
+def token_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = None
+        
+        if 'Authorization' in request.headers:
+            auth_header = request.headers['Authorization']
+            try:
+                token = auth_header.split(' ')[1]
+            except IndexError:
+                return jsonify({
+                    'success': False,
+                    'message': 'صيغة التوكن غير صحيحة. استخدم: Bearer <token>'
+                }), 401
+        
+        if not token:
+            return jsonify({
+                'success': False,
+                'message': 'التوكن مفقود'
+            }), 401
+        
+        try:
+            data = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
+            
+            # البحث عن الموظف
+            current_employee = Employee.query.filter_by(employee_id=data.get('employee_id')).first()
+            
+            if not current_employee and 'id' in data:
+                current_employee = Employee.query.get(data.get('id'))
+            
+            if not current_employee and 'national_id' in data:
+                current_employee = Employee.query.filter_by(national_id=data.get('national_id')).first()
+            
+            if not current_employee and 'user_id' in data:
+                user = User.query.get(data.get('user_id'))
+                if user:
+                    current_employee = Employee.query.filter_by(user_id=user.id).first()
+            
+            if not current_employee:
+                logger.error(f"Employee not found. Token data: {data}")
+                return jsonify({
+                    'success': False,
+                    'message': 'الموظف غير موجود في قاعدة البيانات'
+                }), 401
+            
+        except jwt.ExpiredSignatureError:
+            logger.warning("Expired token attempted to access accident reports API")
+            return jsonify({
+                'success': False,
+                'message': 'التوكن منتهي الصلاحية. يرجى تسجيل الدخول مجدداً'
+            }), 401
+        except jwt.InvalidTokenError as e:
+            logger.error(f"Invalid token: {str(e)}")
+            return jsonify({
+                'success': False,
+                'message': 'التوكن غير صالح'
+            }), 401
+        
+        return f(current_employee, *args, **kwargs)
+    
+    return decorated
+
+
+@api_accident_reports.route('/submit', methods=['POST'])
+@token_required
+def submit_accident_report(current_employee):
+    """رفع تقرير حادث من تطبيق Flutter"""
+    try:
+        # التحقق من البيانات المطلوبة
+        vehicle_id = request.form.get('vehicle_id')
+        accident_date_str = request.form.get('accident_date')
+        accident_time_str = request.form.get('accident_time')
+        driver_name = request.form.get('driver_name')
+        description = request.form.get('description')
+        
+        if not all([vehicle_id, accident_date_str, driver_name, description]):
+            return jsonify({
+                'success': False,
+                'message': 'البيانات المطلوبة غير كاملة'
+            }), 400
+        
+        # التحقق من وجود السيارة
+        vehicle = Vehicle.query.get(vehicle_id)
+        if not vehicle:
+            return jsonify({
+                'success': False,
+                'message': 'السيارة غير موجودة'
+            }), 404
+        
+        # تحويل التاريخ والوقت
+        try:
+            accident_date = datetime.strptime(accident_date_str, '%Y-%m-%d').date()
+        except:
+            return jsonify({
+                'success': False,
+                'message': 'صيغة التاريخ غير صحيحة. استخدم: YYYY-MM-DD'
+            }), 400
+        
+        accident_time_obj = None
+        if accident_time_str:
+            try:
+                accident_time_obj = datetime.strptime(accident_time_str, '%H:%M').time()
+            except:
+                logger.warning(f"Invalid time format: {accident_time_str}")
+        
+        # إنشاء سجل الحادث
+        accident = VehicleAccident(
+            vehicle_id=vehicle_id,
+            accident_date=accident_date,
+            accident_time=accident_time_obj,
+            driver_name=driver_name,
+            reported_by_employee_id=current_employee.id,
+            reported_via='mobile_app',
+            review_status='pending',
+            description=description,
+            location=request.form.get('location', ''),
+            latitude=request.form.get('latitude'),
+            longitude=request.form.get('longitude'),
+            severity=request.form.get('severity', 'متوسط'),
+            vehicle_condition=request.form.get('vehicle_condition'),
+            police_report=request.form.get('police_report', 'false').lower() == 'true',
+            police_report_number=request.form.get('police_report_number'),
+            notes=request.form.get('notes')
+        )
+        
+        db.session.add(accident)
+        db.session.flush()  # للحصول على ID
+        
+        # معالجة الصور المرفقة
+        uploaded_images = []
+        images = request.files.getlist('images')
+        
+        if images:
+            # إنشاء مجلد للصور
+            upload_dir = os.path.join('static', 'uploads', 'accidents', str(accident.id))
+            os.makedirs(upload_dir, exist_ok=True)
+            
+            for idx, image_file in enumerate(images):
+                if image_file and allowed_file(image_file.filename):
+                    # إنشاء اسم ملف آمن وفريد
+                    original_filename = secure_filename(image_file.filename)
+                    filename_base = os.path.splitext(original_filename)[0]
+                    unique_filename = f"{uuid.uuid4().hex[:8]}_{filename_base}.jpg"
+                    filepath = os.path.join(upload_dir, unique_filename)
+                    
+                    # حفظ الصورة
+                    image_file.save(filepath)
+                    
+                    # ضغط الصورة
+                    compress_image(filepath)
+                    
+                    # حفظ بيانات الصورة في قاعدة البيانات
+                    relative_path = filepath.replace('static/', '')
+                    accident_image = VehicleAccidentImage(
+                        accident_id=accident.id,
+                        image_path=relative_path,
+                        image_type=request.form.get(f'image_type_{idx}', 'scene'),
+                        caption=request.form.get(f'image_caption_{idx}')
+                    )
+                    db.session.add(accident_image)
+                    uploaded_images.append(relative_path)
+        
+        db.session.commit()
+        
+        logger.info(f"Accident report {accident.id} submitted by employee {current_employee.employee_id} for vehicle {vehicle.plate_number}")
+        
+        return jsonify({
+            'success': True,
+            'message': 'تم رفع تقرير الحادث بنجاح. سيتم مراجعته من قبل إدارة العمليات',
+            'data': {
+                'accident_id': accident.id,
+                'vehicle': {
+                    'id': vehicle.id,
+                    'plate_number': vehicle.plate_number,
+                    'make': vehicle.make,
+                    'model': vehicle.model
+                },
+                'review_status': accident.review_status,
+                'uploaded_images_count': len(uploaded_images),
+                'created_at': accident.created_at.isoformat()
+            }
+        }), 201
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Error submitting accident report: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': f'حدث خطأ أثناء رفع التقرير: {str(e)}'
+        }), 500
+
+
+@api_accident_reports.route('/my-reports', methods=['GET'])
+@token_required
+def get_my_reports(current_employee):
+    """الحصول على تقارير الحوادث الخاصة بالموظف"""
+    try:
+        accidents = VehicleAccident.query.filter_by(
+            reported_by_employee_id=current_employee.id
+        ).order_by(VehicleAccident.accident_date.desc()).all()
+        
+        reports = []
+        for accident in accidents:
+            reports.append({
+                'id': accident.id,
+                'vehicle': {
+                    'id': accident.vehicle.id,
+                    'plate_number': accident.vehicle.plate_number,
+                    'make': accident.vehicle.make,
+                    'model': accident.vehicle.model
+                },
+                'accident_date': accident.accident_date.isoformat(),
+                'accident_time': accident.accident_time.isoformat() if accident.accident_time else None,
+                'driver_name': accident.driver_name,
+                'description': accident.description,
+                'location': accident.location,
+                'severity': accident.severity,
+                'review_status': accident.review_status,
+                'reviewer_notes': accident.reviewer_notes,
+                'images_count': accident.images.count(),
+                'created_at': accident.created_at.isoformat(),
+                'reviewed_at': accident.reviewed_at.isoformat() if accident.reviewed_at else None
+            })
+        
+        return jsonify({
+            'success': True,
+            'data': reports,
+            'total': len(reports)
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error fetching accident reports: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': f'حدث خطأ أثناء جلب التقارير: {str(e)}'
+        }), 500
+
+
+@api_accident_reports.route('/<int:accident_id>', methods=['GET'])
+@token_required
+def get_accident_details(current_employee, accident_id):
+    """الحصول على تفاصيل تقرير حادث معين"""
+    try:
+        accident = VehicleAccident.query.get_or_404(accident_id)
+        
+        # التحقق من أن الموظف هو من قام بالإبلاغ أو لديه صلاحيات
+        if accident.reported_by_employee_id != current_employee.id:
+            # يمكن إضافة تحقق من صلاحيات المشاهدة هنا
+            pass
+        
+        images = []
+        for img in accident.images.all():
+            images.append({
+                'id': img.id,
+                'url': f'/static/{img.image_path}',
+                'type': img.image_type,
+                'caption': img.caption,
+                'uploaded_at': img.uploaded_at.isoformat()
+            })
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'id': accident.id,
+                'vehicle': {
+                    'id': accident.vehicle.id,
+                    'plate_number': accident.vehicle.plate_number,
+                    'make': accident.vehicle.make,
+                    'model': accident.vehicle.model,
+                    'year': accident.vehicle.year
+                },
+                'accident_date': accident.accident_date.isoformat(),
+                'accident_time': accident.accident_time.isoformat() if accident.accident_time else None,
+                'driver_name': accident.driver_name,
+                'description': accident.description,
+                'location': accident.location,
+                'latitude': accident.latitude,
+                'longitude': accident.longitude,
+                'severity': accident.severity,
+                'vehicle_condition': accident.vehicle_condition,
+                'police_report': accident.police_report,
+                'police_report_number': accident.police_report_number,
+                'insurance_claim': accident.insurance_claim,
+                'review_status': accident.review_status,
+                'reviewer_notes': accident.reviewer_notes,
+                'accident_status': accident.accident_status,
+                'images': images,
+                'created_at': accident.created_at.isoformat(),
+                'reviewed_at': accident.reviewed_at.isoformat() if accident.reviewed_at else None
+            }
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error fetching accident details: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': f'حدث خطأ أثناء جلب تفاصيل التقرير: {str(e)}'
+        }), 500

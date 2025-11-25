@@ -1369,29 +1369,80 @@ class VehicleSafetyCheck(db.Model):
 
 class VehicleAccident(db.Model):
     """نموذج الحوادث المرورية للمركبات"""
+    __tablename__ = 'vehicle_accident'
+    
     id = db.Column(db.Integer, primary_key=True)
-    vehicle_id = db.Column(db.Integer, db.ForeignKey('vehicle.id', ondelete='CASCADE'), nullable=False)
-    accident_date = db.Column(db.Date, nullable=False)  # تاريخ الحادث
+    vehicle_id = db.Column(db.Integer, db.ForeignKey('vehicle.id', ondelete='CASCADE'), nullable=False, index=True)
+    
+    # معلومات التقرير
+    accident_date = db.Column(db.Date, nullable=False, index=True)  # تاريخ الحادث
+    accident_time = db.Column(db.Time)  # وقت الحادث
     driver_name = db.Column(db.String(100), nullable=False)  # اسم السائق
+    reported_by_employee_id = db.Column(db.Integer, db.ForeignKey('employee.id'), nullable=True)  # الموظف الذي أبلغ
+    reported_via = db.Column(db.String(50), default='mobile_app')  # mobile_app, web, manual
+    
+    # حالة التقرير والمراجعة
+    review_status = db.Column(db.String(50), default='pending', index=True)  # pending, approved, rejected, under_review
+    reviewed_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    reviewed_at = db.Column(db.DateTime)
+    reviewer_notes = db.Column(db.Text)  # ملاحظات المراجع
+    
+    # معلومات الحادث
     accident_status = db.Column(db.String(50), default='قيد المعالجة')  # حالة الحادث: قيد المعالجة، مغلق، معلق، إلخ
     vehicle_condition = db.Column(db.String(100))  # حالة السيارة بعد الحادث
+    severity = db.Column(db.String(50))  # بسيط، متوسط، شديد
+    description = db.Column(db.Text)  # وصف الحادث
+    location = db.Column(db.String(255))  # موقع الحادث (نص)
+    latitude = db.Column(db.Float)  # خط العرض
+    longitude = db.Column(db.Float)  # خط الطول
+    
+    # معلومات مالية وقانونية
     deduction_amount = db.Column(db.Float, default=0.0)  # مبلغ الخصم على السائق
     deduction_status = db.Column(db.Boolean, default=False)  # هل تم الخصم
     liability_percentage = db.Column(db.Integer, default=0)  # نسبة تحمل السائق للحادث (25%، 50%، 75%، 100%)
-    accident_file_link = db.Column(db.String(255))  # رابط ملف الحادث
-    location = db.Column(db.String(255))  # موقع الحادث
-    description = db.Column(db.Text)  # وصف الحادث
     police_report = db.Column(db.Boolean, default=False)  # هل تم عمل محضر شرطة
+    police_report_number = db.Column(db.String(100))  # رقم محضر الشرطة
     insurance_claim = db.Column(db.Boolean, default=False)  # هل تم رفع مطالبة للتأمين
+    insurance_claim_number = db.Column(db.String(100))  # رقم مطالبة التأمين
+    
+    # ملفات ومرفقات
+    accident_file_link = db.Column(db.String(255))  # رابط ملف الحادث
+    google_drive_folder = db.Column(db.String(500))  # مجلد Google Drive للحادث
+    
+    # ملاحظات وتواريخ
     notes = db.Column(db.Text)  # ملاحظات إضافية
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # العلاقات
     vehicle = db.relationship('Vehicle', back_populates='accidents')
+    reported_by = db.relationship('Employee', foreign_keys=[reported_by_employee_id], backref='reported_accidents')
+    reviewer = db.relationship('User', foreign_keys=[reviewed_by])
+    images = db.relationship('VehicleAccidentImage', back_populates='accident', cascade='all, delete-orphan', lazy='dynamic')
     
     def __repr__(self):
         return f'<VehicleAccident {self.id} for vehicle {self.vehicle_id} on {self.accident_date}>'
+
+
+class VehicleAccidentImage(db.Model):
+    """صور الحوادث"""
+    __tablename__ = 'vehicle_accident_images'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    accident_id = db.Column(db.Integer, db.ForeignKey('vehicle_accident.id', ondelete='CASCADE'), nullable=False, index=True)
+    
+    # معلومات الصورة
+    image_path = db.Column(db.String(500), nullable=False)  # المسار المحلي
+    image_url = db.Column(db.String(500))  # رابط Google Drive (اختياري)
+    image_type = db.Column(db.String(50))  # نوع الصورة: damage, scene, police_report, other
+    caption = db.Column(db.String(255))  # وصف الصورة
+    uploaded_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # العلاقات
+    accident = db.relationship('VehicleAccident', back_populates='images')
+    
+    def __repr__(self):
+        return f'<VehicleAccidentImage {self.id} for accident {self.accident_id}>'
 
 
 class Project(db.Model):
