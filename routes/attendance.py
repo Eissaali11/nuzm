@@ -3741,6 +3741,16 @@ def departments_circles_overview():
     except ValueError:
         selected_date = datetime.now().date()
     
+    # حساب نطاق زمني من الصباح (6 صباحاً) إلى الآن - آخر 18 ساعة
+    now = datetime.now()
+    # ابدأ من اليوم الصباح في الساعة 6 صباحاً أو من 18 ساعة مضت، أيهما أحدث
+    today_morning = datetime.combine(selected_date, time(6, 0, 0))
+    eighteen_hours_ago = now - timedelta(hours=18)
+    
+    # استخدم أيهما أكثر حداثة
+    start_time = max(today_morning, eighteen_hours_ago)
+    end_time = now
+    
     all_departments = Department.query.order_by(Department.name).all()
     
     if department_filter:
@@ -3785,28 +3795,32 @@ def departments_circles_overview():
             emp_ids = [e.id for e in emp_in_circle]
             
             if emp_ids:
-                # جلب بيانات الحضور لهذه الدائرة في التاريخ المحدد
+                # جلب بيانات الحضور لهذه الدائرة من الصباح حتى الآن (آخر 18 ساعة)
                 present = db.session.query(func.count(Attendance.id)).filter(
                     Attendance.employee_id.in_(emp_ids),
-                    Attendance.date == selected_date,
+                    Attendance.recorded_at >= start_time,
+                    Attendance.recorded_at <= end_time,
                     Attendance.status == 'present'
                 ).scalar() or 0
                 
                 absent = db.session.query(func.count(Attendance.id)).filter(
                     Attendance.employee_id.in_(emp_ids),
-                    Attendance.date == selected_date,
+                    Attendance.recorded_at >= start_time,
+                    Attendance.recorded_at <= end_time,
                     Attendance.status == 'absent'
                 ).scalar() or 0
                 
                 leave = db.session.query(func.count(Attendance.id)).filter(
                     Attendance.employee_id.in_(emp_ids),
-                    Attendance.date == selected_date,
+                    Attendance.recorded_at >= start_time,
+                    Attendance.recorded_at <= end_time,
                     Attendance.status == 'leave'
                 ).scalar() or 0
                 
                 sick = db.session.query(func.count(Attendance.id)).filter(
                     Attendance.employee_id.in_(emp_ids),
-                    Attendance.date == selected_date,
+                    Attendance.recorded_at >= start_time,
+                    Attendance.recorded_at <= end_time,
                     Attendance.status == 'sick'
                 ).scalar() or 0
                 
@@ -3819,13 +3833,14 @@ def departments_circles_overview():
             total_dept_leave += leave
             total_dept_sick += sick
             
-            # جلب تفاصيل الموظفين في هذه الدائرة
+            # جلب تفاصيل الموظفين في هذه الدائرة (آخر سجل خلال 18 ساعة)
             employees_details = []
             for emp in emp_in_circle:
-                attendance = Attendance.query.filter_by(
-                    employee_id=emp.id,
-                    date=selected_date
-                ).first()
+                attendance = Attendance.query.filter(
+                    Attendance.employee_id == emp.id,
+                    Attendance.recorded_at >= start_time,
+                    Attendance.recorded_at <= end_time
+                ).order_by(Attendance.recorded_at.desc()).first()
                 
                 emp_data = {
                     'name': emp.name,
@@ -3853,25 +3868,29 @@ def departments_circles_overview():
             emp_ids = [e.id for e in employees_without_location]
             present = db.session.query(func.count(Attendance.id)).filter(
                 Attendance.employee_id.in_(emp_ids),
-                Attendance.date == selected_date,
+                Attendance.recorded_at >= start_time,
+                Attendance.recorded_at <= end_time,
                 Attendance.status == 'present'
             ).scalar() or 0
             
             absent = db.session.query(func.count(Attendance.id)).filter(
                 Attendance.employee_id.in_(emp_ids),
-                Attendance.date == selected_date,
+                Attendance.recorded_at >= start_time,
+                Attendance.recorded_at <= end_time,
                 Attendance.status == 'absent'
             ).scalar() or 0
             
             leave = db.session.query(func.count(Attendance.id)).filter(
                 Attendance.employee_id.in_(emp_ids),
-                Attendance.date == selected_date,
+                Attendance.recorded_at >= start_time,
+                Attendance.recorded_at <= end_time,
                 Attendance.status == 'leave'
             ).scalar() or 0
             
             sick = db.session.query(func.count(Attendance.id)).filter(
                 Attendance.employee_id.in_(emp_ids),
-                Attendance.date == selected_date,
+                Attendance.recorded_at >= start_time,
+                Attendance.recorded_at <= end_time,
                 Attendance.status == 'sick'
             ).scalar() or 0
             
@@ -3884,10 +3903,11 @@ def departments_circles_overview():
             
             employees_details = []
             for emp in employees_without_location:
-                attendance = Attendance.query.filter_by(
-                    employee_id=emp.id,
-                    date=selected_date
-                ).first()
+                attendance = Attendance.query.filter(
+                    Attendance.employee_id == emp.id,
+                    Attendance.recorded_at >= start_time,
+                    Attendance.recorded_at <= end_time
+                ).order_by(Attendance.recorded_at.desc()).first()
                 
                 emp_data = {
                     'name': emp.name,
