@@ -1767,6 +1767,44 @@ def export_safety_check_pdf(check_id):
         flash('حدث خطأ في تصدير الطلب', 'error')
         return redirect(url_for('external_safety.admin_view_safety_check', check_id=check_id))
 
+@external_safety_bp.route('/admin/external-safety-check/<int:check_id>/image/<int:image_id>')
+def view_safety_check_image(check_id, image_id):
+    """عرض صورة فحص السلامة في صفحة منفصلة مع الملاحظات"""
+    if not current_user.is_authenticated:
+        return redirect(url_for('auth.login'))
+    
+    try:
+        safety_check = VehicleExternalSafetyCheck.query.get_or_404(check_id)
+        image = VehicleSafetyImage.query.filter_by(id=image_id, safety_check_id=check_id).first_or_404()
+        
+        # حساب عدد الصورة من إجمالي الصور
+        all_images = VehicleSafetyImage.query.filter_by(safety_check_id=check_id).all()
+        image_number = next((i+1 for i, img in enumerate(all_images) if img.id == image_id), 1)
+        total_images = len(all_images)
+        
+        # البحث عن الصور السابقة واللاحقة
+        previous_image = None
+        next_image = None
+        for i, img in enumerate(all_images):
+            if img.id == image_id:
+                if i > 0:
+                    previous_image = all_images[i-1]
+                if i < len(all_images) - 1:
+                    next_image = all_images[i+1]
+                break
+        
+        return render_template('safety_check_image_view.html', 
+                             safety_check=safety_check, 
+                             image=image,
+                             image_number=image_number,
+                             total_images=total_images,
+                             previous_image=previous_image,
+                             next_image=next_image)
+    except Exception as e:
+        current_app.logger.error(f"خطأ في عرض صورة فحص السلامة: {str(e)}")
+        flash('حدث خطأ في عرض الصورة', 'error')
+        return redirect(url_for('external_safety.admin_view_safety_check', check_id=check_id))
+
 @external_safety_bp.route('/admin/external-safety-check/<int:check_id>/pdf/english')
 def export_safety_check_pdf_english(check_id):
     """تصدير طلب فحص السلامة كملف PDF إنجليزي احترافي مع الشعار"""
