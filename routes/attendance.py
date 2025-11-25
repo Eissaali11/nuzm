@@ -3,7 +3,7 @@ from flask_login import login_required
 from sqlalchemy import func, extract, or_
 from datetime import datetime, time, timedelta, date
 from app import db
-from models import Attendance, Employee, Department, SystemAudit, VehicleProject, Module, Permission, employee_departments
+from models import Attendance, Employee, Department, SystemAudit, VehicleProject, Module, Permission, employee_departments, EmployeeLocation, GeofenceSession
 from utils.date_converter import parse_date, format_date_hijri, format_date_gregorian
 from utils.excel import export_attendance_by_department
 from utils.excel_dashboard import export_attendance_by_department_with_dashboard
@@ -3853,7 +3853,6 @@ def departments_circles_overview():
                 ).order_by(EmployeeLocation.recorded_at.desc()).first()
                 
                 # جلب بيانات الوصول إلى الدوائر (GeofenceSession)
-                from models import GeofenceSession
                 geofence_session = GeofenceSession.query.filter(
                     GeofenceSession.employee_id == emp.id,
                     GeofenceSession.enter_time >= datetime.combine(start_date, time(0, 0, 0)),
