@@ -69,37 +69,23 @@
         }
 
         .navbar-brand {
-            font-size: 2.2rem;
-            font-weight: 900;
-            background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 50%, #38bdf8 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            letter-spacing: 2px;
             text-decoration: none;
             transition: all 0.4s ease;
             position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .navbar-logo {
+            height: 50px;
+            width: auto;
+            filter: brightness(1.1) drop-shadow(0 0 10px rgba(100, 150, 255, 0.3));
+            transition: all 0.4s ease;
         }
         
-        .navbar-brand:hover {
-            transform: scale(1.05);
-            filter: brightness(1.2);
-        }
-
-        .navbar-brand::after {
-            content: '';
-            position: absolute;
-            bottom: -5px;
-            left: 0;
-            width: 100%;
-            height: 2px;
-            background: linear-gradient(90deg, #60a5fa, #a78bfa);
-            transform: scaleX(0);
-            transition: transform 0.3s ease;
-        }
-
-        .navbar-brand:hover::after {
-            transform: scaleX(1);
+        .navbar-brand:hover .navbar-logo {
+            transform: scale(1.08);
+            filter: brightness(1.3) drop-shadow(0 0 20px rgba(100, 150, 255, 0.5));
         }
         
         .navbar-nav .nav-link {
@@ -256,8 +242,8 @@
                 padding-right: 15px !important;
             }
 
-            .navbar-brand {
-                font-size: 1.8rem;
+            .navbar-logo {
+                height: 40px;
             }
             
             .navbar-nav {
@@ -386,7 +372,7 @@
     <nav class="navbar navbar-expand-lg fixed-top">
         <div class="container">
             <a class="navbar-brand" href="/nuzum">
-                <i class="fas fa-cube me-2" style="font-size: 1.5rem;"></i>نُظم
+                <img src="/static/images/logo.png" alt="نُظم" class="navbar-logo">
             </a>
             
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
