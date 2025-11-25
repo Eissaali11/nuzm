@@ -463,23 +463,18 @@
     <!-- Enhanced Tabs -->
     <ul class="nav nav-tabs nav-tabs-enhanced mb-4" id="vehicleTabs" role="tablist">
         <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="info-tab" data-bs-toggle="tab" data-bs-target="#info" type="button" role="tab" aria-controls="info" aria-selected="true">
-                <i class="fas fa-info-circle me-1"></i> معلومات السيارة
+            <button class="nav-link active" id="accidents-tab" data-bs-toggle="tab" data-bs-target="#accidents" type="button" role="tab" aria-controls="accidents" aria-selected="true">
+                <i class="fas fa-car-crash me-1"></i> الحوادث
             </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="drivers-tab" data-bs-toggle="tab" data-bs-target="#drivers" type="button" role="tab" aria-controls="drivers" aria-selected="false">
-                <i class="fas fa-user-tie me-1"></i> السائقين
+            <button class="nav-link" id="info-tab" data-bs-toggle="tab" data-bs-target="#info" type="button" role="tab" aria-controls="info" aria-selected="false">
+                <i class="fas fa-info-circle me-1"></i> معلومات السيارة
             </button>
         </li>
         <li class="nav-item" role="presentation">
             <button class="nav-link" id="documents-tab" data-bs-toggle="tab" data-bs-target="#documents" type="button" role="tab" aria-controls="documents" aria-selected="false">
                 <i class="fas fa-file-alt me-1"></i> الوثائق
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="accidents-tab" data-bs-toggle="tab" data-bs-target="#accidents" type="button" role="tab" aria-controls="accidents" aria-selected="false">
-                <i class="fas fa-car-crash me-1"></i> الحوادث
             </button>
         </li>
         <li class="nav-item" role="presentation">
@@ -490,6 +485,11 @@
         <li class="nav-item" role="presentation">
             <button class="nav-link" id="workshop-tab" data-bs-toggle="tab" data-bs-target="#workshop" type="button" role="tab" aria-controls="workshop" aria-selected="false">
                 <i class="fas fa-tools me-1"></i> الورشة
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="drivers-tab" data-bs-toggle="tab" data-bs-target="#drivers" type="button" role="tab" aria-controls="drivers" aria-selected="false">
+                <i class="fas fa-user-tie me-1"></i> السائقين
             </button>
         </li>
         <li class="nav-item" role="presentation">
@@ -505,15 +505,14 @@
     </ul>
 
     <div class="tab-content" id="vehicleTabsContent">
-        <!-- تبويب معلومات السيارة -->
-        <div class="tab-pane fade show active" id="info" role="tabpanel" aria-labelledby="info-tab">
+        <!-- تبويب الحوادث -->
+        <div class="tab-pane fade show active" id="accidents" role="tabpanel" aria-labelledby="accidents-tab">
             <div class="row mb-4">
-                <!-- تفاصيل السيارة الأساسية -->
-                <div class="col-md-6 mb-4">
+                <div class="col-12">
                     <div class="vehicle-card card">
-                        <div class="vehicle-card-header">
+                        <div class="vehicle-card-header d-flex justify-content-between align-items-center">
                             <h5 class="mb-0">
-                                <i class="fas fa-info-circle ms-2"></i>
+                                <i class="fas fa-car-crash ms-2"></i>
                                 الحوادث المرورية 
                                 {% if accidents %}
                                 <span class="badge-enhanced bg-secondary">{{ accidents|length }}</span>
@@ -647,8 +646,8 @@
             </div>
         </div>
 
-        <!-- تبويب السائقين -->
-        <div class="tab-pane fade" id="drivers" role="tabpanel" aria-labelledby="drivers-tab">
+        <!-- تبويب معلومات السيارة -->
+        <div class="tab-pane fade" id="info" role="tabpanel" aria-labelledby="info-tab">
             <div class="row mb-4">
                 <!-- تفاصيل السيارة الأساسية -->
                 <div class="col-md-6 mb-4">
