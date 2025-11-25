@@ -1725,8 +1725,8 @@ def export_safety_check_pdf(check_id):
                 current_app.logger.error(f"خطأ في تحويل الصورة: {str(e)}")
                 image.image_base64 = ''
         
-        # الحصول على مسار الشعار
-        logo_path = os.path.join(current_app.root_path, 'static/img/logo.png')
+        # الحصول على مسار الشعار RASSCO
+        logo_path = os.path.join(current_app.root_path, 'static/img/rassco_logo.png')
         logo_uri = f"file://{logo_path}"
         
         # إنشاء HTML للـ PDF بتصميم احترافي
