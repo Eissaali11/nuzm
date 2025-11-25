@@ -4095,7 +4095,7 @@ def circle_accessed_details(department_id, circle_name):
             employees_accessed.append({
                 'name': emp.name,
                 'employee_id': emp.employee_id,
-                'status': attendance.status if attendance else 'لم يتم التسجيل',
+                'status': 'حضور' if (attendance and attendance.status) else 'لم يتم التسجيل',
                 'check_in': check_in_sa.strftime('%H:%M') if check_in_sa else '-',
                 'check_out': check_out_sa.strftime('%H:%M') if check_out_sa else '-',
                 'circle_enter_time': entry_time_sa.strftime('%H:%M:%S') if entry_time_sa else None,
@@ -4232,7 +4232,7 @@ def export_circle_details_excel(department_id, circle_name):
     
     # اسم الملف
     if export_type == 'single' and employee_id_filter:
-        emp = next((e for e in active_employees if e.id == employee_id_filter), None)
+        emp = next((e for e in active_employees if e.employee_id == str(employee_id_filter)), None)
         filename = f'تفاصيل_الموظف_{emp.name if emp else "unknown"}_{selected_date.strftime("%Y-%m-%d")}.xlsx'
     else:
         filename = f'تفاصيل_الدائرة_{circle_name}_{selected_date.strftime("%Y-%m-%d")}.xlsx'
