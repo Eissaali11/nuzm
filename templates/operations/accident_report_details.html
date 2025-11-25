@@ -15,10 +15,17 @@
                     </h2>
                     <p class="text-muted mb-0">تفاصيل وثائق الحادث</p>
                 </div>
-                <a href="{{ url_for('operations.list_accident_reports') }}" class="btn btn-outline-secondary">
-                    <i class="fas fa-arrow-right me-2"></i>
-                    العودة للقائمة
-                </a>
+                <div>
+                    <a href="{{ url_for('operations.download_accident_report_pdf', accident_id=accident.id) }}" 
+                       class="btn btn-danger me-2">
+                        <i class="fas fa-file-pdf me-2"></i>
+                        تصدير PDF
+                    </a>
+                    <a href="{{ url_for('operations.list_accident_reports') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-right me-2"></i>
+                        العودة للقائمة
+                    </a>
+                </div>
             </div>
 
             <!-- Status Banner -->

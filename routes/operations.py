@@ -2255,3 +2255,45 @@ def delete_accident_reports():
         flash(f'حدث خطأ أثناء الحذف: {str(e)}', 'danger')
     
     return redirect(url_for('operations.list_accident_reports'))
+
+
+@operations_bp.route('/accident-reports/<int:accident_id>/download-pdf', methods=['GET'])
+@login_required
+def download_accident_report_pdf(accident_id):
+    """تنزيل تقرير الحادث بصيغة PDF"""
+    from models import VehicleAccident
+    from utils.accident_report_pdf import generate_accident_report_pdf
+    import io
+    from flask import make_response
+    
+    accident = VehicleAccident.query.get_or_404(accident_id)
+    
+    try:
+        # إنشاء PDF
+        pdf = generate_accident_report_pdf(accident)
+        
+        # إنشاء response
+        pdf_output = pdf.output(dest='S').encode('latin1')
+        
+        response = make_response(pdf_output)
+        response.headers['Content-Type'] = 'application/pdf'
+        
+        # اسم الملف
+        filename = f'accident_report_{accident.id}_{accident.vehicle.plate_number}_{accident.accident_date.strftime("%Y%m%d")}.pdf'
+        response.headers['Content-Disposition'] = f'attachment; filename="{filename}"'
+        
+        # تسجيل العملية
+        log_audit(
+            user_id=current_user.id,
+            action='download_accident_pdf',
+            entity_type='vehicle_accident',
+            entity_id=accident.id,
+            details=f'تنزيل تقرير PDF للحادث {accident.id}'
+        )
+        
+        return response
+        
+    except Exception as e:
+        current_app.logger.error(f"خطأ في إنشاء PDF: {e}")
+        flash(f'حدث خطأ أثناء إنشاء ملف PDF: {str(e)}', 'danger')
+        return redirect(url_for('operations.view_accident_report', accident_id=accident_id))
