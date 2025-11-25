@@ -844,6 +844,31 @@
                     .catch(error => console.error('خطأ في تحديث إشعارات المركبات:', error));
             }
 
+            // دالة لتحديث عداد الإشعارات العامة
+            function updateNotificationBadge() {
+                fetch('{{ url_for("notifications.unread_count") }}')
+                    .then(response => response.json())
+                    .then(data => {
+                        const sidebarBadge = document.getElementById('sidebarNotificationBadge');
+                        const headerBadge = document.getElementById('headerNotificationBadge');
+                        
+                        if (data.unread_count > 0) {
+                            if (sidebarBadge) {
+                                sidebarBadge.textContent = data.unread_count;
+                                sidebarBadge.style.display = 'inline-block';
+                            }
+                            if (headerBadge) {
+                                headerBadge.textContent = data.unread_count;
+                                headerBadge.style.display = 'inline-block';
+                            }
+                        } else {
+                            if (sidebarBadge) sidebarBadge.style.display = 'none';
+                            if (headerBadge) headerBadge.style.display = 'none';
+                        }
+                    })
+                    .catch(error => console.error('خطأ في تحديث الإشعارات:', error));
+            }
+
             // Set current year for footer
             document.addEventListener("DOMContentLoaded", function () {
                 const footerYear = document.querySelector(
@@ -863,8 +888,12 @@
                 // تحديث دائرة إشعارات المركبات
                 updateVehicleAlertsBadge();
                 
+                // تحديث عداد الإشعارات العامة
+                updateNotificationBadge();
+                
                 // تحديث الإشعارات كل دقيقة
                 setInterval(updateVehicleAlertsBadge, 60000);
+                setInterval(updateNotificationBadge, 30000);
             });
         </script>
 

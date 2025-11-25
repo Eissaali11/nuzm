@@ -1735,3 +1735,62 @@ table {
         margin-right: 0;
     }
 }
+
+/* ============================================= */
+/* Notification System Styles */
+/* ============================================= */
+
+.notification-floating-btn {
+    color: #fff;
+    text-decoration: none;
+    padding: 8px 12px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.notification-floating-btn:hover {
+    color: #fff;
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.notification-sidebar-btn {
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.notification-sidebar-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateX(-5px);
+}
+
+.notification-badge {
+    font-size: 0.7rem;
+    min-width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: pulse-badge 2s infinite;
+}
+
+@keyframes pulse-badge {
+    0% {
+        box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 8px rgba(220, 53, 69, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(220, 53, 69, 0);
+    }
+}
+
+/* Dark theme adjustments for notifications */
+[data-bs-theme="dark"] .notification-floating-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
