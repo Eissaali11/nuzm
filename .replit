@@ -52,9 +52,5 @@ externalPort = 3002
 localPort = 45211
 externalPort = 3000
 
-[[ports]]
-localPort = 46433
-externalPort = 3003
-
 [agent]
 integrations = ["python_sendgrid:1.0.0", "python_openai:1.0.0", "sendgrid:1.0.0"]
