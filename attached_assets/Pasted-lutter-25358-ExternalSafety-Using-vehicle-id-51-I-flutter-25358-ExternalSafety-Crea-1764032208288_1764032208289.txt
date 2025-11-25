@@ -1,0 +1,47 @@
+lutter (25358): ✅ [ExternalSafety] Using vehicle_id: 51
+I/flutter (25358): 📤 [ExternalSafety] Creating safety check...
+I/flutter (25358):    Vehicle ID: 51
+I/flutter (25358):    Driver: EISSA ALI  ABDOULLH MOHAMMED
+I/flutter (25358):    Endpoint: https://nuzum.site/api/v1/external-safety/checks
+I/flutter (25358): 📤 [ExternalSafety] Trying: https://nuzum.site/api/v1/external-safety/checks
+I/flutter (25358): 📝 [APILog] Request logged: POST https://nuzum.site/api/v1/external-safety/checks
+I/flutter (25358): 📝 [APILog] Response logged: POST https://nuzum.site/api/v1/external-safety/checks - 401
+I/flutter (25358): 📤 [ExternalSafety] Response status: 401
+I/flutter (25358): 📤 [ExternalSafety] Response data: {message: الموظف غير موجود, success: false}
+I/flutter (25358): ❌ [ExternalSafety] Employee not found in database (401): الموظف غير موجود
+I/flutter (25358): ! [ExternalSafety] Server: https://nuzum.site/api/v1/external-safety/checks
+I/flutter (25358): ! [ExternalSafety] Trying alternative server/path...
+I/flutter (25358): 📤 [ExternalSafety] Trying: https://nuzum.site/api/external-safety/checks
+I/flutter (25358): 📝 [APILog] Request logged: POST https://nuzum.site/api/external-safety/checks
+I/flutter (25358): 📝 [APILog] Response logged: POST https://nuzum.site/api/external-safety/checks - 404
+I/flutter (25358): 📤 [ExternalSafety] Response status: 404
+I/flutter (25358): 📤 [ExternalSafety] Response data: <!doctype html>
+I/flutter (25358): <html lang=en>
+I/flutter (25358): <title>404 Not Found</title>
+I/flutter (25358): <h1>Not Found</h1>
+I/flutter (25358): <p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>
+I/flutter (25358): 
+I/flutter (25358): ! [ExternalSafety] Path not found (404), trying next path...
+I/flutter (25358): 📤 [ExternalSafety] Trying: https://eissahr.replit.app/api/v1/external-safety/checks
+I/flutter (25358): 📝 [APILog] Request logged: POST https://eissahr.replit.app/api/v1/external-safety/checks
+I/flutter (25358): 📝 [APILog] Response logged: POST https://eissahr.replit.app/api/v1/external-safety/checks - 401
+I/flutter (25358): 📤 [ExternalSafety] Response status: 401
+I/flutter (25358): 📤 [ExternalSafety] Response data: {message: الموظف غير موجود, success: false}
+I/flutter (25358): ❌ [ExternalSafety] Employee not found in database (401): الموظف غير موجود
+I/flutter (25358): ! [ExternalSafety] Server: https://eissahr.replit.app/api/v1/external-safety/checks
+I/flutter (25358): ! [ExternalSafety] Trying alternative server/path...
+I/flutter (25358): 📤 [ExternalSafety] Trying: https://eissahr.replit.app/api/external-safety/checks
+I/flutter (25358): 📝 [APILog] Request logged: POST https://eissahr.replit.app/api/external-safety/checks
+I/flutter (25358): 📝 [APILog] Response logged: POST https://eissahr.replit.app/api/external-safety/checks - 404
+I/flutter (25358): 📤 [ExternalSafety] Response status: 404
+I/flutter (25358): 📤 [ExternalSafety] Response data: <!doctype html>
+I/flutter (25358): <html lang=en>
+I/flutter (25358): <title>404 Not Found</title>
+I/flutter (25358): <h1>Not Found</h1>
+I/flutter (25358): <p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>
+I/flutter (25358): 
+I/flutter (25358): ! [ExternalSafety] Path not found (404), trying next path...
+I/flutter (25358): ❌ [ExternalSafety] Employee not found in all servers
+I/IMM_LC  (25358): hsifw() - flag : 0
+I/IMM_LC  (25358): hsifw() - mService.hideSoftInput
+I/flutter (25358): 📤 [SEND] Sending location to: https://eissahr.replit.app/api/externa

@@ -81,21 +81,25 @@ def token_required(f):
         try:
             data = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
             
-            # البحث عن الموظف بـ employee_id أولاً
-            current_employee = Employee.query.get(data.get('employee_id'))
+            # البحث عن الموظف بـ employee_id (رقم الموظف من التوكن)
+            current_employee = Employee.query.filter_by(employee_id=data.get('employee_id')).first()
             
-            # إذا لم يجد بـ employee_id، حاول البحث بـ national_id
+            # إذا لم يجد، حاول البحث بـ id المباشر (للتوافقية مع الأنظمة القديمة)
+            if not current_employee and 'id' in data:
+                current_employee = Employee.query.get(data.get('id'))
+            
+            # إذا لم يجد، حاول البحث بـ national_id
             if not current_employee and 'national_id' in data:
                 current_employee = Employee.query.filter_by(national_id=data.get('national_id')).first()
             
-            # إذا لم يجد بهما، حاول البحث بـ user_id عن طريق جدول User
+            # إذا لم يجد، حاول البحث بـ user_id عن طريق جدول User
             if not current_employee and 'user_id' in data:
                 user = User.query.get(data.get('user_id'))
                 if user:
                     current_employee = Employee.query.filter_by(user_id=user.id).first()
             
             if not current_employee:
-                logger.error(f"Employee not found. Token data: {data}")
+                logger.error(f"Employee not found. Token data: {data}, searched for employee_id: {data.get('employee_id')}")
                 return jsonify({
                     'success': False,
                     'message': 'الموظف غير موجود في قاعدة البيانات'
