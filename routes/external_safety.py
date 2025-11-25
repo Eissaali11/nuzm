@@ -13,7 +13,7 @@ from app import db
 from utils.audit_logger import log_audit
 from utils.storage_helper import upload_image, delete_image
 from utils.vehicle_drive_uploader import VehicleDriveUploader
-from flask_login import current_user
+from flask_login import current_user, login_required
 from sqlalchemy import func, select
 from sqlalchemy.orm import aliased, contains_eager
 
@@ -2265,3 +2265,55 @@ def admin_create_check_from_images():
         db.session.rollback()
         current_app.logger.error(f"خطأ في إنشاء فحص السلامة من الصور: {str(e)}")
         return jsonify({'success': False, 'error': 'حدث خطأ في إنشاء الفحص'}), 500
+
+
+@external_safety_bp.route('/admin/external-safety-check/<int:check_id>/upload-to-drive', methods=['POST'])
+@login_required
+def upload_safety_check_to_drive(check_id):
+    """رفع فحص السلامة على Google Drive"""
+    try:
+        safety_check = VehicleExternalSafetyCheck.query.get_or_404(check_id)
+        
+        # التحقق من الصلاحيات
+        if not current_user.is_authenticated:
+            return jsonify({
+                'success': False,
+                'message': 'ليس لديك صلاحية لهذا الإجراء'
+            }), 403
+        
+        # استخدام VehicleDriveUploader لرفع الفحص
+        uploader = VehicleDriveUploader()
+        uploader.upload_safety_check(safety_check)
+        
+        # حفظ التغييرات في قاعدة البيانات
+        db.session.commit()
+        
+        current_app.logger.info(f"تم رفع فحص السلامة {check_id} على Google Drive بنجاح")
+        
+        # تسجيل العملية
+        log_audit(
+            user_id=current_user.id,
+            action='upload_to_drive',
+            entity_type='VehicleExternalSafetyCheck',
+            entity_id=safety_check.id,
+            details=f'تم رفع فحص السلامة للسيارة {safety_check.vehicle_plate_number} على Google Drive'
+        )
+        
+        folder_url = ''
+        if hasattr(safety_check, 'drive_folder_id') and safety_check.drive_folder_id:
+            folder_url = f"https://drive.google.com/drive/folders/{safety_check.drive_folder_id}"
+        
+        return jsonify({
+            'success': True,
+            'message': 'تم رفع فحص السلامة على Google Drive بنجاح',
+            'folder_url': folder_url,
+            'folder_id': safety_check.drive_folder_id if hasattr(safety_check, 'drive_folder_id') else None
+        }), 200
+    
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"خطأ في رفع فحص السلامة على Google Drive: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': f'حدث خطأ في الرفع: {str(e)}'
+        }), 500
