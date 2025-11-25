@@ -358,7 +358,12 @@
                                 </div>
                                 
                                 <!-- Modal تفاصيل الموظفين الواصلين للدائرة -->
-                                {% set accessed_employees_list = [emp for emp in circle.employees if emp.accessed_circle] %}
+                                {% set accessed_employees_list = [] %}
+                                {% for emp in circle.employees %}
+                                    {% if emp.accessed_circle %}
+                                        {% set _ = accessed_employees_list.append(emp) %}
+                                    {% endif %}
+                                {% endfor %}
                                 {% if accessed_employees_list %}
                                 <div class="modal fade" id="accessed-modal-{{ dept.id }}-{{ loop.index }}" tabindex="-1">
                                     <div class="modal-dialog modal-lg">
