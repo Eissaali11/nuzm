@@ -20,6 +20,7 @@ class GoogleDriveService:
         self.credentials = self._load_credentials()
         self.access_token = None
         self.root_folder_id = "1AvaKUW2VKb9t4O4Dwo_KXTntBfDQ1IYe"  # مجلد "نُظم" الرئيسي (Shared Drive)
+        self.shared_drive_id = "1AvaKUW2VKb9t4O4Dwo_KXTntBfDQ1IYe"  # Shared Drive ID (نفس المجلد الرئيسي)
         self.requests_folder_id = "1AvaKUW2VKb9t4O4Dwo_KXTntBfDQ1IYe"  # مجلد طلبات الموظفين (نفس المجلد الرئيسي)
         
     def _load_credentials(self) -> Optional[Dict]:
