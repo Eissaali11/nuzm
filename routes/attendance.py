@@ -3741,15 +3741,15 @@ def departments_circles_overview():
     except ValueError:
         selected_date = datetime.now().date()
     
-    # حساب نطاق زمني من الصباح (6 صباحاً) إلى الآن - آخر 18 ساعة
+    # حساب التاريخ: من اليوم الحالي أو التاريخ المختار
+    # نجلب بيانات الحضور من آخر 18 ساعة من الصباح (6 صباحاً)
     now = datetime.now()
-    # ابدأ من اليوم الصباح في الساعة 6 صباحاً أو من 18 ساعة مضت، أيهما أحدث
-    today_morning = datetime.combine(selected_date, time(6, 0, 0))
-    eighteen_hours_ago = now - timedelta(hours=18)
+    today_date = datetime.now().date()
+    eighteen_hours_ago_date = (now - timedelta(hours=18)).date()
     
-    # استخدم أيهما أكثر حداثة
-    start_time = max(today_morning, eighteen_hours_ago)
-    end_time = now
+    # نطاق التواريخ المراد البحث فيها
+    start_date = min(selected_date, eighteen_hours_ago_date)
+    end_date = today_date
     
     all_departments = Department.query.order_by(Department.name).all()
     
@@ -3795,32 +3795,32 @@ def departments_circles_overview():
             emp_ids = [e.id for e in emp_in_circle]
             
             if emp_ids:
-                # جلب بيانات الحضور لهذه الدائرة من الصباح حتى الآن (آخر 18 ساعة)
+                # جلب بيانات الحضور لهذه الدائرة من آخر 18 ساعة
                 present = db.session.query(func.count(Attendance.id)).filter(
                     Attendance.employee_id.in_(emp_ids),
-                    Attendance.recorded_at >= start_time,
-                    Attendance.recorded_at <= end_time,
+                    Attendance.date >= start_date,
+                    Attendance.date <= end_date,
                     Attendance.status == 'present'
                 ).scalar() or 0
                 
                 absent = db.session.query(func.count(Attendance.id)).filter(
                     Attendance.employee_id.in_(emp_ids),
-                    Attendance.recorded_at >= start_time,
-                    Attendance.recorded_at <= end_time,
+                    Attendance.date >= start_date,
+                    Attendance.date <= end_date,
                     Attendance.status == 'absent'
                 ).scalar() or 0
                 
                 leave = db.session.query(func.count(Attendance.id)).filter(
                     Attendance.employee_id.in_(emp_ids),
-                    Attendance.recorded_at >= start_time,
-                    Attendance.recorded_at <= end_time,
+                    Attendance.date >= start_date,
+                    Attendance.date <= end_date,
                     Attendance.status == 'leave'
                 ).scalar() or 0
                 
                 sick = db.session.query(func.count(Attendance.id)).filter(
                     Attendance.employee_id.in_(emp_ids),
-                    Attendance.recorded_at >= start_time,
-                    Attendance.recorded_at <= end_time,
+                    Attendance.date >= start_date,
+                    Attendance.date <= end_date,
                     Attendance.status == 'sick'
                 ).scalar() or 0
                 
@@ -3838,9 +3838,9 @@ def departments_circles_overview():
             for emp in emp_in_circle:
                 attendance = Attendance.query.filter(
                     Attendance.employee_id == emp.id,
-                    Attendance.recorded_at >= start_time,
-                    Attendance.recorded_at <= end_time
-                ).order_by(Attendance.recorded_at.desc()).first()
+                    Attendance.date >= start_date,
+                    Attendance.date <= end_date
+                ).order_by(Attendance.date.desc()).first()
                 
                 emp_data = {
                     'name': emp.name,
@@ -3868,29 +3868,29 @@ def departments_circles_overview():
             emp_ids = [e.id for e in employees_without_location]
             present = db.session.query(func.count(Attendance.id)).filter(
                 Attendance.employee_id.in_(emp_ids),
-                Attendance.recorded_at >= start_time,
-                Attendance.recorded_at <= end_time,
+                Attendance.date >= start_date,
+                Attendance.date <= end_date,
                 Attendance.status == 'present'
             ).scalar() or 0
             
             absent = db.session.query(func.count(Attendance.id)).filter(
                 Attendance.employee_id.in_(emp_ids),
-                Attendance.recorded_at >= start_time,
-                Attendance.recorded_at <= end_time,
+                Attendance.date >= start_date,
+                Attendance.date <= end_date,
                 Attendance.status == 'absent'
             ).scalar() or 0
             
             leave = db.session.query(func.count(Attendance.id)).filter(
                 Attendance.employee_id.in_(emp_ids),
-                Attendance.recorded_at >= start_time,
-                Attendance.recorded_at <= end_time,
+                Attendance.date >= start_date,
+                Attendance.date <= end_date,
                 Attendance.status == 'leave'
             ).scalar() or 0
             
             sick = db.session.query(func.count(Attendance.id)).filter(
                 Attendance.employee_id.in_(emp_ids),
-                Attendance.recorded_at >= start_time,
-                Attendance.recorded_at <= end_time,
+                Attendance.date >= start_date,
+                Attendance.date <= end_date,
                 Attendance.status == 'sick'
             ).scalar() or 0
             
@@ -3905,9 +3905,9 @@ def departments_circles_overview():
             for emp in employees_without_location:
                 attendance = Attendance.query.filter(
                     Attendance.employee_id == emp.id,
-                    Attendance.recorded_at >= start_time,
-                    Attendance.recorded_at <= end_time
-                ).order_by(Attendance.recorded_at.desc()).first()
+                    Attendance.date >= start_date,
+                    Attendance.date <= end_date
+                ).order_by(Attendance.date.desc()).first()
                 
                 emp_data = {
                     'name': emp.name,
