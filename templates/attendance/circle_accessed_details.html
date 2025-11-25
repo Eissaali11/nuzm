@@ -27,6 +27,10 @@
                     </p>
                 </div>
                 <div class="d-flex gap-2 flex-column">
+                    <button type="button" class="btn btn-primary" id="markAllBtn" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: none;">
+                        <i class="fas fa-check-double me-2"></i>
+                        تسجيل الجميع كحاضرين
+                    </button>
                     <a href="{{ url_for('attendance.export_circle_details_excel', department_id=department_id, circle_name=circle_name, date=selected_date.strftime('%Y-%m-%d'), type='all') }}" class="btn btn-success">
                         <i class="fas fa-file-excel me-2"></i>
                         تصدير الجميع (Excel)
@@ -139,7 +143,7 @@
 
                                 <!-- الدخول والخروج المسائي -->
                                 <p class="small fw-bold text-info mb-2" style="font-size: 0.8rem;">🌙 الفترة المسائية</p>
-                                <div class="row g-2">
+                                <div class="row g-2 mb-3">
                                     <div class="col-6">
                                         <div class="p-2" style="background: #dbeafe; border-radius: 8px; border-right: 3px solid #0284c7;">
                                             <small class="text-muted d-block mb-1" style="font-size: 0.7rem;">دخول مسائي</small>
@@ -153,6 +157,52 @@
                                         </div>
                                     </div>
                                 </div>
+
+                                <!-- ساعات العمل الكلية -->
+                                {% if emp.morning_check_in != '-' and emp.evening_check_out != '-' %}
+                                <div class="alert alert-info mb-0" style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(59, 130, 246, 0.1) 100%); border: 2px solid #3b82f6; border-radius: 10px;">
+                                    <div class="text-center">
+                                        <i class="fas fa-clock" style="font-size: 1.2rem; color: #1e40af; margin-bottom: 5px;"></i>
+                                        <div class="fw-bold" style="font-size: 1.3rem; color: #1e40af;">ساعات العمل الكلية</div>
+                                        <div class="fw-bold" style="font-size: 1.1rem; color: #1e40af;" id="work-hours-{{ emp.employee_id }}">--</div>
+                                        <small class="text-muted">من {{ emp.morning_check_in }} إلى {{ emp.evening_check_out }}</small>
+                                    </div>
+                                </div>
+                                <script>
+                                    document.addEventListener('DOMContentLoaded', function() {
+                                        var morningCheckIn = "{{ emp.morning_check_in }}";
+                                        var eveningCheckOut = "{{ emp.evening_check_out }}";
+                                        
+                                        if (morningCheckIn !== '-' && eveningCheckOut !== '-') {
+                                            // استخراج الوقت من النص (مثل "7:30:00 ص")
+                                            var morningParts = morningCheckIn.split(' ');
+                                            var eveningParts = eveningCheckOut.split(' ');
+                                            
+                                            var morningTime = morningParts[0]; // "7:30:00"
+                                            var eveningTime = eveningParts[0]; // "5:00:00"
+                                            
+                                            var [morningHours, morningMins, morningSecs] = morningTime.split(':').map(Number);
+                                            var [eveningHours, eveningMins, eveningSecs] = eveningTime.split(':').map(Number);
+                                            
+                                            // تحويل إلى دقائق
+                                            var morningTotalMins = morningHours * 60 + morningMins;
+                                            var eveningTotalMins = eveningHours * 60 + eveningMins;
+                                            
+                                            var diffMins = eveningTotalMins - morningTotalMins;
+                                            var hours = Math.floor(diffMins / 60);
+                                            var mins = diffMins % 60;
+                                            
+                                            if (diffMins < 0) {
+                                                hours = 0;
+                                                mins = 0;
+                                            }
+                                            
+                                            var display = hours + ' س ' + mins + ' د';
+                                            document.getElementById('work-hours-{{ emp.employee_id }}').textContent = display;
+                                        }
+                                    });
+                                </script>
+                                {% endif %}
                             </div>
 
                             <!-- GPS -->
@@ -198,4 +248,47 @@
         box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
     }
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var markAllBtn = document.getElementById('markAllBtn');
+    
+    if (markAllBtn) {
+        markAllBtn.addEventListener('click', function() {
+            var dateStr = "{{ selected_date.strftime('%Y-%m-%d') }}";
+            var departmentId = {{ department_id }};
+            var circleName = "{{ circle_name }}";
+            
+            if (confirm('هل تريد تسجيل جميع الموظفين الواصلين للدائرة كحاضرين؟')) {
+                // إظهار رسالة التحميل
+                markAllBtn.disabled = true;
+                markAllBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>جاري التسجيل...';
+                
+                fetch(`/attendance/mark-circle-employees-attendance/${departmentId}/${circleName}?date=${dateStr}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.message);
+                        location.reload(); // إعادة تحميل الصفحة
+                    } else {
+                        alert('خطأ: ' + data.message);
+                        markAllBtn.disabled = false;
+                        markAllBtn.innerHTML = '<i class="fas fa-check-double me-2"></i>تسجيل الجميع كحاضرين';
+                    }
+                })
+                .catch(error => {
+                    alert('خطأ: ' + error);
+                    markAllBtn.disabled = false;
+                    markAllBtn.innerHTML = '<i class="fas fa-check-double me-2"></i>تسجيل الجميع كحاضرين';
+                });
+            }
+        });
+    }
+});
+</script>
 {% endblock %}

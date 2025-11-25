@@ -4357,3 +4357,72 @@ def export_circle_details_excel(department_id, circle_name):
         as_attachment=True,
         download_name=filename
     )
+
+@attendance_bp.route('/mark-circle-employees-attendance/<int:department_id>/<circle_name>', methods=['POST'])
+@login_required
+def mark_circle_employees_attendance(department_id, circle_name):
+    """تسجيل الموظفين الواصلين للدائرة كحاضرين"""
+    try:
+        date_str = request.args.get('date')
+        
+        try:
+            if date_str:
+                selected_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+            else:
+                selected_date = datetime.now().date()
+        except ValueError:
+            selected_date = datetime.now().date()
+        
+        dept = Department.query.get(department_id)
+        if not dept:
+            return jsonify({'success': False, 'message': 'القسم غير موجود'}), 404
+        
+        # جلب الموظفين النشطين في القسم والدائرة المحددة
+        active_employees = [emp for emp in dept.employees if emp.status == 'active' and emp.location and emp.location.strip() == circle_name]
+        
+        # جلب جميع من لديهم حضور من الدائرة الجغرافية
+        start_date = selected_date
+        end_date = datetime.now().date()
+        
+        geo_sessions = db.session.query(GeofenceSession).filter(
+            GeofenceSession.employee_id.in_([emp.id for emp in active_employees]),
+            GeofenceSession.entry_time >= datetime.combine(start_date, time(0, 0, 0)),
+            GeofenceSession.entry_time <= datetime.combine(end_date, time(23, 59, 59))
+        ).all()
+        
+        employee_ids_with_geofence = set([geo.employee_id for geo in geo_sessions])
+        
+        marked_count = 0
+        for emp in active_employees:
+            if emp.id in employee_ids_with_geofence:
+                existing_attendance = Attendance.query.filter(
+                    Attendance.employee_id == emp.id,
+                    Attendance.date == selected_date
+                ).first()
+                
+                if existing_attendance:
+                    existing_attendance.status = 'present'
+                    existing_attendance.updated_at = datetime.utcnow()
+                else:
+                    attendance = Attendance(
+                        employee_id=emp.id,
+                        date=selected_date,
+                        status='present',
+                        check_in=datetime.utcnow().time(),
+                    )
+                    db.session.add(attendance)
+                
+                marked_count += 1
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': f'تم تسجيل {marked_count} موظف كحاضرين',
+            'count': marked_count
+        }), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"خطأ في تسجيل الحضور: {str(e)}")
+        return jsonify({'success': False, 'message': f'حدث خطأ: {str(e)}'}), 500
