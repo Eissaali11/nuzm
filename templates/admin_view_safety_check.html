@@ -290,6 +290,9 @@
         <a href="{{ url_for('external_safety.export_safety_check_pdf', check_id=safety_check.id) }}" class="btn-primary">
             <i class="fas fa-file-pdf"></i> تحميل PDF
         </a>
+        <button onclick="uploadToGoogleDrive({{ safety_check.id }})" class="btn-primary" id="drive-btn" style="background-color: #4285F4;">
+            <i class="fab fa-google-drive"></i> رفع على Google Drive
+        </button>
         <a href="{{ url_for('external_safety.edit_safety_check', check_id=safety_check.id) }}" class="btn-secondary">
             <i class="fas fa-edit"></i> تعديل
         </a>
@@ -490,5 +493,39 @@
             });
         }
     });
+    
+    function uploadToGoogleDrive(checkId) {
+        const btn = document.getElementById('drive-btn');
+        const originalText = btn.innerHTML;
+        
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الرفع...';
+        
+        fetch(`/external-safety/admin/external-safety-check/${checkId}/upload-to-drive`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('meta[name="csrf-token"]')?.content || ''
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('✅ تم رفع الفحص على Google Drive بنجاح!\n\nالمجلد: ' + (data.folder_url || ''));
+                btn.innerHTML = '<i class="fab fa-google-drive"></i> تم الرفع بنجاح';
+                btn.style.backgroundColor = '#34A853';
+            } else {
+                alert('❌ حدث خطأ: ' + (data.message || 'خطأ غير معروف'));
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('❌ خطأ في الاتصال: ' + error.message);
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        });
+    }
 </script>
 {% endblock %}
