@@ -3855,9 +3855,9 @@ def departments_circles_overview():
                 # جلب بيانات الوصول إلى الدوائر (GeofenceSession)
                 geo_session = db.session.query(GeofenceSession).filter(
                     GeofenceSession.employee_id == emp.id,
-                    GeofenceSession.enter_time >= datetime.combine(start_date, time(0, 0, 0)),
-                    GeofenceSession.enter_time <= datetime.combine(end_date, time(23, 59, 59))
-                ).order_by(GeofenceSession.enter_time.desc()).first()
+                    GeofenceSession.entry_time >= datetime.combine(start_date, time(0, 0, 0)),
+                    GeofenceSession.entry_time <= datetime.combine(end_date, time(23, 59, 59))
+                ).order_by(GeofenceSession.entry_time.desc()).first()
                 
                 # تحديد ما إذا كان الموظف قد دخل الدائرة
                 accessed = geo_session is not None
@@ -3877,7 +3877,7 @@ def departments_circles_overview():
                     'gps_recorded_at': emp_location.recorded_at if emp_location else None,
                     # بيانات الوصول إلى الدائرة
                     'accessed_circle': accessed,
-                    'circle_enter_time': geo_session.enter_time if geo_session else None,
+                    'circle_enter_time': geo_session.entry_time if geo_session else None,
                     'circle_exit_time': geo_session.exit_time if geo_session else None,
                 }
                 employees_details.append(emp_data)
