@@ -4,22 +4,295 @@
 
 {% block extra_css %}
 <style>
-    .hover-scale {
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    :root {
+        --teal: #18B2B0;
+        --dark-teal: #0f8481;
     }
-    .hover-scale:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 25px rgba(0,0,0,0.15) !important;
+
+    body {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        min-height: 100vh;
     }
-    .car-wash-image {
-        transition: transform 0.5s ease;
-    }
-    .car-wash-image:hover {
-        transform: scale(1.05);
-    }
-    .image-gallery .card {
+
+    .card {
         border: none;
+        box-shadow: 0 4px 15px rgba(24, 178, 176, 0.1);
+        transition: all 0.3s ease;
+    }
+
+    .card:hover {
+        box-shadow: 0 8px 25px rgba(24, 178, 176, 0.15);
+        transform: translateY(-2px);
+    }
+
+    .card-header {
+        background: linear-gradient(135deg, var(--teal), var(--dark-teal));
+        border: none;
+        padding: 1.5rem;
+    }
+
+    /* معرض الصور الاحترافي */
+    .image-gallery-container {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-top: 2rem;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .gallery-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 3px solid var(--teal);
+    }
+
+    .gallery-header i {
+        color: var(--teal);
+        font-size: 2rem;
+        margin-left: 1rem;
+    }
+
+    .gallery-header h4 {
+        color: var(--dark-teal);
+        margin: 0;
+        font-weight: 700;
+    }
+
+    .image-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 2rem;
+        animation: fadeIn 0.5s ease;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .image-card {
+        position: relative;
+        border-radius: 12px;
         overflow: hidden;
+        background: white;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        cursor: pointer;
+    }
+
+    .image-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 12px 30px rgba(24, 178, 176, 0.3);
+    }
+
+    .image-wrapper {
+        position: relative;
+        width: 100%;
+        padding-bottom: 100%;
+        overflow: hidden;
+        background: linear-gradient(45deg, #f0f0f0 25%, transparent 25%, transparent 75%, #f0f0f0 75%, #f0f0f0),
+                    linear-gradient(45deg, #f0f0f0 25%, transparent 25%, transparent 75%, #f0f0f0 75%, #f0f0f0);
+        background-size: 30px 30px;
+        background-position: 0 0, 15px 15px;
+        background-color: #fafafa;
+    }
+
+    .image-wrapper img {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.3s ease;
+    }
+
+    .image-card:hover .image-wrapper img {
+        transform: scale(1.08);
+    }
+
+    .image-badge {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        background: linear-gradient(135deg, var(--teal), var(--dark-teal));
+        color: white;
+        padding: 8px 12px;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        box-shadow: 0 4px 10px rgba(24, 178, 176, 0.3);
+        z-index: 10;
+    }
+
+    .image-badge i {
+        margin-right: 5px;
+    }
+
+    .image-overlay {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
+        padding: 1rem;
+        transform: translateY(100%);
+        transition: transform 0.3s ease;
+    }
+
+    .image-card:hover .image-overlay {
+        transform: translateY(0);
+    }
+
+    .image-filename {
+        color: white;
+        font-size: 0.9rem;
+        margin: 0;
+        font-weight: 500;
+        word-break: break-word;
+    }
+
+    .image-size {
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 0.8rem;
+        margin-top: 4px;
+    }
+
+    .image-view-btn {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: var(--teal);
+        color: white;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(24, 178, 176, 0.4);
+        z-index: 20;
+    }
+
+    .image-card:hover .image-view-btn {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+
+    .image-view-btn:hover {
+        background: var(--dark-teal);
+        transform: translate(-50%, -50%) scale(1.1);
+    }
+
+    /* موديل الصورة */
+    .modal-content {
+        border: none;
+        border-radius: 12px;
+        overflow: hidden;
+        background: white;
+    }
+
+    .modal-header {
+        background: linear-gradient(135deg, var(--teal), var(--dark-teal));
+        color: white;
+        border: none;
+        padding: 1.5rem;
+    }
+
+    .modal-header .btn-close {
+        filter: brightness(0) invert(1);
+    }
+
+    .modal-body {
+        padding: 2rem;
+        background: #f8f9fa;
+    }
+
+    .modal-body img {
+        border-radius: 10px;
+        box-shadow: 0 8px 25px rgba(24, 178, 176, 0.2);
+        max-height: 80vh;
+    }
+
+    /* لا توجد صور */
+    .no-images-alert {
+        background: linear-gradient(135deg, #fff5f5, #ffe0e0);
+        border: 2px dashed #ff9999;
+        border-radius: 12px;
+        padding: 2rem;
+        text-align: center;
+        margin-top: 2rem;
+    }
+
+    .no-images-alert i {
+        color: #ff6b6b;
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        display: block;
+    }
+
+    .no-images-alert p {
+        color: #c92a2a;
+        margin: 0;
+        font-weight: 500;
+        font-size: 1.1rem;
+    }
+
+    .breadcrumb {
+        background: transparent;
+        padding: 0;
+        margin-bottom: 1.5rem;
+    }
+
+    .breadcrumb-item {
+        color: var(--teal);
+    }
+
+    .breadcrumb-item.active {
+        color: var(--dark-teal);
+        font-weight: 600;
+    }
+
+    .badge {
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        font-weight: 500;
+    }
+
+    .info-section {
+        margin-bottom: 2rem;
+    }
+
+    .info-label {
+        font-weight: 600;
+        color: var(--dark-teal);
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    .info-value {
+        color: #666;
+        margin-left: 1rem;
+    }
+
+    @media (max-width: 768px) {
+        .image-grid {
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .image-gallery-container {
+            padding: 1rem;
+        }
+
+        .gallery-header {
+            margin-bottom: 1.5rem;
+        }
     }
 </style>
 {% endblock %}
@@ -38,10 +311,10 @@
     </div>
 
     <div class="row">
-        <!-- معلومات الطلب الأساسية -->
         <div class="col-md-8">
+            <!-- معلومات الطلب الأساسية -->
             <div class="card shadow-lg mb-4">
-                <div class="card-header bg-gradient-primary text-white">
+                <div class="card-header text-white">
                     <h5 class="mb-0">
                         <i class="fas fa-info-circle me-2"></i>
                         معلومات الطلب
@@ -49,17 +322,17 @@
                 </div>
                 <div class="card-body">
                     <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <strong>رقم الطلب:</strong>
-                            <p class="text-muted">#{{ emp_request.id }}</p>
+                        <div class="col-md-6 info-section">
+                            <span class="info-label">رقم الطلب:</span>
+                            <p class="info-value">#{{ emp_request.id }}</p>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <strong>اسم الموظف:</strong>
-                            <p class="text-muted">{{ emp_request.employee.name if emp_request.employee else 'غير محدد' }}</p>
+                        <div class="col-md-6 info-section">
+                            <span class="info-label">اسم الموظف:</span>
+                            <p class="info-value">{{ emp_request.employee.name if emp_request.employee else 'غير محدد' }}</p>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <strong>نوع الطلب:</strong>
-                            <p>
+                        <div class="col-md-6 info-section">
+                            <span class="info-label">نوع الطلب:</span>
+                            <p class="info-value">
                                 {% if emp_request.request_type == RequestType.INVOICE %}
                                     <span class="badge bg-info">فاتورة</span>
                                 {% elif emp_request.request_type == RequestType.CAR_WASH %}
@@ -71,9 +344,9 @@
                                 {% endif %}
                             </p>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <strong>الحالة:</strong>
-                            <p>
+                        <div class="col-md-6 info-section">
+                            <span class="info-label">الحالة:</span>
+                            <p class="info-value">
                                 {% if emp_request.status == RequestStatus.PENDING %}
                                     <span class="badge bg-warning">قيد الانتظار</span>
                                 {% elif emp_request.status == RequestStatus.APPROVED %}
@@ -83,26 +356,26 @@
                                 {% endif %}
                             </p>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <strong>تاريخ الإنشاء:</strong>
-                            <p class="text-muted">{{ emp_request.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                        <div class="col-md-6 info-section">
+                            <span class="info-label">تاريخ الإنشاء:</span>
+                            <p class="info-value">{{ emp_request.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
                         </div>
                         {% if emp_request.approved_at %}
-                        <div class="col-md-6 mb-3">
-                            <strong>تاريخ المعالجة:</strong>
-                            <p class="text-muted">{{ emp_request.approved_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                        <div class="col-md-6 info-section">
+                            <span class="info-label">تاريخ المعالجة:</span>
+                            <p class="info-value">{{ emp_request.approved_at.strftime('%Y-%m-%d %H:%M') }}</p>
                         </div>
                         {% endif %}
                         {% if emp_request.employee_notes %}
-                        <div class="col-12 mb-3">
-                            <strong>ملاحظات الموظف:</strong>
-                            <p class="text-muted">{{ emp_request.employee_notes }}</p>
+                        <div class="col-12 info-section">
+                            <span class="info-label">ملاحظات الموظف:</span>
+                            <p class="info-value">{{ emp_request.employee_notes }}</p>
                         </div>
                         {% endif %}
                         {% if emp_request.admin_notes %}
-                        <div class="col-12 mb-3">
-                            <strong>ملاحظات الإدارة:</strong>
-                            <p class="text-muted">{{ emp_request.admin_notes }}</p>
+                        <div class="col-12 info-section">
+                            <span class="info-label">ملاحظات الإدارة:</span>
+                            <p class="info-value">{{ emp_request.admin_notes }}</p>
                         </div>
                         {% endif %}
                         {% if emp_request.rejection_reason %}
@@ -117,10 +390,10 @@
                 </div>
             </div>
 
-            <!-- تفاصيل خاصة بنوع الطلب -->
+            <!-- تفاصيل خاصة بنوع الطلب مع معرض الصور الاحترافي -->
             {% if specific_request %}
             <div class="card shadow-lg">
-                <div class="card-header bg-gradient-info text-white">
+                <div class="card-header text-white">
                     <h5 class="mb-0">
                         <i class="fas fa-file-invoice me-2"></i>
                         تفاصيل إضافية
@@ -129,56 +402,24 @@
                 <div class="card-body">
                     {% if emp_request.request_type == RequestType.INVOICE %}
                         <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <strong>المبلغ:</strong>
-                                <p class="text-muted">{{ specific_request.amount if specific_request.amount else emp_request.amount }} ريال</p>
+                            <div class="col-md-6 info-section">
+                                <span class="info-label">المبلغ:</span>
+                                <p class="info-value">{{ specific_request.amount if specific_request.amount else emp_request.amount }} ريال</p>
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <strong>اسم المحل:</strong>
-                                <p class="text-muted">{{ specific_request.vendor_name or 'غير محدد' }}</p>
+                            <div class="col-md-6 info-section">
+                                <span class="info-label">اسم المحل:</span>
+                                <p class="info-value">{{ specific_request.vendor_name or 'غير محدد' }}</p>
                             </div>
-                            {% if specific_request.drive_view_url or specific_request.drive_download_url or specific_request.local_image_path %}
-                            <div class="col-12 mb-3">
-                                <strong>صورة الفاتورة:</strong>
-                                <div class="mt-2">
-                                    {% if specific_request.drive_view_url or specific_request.drive_download_url %}
-                                        {% set invoice_url = specific_request.drive_view_url or specific_request.drive_download_url %}
-                                        <a href="{{ invoice_url }}" target="_blank" class="d-block mb-2">
-                                            <img src="{{ invoice_url }}" class="img-fluid rounded shadow" alt="صورة الفاتورة" style="max-height: 500px; cursor: pointer;" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-                                            <div class="btn btn-sm btn-primary" style="display: none;">
-                                                <i class="fas fa-file-invoice me-2"></i>عرض الفاتورة (PDF)
-                                            </div>
-                                        </a>
-                                    {% elif specific_request.local_image_path %}
-                                        {% set invoice_url = url_for('static', filename=specific_request.local_image_path) %}
-                                        <a href="{{ invoice_url }}" target="_blank" class="d-block mb-2">
-                                            <img src="{{ invoice_url }}" class="img-fluid rounded shadow" alt="صورة الفاتورة" style="max-height: 500px; cursor: pointer;">
-                                        </a>
-                                        <p class="text-muted small mt-2">
-                                            <i class="fas fa-check-circle text-success me-1"></i>
-                                            الصورة محفوظة محلياً
-                                        </p>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            {% else %}
-                            <div class="col-12 mb-3">
-                                <div class="alert alert-warning">
-                                    <i class="fas fa-exclamation-triangle me-2"></i>
-                                    لم يتم رفع صورة الفاتورة بعد
-                                </div>
-                            </div>
-                            {% endif %}
                         </div>
                     {% elif emp_request.request_type == RequestType.CAR_WASH %}
                         <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <strong>رقم لوحة السيارة:</strong>
-                                <p class="text-muted">{{ specific_request.vehicle.plate_number if specific_request.vehicle else 'غير محدد' }}</p>
+                            <div class="col-md-6 info-section">
+                                <span class="info-label">رقم لوحة السيارة:</span>
+                                <p class="info-value">{{ specific_request.vehicle.plate_number if specific_request.vehicle else 'غير محدد' }}</p>
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <strong>نوع الخدمة:</strong>
-                                <p class="text-muted">
+                            <div class="col-md-6 info-section">
+                                <span class="info-label">نوع الخدمة:</span>
+                                <p class="info-value">
                                     {% if specific_request.service_type == 'normal' %}
                                         <span class="badge bg-info">غسيل عادي</span>
                                     {% elif specific_request.service_type == 'polish' %}
@@ -191,469 +432,74 @@
                                 </p>
                             </div>
                             {% if specific_request.scheduled_date %}
-                            <div class="col-md-6 mb-3">
-                                <strong>التاريخ المطلوب:</strong>
-                                <p class="text-muted">{{ specific_request.scheduled_date.strftime('%Y-%m-%d') }}</p>
-                            </div>
-                            {% endif %}
-                            <div class="col-md-6 mb-3">
-                                <strong>عدد الصور:</strong>
-                                <p class="text-muted">
-                                    {% if specific_request.media_files %}
-                                        {{ specific_request.media_files|length }} صورة
-                                    {% else %}
-                                        لا توجد صور
-                                    {% endif %}
-                                </p>
-                            </div>
-                            
-                            {% if specific_request.media_files %}
-                            <div class="col-12">
-                                <strong class="mb-3 d-block">
-                                    <i class="fas fa-images me-2"></i>معرض الصور
-                                </strong>
-                                
-                                <div class="image-gallery">
-                                    <div class="row g-3">
-                                        {% for media in specific_request.media_files %}
-                                        <div class="col-md-4 col-sm-6">
-                                            <div class="card shadow-sm hover-scale">
-                                                <div class="position-relative">
-                                                    <img src="{{ media.drive_view_url or url_for('static', filename=media.local_path) }}" 
-                                                         class="card-img-top car-wash-image" 
-                                                         alt="{{ media.media_type.value }}"
-                                                         data-bs-toggle="modal"
-                                                         data-bs-target="#imageModal{{ loop.index }}"
-                                                         style="height: 200px; object-fit: cover; cursor: pointer;">
-                                                    <div class="position-absolute top-0 start-0 m-2">
-                                                        <span class="badge bg-dark bg-opacity-75">
-                                                            {% if media.media_type.value == 'PLATE' %}
-                                                                <i class="fas fa-car me-1"></i>اللوحة
-                                                            {% elif media.media_type.value == 'FRONT' %}
-                                                                <i class="fas fa-arrow-up me-1"></i>أمامي
-                                                            {% elif media.media_type.value == 'BACK' %}
-                                                                <i class="fas fa-arrow-down me-1"></i>خلفي
-                                                            {% elif media.media_type.value == 'RIGHT' %}
-                                                                <i class="fas fa-arrow-right me-1"></i>يمين
-                                                            {% elif media.media_type.value == 'LEFT' %}
-                                                                <i class="fas fa-arrow-left me-1"></i>يسار
-                                                            {% endif %}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                                <div class="card-body p-2 text-center">
-                                                    <small class="text-muted">{{ media.uploaded_at.strftime('%Y-%m-%d') if media.uploaded_at else 'غير محدد' }}</small>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        
-                                        <!-- Modal للصورة -->
-                                        <div class="modal fade" id="imageModal{{ loop.index }}" tabindex="-1" aria-hidden="true">
-                                            <div class="modal-dialog modal-lg modal-dialog-centered">
-                                                <div class="modal-content">
-                                                    <div class="modal-header">
-                                                        <h5 class="modal-title">
-                                                            {% if media.media_type.value == 'PLATE' %}اللوحة
-                                                            {% elif media.media_type.value == 'FRONT' %}أمامي
-                                                            {% elif media.media_type.value == 'BACK' %}خلفي
-                                                            {% elif media.media_type.value == 'RIGHT' %}يمين
-                                                            {% elif media.media_type.value == 'LEFT' %}يسار
-                                                            {% endif %}
-                                                        </h5>
-                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                                    </div>
-                                                    <div class="modal-body text-center">
-                                                        <img src="{{ media.drive_view_url or url_for('static', filename=media.local_path) }}" 
-                                                             class="img-fluid rounded" 
-                                                             alt="{{ media.media_type.value }}">
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        {% endfor %}
-                                    </div>
-                                </div>
-                            </div>
-                            {% else %}
-                            <div class="col-12">
-                                <div class="alert alert-warning">
-                                    <i class="fas fa-exclamation-triangle me-2"></i>
-                                    لم يتم رفع صور لهذا الطلب
-                                </div>
+                            <div class="col-md-6 info-section">
+                                <span class="info-label">التاريخ المطلوب:</span>
+                                <p class="info-value">{{ specific_request.scheduled_date.strftime('%Y-%m-%d') }}</p>
                             </div>
                             {% endif %}
                         </div>
-                    {% elif emp_request.request_type == RequestType.CAR_INSPECTION %}
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <strong>رقم لوحة السيارة:</strong>
-                                <p class="text-muted">{{ specific_request.vehicle.plate_number if specific_request.vehicle else 'غير محدد' }}</p>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <strong>نوع الفحص:</strong>
-                                <p class="text-muted">{{ specific_request.inspection_type }}</p>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <strong>تاريخ الفحص:</strong>
-                                <p class="text-muted">{{ specific_request.inspection_date.strftime('%Y-%m-%d') if specific_request.inspection_date else 'غير محدد' }}</p>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <strong>عدد الملفات:</strong>
-                                <p class="text-muted">
-                                    {% if specific_request.media_files %}
-                                        {{ specific_request.media_files|length }} ملف
-                                    {% else %}
-                                        لا توجد ملفات
-                                    {% endif %}
-                                </p>
-                            </div>
-                            
-                            {% if specific_request.media_files %}
-                            <div class="col-12">
-                                <strong class="mb-3 d-block">
-                                    <i class="fas fa-images me-2"></i>معرض الصور والفيديوهات
-                                </strong>
-                                
-                                <div class="image-gallery">
-                                    <div class="row g-3">
-                                        {% for media in specific_request.media_files %}
-                                        {% if media.file_type.value == 'IMAGE' %}
-                                        <div class="col-md-4 col-sm-6">
-                                            <div class="card shadow-sm hover-scale">
-                                                <div class="position-relative">
-                                                    {% if media.drive_view_url %}
-                                                        {% set image_url = media.drive_view_url %}
-                                                    {% elif media.local_path %}
-                                                        {% if media.local_path.startswith('static/') %}
-                                                            {% set image_url = url_for('static', filename=media.local_path.replace('static/', '')) %}
-                                                        {% elif media.local_path.startswith('uploads/') %}
-                                                            {% set image_url = url_for('uploaded_file', filename=media.local_path.replace('uploads/', '')) %}
-                                                        {% else %}
-                                                            {% set image_url = url_for('uploaded_file', filename=media.local_path) %}
-                                                        {% endif %}
-                                                    {% else %}
-                                                        {% set image_url = url_for('static', filename='images/no-image.png') %}
-                                                    {% endif %}
-                                                    <img src="{{ image_url }}" 
-                                                         class="card-img-top car-wash-image" 
-                                                         alt="{{ media.original_filename }}"
-                                                         data-bs-toggle="modal"
-                                                         data-bs-target="#inspectionImageModal{{ loop.index }}"
-                                                         style="height: 200px; object-fit: cover; cursor: pointer;">
-                                                    <div class="position-absolute top-0 start-0 m-2">
-                                                        <span class="badge bg-dark bg-opacity-75">
-                                                            <i class="fas fa-image me-1"></i>صورة {{ loop.index }}
-                                                        </span>
-                                                    </div>
-                                                    {% if media.local_path %}
-                                                    <div class="position-absolute top-0 end-0 m-2">
-                                                        <span class="badge bg-success bg-opacity-75" title="محفوظة محلياً">
-                                                            <i class="fas fa-check-circle"></i>
-                                                        </span>
-                                                    </div>
-                                                    {% endif %}
-                                                </div>
-                                                <div class="card-body p-2">
-                                                    <small class="text-muted d-block">{{ media.original_filename }}</small>
-                                                    <small class="text-muted">{{ (media.file_size / 1024 / 1024)|round(2) }} MB</small>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        
-                                        <!-- Modal للصورة -->
-                                        <div class="modal fade" id="inspectionImageModal{{ loop.index }}" tabindex="-1" aria-hidden="true">
-                                            <div class="modal-dialog modal-lg modal-dialog-centered">
-                                                <div class="modal-content">
-                                                    <div class="modal-header">
-                                                        <h5 class="modal-title">{{ media.original_filename }}</h5>
-                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                                    </div>
-                                                    <div class="modal-body text-center">
-                                                        <img src="{{ image_url }}" 
-                                                             class="img-fluid rounded" 
-                                                             alt="{{ media.original_filename }}">
-                                                        <div class="mt-3">
-                                                            <a href="{{ image_url }}" target="_blank" class="btn btn-sm btn-primary">
-                                                                <i class="fas fa-external-link-alt me-2"></i>فتح في نافذة جديدة
-                                                            </a>
-                                                            {% if media.drive_view_url %}
-                                                            <a href="{{ media.drive_view_url }}" target="_blank" class="btn btn-sm btn-info">
-                                                                <i class="fab fa-google-drive me-2"></i>عرض في Google Drive
-                                                            </a>
-                                                            {% endif %}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        {% elif media.file_type.value == 'VIDEO' %}
-                                        <div class="col-md-6">
-                                            <div class="card shadow-sm hover-scale">
-                                                <div class="card-body text-center">
-                                                    <i class="fas fa-video fa-4x text-info mb-3"></i>
-                                                    <h6>{{ media.original_filename }}</h6>
-                                                    <p class="text-muted small">حجم: {{ (media.file_size / 1024 / 1024)|round(2) }} MB</p>
-                                                    {% if media.video_duration %}
-                                                    <p class="text-muted small">المدة: {{ media.video_duration }} ثانية</p>
-                                                    {% endif %}
-                                                    <div class="mt-3">
-                                                        {% if media.drive_view_url %}
-                                                        <a href="{{ media.drive_view_url }}" target="_blank" class="btn btn-sm btn-info">
-                                                            <i class="fab fa-google-drive me-2"></i>عرض في Google Drive
-                                                        </a>
-                                                        {% endif %}
-                                                        {% if media.drive_download_url %}
-                                                        <a href="{{ media.drive_download_url }}" target="_blank" class="btn btn-sm btn-primary">
-                                                            <i class="fas fa-download me-2"></i>تحميل
-                                                        </a>
-                                                        {% endif %}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        {% endif %}
-                                        {% endfor %}
-                                    </div>
-                                </div>
-                            </div>
-                            {% else %}
-                            <div class="col-12">
-                                <div class="alert alert-warning">
-                                    <i class="fas fa-exclamation-triangle me-2"></i>
-                                    لم يتم رفع صور أو فيديوهات لهذا الطلب
-                                </div>
-                            </div>
-                            {% endif %}
-                        </div>
-                    {% elif emp_request.request_type == RequestType.ADVANCE_PAYMENT %}
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <strong>المبلغ المطلوب:</strong>
-                                <p class="text-muted">{{ specific_request.requested_amount }} ريال</p>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <strong>السبب:</strong>
-                                <p class="text-muted">{{ specific_request.reason or 'غير محدد' }}</p>
-                            </div>
-                            {% if specific_request.installments %}
-                            <div class="col-md-6 mb-3">
-                                <strong>عدد الأقساط:</strong>
-                                <p class="text-muted">{{ specific_request.installments }} قسط</p>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <strong>مبلغ القسط:</strong>
-                                <p class="text-muted">{{ specific_request.installment_amount }} ريال</p>
-                            </div>
-                            {% endif %}
-                            
-                            {% set image_path = 'uploads/advance_payments/request_' + emp_request.id|string + '_image.jpg' %}
-                            {% set full_path = 'static/' + image_path %}
-                            
-                            <div class="col-12 mb-3">
-                                <strong>صورة مرفقة:</strong>
-                                <div class="mt-2">
-                                    <img src="{{ url_for('static', filename=image_path) }}" 
-                                         class="img-fluid rounded shadow" 
-                                         alt="صورة السلفة" 
-                                         style="max-height: 500px; cursor: pointer;"
-                                         onclick="window.open(this.src, '_blank')"
-                                         onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-                                    <div class="alert alert-warning" style="display: none;">
-                                        <i class="fas fa-exclamation-triangle me-2"></i>
-                                        لم يتم رفع صورة مع هذا الطلب
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    {% endif %}
-                </div>
-            </div>
-            {% endif %}
-        </div>
 
-        <!-- إجراءات الموافقة/الرفض -->
-        <div class="col-md-4">
-            {% if emp_request.status == RequestStatus.PENDING %}
-            {% if emp_request.request_type == RequestType.ADVANCE_PAYMENT %}
-            <div class="card shadow-lg mb-4">
-                <div class="card-header bg-gradient-warning text-white">
-                    <h5 class="mb-0">
-                        <i class="fas fa-edit me-2"></i>
-                        تعديل الطلب
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <button type="button" class="btn btn-warning w-100" data-bs-toggle="modal" data-bs-target="#editAdvanceModal">
-                        <i class="fas fa-edit me-2"></i>تعديل البيانات
-                    </button>
-                </div>
-            </div>
-            {% elif emp_request.request_type == RequestType.CAR_WASH %}
-            <div class="card shadow-lg mb-4">
-                <div class="card-header bg-gradient-warning text-white">
-                    <h5 class="mb-0">
-                        <i class="fas fa-edit me-2"></i>
-                        تعديل الطلب
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <button type="button" class="btn btn-warning w-100" data-bs-toggle="modal" data-bs-target="#editCarWashModal">
-                        <i class="fas fa-edit me-2"></i>تعديل البيانات والصور
-                    </button>
-                </div>
-            </div>
-            {% endif %}
-            
-            <div class="card shadow-lg mb-4">
-                <div class="card-header bg-gradient-success text-white">
-                    <h5 class="mb-0">
-                        <i class="fas fa-check-circle me-2"></i>
-                        الموافقة
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <form method="POST" action="{{ url_for('employee_requests.approve_request', request_id=emp_request.id) }}">
-                        <div class="mb-3">
-                            <label class="form-label">ملاحظات (اختياري)</label>
-                            <textarea name="admin_notes" class="form-control" rows="3"></textarea>
-                        </div>
-                        <button type="submit" class="btn btn-success w-100">
-                            <i class="fas fa-check me-2"></i>الموافقة على الطلب
-                        </button>
-                    </form>
-                </div>
-            </div>
-
-            <div class="card shadow-lg">
-                <div class="card-header bg-gradient-danger text-white">
-                    <h5 class="mb-0">
-                        <i class="fas fa-times-circle me-2"></i>
-                        الرفض
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <form method="POST" action="{{ url_for('employee_requests.reject_request', request_id=emp_request.id) }}">
-                        <div class="mb-3">
-                            <label class="form-label">سبب الرفض <span class="text-danger">*</span></label>
-                            <textarea name="rejection_reason" class="form-control" rows="3" required></textarea>
-                        </div>
-                        <button type="submit" class="btn btn-danger w-100">
-                            <i class="fas fa-times me-2"></i>رفض الطلب
-                        </button>
-                    </form>
-                </div>
-            </div>
-            {% else %}
-            <div class="card shadow-lg">
-                <div class="card-header bg-gradient-secondary text-white">
-                    <h5 class="mb-0">
-                        <i class="fas fa-info-circle me-2"></i>
-                        حالة الطلب
-                    </h5>
-                </div>
-                <div class="card-body text-center">
-                    {% if emp_request.status == RequestStatus.APPROVED %}
-                        <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
-                        <h5>تمت الموافقة على الطلب</h5>
-                        {% if emp_request.approved_by %}
-                        <p class="text-muted">بواسطة: {{ emp_request.approved_by.username }}</p>
-                        {% endif %}
-                    {% elif emp_request.status == RequestStatus.REJECTED %}
-                        <i class="fas fa-times-circle fa-3x text-danger mb-3"></i>
-                        <h5>تم رفض الطلب</h5>
-                        {% if emp_request.approved_by %}
-                        <p class="text-muted">بواسطة: {{ emp_request.approved_by.username }}</p>
-                        {% endif %}
-                    {% endif %}
-                </div>
-            </div>
-            {% endif %}
-            
-            <div class="card shadow-lg mt-4">
-                <div class="card-header bg-gradient-danger text-white">
-                    <h5 class="mb-0">
-                        <i class="fas fa-trash-alt me-2"></i>
-                        حذف الطلب
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <p class="text-muted small mb-3">
-                        <i class="fas fa-exclamation-triangle me-2"></i>
-                        سيتم حذف الطلب نهائياً من قاعدة البيانات ولا يمكن استرجاعه
-                    </p>
-                    <form method="POST" action="{{ url_for('employee_requests.delete_request', request_id=emp_request.id) }}" onsubmit="return confirm('هل أنت متأكد من حذف هذا الطلب؟ لا يمكن التراجع عن هذا الإجراء.');">
-                        <button type="submit" class="btn btn-danger w-100">
-                            <i class="fas fa-trash-alt me-2"></i>حذف الطلب نهائياً
-                        </button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal التعديل - غسيل السيارات -->
-{% if emp_request.request_type == RequestType.CAR_WASH and emp_request.status == RequestStatus.PENDING %}
-<div class="modal fade" id="editCarWashModal" tabindex="-1" aria-labelledby="editCarWashModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl">
-        <div class="modal-content">
-            <div class="modal-header bg-gradient-warning text-white">
-                <h5 class="modal-title" id="editCarWashModalLabel">
-                    <i class="fas fa-edit me-2"></i>
-                    تعديل طلب غسيل السيارة #{{ emp_request.id }}
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="إغلاق"></button>
-            </div>
-            <form method="POST" action="{{ url_for('employee_requests.edit_car_wash', request_id=emp_request.id) }}" enctype="multipart/form-data">
-                <div class="modal-body">
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="service_type" class="form-label">نوع الخدمة <span class="text-danger">*</span></label>
-                            <select class="form-select" id="service_type" name="service_type" required>
-                                <option value="normal" {% if specific_request.service_type == 'normal' %}selected{% endif %}>غسيل عادي</option>
-                                <option value="polish" {% if specific_request.service_type == 'polish' %}selected{% endif %}>تلميع</option>
-                                <option value="full_clean" {% if specific_request.service_type == 'full_clean' %}selected{% endif %}>تنظيف شامل</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="scheduled_date" class="form-label">التاريخ المطلوب</label>
-                            <input type="date" class="form-control" id="scheduled_date" name="scheduled_date" 
-                                   value="{{ specific_request.scheduled_date.strftime('%Y-%m-%d') if specific_request.scheduled_date else '' }}">
-                        </div>
-                    </div>
-                    
-                    <hr class="my-4">
-                    
-                    <h6 class="mb-3">
-                        <i class="fas fa-images me-2"></i>إدارة الصور
-                    </h6>
-                    
-                    {% if specific_request.media_files %}
-                    <div class="row mb-4">
-                        <div class="col-12">
-                            <label class="form-label">الصور الحالية (اختر الصور المراد حذفها)</label>
-                            <div class="row g-3">
+                        <!-- معرض الصور الاحترافي -->
+                        {% if specific_request.media_files %}
+                        <div class="image-gallery-container">
+                            <div class="gallery-header">
+                                <i class="fas fa-images"></i>
+                                <h4>معرض الصور <span style="color: #999; font-size: 0.9em;">({{ specific_request.media_files|length }} صورة)</span></h4>
+                            </div>
+                            <div class="image-grid">
                                 {% for media in specific_request.media_files %}
-                                <div class="col-md-3 col-sm-6">
-                                    <div class="card">
+                                <div class="image-card" data-bs-toggle="modal" data-bs-target="#imageModal{{ loop.index }}">
+                                    <div class="image-wrapper">
                                         <img src="{{ media.drive_view_url or url_for('static', filename=media.local_path) }}" 
-                                             class="card-img-top" 
                                              alt="{{ media.media_type.value }}"
-                                             style="height: 150px; object-fit: cover;">
-                                        <div class="card-body p-2 text-center">
-                                            <small class="d-block mb-2">
-                                                {% if media.media_type.value == 'PLATE' %}اللوحة
-                                                {% elif media.media_type.value == 'FRONT' %}أمامي
-                                                {% elif media.media_type.value == 'BACK' %}خلفي
-                                                {% elif media.media_type.value == 'RIGHT' %}يمين
-                                                {% elif media.media_type.value == 'LEFT' %}يسار
-                                                {% endif %}
-                                            </small>
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="checkbox" name="delete_media" value="{{ media.id }}" id="delete_{{ media.id }}">
-                                                <label class="form-check-label text-danger" for="delete_{{ media.id }}">
-                                                    <i class="fas fa-trash-alt me-1"></i>حذف
-                                                </label>
+                                             onerror="this.parentElement.style.backgroundColor='#f0f0f0';">
+                                        <div class="image-view-btn">
+                                            <i class="fas fa-search-plus"></i>
+                                        </div>
+                                    </div>
+                                    <div class="image-badge">
+                                        {% if media.media_type.value == 'PLATE' %}
+                                            <i class="fas fa-car"></i> اللوحة
+                                        {% elif media.media_type.value == 'FRONT' %}
+                                            <i class="fas fa-arrow-up"></i> أمامي
+                                        {% elif media.media_type.value == 'BACK' %}
+                                            <i class="fas fa-arrow-down"></i> خلفي
+                                        {% elif media.media_type.value == 'RIGHT' %}
+                                            <i class="fas fa-arrow-right"></i> يمين
+                                        {% elif media.media_type.value == 'LEFT' %}
+                                            <i class="fas fa-arrow-left"></i> يسار
+                                        {% else %}
+                                            <i class="fas fa-image"></i> صورة
+                                        {% endif %}
+                                    </div>
+                                    <div class="image-overlay">
+                                        <p class="image-filename">{{ media.media_type.value }}</p>
+                                        {% if media.uploaded_at %}
+                                        <p class="image-size">{{ media.uploaded_at.strftime('%d/%m/%Y') }}</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <!-- موديل الصورة -->
+                                <div class="modal fade" id="imageModal{{ loop.index }}" tabindex="-1" aria-hidden="true">
+                                    <div class="modal-dialog modal-lg modal-dialog-centered">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">
+                                                    {% if media.media_type.value == 'PLATE' %}اللوحة
+                                                    {% elif media.media_type.value == 'FRONT' %}أمامي
+                                                    {% elif media.media_type.value == 'BACK' %}خلفي
+                                                    {% elif media.media_type.value == 'RIGHT' %}يمين
+                                                    {% elif media.media_type.value == 'LEFT' %}يسار
+                                                    {% else %}صورة
+                                                    {% endif %}
+                                                </h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body text-center">
+                                                <img src="{{ media.drive_view_url or url_for('static', filename=media.local_path) }}" 
+                                                     class="img-fluid" 
+                                                     alt="{{ media.media_type.value }}">
                                             </div>
                                         </div>
                                     </div>
@@ -661,107 +507,161 @@
                                 {% endfor %}
                             </div>
                         </div>
-                    </div>
-                    {% endif %}
-                    
-                    <div class="row">
-                        <div class="col-12 mb-3">
-                            <label class="form-label">إضافة صور جديدة (اختياري)</label>
-                            <small class="form-text text-muted d-block mb-2">يمكنك إضافة أو استبدال الصور المحذوفة</small>
+                        {% else %}
+                        <div class="no-images-alert">
+                            <i class="fas fa-image"></i>
+                            <p>لم يتم رفع صور لهذا الطلب</p>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="photo_plate" class="form-label">
-                                <i class="fas fa-car me-1"></i>صورة اللوحة
-                            </label>
-                            <input type="file" class="form-control" id="photo_plate" name="photo_plate" accept="image/*">
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="photo_front" class="form-label">
-                                <i class="fas fa-arrow-up me-1"></i>صورة أمامية
-                            </label>
-                            <input type="file" class="form-control" id="photo_front" name="photo_front" accept="image/*">
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="photo_back" class="form-label">
-                                <i class="fas fa-arrow-down me-1"></i>صورة خلفية
-                            </label>
-                            <input type="file" class="form-control" id="photo_back" name="photo_back" accept="image/*">
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="photo_right_side" class="form-label">
-                                <i class="fas fa-arrow-right me-1"></i>صورة جانب أيمن
-                            </label>
-                            <input type="file" class="form-control" id="photo_right_side" name="photo_right_side" accept="image/*">
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="photo_left_side" class="form-label">
-                                <i class="fas fa-arrow-left me-1"></i>صورة جانب أيسر
-                            </label>
-                            <input type="file" class="form-control" id="photo_left_side" name="photo_left_side" accept="image/*">
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        <i class="fas fa-times me-2"></i>إلغاء
-                    </button>
-                    <button type="submit" class="btn btn-warning">
-                        <i class="fas fa-save me-2"></i>حفظ التعديلات
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-{% endif %}
+                        {% endif %}
 
-<!-- Modal التعديل - السلف المالية -->
-{% if emp_request.request_type == RequestType.ADVANCE_PAYMENT and emp_request.status == RequestStatus.PENDING %}
-<div class="modal fade" id="editAdvanceModal" tabindex="-1" aria-labelledby="editAdvanceModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header bg-gradient-warning text-white">
-                <h5 class="modal-title" id="editAdvanceModalLabel">
-                    <i class="fas fa-edit me-2"></i>
-                    تعديل طلب السلفة #{{ emp_request.id }}
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="إغلاق"></button>
+                    {% elif emp_request.request_type == RequestType.CAR_INSPECTION %}
+                        <div class="row">
+                            <div class="col-md-6 info-section">
+                                <span class="info-label">رقم لوحة السيارة:</span>
+                                <p class="info-value">{{ specific_request.vehicle.plate_number if specific_request.vehicle else 'غير محدد' }}</p>
+                            </div>
+                            <div class="col-md-6 info-section">
+                                <span class="info-label">نوع الفحص:</span>
+                                <p class="info-value">{{ specific_request.inspection_type }}</p>
+                            </div>
+                            <div class="col-md-6 info-section">
+                                <span class="info-label">تاريخ الفحص:</span>
+                                <p class="info-value">{{ specific_request.inspection_date.strftime('%Y-%m-%d') if specific_request.inspection_date else 'غير محدد' }}</p>
+                            </div>
+                        </div>
+
+                        <!-- معرض الصور الاحترافي -->
+                        {% if specific_request.media_files %}
+                        <div class="image-gallery-container">
+                            <div class="gallery-header">
+                                <i class="fas fa-images"></i>
+                                <h4>معرض الصور والملفات <span style="color: #999; font-size: 0.9em;">({{ specific_request.media_files|length }} ملف)</span></h4>
+                            </div>
+                            <div class="image-grid">
+                                {% for media in specific_request.media_files %}
+                                {% if media.file_type.value == 'IMAGE' %}
+                                <div class="image-card" data-bs-toggle="modal" data-bs-target="#inspectionImageModal{{ loop.index }}">
+                                    <div class="image-wrapper">
+                                        {% if media.drive_view_url %}
+                                            {% set image_url = media.drive_view_url %}
+                                        {% elif media.local_path %}
+                                            {% if media.local_path.startswith('static/') %}
+                                                {% set image_url = url_for('static', filename=media.local_path.replace('static/', '')) %}
+                                            {% elif media.local_path.startswith('uploads/') %}
+                                                {% set image_url = url_for('static', filename=media.local_path) %}
+                                            {% else %}
+                                                {% set image_url = url_for('static', filename=media.local_path) %}
+                                            {% endif %}
+                                        {% else %}
+                                            {% set image_url = url_for('static', filename='images/no-image.png') %}
+                                        {% endif %}
+                                        <img src="{{ image_url }}" 
+                                             alt="{{ media.original_filename }}"
+                                             onerror="this.parentElement.style.backgroundColor='#f0f0f0';">
+                                        <div class="image-view-btn">
+                                            <i class="fas fa-search-plus"></i>
+                                        </div>
+                                    </div>
+                                    <div class="image-badge">
+                                        <i class="fas fa-image"></i> صورة {{ loop.index }}
+                                    </div>
+                                    <div class="image-overlay">
+                                        <p class="image-filename">{{ media.original_filename }}</p>
+                                        {% if media.file_size %}
+                                        <p class="image-size">{{ (media.file_size / 1024 / 1024)|round(2) }} MB</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <!-- موديل الصورة -->
+                                <div class="modal fade" id="inspectionImageModal{{ loop.index }}" tabindex="-1" aria-hidden="true">
+                                    <div class="modal-dialog modal-lg modal-dialog-centered">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">{{ media.original_filename }}</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body text-center">
+                                                <img src="{{ image_url }}" class="img-fluid" alt="{{ media.original_filename }}">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="no-images-alert">
+                            <i class="fas fa-image"></i>
+                            <p>لم يتم رفع صور لهذا الطلب</p>
+                        </div>
+                        {% endif %}
+
+                    {% elif emp_request.request_type == RequestType.ADVANCE_PAYMENT %}
+                        <div class="row">
+                            <div class="col-md-6 info-section">
+                                <span class="info-label">المبلغ المطلوب:</span>
+                                <p class="info-value">{{ specific_request.amount }} ريال</p>
+                            </div>
+                            <div class="col-md-6 info-section">
+                                <span class="info-label">السبب:</span>
+                                <p class="info-value">{{ specific_request.reason or 'غير محدد' }}</p>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
             </div>
-            <form method="POST" action="{{ url_for('employee_requests.edit_advance_payment', request_id=emp_request.id) }}" enctype="multipart/form-data">
-                <div class="modal-body">
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="requested_amount" class="form-label">المبلغ المطلوب <span class="text-danger">*</span></label>
-                            <input type="number" step="0.01" class="form-control" id="requested_amount" name="requested_amount" 
-                                   value="{{ specific_request.requested_amount }}" required min="1">
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="installments" class="form-label">عدد الأقساط (اختياري)</label>
-                            <input type="number" class="form-control" id="installments" name="installments" 
-                                   value="{{ specific_request.installments or '' }}" min="1">
-                        </div>
-                        <div class="col-12 mb-3">
-                            <label for="reason" class="form-label">سبب الطلب</label>
-                            <textarea class="form-control" id="reason" name="reason" rows="3">{{ specific_request.reason or '' }}</textarea>
-                        </div>
-                        <div class="col-12 mb-3">
-                            <label for="new_image" class="form-label">تحديث الصورة (اختياري)</label>
-                            <input type="file" class="form-control" id="new_image" name="new_image" accept="image/*">
-                            <small class="form-text text-muted">اترك الحقل فارغاً للاحتفاظ بالصورة الحالية</small>
-                        </div>
+            {% endif %}
+        </div>
+
+        <!-- الشريط الجانبي -->
+        <div class="col-md-4">
+            <div class="card shadow-lg">
+                <div class="card-header text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list me-2"></i>
+                        الملخص
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="info-section">
+                        <span class="info-label">حالة الطلب:</span>
+                        <p class="info-value">
+                            {% if emp_request.status == RequestStatus.PENDING %}
+                                <span class="badge bg-warning w-100">قيد الانتظار</span>
+                            {% elif emp_request.status == RequestStatus.APPROVED %}
+                                <span class="badge bg-success w-100">موافق عليها</span>
+                            {% elif emp_request.status == RequestStatus.REJECTED %}
+                                <span class="badge bg-danger w-100">مرفوضة</span>
+                            {% endif %}
+                        </p>
                     </div>
+                    <div class="info-section">
+                        <span class="info-label">الموظف المسؤول:</span>
+                        <p class="info-value">{{ emp_request.employee.name if emp_request.employee else 'غير محدد' }}</p>
+                    </div>
+                    <div class="info-section">
+                        <span class="info-label">نوع الطلب:</span>
+                        <p class="info-value">
+                            {% if emp_request.request_type == RequestType.INVOICE %}
+                                فاتورة
+                            {% elif emp_request.request_type == RequestType.CAR_WASH %}
+                                غسيل سيارة
+                            {% elif emp_request.request_type == RequestType.CAR_INSPECTION %}
+                                فحص وتوثيق
+                            {% elif emp_request.request_type == RequestType.ADVANCE_PAYMENT %}
+                                سلفة مالية
+                            {% endif %}
+                        </p>
+                    </div>
+                    <hr>
+                    <a href="{{ url_for('employee_requests.index') }}" class="btn btn-outline-primary w-100">
+                        <i class="fas fa-arrow-left me-2"></i>العودة للقائمة
+                    </a>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        <i class="fas fa-times me-2"></i>إلغاء
-                    </button>
-                    <button type="submit" class="btn btn-warning">
-                        <i class="fas fa-save me-2"></i>حفظ التعديلات
-                    </button>
-                </div>
-            </form>
+            </div>
         </div>
     </div>
 </div>
-{% endif %}
 {% endblock %}
