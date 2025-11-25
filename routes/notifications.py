@@ -11,8 +11,16 @@ notifications_bp = Blueprint('notifications', __name__, url_prefix='/notificatio
 def index():
     """صفحة عرض جميع الإشعارات"""
     page = request.args.get('page', 1, type=int)
+    notification_type = request.args.get('type', None)
     
-    notifications = Notification.query.filter_by(user_id=current_user.id).order_by(
+    # بناء الاستعلام مع فلترة النوع
+    query = Notification.query.filter_by(user_id=current_user.id)
+    
+    # تطبيق فلتر النوع إذا تم تحديده
+    if notification_type:
+        query = query.filter_by(notification_type=notification_type)
+    
+    notifications = query.order_by(
         Notification.created_at.desc()
     ).paginate(page=page, per_page=20)
     
@@ -41,10 +49,7 @@ def view_detail(notification_id):
         notification.read_at = datetime.utcnow()
         db.session.commit()
     
-    # التوجيه إلى الصفحة المرتبطة إن وجدت
-    if notification.action_url:
-        return redirect(notification.action_url)
-    
+    # عرض صفحة التفاصيل أولاً مع رابط للصفحة المرتبطة
     return render_template('notifications/detail.html', notification=notification)
 
 
@@ -162,3 +167,99 @@ def create_operations_notification(user_id, operation_title, operation_descripti
         priority='normal',
         action_url=action_urls.get(entity_type, '/')
     )
+
+
+@notifications_bp.route('/test/create-demo-notifications', methods=['GET', 'POST'])
+def create_demo_notifications():
+    """إنشاء إشعارات تجريبية لاختبار النظام"""
+    from models import User
+    
+    # الحصول على معرف المستخدم - استخدام المستخدم الحالي أو أول مستخدم
+    if current_user.is_authenticated:
+        user_id = current_user.id
+    else:
+        # استخدام أول مستخدم موجود
+        first_user = User.query.first()
+        if not first_user:
+            return jsonify({'error': 'لا يوجد مستخدمين في النظام', 'redirect_url': url_for('auth.login')}), 404
+        user_id = first_user.id
+    
+    # حذف الإشعارات التجريبية القديمة (اختياري)
+    # Notification.query.filter_by(user_id=user_id).delete()
+    # db.session.commit()
+    
+    # 1. إنشاء إشعار غياب موظف
+    create_absence_notification(
+        user_id=user_id,
+        employee_name='محمد علي',
+        department_name='قسم التسويق'
+    )
+    
+    # 2. إنشاء إشعار انتهاء إقامة
+    create_document_expiry_notification(
+        user_id=user_id,
+        employee_name='أحمد محمود',
+        doc_type='الإقامة',
+        days_left=5
+    )
+    
+    # 3. إنشاء إشعار انتهاء تفويض
+    create_document_expiry_notification(
+        user_id=user_id,
+        employee_name='فاطمة عبدالرحمن',
+        doc_type='التفويض',
+        days_left=3
+    )
+    
+    # 4. إنشاء إشعار انتهاء فحص دوري
+    create_document_expiry_notification(
+        user_id=user_id,
+        employee_name='سيارة رقم 123',
+        doc_type='الفحص الدوري',
+        days_left=10
+    )
+    
+    # 5. إنشاء إشعارات عمليات متنوعة
+    create_operations_notification(
+        user_id=user_id,
+        operation_title='حادثة سير جديدة',
+        operation_description='تم تسجيل حادثة سير جديدة للسيارة رقم ABC-1234. يرجى المراجعة والموافقة.',
+        entity_type='accident',
+        entity_id=1
+    )
+    
+    create_operations_notification(
+        user_id=user_id,
+        operation_title='طلب سيارة جديد',
+        operation_description='تم استلام طلب تخصيص سيارة جديد من قسم العمليات.',
+        entity_type='vehicle',
+        entity_id=5
+    )
+    
+    create_operations_notification(
+        user_id=user_id,
+        operation_title='طلب سلفة مالية',
+        operation_description='تم تقديم طلب سلفة مالية جديد من الموظف أحمد محمود بقيمة 5000 ريال.',
+        entity_type='employee_request',
+        entity_id=3
+    )
+    
+    # 6. إشعارات إضافية
+    create_absence_notification(
+        user_id=user_id,
+        employee_name='سارة إبراهيم',
+        department_name='قسم الموارد البشرية'
+    )
+    
+    create_document_expiry_notification(
+        user_id=user_id,
+        employee_name='عمر خالد',
+        doc_type='جواز السفر',
+        days_left=15
+    )
+    
+    return jsonify({
+        'success': True,
+        'message': 'تم إنشاء 8 إشعارات تجريبية بنجاح',
+        'redirect_url': url_for('notifications.index')
+    })
