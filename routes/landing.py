@@ -277,9 +277,9 @@ def about_old():
     return render_template('landing/about.html')
 
 @landing_bp.route('/privacy')
-def privacy():
-    """صفحة سياسة الخصوصية"""
-    return render_template('privacy.html')
+def privacy_old():
+    """صفحة سياسة الخصوصية (قديمة)"""
+    return render_template('landing/privacy.html')
 
 @landing_bp.route('/contact')
 def contact_page():

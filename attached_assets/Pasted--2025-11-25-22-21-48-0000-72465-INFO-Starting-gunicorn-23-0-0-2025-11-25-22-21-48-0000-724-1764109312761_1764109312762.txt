@@ -1,0 +1,76 @@
+[2025-11-25 22:21:48 +0000] [72465] [INFO] Starting gunicorn 23.0.0
+[2025-11-25 22:21:48 +0000] [72465] [INFO] Listening at: http://0.0.0.0:5000 (72465)
+[2025-11-25 22:21:48 +0000] [72465] [INFO] Using worker: sync
+[2025-11-25 22:21:48 +0000] [72476] [INFO] Booting worker with pid: 72476
+[2025-11-25 22:21:48 +0000] [72465] [INFO] Handling signal: winch
+[2025-11-25 22:21:48 +0000] [72465] [INFO] Handling signal: winch
+[2025-11-25 22:21:48 +0000] [72465] [INFO] Handling signal: winch
+INFO:app:Using database: postgresql://neondb_owner:npg_A8atbziV4jyJ@***
+[2025-11-25 22:21:49 +0000] [72465] [INFO] Handling signal: winch
+[2025-11-25 22:21:49 +0000] [72465] [INFO] Handling signal: winch
+[2025-11-25 22:21:50 +0000] [72465] [INFO] Handling signal: winch
+/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/fpdf/__init__.py:40: UserWarning: You have both PyFPDF & fpdf2 installed. Both packages cannot be installed at the same time as they share the same module namespace. To only keep fpdf2, run: pip uninstall --yes pypdf && pip install --upgrade fpdf2
+  warnings.warn(
+[2025-11-25 22:21:50 +0000] [72465] [INFO] Handling signal: winch
+[2025-11-25 22:21:50 +0000] [72465] [INFO] Handling signal: winch
+DEBUG:google.cloud.storage._opentelemetry_tracing:This service is instrumented using OpenTelemetry. OpenTelemetry or one of its components could not be imported; please add compatible versions of opentelemetry-api and opentelemetry-instrumentation packages in order to get Storage Tracing data.
+[2025-11-25 22:21:51 +0000] [72465] [INFO] Handling signal: winch
+[2025-11-25 22:21:51 +0000] [72465] [INFO] Handling signal: winch
+[2025-11-25 22:21:51 +0000] [72465] [INFO] Handling signal: winch
+[2025-11-25 22:21:52 +0000] [72476] [ERROR] Exception in worker process
+Traceback (most recent call last):
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/gunicorn/arbiter.py", line 608, in spawn_worker
+    worker.init_process()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/gunicorn/workers/base.py", line 135, in init_process
+    self.load_wsgi()
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/gunicorn/workers/base.py", line 147, in load_wsgi
+    self.wsgi = self.app.wsgi()
+                ^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/gunicorn/app/base.py", line 66, in wsgi
+    self.callable = self.load()
+                    ^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/gunicorn/app/wsgiapp.py", line 57, in load
+    return self.load_wsgiapp()
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/gunicorn/app/wsgiapp.py", line 47, in load_wsgiapp
+    return util.import_app(self.app_uri)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/gunicorn/util.py", line 370, in import_app
+    mod = importlib.import_module(module)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/nix/store/7d088dip86hlzri9sk0h78b63yfmx0a0-python3-3.11.13/lib/python3.11/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1204, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/home/runner/workspace/main.py", line 1, in <module>
+    from app import app
+  File "/home/runner/workspace/app.py", line 462, in <module>
+    app.register_blueprint(landing_bp)
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/flask/sansio/scaffold.py", line 44, in wrapper_func
+    return f(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/flask/sansio/app.py", line 597, in register_blueprint
+    blueprint.register(self, options)
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/flask/sansio/blueprints.py", line 335, in register
+    deferred(state)
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/flask/sansio/blueprints.py", line 431, in <lambda>
+    lambda s: s.add_url_rule(
+              ^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/flask/sansio/blueprints.py", line 110, in add_url_rule
+    self.app.add_url_rule(
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/flask/sansio/scaffold.py", line 44, in wrapper_func
+    return f(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/flask/sansio/app.py", line 659, in add_url_rule
+    raise AssertionError(
+AssertionError: View function mapping is overwriting an existing endpoint function: landing.privacy
+[2025-11-25 22:21:52 +0000] [72476] [INFO] Worker exiting (pid: 72476)
+[2025-11-25 22:21:52 +0000] [72465] [INFO] Handling signal: winch
+[2025-11-25 22:21:52 +0000] [72465] [ERROR] Worker (pid:72476) exited with code 3
+[2025-11-25 22:21:52 +0000] [72465] [ERROR] Shutting down: Master
+[2025-11-25 22:21:52 +0000] [72465] [ERROR] Reason: Worker failed to boot.
