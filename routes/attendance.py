@@ -4075,6 +4075,9 @@ def departments_circles_overview():
                 'recorded_at': loc.recorded_at
             }
     
+    # إذا تم اختيار قسم معين، تمرير فقط هذا القسم في all_departments للفلتر
+    departments_for_filter = departments if department_filter else all_departments
+    
     return render_template(
         'attendance/departments_circles_overview.html',
         departments_data=departments_data,
