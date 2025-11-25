@@ -281,6 +281,98 @@
                     </div>
                 </div>
 
+                <!-- صور الحادث الإضافية -->
+                {% if images and images|length > 0 %}
+                <div class="col-12 mb-4">
+                    <div class="card">
+                        <div class="card-header bg-danger text-white">
+                            <h5 class="mb-0">
+                                <i class="fas fa-camera me-2"></i>
+                                صور الحادث ({{ images|length }} صورة)
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                {% for image in images %}
+                                <div class="col-md-3">
+                                    <div class="card h-100">
+                                        <div class="card-header bg-light text-center">
+                                            <small class="text-muted">
+                                                {% if image.caption %}
+                                                {{ image.caption }}
+                                                {% else %}
+                                                صورة #{{ loop.index }}
+                                                {% endif %}
+                                            </small>
+                                        </div>
+                                        <div class="card-body text-center p-2">
+                                            <a href="{{ url_for('static', filename=image.image_path) }}" 
+                                               target="_blank" 
+                                               data-bs-toggle="modal" 
+                                               data-bs-target="#imageModal{{ image.id }}">
+                                                <img src="{{ url_for('static', filename=image.image_path) }}" 
+                                                     class="img-fluid rounded" 
+                                                     style="max-height: 150px; cursor: pointer;">
+                                            </a>
+                                        </div>
+                                        <div class="card-footer bg-light text-center p-2">
+                                            <a href="{{ url_for('static', filename=image.image_path) }}" 
+                                               class="btn btn-sm btn-primary" 
+                                               download>
+                                                <i class="fas fa-download"></i>
+                                            </a>
+                                            <a href="{{ url_for('static', filename=image.image_path) }}" 
+                                               target="_blank" 
+                                               class="btn btn-sm btn-secondary">
+                                                <i class="fas fa-external-link-alt"></i>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Modal for full image view -->
+                                <div class="modal fade" id="imageModal{{ image.id }}" tabindex="-1">
+                                    <div class="modal-dialog modal-xl modal-dialog-centered">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">
+                                                    {% if image.caption %}
+                                                    {{ image.caption }}
+                                                    {% else %}
+                                                    صورة الحادث #{{ loop.index }}
+                                                    {% endif %}
+                                                </h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body text-center">
+                                                <img src="{{ url_for('static', filename=image.image_path) }}" 
+                                                     class="img-fluid">
+                                            </div>
+                                            <div class="modal-footer">
+                                                <a href="{{ url_for('static', filename=image.image_path) }}" 
+                                                   class="btn btn-primary" 
+                                                   download>
+                                                    <i class="fas fa-download me-2"></i>تحميل
+                                                </a>
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="col-12 mb-4">
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        لا توجد صور إضافية للحادث
+                    </div>
+                </div>
+                {% endif %}
+
                 <!-- إجراءات المراجعة -->
                 {% if accident.review_status in ['pending', 'under_review'] %}
                 <div class="col-12 mb-4">
