@@ -151,6 +151,9 @@ class VehicleDriveUploader:
             return
         
         try:
+            from utils.storage_helper import download_image
+            import tempfile
+            
             # جمع بيانات العملية
             plate_number = safety_check.vehicle_plate_number
             
@@ -160,15 +163,45 @@ class VehicleDriveUploader:
             # جمع الصور
             image_paths = []
             for img in safety_check.safety_images:
-                img_path = os.path.join('static/uploads', img.image_path)
+                if not img.image_path:
+                    continue
+                
+                # إصلاح المسار - لا نضيف static/uploads إذا كانت موجودة بالفعل
+                img_path = img.image_path
+                if not img_path.startswith('static/uploads'):
+                    img_path = os.path.join('static/uploads', img_path)
+                
+                # البحث عن الملف محلياً أولاً
                 if os.path.exists(img_path):
                     image_paths.append(img_path)
+                    logger.info(f"تم العثور على صورة محلياً: {img_path}")
+                else:
+                    # محاولة تحميل الصورة من Object Storage وحفظها مؤقتاً
+                    try:
+                        image_data = download_image(img.image_path)
+                        if image_data:
+                            # إنشاء ملف مؤقت
+                            with tempfile.NamedTemporaryFile(suffix='.jpg', delete=False) as tmp:
+                                tmp.write(image_data)
+                                tmp_path = tmp.name
+                            image_paths.append(tmp_path)
+                            logger.info(f"تم تحميل صورة من Object Storage: {img.image_path}")
+                        else:
+                            logger.warning(f"لم يتم العثور على صورة: {img.image_path}")
+                    except Exception as e:
+                        logger.warning(f"خطأ في تحميل صورة {img.image_path}: {e}")
             
             # استخدام ملف PDF الموجود إذا لم يتم توفير واحد
             if not pdf_path and safety_check.pdf_file_path:
-                pdf_path = os.path.join('static/uploads', safety_check.pdf_file_path)
+                pdf_path = safety_check.pdf_file_path
+                if not pdf_path.startswith('static/uploads'):
+                    pdf_path = os.path.join('static/uploads', pdf_path)
+                
                 if not os.path.exists(pdf_path):
+                    logger.warning(f"ملف PDF غير موجود: {pdf_path}")
                     pdf_path = None
+            
+            logger.info(f"جاري رفع فحص السلامة {safety_check.id} - {len(image_paths)} صورة، PDF: {pdf_path is not None}")
             
             # رفع إلى Google Drive
             result = drive_service.upload_vehicle_operation(
@@ -178,6 +211,14 @@ class VehicleDriveUploader:
                 image_paths=image_paths if image_paths else None,
                 operation_date=safety_check.inspection_date
             )
+            
+            # تنظيف الملفات المؤقتة
+            for img_path in image_paths:
+                if img_path.startswith('/tmp'):
+                    try:
+                        os.remove(img_path)
+                    except:
+                        pass
             
             if result:
                 # تحديث السجل بروابط Google Drive
@@ -193,12 +234,13 @@ class VehicleDriveUploader:
                 safety_check.drive_upload_status = 'success'
                 safety_check.drive_uploaded_at = datetime.utcnow()
                 
-                logger.info(f"تم رفع فحص السلامة {safety_check.id} بنجاح")
+                logger.info(f"تم رفع فحص السلامة {safety_check.id} بنجاح - Folder ID: {result.get('folder_id')}")
             else:
                 safety_check.drive_upload_status = 'failed'
+                logger.warning(f"فشل رفع فحص السلامة {safety_check.id} - لم يتم استلام نتيجة من Google Drive")
                 
         except Exception as e:
-            logger.error(f"خطأ في رفع فحص السلامة: {e}")
+            logger.error(f"خطأ في رفع فحص السلامة: {e}", exc_info=True)
             safety_check.drive_upload_status = 'failed'
 
 
