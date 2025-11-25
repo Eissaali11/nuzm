@@ -4034,6 +4034,9 @@ def circle_accessed_details(department_id, circle_name):
     """صفحة منفصلة لعرض تفاصيل الموظفين الواصلين للدائرة"""
     date_str = request.args.get('date')
     
+    # منطقة زمنية السعودية (UTC+3)
+    saudi_tz = timedelta(hours=3)
+    
     try:
         if date_str:
             selected_date = datetime.strptime(date_str, '%Y-%m-%d').date()
@@ -4081,18 +4084,25 @@ def circle_accessed_details(department_id, circle_name):
             
             duration_minutes = geo_session.duration_minutes if geo_session.duration_minutes else 0
             
+            # تحويل الأوقات إلى توقيت السعودية
+            entry_time_sa = (geo_session.entry_time + saudi_tz) if geo_session.entry_time else None
+            exit_time_sa = (geo_session.exit_time + saudi_tz) if geo_session.exit_time else None
+            check_in_sa = (attendance.check_in + saudi_tz) if attendance and attendance.check_in else None
+            check_out_sa = (attendance.check_out + saudi_tz) if attendance and attendance.check_out else None
+            
             employees_accessed.append({
                 'name': emp.name,
                 'employee_id': emp.employee_id,
                 'status': attendance.status if attendance else 'لم يتم التسجيل',
-                'check_in': attendance.check_in.strftime('%H:%M') if attendance and attendance.check_in else '-',
-                'check_out': attendance.check_out.strftime('%H:%M') if attendance and attendance.check_out else '-',
-                'circle_enter_time': geo_session.entry_time.strftime('%H:%M:%S') if geo_session.entry_time else None,
-                'circle_exit_time': geo_session.exit_time.strftime('%H:%M:%S') if geo_session.exit_time else None,
+                'check_in': check_in_sa.strftime('%H:%M') if check_in_sa else '-',
+                'check_out': check_out_sa.strftime('%H:%M') if check_out_sa else '-',
+                'circle_enter_time': entry_time_sa.strftime('%H:%M:%S') if entry_time_sa else None,
+                'circle_exit_time': exit_time_sa.strftime('%H:%M:%S') if exit_time_sa else None,
                 'duration_minutes': duration_minutes,
                 'duration_display': f'{duration_minutes // 60}س {duration_minutes % 60}د' if duration_minutes > 0 else '-',
                 'gps_latitude': emp_location.latitude if emp_location else None,
                 'gps_longitude': emp_location.longitude if emp_location else None,
+                'profile_image': emp.profile_image,
             })
     
     return render_template(
