@@ -223,6 +223,36 @@ def create_safety_check_review_notification(user_id, vehicle_plate, action, revi
     )
 
 
+def create_accident_notification(user_id, vehicle_plate, driver_name, accident_type, accident_id, severity='normal'):
+    """إشعار حادثة سير جديدة"""
+    severity_labels = {
+        'minor': 'بسيطة',
+        'moderate': 'متوسطة',
+        'severe': 'حادة',
+        'critical': 'حرجة'
+    }
+    
+    severity_priority = {
+        'minor': 'low',
+        'moderate': 'normal',
+        'severe': 'high',
+        'critical': 'critical'
+    }
+    
+    severity_label = severity_labels.get(accident_type, accident_type)
+    
+    return create_notification(
+        user_id=user_id,
+        notification_type='accident',
+        title=f'حادثة سير - السيارة {vehicle_plate}',
+        description=f'تم تسجيل حادثة سير {severity_label} للسيارة {vehicle_plate} من قبل السائق {driver_name}. يرجى المراجعة والموافقة.',
+        related_entity_type='accident',
+        related_entity_id=accident_id,
+        priority=severity_priority.get(severity, 'normal'),
+        action_url=url_for('vehicle_operations.vehicle_operations_list')
+    )
+
+
 @notifications_bp.route('/test/create-demo-notifications', methods=['GET', 'POST'])
 def create_demo_notifications():
     """إنشاء إشعارات تجريبية لاختبار النظام"""
@@ -337,8 +367,27 @@ def create_demo_notifications():
         check_id=3
     )
     
+    # 8. إشعارات الحوادث
+    create_accident_notification(
+        user_id=user_id,
+        vehicle_plate='ABC-1234',
+        driver_name='محمد عبدالله',
+        accident_type='moderate',
+        accident_id=10,
+        severity='moderate'
+    )
+    
+    create_accident_notification(
+        user_id=user_id,
+        vehicle_plate='XYZ-5678',
+        driver_name='فاطمة احمد',
+        accident_type='severe',
+        accident_id=11,
+        severity='severe'
+    )
+    
     return jsonify({
         'success': True,
-        'message': 'تم إنشاء 11 إشعار تجريبي بنجاح (شامل إشعارات فحص السلامة)',
+        'message': 'تم إنشاء 13 إشعار تجريبي بنجاح (شامل إشعارات فحص السلامة والحوادث)',
         'redirect_url': url_for('notifications.index')
     })
