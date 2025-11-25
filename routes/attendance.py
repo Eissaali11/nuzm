@@ -3846,21 +3846,21 @@ def departments_circles_overview():
                 ).order_by(Attendance.date.desc()).first()
                 
                 # جلب بيانات التتبع الجغرافي (GPS)
-                location_data = EmployeeLocation.query.filter(
+                emp_location = db.session.query(EmployeeLocation).filter(
                     EmployeeLocation.employee_id == emp.id,
                     EmployeeLocation.recorded_at >= datetime.combine(start_date, time(0, 0, 0)),
                     EmployeeLocation.recorded_at <= datetime.combine(end_date, time(23, 59, 59))
                 ).order_by(EmployeeLocation.recorded_at.desc()).first()
                 
                 # جلب بيانات الوصول إلى الدوائر (GeofenceSession)
-                geofence_session = GeofenceSession.query.filter(
+                geo_session = db.session.query(GeofenceSession).filter(
                     GeofenceSession.employee_id == emp.id,
                     GeofenceSession.enter_time >= datetime.combine(start_date, time(0, 0, 0)),
                     GeofenceSession.enter_time <= datetime.combine(end_date, time(23, 59, 59))
                 ).order_by(GeofenceSession.enter_time.desc()).first()
                 
                 # تحديد ما إذا كان الموظف قد دخل الدائرة
-                accessed = geofence_session is not None
+                accessed = geo_session is not None
                 if accessed:
                     accessed_count += 1
                     accessed_employees.append(emp.name)
@@ -3872,13 +3872,13 @@ def departments_circles_overview():
                     'check_in': attendance.check_in.strftime('%H:%M') if attendance and attendance.check_in else '-',
                     'check_out': attendance.check_out.strftime('%H:%M') if attendance and attendance.check_out else '-',
                     # بيانات التتبع الجغرافي
-                    'gps_latitude': location_data.latitude if location_data else None,
-                    'gps_longitude': location_data.longitude if location_data else None,
-                    'gps_recorded_at': location_data.recorded_at if location_data else None,
+                    'gps_latitude': emp_location.latitude if emp_location else None,
+                    'gps_longitude': emp_location.longitude if emp_location else None,
+                    'gps_recorded_at': emp_location.recorded_at if emp_location else None,
                     # بيانات الوصول إلى الدائرة
                     'accessed_circle': accessed,
-                    'circle_enter_time': geofence_session.enter_time if geofence_session else None,
-                    'circle_exit_time': geofence_session.exit_time if geofence_session else None,
+                    'circle_enter_time': geo_session.enter_time if geo_session else None,
+                    'circle_exit_time': geo_session.exit_time if geo_session else None,
                 }
                 employees_details.append(emp_data)
             
