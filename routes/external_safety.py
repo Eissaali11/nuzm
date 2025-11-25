@@ -95,6 +95,43 @@ external_safety_bp = Blueprint('external_safety', __name__)
 
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'heic', 'heif'}
 
+
+@external_safety_bp.route('/test-notifications', methods=['GET', 'POST'])
+def test_safety_check_notifications():
+    """اختبار إنشاء إشعارات فحص السلامة لجميع المستخدمين"""
+    try:
+        # الحصول على آخر فحص سلامة
+        last_check = VehicleExternalSafetyCheck.query.order_by(VehicleExternalSafetyCheck.id.desc()).first()
+        
+        if not last_check:
+            return jsonify({'success': False, 'message': 'لا توجد فحوصات سلامة'}), 404
+        
+        all_users = User.query.all()
+        
+        notification_count = 0
+        for user in all_users:
+            try:
+                create_safety_check_notification(
+                    user_id=user.id,
+                    vehicle_plate=last_check.vehicle_plate_number or 'غير محدد',
+                    supervisor_name=last_check.driver_name or 'غير محدد',
+                    check_status=last_check.approval_status or 'pending',
+                    check_id=last_check.id
+                )
+                notification_count += 1
+            except Exception as e:
+                current_app.logger.error(f'خطأ في إنشاء إشعار للمستخدم {user.id}: {str(e)}')
+        
+        return jsonify({
+            'success': True,
+            'message': f'تم إنشاء {notification_count} إشعار لفحص السلامة {last_check.id}',
+            'check_id': last_check.id,
+            'users_count': len(all_users)
+        })
+    except Exception as e:
+        current_app.logger.error(f'خطأ في اختبار الإشعارات: {str(e)}')
+        return jsonify({'success': False, 'message': str(e)}), 500
+
 def get_all_current_driversWithEmil():
     """
     تسترجع قاموساً يحتوي على معلومات السائق الحالي لكل مركبة.
@@ -635,15 +672,13 @@ def handle_safety_check_submission(vehicle):
         
         # إنشاء إشعارات للمسؤولين عند إنشاء فحص جديد
         try:
-            from routes.notifications import create_safety_check_notification
-            from models import User
-            
-            # الحصول على جميع المستخدمين
+            # الحصول على جميع المستخدمين (الموديل مستورد في أعلى الملف)
             all_users = User.query.all()
             current_app.logger.info(f"Found {len(all_users)} users for safety check notifications")
             
             for user in all_users:
                 try:
+                    # استخدام الدالة المحلية create_safety_check_notification
                     create_safety_check_notification(
                         user_id=user.id,
                         vehicle_plate=safety_check.vehicle_plate_number,
