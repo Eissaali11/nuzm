@@ -2,7 +2,7 @@ modules = ["python-3.11", "python3", "nodejs-20", "postgresql-16"]
 
 [nix]
 channel = "stable-24_05"
-packages = ["cacert", "cairo", "fontconfig", "freefont_ttf", "freetype", "gdk-pixbuf", "ghostscript", "glib", "glibcLocales", "harfbuzz", "lcms2", "libaom", "libde265", "libffi", "libheif", "libimagequant", "libjpeg", "libtiff", "libwebp", "libxcrypt", "nasm", "openjpeg", "pango", "pkg-config", "tcl", "tk", "x265", "zlib"]
+packages = ["cacert", "cairo", "fontconfig", "freefont_ttf", "freetype", "gdk-pixbuf", "ghostscript", "glib", "glibcLocales", "harfbuzz", "lcms2", "libaom", "libde265", "libffi", "libheif", "libimagequant", "libjpeg", "libtiff", "libwebp", "libxcrypt", "nasm", "openjpeg", "pango", "pkg-config", "tcl", "tk", "x265", "xcodebuild", "zlib"]
 
 [deployment]
 deploymentTarget = "autoscale"

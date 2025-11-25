@@ -84,3 +84,7 @@ requests
 apscheduler
 google-api-python-client
 weasyprint
+fpdf2
+lxml
+python-dateutil
+qrcode

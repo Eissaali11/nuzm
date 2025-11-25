@@ -261,60 +261,66 @@
     <!-- الإجراءات السريعة -->
     <div class="row">
         <div class="col-12">
-            <div class="card">
-                <div class="card-header bg-light">
+            <div class="card shadow-lg border-0">
+                <div class="card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 10px 10px 0 0;">
                     <h5 class="card-title mb-0">
                         <i class="fas fa-bolt me-2"></i>الإجراءات السريعة
                     </h5>
                 </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-3 mb-3">
-                            <a href="{{ url_for('accounting_ext.quick_entry') }}" class="btn btn-outline-primary w-100 py-3">
+                <div class="card-body p-4">
+                    <div class="row g-3">
+                        <div class="col-lg-3 col-md-4 col-6">
+                            <a href="{{ url_for('accounting_ext.quick_entry') }}" class="btn btn-outline-primary w-100 py-4 fw-bold rounded-3 shadow-sm">
                                 <i class="fas fa-plus-circle fa-2x d-block mb-2"></i>
                                 قيد سريع
                             </a>
                         </div>
-                        <div class="col-md-3 mb-3">
-                            <a href="{{ url_for('accounting_ext.salary_processing') }}" class="btn btn-outline-success w-100 py-3">
+                        <div class="col-lg-3 col-md-4 col-6">
+                            <a href="{{ url_for('accounting_ext.salary_processing') }}" class="btn btn-outline-success w-100 py-4 fw-bold rounded-3 shadow-sm">
                                 <i class="fas fa-money-bill-wave fa-2x d-block mb-2"></i>
                                 معالجة الرواتب
                             </a>
                         </div>
-                        <div class="col-md-3 mb-3">
-                            <a href="{{ url_for('accounting_ext.vehicle_expenses') }}" class="btn btn-outline-warning w-100 py-3">
+                        <div class="col-lg-3 col-md-4 col-6">
+                            <a href="{{ url_for('accounting_ext.vehicle_expenses') }}" class="btn btn-outline-warning w-100 py-4 fw-bold rounded-3 shadow-sm">
                                 <i class="fas fa-car fa-2x d-block mb-2"></i>
                                 مصروف مركبة
                             </a>
                         </div>
-                        <div class="col-md-3 mb-3">
-                            <a href="/accounting/analytics/" class="btn btn-outline-info w-100 py-3">
+                        <div class="col-lg-3 col-md-4 col-6">
+                            <a href="/accounting/analytics/" class="btn btn-outline-info w-100 py-4 fw-bold rounded-3 shadow-sm">
                                 <i class="fas fa-brain fa-2x d-block mb-2"></i>
                                 التحليل الذكي
                             </a>
                         </div>
-                        <div class="col-md-3 mb-3">
-                            <a href="{{ url_for('accounting.chart_of_accounts') }}" class="btn btn-outline-secondary w-100 py-3">
+                        <div class="col-lg-3 col-md-4 col-6">
+                            <a href="{{ url_for('accounting.chart_of_accounts') }}" class="btn btn-outline-secondary w-100 py-4 fw-bold rounded-3 shadow-sm">
                                 <i class="fas fa-sitemap fa-2x d-block mb-2"></i>
                                 شجرة الحسابات
                             </a>
                         </div>
-                        <div class="col-md-3 mb-3">
-                            <a href="{{ url_for('accounting_ext.trial_balance') }}" class="btn btn-outline-info w-100 py-3">
+                        <div class="col-lg-3 col-md-4 col-6">
+                            <a href="{{ url_for('accounting_ext.trial_balance') }}" class="btn btn-outline-info w-100 py-4 fw-bold rounded-3 shadow-sm">
                                 <i class="fas fa-balance-scale fa-2x d-block mb-2"></i>
                                 ميزان المراجعة
                             </a>
                         </div>
-                        <div class="col-md-3 mb-3">
-                            <a href="{{ url_for('accounting.cost_centers') }}" class="btn btn-outline-primary w-100 py-3">
+                        <div class="col-lg-3 col-md-4 col-6">
+                            <a href="{{ url_for('accounting.cost_centers') }}" class="btn btn-outline-primary w-100 py-4 fw-bold rounded-3 shadow-sm">
                                 <i class="fas fa-building fa-2x d-block mb-2"></i>
                                 مراكز التكلفة
                             </a>
                         </div>
-                        <div class="col-md-3 mb-3">
-                            <a href="{{ url_for('accounting.create_journal_entry') }}" class="btn btn-outline-success w-100 py-3">
+                        <div class="col-lg-3 col-md-4 col-6">
+                            <a href="{{ url_for('accounting.create_journal_entry') }}" class="btn btn-outline-success w-100 py-4 fw-bold rounded-3 shadow-sm">
                                 <i class="fas fa-file-invoice fa-2x d-block mb-2"></i>
                                 قيد يومية
+                            </a>
+                        </div>
+                        <div class="col-lg-3 col-md-4 col-6">
+                            <a href="{{ url_for('e_invoicing.dashboard') }}" class="btn btn-outline-danger w-100 py-4 fw-bold rounded-3 shadow-sm">
+                                <i class="fas fa-receipt fa-2x d-block mb-2"></i>
+                                الفواتير الإلكترونية
                             </a>
                         </div>
                     </div>

@@ -1,0 +1,117 @@
+{% extends "layout.html" %}
+{% block title %}لوحة تحكم الفاتورة الإلكترونية{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- رأس الصفحة -->
+    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 40px; border-radius: 20px; margin-bottom: 30px;">
+        <h1 style="font-size: 2.5rem; font-weight: 800; margin-bottom: 10px;">
+            <i class="fas fa-receipt me-2"></i>الفواتير الإلكترونية السعودية
+        </h1>
+        <p style="opacity: 0.95; margin: 0;">نظام الفاتورة الإلكترونية المتوافق مع ZATCA</p>
+    </div>
+
+    <!-- البطاقات الإحصائية -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card border-0 shadow" style="border-left: 5px solid #28a745;">
+                <div class="card-body text-center">
+                    <h3 style="color: #28a745; font-weight: 700;">{{ total_invoices }}</h3>
+                    <p class="mb-0 text-muted">إجمالي الفواتير</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card border-0 shadow" style="border-left: 5px solid #007bff;">
+                <div class="card-body text-center">
+                    <h3 style="color: #007bff; font-weight: 700;">{{ compliant_invoices }}</h3>
+                    <p class="mb-0 text-muted">فواتير متوافقة</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card border-0 shadow" style="border-left: 5px solid #ffc107;">
+                <div class="card-body text-center">
+                    <h3 style="color: #ffc107; font-weight: 700;">{{ pending_invoices }}</h3>
+                    <p class="mb-0 text-muted">فواتير قيد المراجعة</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card border-0 shadow" style="border-left: 5px solid #dc3545;">
+                <div class="card-body text-center">
+                    <h3 style="color: #dc3545; font-weight: 700;">{{ "{:,.2f}".format(total_vat) }} ريال</h3>
+                    <p class="mb-0 text-muted">الضريبة المستحقة</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- أزرار الإجراءات -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow">
+                <div class="card-body">
+                    <a href="{{ url_for('e_invoicing.create_invoice') }}" class="btn btn-success btn-lg me-2">
+                        <i class="fas fa-plus me-2"></i>إنشاء فاتورة جديدة
+                    </a>
+                    <a href="{{ url_for('e_invoicing.vat_report') }}" class="btn btn-info btn-lg">
+                        <i class="fas fa-chart-bar me-2"></i>تقرير الضريبة المضافة
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- آخر الفواتير -->
+    <div class="card border-0 shadow">
+        <div class="card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+            <h5 class="mb-0"><i class="fas fa-list me-2"></i>آخر الفواتير</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead style="background-color: #f8f9fa;">
+                        <tr>
+                            <th>رقم الفاتورة</th>
+                            <th>المشتري</th>
+                            <th>المبلغ</th>
+                            <th>الضريبة</th>
+                            <th>الحالة</th>
+                            <th>التاريخ</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for invoice in recent_invoices %}
+                        <tr>
+                            <td><strong>{{ invoice.invoice_number }}</strong></td>
+                            <td>{{ invoice.buyer_name }}</td>
+                            <td>{{ "{:,.2f}".format(invoice.total_amount) }} ريال</td>
+                            <td>{{ "{:,.2f}".format(invoice.vat_amount) }} ريال</td>
+                            <td>
+                                {% if invoice.compliance_status == 'compliant' %}
+                                    <span class="badge bg-success">متوافقة</span>
+                                {% elif invoice.compliance_status == 'pending' %}
+                                    <span class="badge bg-warning">قيد الانتظار</span>
+                                {% elif invoice.compliance_status == 'submitted' %}
+                                    <span class="badge bg-info">مرسلة</span>
+                                {% else %}
+                                    <span class="badge bg-danger">مرفوضة</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ invoice.issue_date.strftime('%Y-%m-%d') }}</td>
+                            <td>
+                                <a href="{{ url_for('e_invoicing.view_invoice', invoice_id=invoice.id) }}" class="btn btn-sm btn-primary">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
