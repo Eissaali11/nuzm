@@ -725,12 +725,15 @@
     let mobileMarkers = {};
     let geofenceCircles = {};
     let currentEmployeeInGeofence = {};
-    let allEmployees = {{ employees_json|safe }};
+    const allEmployees = {{ employees_json|safe }};
+    const employeeLocationsData = {{ employee_locations_json|safe }};
+
+    console.log('All Employees:', allEmployees);
+    console.log('Employee Locations:', employeeLocationsData);
 
     function applyFilters() {
         const deptFilter = document.getElementById('departmentFilter').value;
         const statusFilter = document.getElementById('statusFilter').value;
-        const employeeLocations = {{ employee_locations_json|safe }};
 
         // Clear existing markers
         Object.values(mobileMarkers).forEach(m => {
@@ -740,7 +743,7 @@
 
         // Filter and display employees
         allEmployees.forEach(emp => {
-            const location = employeeLocations[emp.id] || {};
+            const location = employeeLocationsData[emp.id] || {};
             
             // Apply department filter
             if (deptFilter && emp.department_id != deptFilter) return;
@@ -748,7 +751,8 @@
             // Apply status filter
             if (statusFilter && location.status !== statusFilter) return;
 
-            if (location.latitude !== undefined) {
+            // Only show employees with actual locations
+            if (location.latitude !== undefined && location.longitude !== undefined) {
                 const photoUrl = emp.photo_url ? `/static/${emp.photo_url}` : 'https://via.placeholder.com/40?text=' + emp.name[0];
                 
                 let borderColor = '#667eea';
@@ -790,8 +794,11 @@
                 mobileMarkers[emp.id] = { marker, location, data: emp };
                 
                 checkGeofenceProximity(emp.id, location);
+                console.log(`تم إضافة موظف: ${emp.name} في (${location.latitude}, ${location.longitude})`);
             }
         });
+
+        console.log(`عدد الموظفين المعروضين: ${Object.keys(mobileMarkers).length}`);
 
         // Fit bounds if there are markers
         if (Object.keys(mobileMarkers).length > 0) {

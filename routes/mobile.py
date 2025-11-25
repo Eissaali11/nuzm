@@ -287,35 +287,36 @@ def index():
     
     # بناء employee_locations مع حالة الاتصال
     employee_locations = {}
-    from datetime import timedelta
     
     for emp in all_employees:
         location = EmployeeLocation.query.filter_by(employee_id=emp.id).order_by(EmployeeLocation.recorded_at.desc()).first()
-        if location:
-            age_minutes = (datetime.utcnow() - location.recorded_at).total_seconds() / 60
-            
-            # تحديد الحالة
-            if age_minutes < 5:
-                status = 'active'
-            elif age_minutes < 30:
-                status = 'recently_active'
-            elif age_minutes < 360:
-                status = 'inactive'
-            else:
-                status = 'not_registered'
-            
-            employee_locations[emp.id] = {
-                'latitude': float(location.latitude),
-                'longitude': float(location.longitude),
-                'name': emp.name,
-                'employee_id': emp.employee_id,
-                'status': status,
-                'age_minutes': int(age_minutes)
-            }
+        if location and location.latitude is not None and location.longitude is not None:
+            try:
+                age_minutes = (datetime.utcnow() - location.recorded_at).total_seconds() / 60
+                
+                # تحديد الحالة
+                if age_minutes < 5:
+                    status = 'active'
+                elif age_minutes < 30:
+                    status = 'recently_active'
+                elif age_minutes < 360:
+                    status = 'inactive'
+                else:
+                    status = 'not_registered'
+                
+                employee_locations[str(emp.id)] = {
+                    'latitude': float(location.latitude),
+                    'longitude': float(location.longitude),
+                    'name': emp.name,
+                    'employee_id': emp.employee_id,
+                    'status': status,
+                    'age_minutes': int(age_minutes)
+                }
+            except Exception as e:
+                print(f"Error processing location for employee {emp.id}: {e}")
+                employee_locations[str(emp.id)] = {'status': 'error'}
         else:
-            employee_locations[emp.id] = {
-                'status': 'not_registered'
-            }
+            employee_locations[str(emp.id)] = {'status': 'not_registered'}
     
     # جلب الدوائر الجغرافية
     geofences = Geofence.query.all()
