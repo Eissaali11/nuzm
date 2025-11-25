@@ -20,63 +20,22 @@
     /* ========== HERO SECTION ========== */
     .landing-hero {
         min-height: 100vh;
-        background: linear-gradient(135deg, #0a1628 0%, #1a2744 25%, #0f172a 50%, #1e293b 75%, #0a1628 100%);
+        background: url('/static/images/hero-nuzum.png') center/cover no-repeat;
         position: relative;
         overflow: hidden;
         display: flex;
         align-items: center;
-        padding: 80px 0;
     }
 
-    .hero-bg-image {
+    .landing-hero::after {
+        content: '';
         position: absolute;
+        bottom: 0;
         left: 0;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 55%;
-        height: auto;
-        z-index: 2;
-        animation: slideInLeft 1.2s ease-out;
-    }
-
-    .hero-bg-image img {
-        width: 100%;
-        height: auto;
-        filter: drop-shadow(0 20px 50px rgba(0, 0, 0, 0.5));
-    }
-
-    @keyframes slideInLeft {
-        from { opacity: 0; transform: translateY(-50%) translateX(-100px); }
-        to { opacity: 1; transform: translateY(-50%) translateX(0); }
-    }
-
-    .hero-glow-1 {
-        position: absolute;
-        width: 600px;
-        height: 600px;
-        border-radius: 50%;
-        background: radial-gradient(circle, rgba(56, 189, 248, 0.15) 0%, transparent 70%);
-        filter: blur(80px);
-        top: -200px;
-        left: 20%;
-        animation: pulse-glow 8s infinite ease-in-out;
-    }
-
-    .hero-glow-2 {
-        position: absolute;
-        width: 500px;
-        height: 500px;
-        border-radius: 50%;
-        background: radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, transparent 70%);
-        filter: blur(80px);
-        bottom: -200px;
-        right: 10%;
-        animation: pulse-glow 10s infinite ease-in-out reverse;
-    }
-
-    @keyframes pulse-glow {
-        0%, 100% { transform: scale(1); opacity: 0.5; }
-        50% { transform: scale(1.2); opacity: 0.8; }
+        right: 0;
+        height: 50%;
+        background: linear-gradient(to top, rgba(10, 22, 40, 0.95) 0%, rgba(10, 22, 40, 0.7) 40%, transparent 100%);
+        z-index: 1;
     }
 
     .hero-content {
@@ -452,12 +411,7 @@
     /* Large Tablets and Small Desktops */
     @media (max-width: 1024px) {
         .landing-hero {
-            padding: 60px 0;
-        }
-
-        .hero-bg-image {
-            width: 50%;
-            opacity: 0.8;
+            padding: 60px 20px;
         }
 
         .hero-content {
@@ -478,19 +432,13 @@
     /* Tablets */
     @media (max-width: 768px) {
         .landing-hero {
-            min-height: auto;
-            padding: 40px 20px;
-            flex-direction: column;
+            min-height: 100vh;
+            padding: 100px 20px 60px;
+            align-items: flex-end;
         }
 
-        .hero-bg-image {
-            position: relative;
-            width: 90%;
-            max-width: 500px;
-            top: 0;
-            transform: none;
-            margin: 0 auto 30px;
-            opacity: 1;
+        .landing-hero::after {
+            height: 70%;
         }
 
         .hero-content {
@@ -811,58 +759,43 @@
 
 <!-- HERO SECTION -->
 <section class="landing-hero">
-    <div class="hero-glow-1"></div>
-    <div class="hero-glow-2"></div>
-    
-    <!-- Hero Image on Left -->
-    <div class="hero-bg-image">
-        <img src="/static/images/hero-nuzum.png" alt="نظام نُظم">
-    </div>
-    
-    <!-- Content on Right -->
-    <div class="container">
-        <div class="row justify-content-end">
-            <div class="col-lg-6 col-xl-5">
-                <div class="hero-content">
-                    <div class="hero-badge">
-                        ⭐ الحل الأول في المملكة العربية السعودية
-                    </div>
-                    
-                    <h1 class="hero-title">
-                        نُظم<br>
-                        مستقبل إدارة الأعمال
-                    </h1>
-                    
-                    <p class="hero-subtitle">
-                        نظام شامل ومتكامل لإدارة الموظفين والمركبات مع واجهة عربية متطورة وذكاء اصطناعي متقدم
-                    </p>
-                    
-                    <div class="hero-features-list">
-                        <div class="feature-check">
-                            <span>إدارة شاملة للموظفين والحضور الذكي</span>
-                            <i class="fas fa-check-circle"></i>
-                        </div>
-                        <div class="feature-check">
-                            <span>تتبع وإدارة أسطول المركبات</span>
-                            <i class="fas fa-check-circle"></i>
-                        </div>
-                        <div class="feature-check">
-                            <span>تحليلات ذكية بالذكاء الاصطناعي</span>
-                            <i class="fas fa-check-circle"></i>
-                        </div>
-                    </div>
-                    
-                    <div class="hero-buttons">
-                        <a href="/nuzum/demo" class="btn-hero btn-hero-primary">
-                            <i class="fas fa-rocket"></i>
-                            ابدأ تجربتك المجانية
-                        </a>
-                        <a href="/nuzum/features" class="btn-hero btn-hero-secondary">
-                            استكشف المزايا
-                        </a>
-                    </div>
-                </div>
+    <div class="hero-content">
+        <div class="hero-badge">
+            ⭐ الحل الأول في المملكة العربية السعودية
+        </div>
+        
+        <h1 class="hero-title">
+            نُظم<br>
+            مستقبل إدارة الأعمال
+        </h1>
+        
+        <p class="hero-subtitle">
+            نظام شامل ومتكامل لإدارة الموظفين والمركبات مع واجهة عربية متطورة وذكاء اصطناعي متقدم
+        </p>
+        
+        <div class="hero-features-list">
+            <div class="feature-check">
+                <span>إدارة شاملة للموظفين والحضور الذكي</span>
+                <i class="fas fa-check-circle"></i>
             </div>
+            <div class="feature-check">
+                <span>تتبع وإدارة أسطول المركبات</span>
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="feature-check">
+                <span>تحليلات ذكية بالذكاء الاصطناعي</span>
+                <i class="fas fa-check-circle"></i>
+            </div>
+        </div>
+        
+        <div class="hero-buttons">
+            <a href="/nuzum/demo" class="btn-hero btn-hero-primary">
+                <i class="fas fa-rocket"></i>
+                ابدأ تجربتك المجانية
+            </a>
+            <a href="/nuzum/features" class="btn-hero btn-hero-secondary">
+                استكشف المزايا
+            </a>
         </div>
     </div>
 </section>
