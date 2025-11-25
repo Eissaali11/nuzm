@@ -53,6 +53,12 @@ def dashboard():
             Account.is_active == True
         ).scalar() or 0
         
+        # حقوق الملكية
+        total_equity = db.session.query(func.sum(Account.balance)).filter(
+            Account.account_type == AccountType.EQUITY,
+            Account.is_active == True
+        ).scalar() or 0
+        
         # صافي الأرباح هذا الشهر
         monthly_revenue = db.session.query(func.sum(Account.balance)).filter(
             Account.account_type == AccountType.REVENUE,
@@ -65,6 +71,12 @@ def dashboard():
         ).scalar() or 0
         
         net_profit = monthly_revenue - monthly_expenses
+        
+        # النسب المالية المهمة
+        current_ratio = float(total_assets) / float(total_liabilities) if total_liabilities != 0 else 0
+        debt_to_equity = float(total_liabilities) / float(total_equity) if total_equity != 0 else 0
+        roa = (float(net_profit) / float(total_assets) * 100) if total_assets != 0 else 0  # معدل العائد على الأصول
+        roe = (float(net_profit) / float(total_equity) * 100) if total_equity != 0 else 0  # معدل العائد على حقوق الملكية
         
         # أحدث المعاملات
         recent_transactions = Transaction.query.filter(
@@ -89,14 +101,38 @@ def dashboard():
             Transaction.transaction_type.in_([TransactionType.VEHICLE_EXPENSE, TransactionType.SALARY])
         ).group_by(CostCenter.id).order_by(desc('total_spent')).limit(5).all()
         
+        # بيانات الرسوم البيانية - توزيع الأصول
+        account_types_data = db.session.query(
+            Account.account_type,
+            func.sum(Account.balance).label('total')
+        ).filter(Account.is_active == True).group_by(Account.account_type).all()
+        
+        # بيانات المصروفات عبر الأشهر (آخر 6 أشهر)
+        six_months_ago = date.today() - timedelta(days=180)
+        monthly_expenses_data = db.session.query(
+            extract('month', Transaction.transaction_date).label('month'),
+            func.sum(Transaction.total_amount).label('total')
+        ).filter(
+            Transaction.transaction_date >= six_months_ago,
+            Transaction.is_approved == True,
+            Transaction.transaction_type == TransactionType.SALARY
+        ).group_by('month').order_by('month').all()
+        
         return render_template('accounting/dashboard.html',
                              total_assets=total_assets,
                              total_liabilities=total_liabilities,
+                             total_equity=total_equity,
                              net_profit=net_profit,
+                             current_ratio=current_ratio,
+                             debt_to_equity=debt_to_equity,
+                             roa=roa,
+                             roe=roe,
                              recent_transactions=recent_transactions,
                              pending_transactions=pending_transactions,
                              top_cost_centers=top_cost_centers,
-                             active_fiscal_year=active_fiscal_year)
+                             active_fiscal_year=active_fiscal_year,
+                             account_types_data=account_types_data,
+                             monthly_expenses_data=monthly_expenses_data)
     
     except Exception as e:
         flash(f'خطأ في تحميل لوحة التحكم: {str(e)}', 'danger')
