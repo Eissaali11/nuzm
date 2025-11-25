@@ -20,13 +20,13 @@
     /* ========== HERO SECTION ========== */
     .landing-hero {
         min-height: 100vh;
-        background: linear-gradient(to left, rgba(10, 14, 39, 0.3) 0%, rgba(26, 31, 58, 0.2) 40%, rgba(45, 27, 78, 0) 100%), url('/static/images/hero-nuzum.png') center/cover no-repeat;
+        background: linear-gradient(to right, rgba(10, 14, 39, 0.15) 0%, rgba(26, 31, 58, 0.08) 30%, rgba(45, 27, 78, 0) 100%), url('/static/images/hero-nuzum.png') center/cover no-repeat;
         background-attachment: fixed;
         position: relative;
         overflow: hidden;
         display: flex;
         align-items: center;
-        justify-content: flex-start;
+        justify-content: flex-end;
         padding: 0 5%;
     }
 
@@ -83,22 +83,23 @@
         z-index: 10;
         color: white;
         padding: 80px 50px;
-        background: linear-gradient(135deg, rgba(10, 14, 39, 0.1) 0%, rgba(26, 31, 58, 0.08) 100%);
+        background: linear-gradient(135deg, rgba(10, 14, 39, 0.05) 0%, rgba(26, 31, 58, 0.03) 100%);
         border-radius: 25px;
-        backdrop-filter: blur(12px);
+        backdrop-filter: blur(5px);
         border: 1px solid rgba(102, 126, 234, 0.35);
         box-shadow: 0 0 50px rgba(102, 126, 234, 0.15), inset 0 0 25px rgba(255, 255, 255, 0.05);
-        animation: fadeInLeft 1s ease 0.3s both;
+        animation: fadeInRight 1s ease 0.3s both;
         border-left: 1px solid rgba(255, 255, 255, 0.2);
         border-top: 1px solid rgba(255, 255, 255, 0.2);
         text-align: right;
         max-width: 550px;
     }
 
-    @keyframes fadeInLeft {
-        from { opacity: 0; transform: translateX(-50px); }
+    @keyframes fadeInRight {
+        from { opacity: 0; transform: translateX(50px); }
         to { opacity: 1; transform: translateX(0); }
     }
+
 
     .hero-badge {
         display: inline-block;
@@ -796,7 +797,7 @@
     <div class="orb-hero-2"></div>
     <div class="orb-hero-3"></div>
     
-    <div class="hero-content" style="max-width: 500px; margin-right: auto;">
+    <div class="hero-content" style="max-width: 550px; margin-left: auto;">
         <div class="hero-badge">
             ⭐ الحل الأول في المملكة العربية السعودية
         </div>
