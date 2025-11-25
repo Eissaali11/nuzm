@@ -20,79 +20,75 @@
     /* ========== HERO SECTION ========== */
     .landing-hero {
         min-height: 100vh;
-        background: linear-gradient(to right, rgba(10, 14, 39, 0.15) 0%, rgba(26, 31, 58, 0.08) 30%, rgba(45, 27, 78, 0) 100%), url('/static/images/hero-nuzum.png') center/cover no-repeat;
-        background-attachment: fixed;
+        background: linear-gradient(135deg, #0a1628 0%, #1a2744 25%, #0f172a 50%, #1e293b 75%, #0a1628 100%);
         position: relative;
         overflow: hidden;
         display: flex;
         align-items: center;
-        justify-content: flex-end;
-        padding: 0 5%;
+        padding: 80px 0;
     }
 
-    .orb-hero-1 {
+    .hero-bg-image {
         position: absolute;
-        width: 800px;
-        height: 800px;
-        border-radius: 50%;
-        background: radial-gradient(circle, rgba(102, 126, 234, 0.25) 0%, transparent 70%);
-        filter: blur(100px);
-        top: -400px;
-        right: -400px;
-        animation: float-orb-slow 25s infinite ease-in-out;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 55%;
+        height: auto;
+        z-index: 2;
+        animation: slideInLeft 1.2s ease-out;
     }
 
-    .orb-hero-2 {
+    .hero-bg-image img {
+        width: 100%;
+        height: auto;
+        filter: drop-shadow(0 20px 50px rgba(0, 0, 0, 0.5));
+    }
+
+    @keyframes slideInLeft {
+        from { opacity: 0; transform: translateY(-50%) translateX(-100px); }
+        to { opacity: 1; transform: translateY(-50%) translateX(0); }
+    }
+
+    .hero-glow-1 {
         position: absolute;
         width: 600px;
         height: 600px;
         border-radius: 50%;
-        background: radial-gradient(circle, rgba(79, 209, 199, 0.2) 0%, transparent 70%);
-        filter: blur(100px);
-        bottom: -300px;
-        left: -300px;
-        animation: float-orb-slow 20s infinite ease-in-out reverse;
+        background: radial-gradient(circle, rgba(56, 189, 248, 0.15) 0%, transparent 70%);
+        filter: blur(80px);
+        top: -200px;
+        left: 20%;
+        animation: pulse-glow 8s infinite ease-in-out;
     }
 
-    .orb-hero-3 {
+    .hero-glow-2 {
         position: absolute;
         width: 500px;
         height: 500px;
         border-radius: 50%;
-        background: radial-gradient(circle, rgba(240, 147, 251, 0.15) 0%, transparent 70%);
-        filter: blur(90px);
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        animation: pulse-orb 15s infinite ease-in-out;
+        background: radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, transparent 70%);
+        filter: blur(80px);
+        bottom: -200px;
+        right: 10%;
+        animation: pulse-glow 10s infinite ease-in-out reverse;
     }
 
-    @keyframes float-orb-slow {
-        0%, 100% { transform: translate(0, 0) scale(1); }
-        33% { transform: translate(100px, -100px) scale(1.2); }
-        66% { transform: translate(-100px, 100px) scale(0.9); }
-    }
-
-    @keyframes pulse-orb {
-        0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.2; }
-        50% { transform: translate(-50%, -50%) scale(1.3); opacity: 0.4; }
+    @keyframes pulse-glow {
+        0%, 100% { transform: scale(1); opacity: 0.5; }
+        50% { transform: scale(1.2); opacity: 0.8; }
     }
 
     .hero-content {
         position: relative;
         z-index: 10;
         color: white;
-        padding: 80px 50px;
-        background: linear-gradient(135deg, rgba(10, 14, 39, 0.05) 0%, rgba(26, 31, 58, 0.03) 100%);
-        border-radius: 25px;
-        backdrop-filter: blur(5px);
-        border: 1px solid rgba(102, 126, 234, 0.35);
-        box-shadow: 0 0 50px rgba(102, 126, 234, 0.15), inset 0 0 25px rgba(255, 255, 255, 0.05);
-        animation: fadeInRight 1s ease 0.3s both;
-        border-left: 1px solid rgba(255, 255, 255, 0.2);
-        border-top: 1px solid rgba(255, 255, 255, 0.2);
+        padding: 60px 50px;
         text-align: right;
         max-width: 550px;
+        margin-right: 5%;
+        margin-left: auto;
+        animation: fadeInRight 1s ease 0.3s both;
     }
 
     @keyframes fadeInRight {
@@ -103,76 +99,83 @@
 
     .hero-badge {
         display: inline-block;
-        padding: 10px 30px;
-        background: linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(79, 209, 199, 0.2));
-        border: 2px solid rgba(102, 126, 234, 0.4);
+        padding: 12px 28px;
+        background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(139, 92, 246, 0.2));
+        border: 1px solid rgba(56, 189, 248, 0.4);
         border-radius: 50px;
-        color: #667eea;
+        color: #38bdf8;
         font-weight: 700;
         margin-bottom: 2rem;
-        font-size: 1rem;
+        font-size: 0.95rem;
         animation: fadeInDown 1s ease;
+        backdrop-filter: blur(10px);
     }
 
     .hero-title {
-        font-size: clamp(2.5rem, 8vw, 6rem);
+        font-size: clamp(2.8rem, 6vw, 4.5rem);
         font-weight: 900;
         margin-bottom: 1.5rem;
-        background: linear-gradient(135deg, #ffffff 0%, #a8d8ff 30%, #87e8de 70%, #ffffff 100%);
+        background: linear-gradient(135deg, #ffffff 0%, #38bdf8 40%, #a78bfa 60%, #ffffff 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
-        line-height: 1.2;
+        line-height: 1.15;
         animation: fadeInUp 1s ease 0.2s both;
-        text-shadow: 0 0 30px rgba(102, 126, 234, 0.3);
     }
 
     .hero-subtitle {
-        font-size: clamp(1.1rem, 2vw, 1.5rem);
-        color: #e8f0ff;
-        max-width: 700px;
-        margin-bottom: 3rem;
-        line-height: 1.8;
+        font-size: clamp(1rem, 1.8vw, 1.25rem);
+        color: #94a3b8;
+        max-width: 500px;
+        margin-bottom: 2.5rem;
+        line-height: 1.9;
         font-weight: 400;
         animation: fadeInUp 1s ease 0.4s both;
+        margin-right: 0;
+        margin-left: auto;
     }
 
     .hero-features-list {
-        margin-bottom: 3rem;
+        margin-bottom: 2.5rem;
         animation: fadeInUp 1s ease 0.6s both;
         text-align: right;
     }
-
 
     .feature-check {
         display: flex;
         align-items: center;
         gap: 12px;
-        margin-bottom: 15px;
-        font-size: 1.1rem;
-        color: #e0e7ff;
+        margin-bottom: 14px;
+        font-size: 1.05rem;
+        color: #cbd5e1;
+        justify-content: flex-end;
     }
 
     .feature-check i {
-        color: #4fd1c7;
-        font-size: 1.3rem;
+        color: #22d3ee;
+        font-size: 1.2rem;
+        order: 1;
+    }
+
+    .feature-check span {
+        order: 0;
     }
 
     .hero-buttons {
         display: flex;
-        gap: 1.5rem;
+        gap: 1.2rem;
         flex-wrap: wrap;
         animation: fadeInUp 1s ease 0.8s both;
         justify-content: flex-end;
     }
 
     .btn-hero {
-        padding: 18px 45px;
-        font-size: 1.15rem;
+        padding: 16px 38px;
+        font-size: 1.05rem;
         font-weight: 700;
-        border-radius: 50px;
+        border-radius: 12px;
         text-decoration: none;
-        transition: all 0.5s ease;
+        transition: all 0.4s ease;
         display: inline-flex;
         align-items: center;
         gap: 10px;
@@ -181,29 +184,29 @@
     }
 
     .btn-hero-primary {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
         color: white;
-        box-shadow: 0 10px 40px rgba(102, 126, 234, 0.4);
+        box-shadow: 0 8px 30px rgba(139, 92, 246, 0.4);
     }
 
     .btn-hero-primary:hover {
-        transform: translateY(-5px) scale(1.05);
-        box-shadow: 0 20px 60px rgba(102, 126, 234, 0.6);
+        transform: translateY(-4px);
+        box-shadow: 0 15px 40px rgba(139, 92, 246, 0.5);
         color: white;
         text-decoration: none;
     }
 
     .btn-hero-secondary {
-        background: transparent;
+        background: rgba(255, 255, 255, 0.08);
         color: white;
-        border: 2px solid rgba(255, 255, 255, 0.4);
+        border: 1px solid rgba(255, 255, 255, 0.25);
         backdrop-filter: blur(10px);
     }
 
     .btn-hero-secondary:hover {
         background: rgba(255, 255, 255, 0.15);
-        border-color: white;
-        transform: translateY(-5px) scale(1.05);
+        border-color: rgba(255, 255, 255, 0.5);
+        transform: translateY(-4px);
         color: white;
         text-decoration: none;
     }
@@ -449,13 +452,17 @@
     /* Large Tablets and Small Desktops */
     @media (max-width: 1024px) {
         .landing-hero {
-            padding: 80px 0;
+            padding: 60px 0;
         }
 
-        .hero-subtitle {
-            max-width: 90%;
-            margin-left: auto;
-            margin-right: auto;
+        .hero-bg-image {
+            width: 50%;
+            opacity: 0.8;
+        }
+
+        .hero-content {
+            padding: 40px 35px;
+            max-width: 480px;
         }
 
         .features-grid {
@@ -472,33 +479,39 @@
     @media (max-width: 768px) {
         .landing-hero {
             min-height: auto;
-            padding: 60px 0 80px;
+            padding: 40px 20px;
+            flex-direction: column;
         }
 
-        .hero-badge {
-            font-size: 0.85rem;
-            padding: 8px 20px;
+        .hero-bg-image {
+            position: relative;
+            width: 90%;
+            max-width: 500px;
+            top: 0;
+            transform: none;
+            margin: 0 auto 30px;
+            opacity: 1;
         }
 
-        .hero-subtitle {
-            font-size: 1rem;
-            margin-bottom: 2rem;
+        .hero-content {
+            max-width: 100%;
+            padding: 30px 20px;
+            margin: 0 auto;
+            text-align: center;
         }
 
         .hero-features-list {
-            margin-bottom: 2rem;
+            text-align: center;
         }
 
         .feature-check {
+            justify-content: center;
             font-size: 0.95rem;
             margin-bottom: 12px;
         }
 
-        .feature-check i {
-            font-size: 1.1rem;
-        }
-
         .hero-buttons {
+            justify-content: center;
             flex-direction: column;
             align-items: center;
             gap: 1rem;
@@ -506,10 +519,15 @@
 
         .btn-hero {
             width: 100%;
-            max-width: 350px;
+            max-width: 320px;
             justify-content: center;
-            padding: 16px 35px;
+            padding: 14px 30px;
             font-size: 1rem;
+        }
+
+        .hero-subtitle {
+            margin-left: auto;
+            margin-right: auto;
         }
 
         .stats-showcase, .features-showcase {
@@ -793,48 +811,58 @@
 
 <!-- HERO SECTION -->
 <section class="landing-hero">
-    <div class="orb-hero-1"></div>
-    <div class="orb-hero-2"></div>
-    <div class="orb-hero-3"></div>
+    <div class="hero-glow-1"></div>
+    <div class="hero-glow-2"></div>
     
-    <div class="hero-content" style="max-width: 550px; margin-left: auto;">
-        <div class="hero-badge">
-            ⭐ الحل الأول في المملكة العربية السعودية
-        </div>
-        
-        <h1 class="hero-title">
-            نُظم<br>
-            مستقبل إدارة الأعمال
-        </h1>
-        
-        <p class="hero-subtitle">
-            نظام شامل ومتكامل لإدارة الموظفين والمركبات مع واجهة عربية متطورة وذكاء اصطناعي متقدم. حوّل إدارة مؤسستك إلى تجربة سلسة واحترافية
-        </p>
-        
-        <div class="hero-features-list">
-            <div class="feature-check">
-                <i class="fas fa-check-circle"></i>
-                <span>إدارة شاملة للموظفين مع نظام حضور ذكي متقدم</span>
+    <!-- Hero Image on Left -->
+    <div class="hero-bg-image">
+        <img src="/static/images/hero-nuzum.png" alt="نظام نُظم">
+    </div>
+    
+    <!-- Content on Right -->
+    <div class="container">
+        <div class="row justify-content-end">
+            <div class="col-lg-6 col-xl-5">
+                <div class="hero-content">
+                    <div class="hero-badge">
+                        ⭐ الحل الأول في المملكة العربية السعودية
+                    </div>
+                    
+                    <h1 class="hero-title">
+                        نُظم<br>
+                        مستقبل إدارة الأعمال
+                    </h1>
+                    
+                    <p class="hero-subtitle">
+                        نظام شامل ومتكامل لإدارة الموظفين والمركبات مع واجهة عربية متطورة وذكاء اصطناعي متقدم
+                    </p>
+                    
+                    <div class="hero-features-list">
+                        <div class="feature-check">
+                            <span>إدارة شاملة للموظفين والحضور الذكي</span>
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="feature-check">
+                            <span>تتبع وإدارة أسطول المركبات</span>
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="feature-check">
+                            <span>تحليلات ذكية بالذكاء الاصطناعي</span>
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="hero-buttons">
+                        <a href="/nuzum/demo" class="btn-hero btn-hero-primary">
+                            <i class="fas fa-rocket"></i>
+                            ابدأ تجربتك المجانية
+                        </a>
+                        <a href="/nuzum/features" class="btn-hero btn-hero-secondary">
+                            استكشف المزايا
+                        </a>
+                    </div>
+                </div>
             </div>
-            <div class="feature-check">
-                <i class="fas fa-check-circle"></i>
-                <span>تتبع وإدارة أسطول المركبات بكفاءة عالية</span>
-            </div>
-            <div class="feature-check">
-                <i class="fas fa-check-circle"></i>
-                <span>تحليلات ذكية وتوصيات استراتيجية بالذكاء الاصطناعي</span>
-            </div>
-        </div>
-        
-        <div class="hero-buttons">
-            <a href="/nuzum/demo" class="btn-hero btn-hero-primary">
-                <i class="fas fa-rocket"></i>
-                ابدأ تجربتك المجانية
-            </a>
-            <a href="/nuzum/features" class="btn-hero btn-hero-secondary">
-                <i class="fas fa-sparkles"></i>
-                استكشف المزايا
-            </a>
         </div>
     </div>
 </section>
