@@ -230,7 +230,8 @@ def root():
 def index():
     """الصفحة الرئيسية للنسخة المحمولة"""
     # التحقق من صلاحيات المستخدم للوصول إلى لوحة التحكم
-    from models import Module, UserRole
+    from models import Module, UserRole, EmployeeLocation
+    import json
 
     # إذا كان المستخدم لا يملك صلاحيات لرؤية لوحة التحكم، توجيهه إلى أول وحدة مصرح له بالوصول إليها
     if not (current_user.role == UserRole.ADMIN or current_user.has_module_access(Module.DASHBOARD)):
@@ -277,12 +278,39 @@ def index():
     today_str = today.strftime('%Y-%m-%d')
     absences = Attendance.query.filter_by(date=today_str, status='غائب').all()
 
+    # جلب بيانات الموظفين والمواقع للخريطة
+    employees = Employee.query.filter_by(status='active').all()
+    employee_locations = {}
+    
+    for emp in employees:
+        location = EmployeeLocation.query.filter_by(employee_id=emp.id).order_by(EmployeeLocation.recorded_at.desc()).first()
+        if location:
+            employee_locations[emp.id] = {
+                'latitude': float(location.latitude),
+                'longitude': float(location.longitude),
+                'name': emp.name,
+                'employee_id': emp.employee_id
+            }
+    
+    employees_json = json.dumps([{
+        'id': emp.id,
+        'name': emp.name,
+        'employee_id': emp.employee_id,
+        'photo_url': emp.profile_image,
+        'department_name': emp.department.name if emp.department else 'غير محدد'
+    } for emp in employees])
+    
+    employee_locations_json = json.dumps(employee_locations)
+
     return render_template('mobile/dashboard_new.html', 
                             stats=stats,
                             expiring_documents=expiring_documents,
                             absences=absences,
                             notifications_count=notifications_count,
-                            now=datetime.now())
+                            now=datetime.now(),
+                            employees=employees,
+                            employees_json=employees_json,
+                            employee_locations_json=employee_locations_json)
 
 # صفحة تسجيل الدخول - النسخة المحمولة
 @mobile_bp.route('/login', methods=['GET', 'POST'])
