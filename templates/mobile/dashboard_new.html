@@ -683,6 +683,8 @@
     // Mobile Tracking Map
     let mobileMap;
     let mobileMarkers = {};
+    let geofenceCircles = {};
+    let currentEmployeeInGeofence = {};
 
     function initMobileMap() {
         mobileMap = L.map('mobileMap').setView([24.7136, 46.6753], 6);
@@ -692,34 +694,142 @@
             maxZoom: 19
         }).addTo(mobileMap);
 
-        // Add markers for employees
+        // Add geofences (دوائر جغرافية)
+        const geofences = {{ geofences_json|safe }};
+        geofences.forEach(gf => {
+            const circle = L.circle([gf.latitude, gf.longitude], {
+                color: gf.color || '#818cf8',
+                fillColor: gf.color || '#818cf8',
+                fillOpacity: 0.15,
+                radius: gf.radius,
+                weight: 2
+            }).addTo(mobileMap);
+            
+            circle.bindPopup(`<strong>${gf.name}</strong><br>نطاق: ${gf.radius} متر`);
+            geofenceCircles[gf.id] = { circle, data: gf };
+        });
+
+        // Add markers for employees مع صورهم
         const employees = {{ employees_json|safe }};
         const employeeLocations = {{ employee_locations_json|safe }};
 
         employees.forEach(emp => {
             const location = employeeLocations[emp.id];
             if (location) {
-                const customIcon = L.icon({
-                    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
-                    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-                    iconSize: [25, 41],
-                    iconAnchor: [12, 41],
-                    popupAnchor: [1, -34],
-                    shadowSize: [41, 41]
+                // Create custom marker with employee photo
+                const photoUrl = emp.photo_url ? `/static/${emp.photo_url}` : 'https://via.placeholder.com/40?text=' + emp.name[0];
+                
+                const customIcon = L.divIcon({
+                    className: 'custom-employee-marker',
+                    html: `
+                        <div style="
+                            width: 45px;
+                            height: 45px;
+                            border-radius: 50%;
+                            border: 3px solid #667eea;
+                            overflow: hidden;
+                            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+                            background: white;
+                        ">
+                            <img src="${photoUrl}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='https://via.placeholder.com/40?text=${emp.name[0]}'">
+                        </div>
+                    `,
+                    iconSize: [45, 45],
+                    iconAnchor: [22, 45],
+                    popupAnchor: [0, -45]
                 });
 
                 const marker = L.marker([location.latitude, location.longitude], {icon: customIcon})
-                    .bindPopup(`<strong>${emp.name}</strong><br>الموظف #${emp.employee_id || 'N/A'}`);
+                    .bindPopup(`
+                        <div style="text-align: center; font-family: Cairo, sans-serif;">
+                            <strong>${emp.name}</strong><br>
+                            الموظف #${emp.employee_id || 'N/A'}<br>
+                            <small>${emp.department_name}</small>
+                        </div>
+                    `);
                 
                 marker.addTo(mobileMap);
-                mobileMarkers[emp.id] = marker;
+                mobileMarkers[emp.id] = { marker, location, data: emp };
+                
+                // Check if employee is in any geofence
+                checkGeofenceProximity(emp.id, location);
             }
         });
 
         if (Object.keys(mobileMarkers).length > 0) {
-            const group = new L.featureGroup(Object.values(mobileMarkers));
+            const markers = Object.values(mobileMarkers).map(m => m.marker);
+            const group = new L.featureGroup(markers);
             mobileMap.fitBounds(group.getBounds(), { padding: [50, 50] });
         }
+    }
+
+    // دالة للتحقق من الدوائر الجغرافية
+    function checkGeofenceProximity(empId, location) {
+        const geofences = {{ geofences_json|safe }};
+        
+        geofences.forEach(gf => {
+            const distance = mobileMap.distance(
+                [location.latitude, location.longitude],
+                [gf.latitude, gf.longitude]
+            );
+            
+            const wasInGeofence = currentEmployeeInGeofence[empId + '_' + gf.id];
+            const isNowInGeofence = distance <= gf.radius;
+            
+            if (isNowInGeofence && !wasInGeofence) {
+                // Employee entered geofence - send notification
+                sendNotification(
+                    mobileMarkers[empId].data.name,
+                    `دخل الموظف ${mobileMarkers[empId].data.name} إلى منطقة ${gf.name}`
+                );
+                currentEmployeeInGeofence[empId + '_' + gf.id] = true;
+            } else if (!isNowInGeofence && wasInGeofence) {
+                // Employee left geofence
+                currentEmployeeInGeofence[empId + '_' + gf.id] = false;
+            }
+        });
+    }
+
+    // دالة للإشعارات
+    function sendNotification(title, message) {
+        // Browser notification
+        if ('Notification' in window && Notification.permission === 'granted') {
+            new Notification(title, {
+                body: message,
+                icon: 'https://via.placeholder.com/100',
+                tag: 'geofence-notification'
+            });
+        }
+        
+        // Show toast notification
+        showToast(title, message);
+    }
+
+    // دالة Toast
+    function showToast(title, message) {
+        const toast = document.createElement('div');
+        toast.style.cssText = `
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 16px 24px;
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+            z-index: 10000;
+            font-family: Cairo, sans-serif;
+            animation: slideUp 0.4s ease;
+            max-width: 90%;
+        `;
+        toast.innerHTML = `<strong>${title}</strong><br><small>${message}</small>`;
+        document.body.appendChild(toast);
+        
+        setTimeout(() => {
+            toast.style.animation = 'slideDown 0.4s ease';
+            setTimeout(() => toast.remove(), 400);
+        }, 3000);
     }
 
     function focusEmployeeOnMap(empId, element) {
@@ -737,11 +847,55 @@
         }
     }
 
+    // Request notification permission
+    if ('Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission();
+    }
+
     // Initialize map when document is ready
     document.addEventListener('DOMContentLoaded', function() {
         setTimeout(() => {
             initMobileMap();
+            // Update locations every 10 seconds
+            setInterval(updateLocations, 10000);
         }, 100);
     });
+
+    // Function to update employee locations
+    function updateLocations() {
+        const employees = {{ employees_json|safe }};
+        const employeeLocations = {{ employee_locations_json|safe }};
+        
+        employees.forEach(emp => {
+            const location = employeeLocations[emp.id];
+            if (location && mobileMarkers[emp.id]) {
+                const marker = mobileMarkers[emp.id].marker;
+                marker.setLatLng([location.latitude, location.longitude]);
+                checkGeofenceProximity(emp.id, location);
+            }
+        });
+    }
+
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateX(-50%) translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+    }
+    
+    @keyframes slideDown {
+        from {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+        to {
+            opacity: 0;
+            transform: translateX(-50%) translateY(20px);
+        }
+    }
 </script>
 {% endblock %}

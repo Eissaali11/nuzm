@@ -279,6 +279,7 @@ def index():
     absences = Attendance.query.filter_by(date=today_str, status='غائب').all()
 
     # جلب بيانات الموظفين والمواقع للخريطة
+    from models import Geofence
     employees = Employee.query.filter_by(status='active').all()
     employee_locations = {}
     
@@ -292,6 +293,17 @@ def index():
                 'employee_id': emp.employee_id
             }
     
+    # جلب الدوائر الجغرافية
+    geofences = Geofence.query.all()
+    geofences_data = [{
+        'id': gf.id,
+        'name': gf.name,
+        'latitude': float(gf.center_latitude),
+        'longitude': float(gf.center_longitude),
+        'radius': gf.radius_meters,
+        'color': gf.color
+    } for gf in geofences]
+    
     employees_json = json.dumps([{
         'id': emp.id,
         'name': emp.name,
@@ -301,6 +313,7 @@ def index():
     } for emp in employees])
     
     employee_locations_json = json.dumps(employee_locations)
+    geofences_json = json.dumps(geofences_data)
 
     return render_template('mobile/dashboard_new.html', 
                             stats=stats,
@@ -310,7 +323,8 @@ def index():
                             now=datetime.now(),
                             employees=employees,
                             employees_json=employees_json,
-                            employee_locations_json=employee_locations_json)
+                            employee_locations_json=employee_locations_json,
+                            geofences_json=geofences_json)
 
 # صفحة تسجيل الدخول - النسخة المحمولة
 @mobile_bp.route('/login', methods=['GET', 'POST'])
