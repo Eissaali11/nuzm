@@ -635,18 +635,27 @@ def handle_safety_check_submission(vehicle):
         
         # إنشاء إشعارات للمسؤولين عند إنشاء فحص جديد
         try:
-            from routes.notifications import get_all_admin_users, create_safety_check_notification
-            admin_users = get_all_admin_users()
-            for admin_user in admin_users:
-                create_safety_check_notification(
-                    user_id=admin_user.id,
-                    vehicle_plate=safety_check.vehicle_plate_number,
-                    supervisor_name=safety_check.driver_name,
-                    check_status='pending',
-                    check_id=safety_check.id
-                )
+            from routes.notifications import create_safety_check_notification
+            from models import User
+            
+            # الحصول على جميع المستخدمين
+            all_users = User.query.all()
+            current_app.logger.info(f"Found {len(all_users)} users for safety check notifications")
+            
+            for user in all_users:
+                try:
+                    create_safety_check_notification(
+                        user_id=user.id,
+                        vehicle_plate=safety_check.vehicle_plate_number,
+                        supervisor_name=safety_check.driver_name,
+                        check_status='pending',
+                        check_id=safety_check.id
+                    )
+                    current_app.logger.info(f"Created safety check notification for user {user.id}")
+                except Exception as e:
+                    current_app.logger.error(f'خطأ في إنشاء إشعار للمستخدم {user.id}: {str(e)}')
         except Exception as e:
-            current_app.logger.error(f'خطأ في إنشاء إشعار فحص السلامة: {str(e)}')
+            current_app.logger.error(f'خطأ في إنشاء إشعارات فحص السلامة: {str(e)}')
 
         # رفع تلقائي إلى Google Drive
         try:

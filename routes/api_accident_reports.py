@@ -339,19 +339,28 @@ def submit_accident_report(current_employee):
         
         # إنشاء إشعارات للمسؤولين عند تسجيل حادثة جديدة
         try:
-            from routes.notifications import get_all_admin_users, create_accident_notification
-            admin_users = get_all_admin_users()
-            for admin_user in admin_users:
-                create_accident_notification(
-                    user_id=admin_user.id,
-                    vehicle_plate=vehicle.plate_number,
-                    driver_name=driver_name,
-                    accident_type=request.form.get('severity', 'متوسط'),
-                    accident_id=accident.id,
-                    severity=request.form.get('severity', 'متوسط')
-                )
+            from routes.notifications import create_accident_notification
+            from models import User
+            
+            # الحصول على جميع المستخدمين
+            all_users = User.query.all()
+            logger.info(f"Found {len(all_users)} users for notifications")
+            
+            for user in all_users:
+                try:
+                    create_accident_notification(
+                        user_id=user.id,
+                        vehicle_plate=vehicle.plate_number,
+                        driver_name=driver_name,
+                        accident_type=request.form.get('severity', 'متوسط'),
+                        accident_id=accident.id,
+                        severity=request.form.get('severity', 'متوسط')
+                    )
+                    logger.info(f"Created notification for user {user.id}")
+                except Exception as e:
+                    logger.error(f'خطأ في إنشاء إشعار للمستخدم {user.id}: {str(e)}')
         except Exception as e:
-            logger.error(f'خطأ في إنشاء إشعار الحادثة: {str(e)}')
+            logger.error(f'خطأ في إنشاء إشعارات الحادثة: {str(e)}')
         
         logger.info(f"Accident report {accident.id} submitted by employee {current_employee.employee_id} for vehicle {vehicle.plate_number}")
         
