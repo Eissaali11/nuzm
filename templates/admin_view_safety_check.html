@@ -355,17 +355,29 @@
             
             <!-- صور الفحص -->
             {% if safety_check.safety_images %}
-            <h3 class="section-title">📸 صور الفحص</h3>
+            <h3 class="section-title">📸 صور الفحص ({{ safety_check.safety_images|length }})</h3>
             <div class="images-gallery">
                 {% for image in safety_check.safety_images %}
-                <div class="image-card">
+                <div class="image-card" style="cursor:pointer; transition:all 0.3s ease; position:relative;">
                     <img src="{{ url_for('static', filename='uploads/' + image.image_path) }}" 
                          alt="صورة الفحص"
-                         onclick="openModal('{{ url_for('static', filename='uploads/' + image.image_path) }}', '{{ image.notes or 'لا توجد ملاحظات' }}', {{ loop.index }})">
-                    {% if image.notes %}
-                    <div class="image-notes" style="margin-top: 10px; padding: 10px; background: #f0f9f9; border-right: 3px solid #18b2b0; border-radius: 4px; font-size: 12px; color: #333;">
-                        <strong style="color: #18b2b0;">📝 ملاحظة:</strong><br>
-                        {{ image.notes[:100] }}{% if image.notes|length > 100 %}...{% endif %}
+                         style="cursor:pointer; transition:transform 0.3s ease;"
+                         onmouseover="this.style.transform='scale(1.05)'"
+                         onmouseout="this.style.transform='scale(1)'"
+                         onclick="openModal('{{ url_for('static', filename='uploads/' + image.image_path) }}', '{{ image.image_description or 'لا توجد ملاحظات' }}', {{ loop.index }})">
+                    
+                    {% if image.image_description %}
+                    <div class="image-notes" style="margin-top: 12px; padding: 12px; background: linear-gradient(135deg, #f0f9f9 0%, #e8f5f6 100%); border-right: 4px solid #18b2b0; border-radius: 5px; font-size: 12px; color: #333; box-shadow: 0 2px 8px rgba(24, 178, 176, 0.1);">
+                        <div style="color: #18b2b0; font-weight: 700; margin-bottom: 6px; display:flex; align-items:center; gap:6px;">
+                            📝 ملاحظة
+                        </div>
+                        <div style="color: #555; font-size: 11px; line-height: 1.6;">
+                            {{ image.image_description[:120] }}{% if image.image_description|length > 120 %}<span style="color: #18b2b0; font-weight:600;">...اضغط لعرض التفاصيل</span>{% endif %}
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="image-notes" style="margin-top: 12px; padding: 12px; background: linear-gradient(135deg, #f5f5f5 0%, #eeeeee 100%); border-right: 4px solid #bbb; border-radius: 5px; font-size: 11px; color: #999; text-align:center; font-style:italic;">
+                        لا توجد ملاحظات لهذه الصورة
                     </div>
                     {% endif %}
                 </div>
@@ -405,11 +417,11 @@
         <img id="modalImage" style="max-width:90vw; max-height:70vh; border-radius:8px; box-shadow: 0 0 40px rgba(0,0,0,0.7); object-fit: contain; margin-bottom: 20px;" />
         
         <!-- الملاحظات أسفل الصورة -->
-        <div id="modalNotes" style="width:100%; background: linear-gradient(135deg, #18b2b0 0%, #159e9c 100%); color:white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(24, 178, 176, 0.3);">
-            <h4 style="margin-bottom: 12px; font-size:16px; display:flex; align-items:center; gap:8px;">
-                📝 ملاحظات الصورة #<span id="modalImageNumber">1</span>
+        <div id="modalNotes" style="width:100%; background: linear-gradient(135deg, #18b2b0 0%, #159e9c 100%); color:white; padding: 25px; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 8px 25px rgba(24, 178, 176, 0.4); border-top: 3px solid rgba(255,255,255, 0.2);">
+            <h4 style="margin-bottom: 15px; font-size:18px; display:flex; align-items:center; gap:10px; font-weight:700;">
+                📝 ملاحظات الصورة #<span id="modalImageNumber" style="background:rgba(255,255,255,0.2); padding:4px 12px; border-radius:20px;">1</span>
             </h4>
-            <p id="modalNotesText" style="font-size:14px; line-height:1.8; margin:0; word-wrap:break-word; font-weight:500;"></p>
+            <div id="modalNotesText" style="font-size:15px; line-height:1.9; margin:0; word-wrap:break-word; font-weight:500; background:rgba(255,255,255,0.1); padding:15px; border-radius:6px; border-right:2px solid rgba(255,255,255,0.3); max-height:300px; overflow-y:auto;"></div>
         </div>
         
         <!-- زر الإغلاق -->
@@ -448,16 +460,21 @@
     document.addEventListener('keydown', function(event) {
         if (event.key === 'Escape') {
             const modal = document.getElementById('imageModal');
-            if (modal.style.display === 'flex' || modal.style.display === 'flex !important') {
+            if (modal && (modal.style.display === 'flex' || modal.style.display === 'flex !important')) {
                 closeImageModal();
             }
         }
     });
     
     // إغلاق عند الضغط خارج المحتوى
-    document.getElementById('imageModal').addEventListener('click', function(e) {
-        if (e.target === this) {
-            closeImageModal();
+    document.addEventListener('DOMContentLoaded', function() {
+        const modal = document.getElementById('imageModal');
+        if (modal) {
+            modal.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeImageModal();
+                }
+            });
         }
     });
 </script>
