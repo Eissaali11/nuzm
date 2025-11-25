@@ -1,0 +1,184 @@
+{% extends "layout.html" %}
+
+{% block title %}تقارير الحوادث{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="mb-0">
+                        <i class="fas fa-car-crash me-2"></i>
+                        تقارير حوادث المركبات
+                    </h2>
+                    <p class="text-muted mb-0">مراجعة والموافقة على تقارير الحوادث المرسلة من التطبيق</p>
+                </div>
+            </div>
+
+            <!-- Statistics Cards -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card bg-warning text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="text-white-50 mb-1">في انتظار المراجعة</h6>
+                                    <h3 class="mb-0">{{ stats.total_pending }}</h3>
+                                </div>
+                                <i class="fas fa-clock fa-3x opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="text-white-50 mb-1">قيد المراجعة</h6>
+                                    <h3 class="mb-0">{{ stats.total_under_review }}</h3>
+                                </div>
+                                <i class="fas fa-search fa-3x opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="text-white-50 mb-1">تمت الموافقة</h6>
+                                    <h3 class="mb-0">{{ stats.total_approved }}</h3>
+                                </div>
+                                <i class="fas fa-check-circle fa-3x opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-danger text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="text-white-50 mb-1">مرفوضة</h6>
+                                    <h3 class="mb-0">{{ stats.total_rejected }}</h3>
+                                </div>
+                                <i class="fas fa-times-circle fa-3x opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter Tabs -->
+            <ul class="nav nav-tabs mb-3">
+                <li class="nav-item">
+                    <a class="nav-link {% if status_filter == 'pending' %}active{% endif %}" 
+                       href="{{ url_for('operations.list_accident_reports', status='pending') }}">
+                        <i class="fas fa-clock me-1"></i> في انتظار المراجعة
+                        <span class="badge bg-warning ms-1">{{ stats.total_pending }}</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if status_filter == 'under_review' %}active{% endif %}" 
+                       href="{{ url_for('operations.list_accident_reports', status='under_review') }}">
+                        <i class="fas fa-search me-1"></i> قيد المراجعة
+                        <span class="badge bg-info ms-1">{{ stats.total_under_review }}</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if status_filter == 'approved' %}active{% endif %}" 
+                       href="{{ url_for('operations.list_accident_reports', status='approved') }}">
+                        <i class="fas fa-check-circle me-1"></i> معتمدة
+                        <span class="badge bg-success ms-1">{{ stats.total_approved }}</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if status_filter == 'rejected' %}active{% endif %}" 
+                       href="{{ url_for('operations.list_accident_reports', status='rejected') }}">
+                        <i class="fas fa-times-circle me-1"></i> مرفوضة
+                        <span class="badge bg-danger ms-1">{{ stats.total_rejected }}</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if status_filter == 'all' %}active{% endif %}" 
+                       href="{{ url_for('operations.list_accident_reports', status='all') }}">
+                        <i class="fas fa-list me-1"></i> الكل
+                    </a>
+                </li>
+            </ul>
+
+            <!-- Accidents List -->
+            <div class="card">
+                <div class="card-body">
+                    {% if accidents %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>المركبة</th>
+                                    <th>السائق</th>
+                                    <th>رقم الهاتف</th>
+                                    <th>تاريخ الحادث</th>
+                                    <th>الحالة</th>
+                                    <th>تاريخ الإرسال</th>
+                                    <th>إجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for accident in accidents %}
+                                <tr>
+                                    <td>{{ accident.id }}</td>
+                                    <td>
+                                        <strong>{{ accident.vehicle.plate_number }}</strong><br>
+                                        <small class="text-muted">{{ accident.vehicle.model }}</small>
+                                    </td>
+                                    <td>{{ accident.driver_name }}</td>
+                                    <td>
+                                        {% if accident.driver_phone %}
+                                        <i class="fas fa-phone me-1"></i>{{ accident.driver_phone }}
+                                        {% else %}
+                                        <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ accident.accident_date.strftime('%Y-%m-%d') }}</td>
+                                    <td>
+                                        {% if accident.review_status == 'pending' %}
+                                        <span class="badge bg-warning">في انتظار المراجعة</span>
+                                        {% elif accident.review_status == 'under_review' %}
+                                        <span class="badge bg-info">قيد المراجعة</span>
+                                        {% elif accident.review_status == 'approved' %}
+                                        <span class="badge bg-success">معتمد</span>
+                                        {% elif accident.review_status == 'rejected' %}
+                                        <span class="badge bg-danger">مرفوض</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ accident.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    <td>
+                                        <a href="{{ url_for('operations.view_accident_report', accident_id=accident.id) }}" 
+                                           class="btn btn-sm btn-primary">
+                                            <i class="fas fa-eye me-1"></i>عرض
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-inbox fa-4x text-muted mb-3"></i>
+                        <h5 class="text-muted">لا توجد تقارير حوادث</h5>
+                        <p class="text-muted">عندما يتم إرسال تقارير من التطبيق ستظهر هنا</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

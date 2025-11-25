@@ -1,0 +1,343 @@
+{% extends "layout.html" %}
+
+{% block title %}تفاصيل تقرير الحادث #{{ accident.id }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="mb-0">
+                        <i class="fas fa-car-crash me-2"></i>
+                        تقرير حادث #{{ accident.id }}
+                    </h2>
+                    <p class="text-muted mb-0">تفاصيل وثائق الحادث</p>
+                </div>
+                <a href="{{ url_for('operations.list_accident_reports') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-right me-2"></i>
+                    العودة للقائمة
+                </a>
+            </div>
+
+            <!-- Status Banner -->
+            <div class="alert 
+                {% if accident.review_status == 'pending' %}alert-warning
+                {% elif accident.review_status == 'under_review' %}alert-info
+                {% elif accident.review_status == 'approved' %}alert-success
+                {% elif accident.review_status == 'rejected' %}alert-danger
+                {% endif %} mb-4">
+                <div class="d-flex align-items-center">
+                    <i class="fas 
+                        {% if accident.review_status == 'pending' %}fa-clock
+                        {% elif accident.review_status == 'under_review' %}fa-search
+                        {% elif accident.review_status == 'approved' %}fa-check-circle
+                        {% elif accident.review_status == 'rejected' %}fa-times-circle
+                        {% endif %} fa-2x me-3"></i>
+                    <div>
+                        <h5 class="mb-0">
+                            حالة التقرير: 
+                            {% if accident.review_status == 'pending' %}في انتظار المراجعة
+                            {% elif accident.review_status == 'under_review' %}قيد المراجعة
+                            {% elif accident.review_status == 'approved' %}معتمد
+                            {% elif accident.review_status == 'rejected' %}مرفوض
+                            {% endif %}
+                        </h5>
+                        {% if accident.reviewed_at %}
+                        <small>تمت المراجعة: {{ accident.reviewed_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <!-- معلومات المركبة -->
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0"><i class="fas fa-car me-2"></i>معلومات المركبة</h5>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <th width="40%">رقم اللوحة:</th>
+                                    <td><strong>{{ accident.vehicle.plate_number }}</strong></td>
+                                </tr>
+                                <tr>
+                                    <th>الموديل:</th>
+                                    <td>{{ accident.vehicle.model }}</td>
+                                </tr>
+                                <tr>
+                                    <th>الصنع:</th>
+                                    <td>{{ accident.vehicle.make }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- معلومات السائق -->
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header bg-info text-white">
+                            <h5 class="mb-0"><i class="fas fa-user me-2"></i>معلومات السائق</h5>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <th width="40%">الاسم:</th>
+                                    <td>{{ accident.driver_name }}</td>
+                                </tr>
+                                <tr>
+                                    <th>رقم الهاتف (أبشر):</th>
+                                    <td>
+                                        {% if accident.driver_phone %}
+                                        <i class="fas fa-phone me-1"></i>{{ accident.driver_phone }}
+                                        {% else %}
+                                        <span class="text-muted">غير متوفر</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>تاريخ الإبلاغ:</th>
+                                    <td>{{ accident.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- معلومات الحادث -->
+                <div class="col-12 mb-4">
+                    <div class="card">
+                        <div class="card-header bg-warning">
+                            <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>تفاصيل الحادث</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <table class="table table-borderless">
+                                        <tr>
+                                            <th width="40%">تاريخ الحادث:</th>
+                                            <td>{{ accident.accident_date.strftime('%Y-%m-%d') }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>الوقت:</th>
+                                            <td>
+                                                {% if accident.accident_time %}
+                                                {{ accident.accident_time.strftime('%H:%M') }}
+                                                {% else %}
+                                                <span class="text-muted">غير محدد</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th>الموقع:</th>
+                                            <td>
+                                                {% if accident.location %}
+                                                {{ accident.location }}
+                                                {% else %}
+                                                <span class="text-muted">غير محدد</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                                <div class="col-md-6">
+                                    <table class="table table-borderless">
+                                        <tr>
+                                            <th width="40%">درجة الخطورة:</th>
+                                            <td>
+                                                {% if accident.severity %}
+                                                <span class="badge 
+                                                    {% if accident.severity == 'بسيط' %}bg-success
+                                                    {% elif accident.severity == 'متوسط' %}bg-warning
+                                                    {% elif accident.severity == 'خطير' %}bg-danger
+                                                    {% endif %}">{{ accident.severity }}</span>
+                                                {% else %}
+                                                <span class="text-muted">غير محدد</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th>الإحداثيات:</th>
+                                            <td>
+                                                {% if accident.latitude and accident.longitude %}
+                                                <a href="https://www.google.com/maps?q={{ accident.latitude }},{{ accident.longitude }}" 
+                                                   target="_blank" class="btn btn-sm btn-outline-primary">
+                                                    <i class="fas fa-map-marker-alt me-1"></i>
+                                                    عرض على الخريطة
+                                                </a>
+                                                {% else %}
+                                                <span class="text-muted">غير متوفر</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                            <hr>
+                            <div>
+                                <h6>وصف الحادث:</h6>
+                                <p class="mb-0">{{ accident.description or 'لا يوجد وصف' }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- الوثائق المرفقة -->
+                <div class="col-12 mb-4">
+                    <div class="card">
+                        <div class="card-header bg-secondary text-white">
+                            <h5 class="mb-0"><i class="fas fa-file-alt me-2"></i>الوثائق المرفقة</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <!-- صورة الهوية -->
+                                <div class="col-md-4">
+                                    <div class="card">
+                                        <div class="card-header bg-light">
+                                            <h6 class="mb-0"><i class="fas fa-id-card me-2"></i>صورة الهوية</h6>
+                                        </div>
+                                        <div class="card-body text-center">
+                                            {% if accident.driver_id_image %}
+                                            <a href="{{ url_for('static', filename=accident.driver_id_image) }}" 
+                                               target="_blank">
+                                                <img src="{{ url_for('static', filename=accident.driver_id_image) }}" 
+                                                     class="img-fluid rounded mb-2" 
+                                                     style="max-height: 200px;">
+                                            </a>
+                                            <br>
+                                            <a href="{{ url_for('static', filename=accident.driver_id_image) }}" 
+                                               class="btn btn-sm btn-primary" download>
+                                                <i class="fas fa-download me-1"></i>تحميل
+                                            </a>
+                                            {% else %}
+                                            <p class="text-muted">غير متوفرة</p>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- صورة الرخصة -->
+                                <div class="col-md-4">
+                                    <div class="card">
+                                        <div class="card-header bg-light">
+                                            <h6 class="mb-0"><i class="fas fa-address-card me-2"></i>صورة الرخصة</h6>
+                                        </div>
+                                        <div class="card-body text-center">
+                                            {% if accident.driver_license_image %}
+                                            <a href="{{ url_for('static', filename=accident.driver_license_image) }}" 
+                                               target="_blank">
+                                                <img src="{{ url_for('static', filename=accident.driver_license_image) }}" 
+                                                     class="img-fluid rounded mb-2" 
+                                                     style="max-height: 200px;">
+                                            </a>
+                                            <br>
+                                            <a href="{{ url_for('static', filename=accident.driver_license_image) }}" 
+                                               class="btn btn-sm btn-primary" download>
+                                                <i class="fas fa-download me-1"></i>تحميل
+                                            </a>
+                                            {% else %}
+                                            <p class="text-muted">غير متوفرة</p>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- تقرير الحادث -->
+                                <div class="col-md-4">
+                                    <div class="card">
+                                        <div class="card-header bg-light">
+                                            <h6 class="mb-0"><i class="fas fa-file-pdf me-2"></i>تقرير الحادث</h6>
+                                        </div>
+                                        <div class="card-body text-center">
+                                            {% if accident.accident_report_file %}
+                                                {% if accident.accident_report_file.endswith('.pdf') %}
+                                                <i class="fas fa-file-pdf fa-4x text-danger mb-2"></i>
+                                                <br>
+                                                {% else %}
+                                                <a href="{{ url_for('static', filename=accident.accident_report_file) }}" 
+                                                   target="_blank">
+                                                    <img src="{{ url_for('static', filename=accident.accident_report_file) }}" 
+                                                         class="img-fluid rounded mb-2" 
+                                                         style="max-height: 200px;">
+                                                </a>
+                                                <br>
+                                                {% endif %}
+                                                <a href="{{ url_for('static', filename=accident.accident_report_file) }}" 
+                                                   class="btn btn-sm btn-primary" download>
+                                                    <i class="fas fa-download me-1"></i>تحميل
+                                                </a>
+                                            {% else %}
+                                            <p class="text-muted">غير متوفر</p>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- إجراءات المراجعة -->
+                {% if accident.review_status in ['pending', 'under_review'] %}
+                <div class="col-12 mb-4">
+                    <div class="card border-primary">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0"><i class="fas fa-tasks me-2"></i>إجراءات المراجعة</h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="POST" action="{{ url_for('operations.review_accident_report', accident_id=accident.id) }}">
+                                <div class="row">
+                                    <div class="col-12 mb-3">
+                                        <label class="form-label">ملاحظات المراجعة:</label>
+                                        <textarea name="reviewer_notes" class="form-control" rows="3" 
+                                                  placeholder="أضف ملاحظاتك هنا...">{{ accident.reviewer_notes or '' }}</textarea>
+                                    </div>
+                                </div>
+                                <div class="row g-2">
+                                    <div class="col-md-3">
+                                        <button type="submit" name="action" value="approve" 
+                                                class="btn btn-success w-100">
+                                            <i class="fas fa-check me-2"></i>اعتماد التقرير
+                                        </button>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <button type="submit" name="action" value="under_review" 
+                                                class="btn btn-info w-100">
+                                            <i class="fas fa-search me-2"></i>تحت المراجعة
+                                        </button>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <button type="submit" name="action" value="reject" 
+                                                class="btn btn-danger w-100">
+                                            <i class="fas fa-times me-2"></i>رفض التقرير
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- ملاحظات المراجع -->
+                {% if accident.reviewer_notes %}
+                <div class="col-12 mb-4">
+                    <div class="card">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0"><i class="fas fa-comment me-2"></i>ملاحظات المراجع</h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="mb-0">{{ accident.reviewer_notes }}</p>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

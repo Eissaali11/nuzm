@@ -284,7 +284,8 @@ def operations_dashboard():
         'under_review': OperationRequest.query.filter_by(status='under_review').count(),
         'approved': OperationRequest.query.filter_by(status='approved').count(),
         'rejected': OperationRequest.query.filter_by(status='rejected').count(),
-        'unread_notifications': OperationNotification.query.filter_by(user_id=current_user.id, is_read=False).count()
+        'unread_notifications': OperationNotification.query.filter_by(user_id=current_user.id, is_read=False).count(),
+        'pending_accidents': VehicleAccident.query.filter_by(review_status='pending').count()
     }
 
     return render_template('operations/dashboard.html', 
