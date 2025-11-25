@@ -932,23 +932,122 @@
     document.addEventListener('DOMContentLoaded', function() {
         setTimeout(() => {
             initMobileMap();
-            // Update locations every 10 seconds
-            setInterval(updateLocations, 10000);
+            // تحديث المواقع كل 5 ثواني (real-time)
+            setInterval(fetchLiveLocations, 5000);
         }, 100);
     });
 
-    // Function to update employee locations
-    function updateLocations() {
-        const employees = {{ employees_json|safe }};
-        const employeeLocations = {{ employee_locations_json|safe }};
-        
-        employees.forEach(emp => {
-            const location = employeeLocations[emp.id];
-            if (location && mobileMarkers[emp.id]) {
-                const marker = mobileMarkers[emp.id].marker;
-                marker.setLatLng([location.latitude, location.longitude]);
-                checkGeofenceProximity(emp.id, location);
+    // دالة لجلب المواقع المباشرة من الخادم
+    async function fetchLiveLocations() {
+        try {
+            const response = await fetch('/mobile/api/live-locations');
+            const data = await response.json();
+            
+            if (data.success) {
+                console.log('📍 تم تحديث المواقع:', data.timestamp);
+                updateMapWithLiveData(data.locations);
             }
+        } catch (error) {
+            console.error('❌ خطأ في جلب المواقع:', error);
+        }
+    }
+
+    // دالة لتحديث الخريطة بالبيانات المباشرة
+    function updateMapWithLiveData(liveLocations) {
+        const deptFilter = document.getElementById('departmentFilter').value;
+        const statusFilter = document.getElementById('statusFilter').value;
+
+        // تحديث المواقع الموجودة أو إضافة جديدة
+        Object.keys(liveLocations).forEach(empId => {
+            const location = liveLocations[empId];
+            
+            // تخطي إذا لا يوجد موقع فعلي
+            if (!location.latitude || !location.longitude) return;
+            
+            // تطبيق الفلاتر
+            if (deptFilter && location.department_id != deptFilter) {
+                // إزالة الموظف من الخريطة إذا لم يطابق الفلتر
+                if (mobileMarkers[empId]) {
+                    mobileMap.removeLayer(mobileMarkers[empId].marker);
+                    delete mobileMarkers[empId];
+                }
+                return;
+            }
+            if (statusFilter && location.status !== statusFilter) {
+                if (mobileMarkers[empId]) {
+                    mobileMap.removeLayer(mobileMarkers[empId].marker);
+                    delete mobileMarkers[empId];
+                }
+                return;
+            }
+
+            // تحديد لون الإطار حسب الحالة
+            let borderColor = '#667eea';
+            if (location.status === 'active') borderColor = '#10b981';
+            else if (location.status === 'recently_active') borderColor = '#f59e0b';
+            else if (location.status === 'inactive') borderColor = '#ef4444';
+
+            const photoUrl = location.photo_url ? `/static/${location.photo_url}` : `https://via.placeholder.com/40?text=${location.name ? location.name[0] : 'E'}`;
+
+            if (mobileMarkers[empId]) {
+                // تحديث الموقع الحالي
+                const marker = mobileMarkers[empId].marker;
+                marker.setLatLng([location.latitude, location.longitude]);
+                
+                // تحديث popup
+                marker.setPopupContent(`
+                    <div style="text-align: center; font-family: Cairo, sans-serif; padding: 8px;">
+                        <strong>${location.name}</strong><br>
+                        الموظف #${location.employee_id || 'N/A'}<br>
+                        <small>${location.department_name}</small><br>
+                        <small style="color: #10b981;">🟢 آخر تحديث: ${location.age_minutes} دقيقة</small>
+                    </div>
+                `);
+                
+                // تحديث البيانات المخزنة
+                mobileMarkers[empId].location = location;
+                
+                console.log(`✅ تحديث موقع: ${location.name} (${location.age_minutes} دقيقة)`);
+            } else {
+                // إضافة موظف جديد للخريطة
+                const customIcon = L.divIcon({
+                    className: 'custom-employee-marker',
+                    html: `
+                        <div style="
+                            width: 45px;
+                            height: 45px;
+                            border-radius: 50%;
+                            border: 3px solid ${borderColor};
+                            overflow: hidden;
+                            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+                            background: white;
+                        ">
+                            <img src="${photoUrl}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='https://via.placeholder.com/40?text=${location.name ? location.name[0] : 'E'}'">
+                        </div>
+                    `,
+                    iconSize: [45, 45],
+                    iconAnchor: [22, 45],
+                    popupAnchor: [0, -45]
+                });
+
+                const marker = L.marker([location.latitude, location.longitude], {icon: customIcon})
+                    .bindPopup(`
+                        <div style="text-align: center; font-family: Cairo, sans-serif; padding: 8px;">
+                            <strong>${location.name}</strong><br>
+                            الموظف #${location.employee_id || 'N/A'}<br>
+                            <small>${location.department_name}</small><br>
+                            <small style="color: #10b981;">🟢 آخر تحديث: ${location.age_minutes} دقيقة</small>
+                        </div>
+                    `);
+                
+                marker.addTo(mobileMap);
+                mobileMarkers[empId] = { marker, location, data: location };
+                
+                console.log(`➕ إضافة موظف جديد: ${location.name}`);
+            }
+
+            // التحقق من الدوائر الجغرافية
+            checkGeofenceProximity(empId, location);
         });
     }
 

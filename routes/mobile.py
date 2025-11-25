@@ -355,6 +355,70 @@ def index():
                             geofences_json=geofences_json,
                             departments=departments)
 
+# API لجلب مواقع الموظفين المباشرة (Real-time)
+@mobile_bp.route('/api/live-locations')
+@login_required
+def get_live_locations():
+    """جلب مواقع الموظفين الحية مباشرة من قاعدة البيانات"""
+    from models import Geofence
+    
+    all_employees = Employee.query.all()
+    employee_locations = {}
+    
+    for emp in all_employees:
+        location = EmployeeLocation.query.filter_by(employee_id=emp.id).order_by(EmployeeLocation.recorded_at.desc()).first()
+        if location and location.latitude is not None and location.longitude is not None:
+            try:
+                age_minutes = (datetime.utcnow() - location.recorded_at).total_seconds() / 60
+                
+                # تحديد الحالة بناءً على عمر الموقع
+                if age_minutes < 5:
+                    status = 'active'
+                elif age_minutes < 30:
+                    status = 'recently_active'
+                elif age_minutes < 360:
+                    status = 'inactive'
+                else:
+                    status = 'not_registered'
+                
+                employee_locations[str(emp.id)] = {
+                    'latitude': float(location.latitude),
+                    'longitude': float(location.longitude),
+                    'name': emp.name,
+                    'employee_id': emp.employee_id,
+                    'status': status,
+                    'age_minutes': int(age_minutes),
+                    'last_update': location.recorded_at.strftime('%Y-%m-%d %H:%M:%S'),
+                    'photo_url': emp.profile_image,
+                    'department_name': emp.department.name if emp.department else 'غير محدد',
+                    'department_id': emp.departments[0].id if emp.departments else None
+                }
+            except Exception as e:
+                print(f"Error processing location for employee {emp.id}: {e}")
+                employee_locations[str(emp.id)] = {'status': 'error'}
+        else:
+            employee_locations[str(emp.id)] = {'status': 'not_registered'}
+    
+    # جلب الدوائر الجغرافية
+    geofences = Geofence.query.all()
+    geofences_data = [{
+        'id': gf.id,
+        'name': gf.name,
+        'latitude': float(gf.center_latitude),
+        'longitude': float(gf.center_longitude),
+        'radius': gf.radius_meters,
+        'color': gf.color,
+        'department_id': gf.department_id
+    } for gf in geofences]
+    
+    return jsonify({
+        'success': True,
+        'locations': employee_locations,
+        'geofences': geofences_data,
+        'timestamp': datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+    })
+
+
 # صفحة تسجيل الدخول - النسخة المحمولة
 @mobile_bp.route('/login', methods=['GET', 'POST'])
 def login():
