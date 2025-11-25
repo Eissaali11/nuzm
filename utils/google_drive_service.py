@@ -147,7 +147,8 @@ class GoogleDriveService:
         try:
             from google.oauth2 import service_account
             from googleapiclient.discovery import build
-            from googleapiclient.http import MediaFileUpload
+            from googleapiclient.http import MediaIoBaseUpload
+            import io
             
             # التحقق من وجود الملف وحجمه
             if not os.path.exists(file_path):
@@ -159,6 +160,12 @@ class GoogleDriveService:
             
             if file_size == 0:
                 logger.warning(f"تحذير: الملف فارغ: {file_path}")
+            
+            # قراءة الملف بالكامل في الذاكرة
+            with open(file_path, 'rb') as f:
+                file_content = f.read()
+            
+            logger.info(f"تم قراءة الملف: {len(file_content)} بايت")
             
             # إنشاء الـ credentials
             SCOPES = [
@@ -181,9 +188,9 @@ class GoogleDriveService:
                 'parents': [folder_id]
             }
             
-            # رفع الملف إلى Shared Drive
-            # استخدام resumable=True دائماً لضمان رفع مستقر
-            media = MediaFileUpload(file_path, mimetype='application/octet-stream', resumable=True)
+            # تحويل البيانات إلى BytesIO لرفعها
+            file_stream = io.BytesIO(file_content)
+            media = MediaIoBaseUpload(file_stream, mimetype='application/octet-stream', resumable=True, chunksize=1024*1024*5)
             
             request = service.files().create(
                 body=file_metadata,
@@ -192,18 +199,25 @@ class GoogleDriveService:
                 supportsAllDrives=True
             )
             
-            # إكمال الرفع
+            # إكمال الرفع مع تتبع التقدم
             response = None
-            while response is None:
+            retry_count = 0
+            max_retries = 3
+            
+            while response is None and retry_count < max_retries:
                 try:
                     status, response = request.next_chunk()
                     if status:
                         logger.info(f"تم رفع {int(status.progress() * 100)}% من {file_name}")
+                    retry_count = 0  # إعادة تعيين العداد عند النجاح
                 except Exception as e:
-                    logger.error(f"خطأ أثناء الرفع المستأنف: {e}")
-                    return None
+                    retry_count += 1
+                    if retry_count >= max_retries:
+                        logger.error(f"فشل الرفع بعد {max_retries} محاولات: {e}")
+                        return None
+                    logger.warning(f"خطأ في الرفع، المحاولة {retry_count}: {e}")
             
-            logger.info(f"تم رفع الملف بنجاح: {file_name} (ID: {response.get('id')})")
+            logger.info(f"تم رفع الملف بنجاح: {file_name} (ID: {response.get('id')}, الحجم: {len(file_content)})")
             return {
                 'file_id': response.get('id'),
                 'file_name': response.get('name'),
