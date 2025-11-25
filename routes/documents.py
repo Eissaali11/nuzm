@@ -30,6 +30,91 @@ import json
 
 documents_bp = Blueprint('documents', __name__)
 
+
+def create_expiry_notification(user_id, document_type, employee_name, days_until_expiry, document_id):
+    """إشعار انتهاء صلاحية وثيقة"""
+    from models import Notification, User
+    
+    if days_until_expiry < 0:
+        title = f'وثيقة منتهية - {document_type}'
+        description = f'انتهت صلاحية {document_type} للموظف {employee_name} منذ {abs(days_until_expiry)} يوم'
+        priority = 'critical'
+    elif days_until_expiry <= 7:
+        title = f'تنبيه عاجل: وثيقة تنتهي قريباً'
+        description = f'{document_type} للموظف {employee_name} تنتهي خلال {days_until_expiry} أيام'
+        priority = 'critical'
+    elif days_until_expiry <= 30:
+        title = f'تذكير: وثيقة تنتهي خلال شهر'
+        description = f'{document_type} للموظف {employee_name} تنتهي خلال {days_until_expiry} يوماً'
+        priority = 'high'
+    else:
+        title = f'تذكير: وثيقة قريبة من الانتهاء'
+        description = f'{document_type} للموظف {employee_name} تنتهي خلال {days_until_expiry} يوماً'
+        priority = 'normal'
+    
+    notification = Notification(
+        user_id=user_id,
+        notification_type='expiry',
+        title=title,
+        description=description,
+        related_entity_type='document',
+        related_entity_id=document_id,
+        priority=priority,
+        action_url=url_for('documents.dashboard')
+    )
+    db.session.add(notification)
+    return notification
+
+
+@documents_bp.route('/test-notifications', methods=['GET', 'POST'])
+def test_expiry_notifications():
+    """اختبار إنشاء إشعارات انتهاء الصلاحيات لجميع المستخدمين"""
+    try:
+        from models import Notification, User
+        
+        current_date = datetime.now().date()
+        warning_date = current_date + timedelta(days=30)
+        
+        # الحصول على وثائق قريبة من الانتهاء أو منتهية
+        expiring_docs = Document.query.join(Employee)\
+            .filter(Document.expiry_date <= warning_date)\
+            .order_by(Document.expiry_date)\
+            .limit(5).all()
+        
+        if not expiring_docs:
+            return jsonify({'success': False, 'message': 'لا توجد وثائق منتهية أو قريبة من الانتهاء'}), 404
+        
+        all_users = User.query.all()
+        
+        notification_count = 0
+        for doc in expiring_docs:
+            days_until_expiry = (doc.expiry_date - current_date).days if doc.expiry_date else -999
+            
+            for user in all_users:
+                try:
+                    create_expiry_notification(
+                        user_id=user.id,
+                        document_type=doc.document_type or 'وثيقة',
+                        employee_name=doc.employee.name if doc.employee else 'غير محدد',
+                        days_until_expiry=days_until_expiry,
+                        document_id=doc.id
+                    )
+                    notification_count += 1
+                except Exception as e:
+                    pass
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': f'تم إنشاء {notification_count} إشعار لـ {len(expiring_docs)} وثيقة',
+            'documents_count': len(expiring_docs),
+            'users_count': len(all_users)
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
 @documents_bp.route('/dashboard')
 @login_required
 def dashboard():
