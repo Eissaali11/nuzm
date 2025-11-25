@@ -3,65 +3,83 @@
 
 {% block extra_css %}
 <style>
+    * {
+        direction: rtl;
+    }
+    
     body {
         background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
         min-height: 100vh;
+        padding: 20px 0;
+    }
+    
+    .container-fluid {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0 15px;
     }
     
     .report-header {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
-        border-radius: 20px;
-        padding: 40px;
-        margin-bottom: 30px;
+        border-radius: 25px;
+        padding: 50px 40px;
+        margin-bottom: 40px;
         text-align: center;
-        box-shadow: 0 10px 40px rgba(102, 126, 234, 0.3);
+        box-shadow: 0 15px 50px rgba(102, 126, 234, 0.4);
+        animation: slideDown 0.5s ease;
+    }
+    
+    @keyframes slideDown {
+        from { opacity: 0; transform: translateY(-20px); }
+        to { opacity: 1; transform: translateY(0); }
     }
     
     .report-header h1 {
-        font-size: 2.5rem;
-        font-weight: 800;
-        margin-bottom: 10px;
+        font-size: 2.8rem;
+        font-weight: 900;
+        margin-bottom: 15px;
+        letter-spacing: -0.5px;
+    }
+    
+    .report-header p {
+        font-size: 1.1rem;
+        opacity: 0.95;
     }
     
     .summary-card {
         background: white;
-        border-radius: 20px;
-        padding: 30px;
-        margin-bottom: 20px;
-        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-        border-left: 6px solid;
-        transition: all 0.3s ease;
+        border-radius: 25px;
+        padding: 35px 25px;
+        margin-bottom: 25px;
+        box-shadow: 0 10px 35px rgba(0,0,0,0.12);
+        border-left: 7px solid;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         position: relative;
-        overflow: hidden;
-    }
-    
-    .summary-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        right: 0;
-        width: 100px;
-        height: 100px;
-        opacity: 0.1;
-        border-radius: 50%;
+        height: 100%;
     }
     
     .summary-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+        transform: translateY(-8px);
+        box-shadow: 0 20px 50px rgba(0,0,0,0.18);
     }
     
     .summary-card h3 {
-        font-size: 2rem;
-        font-weight: 700;
-        margin-bottom: 10px;
+        font-size: 2.2rem;
+        font-weight: 800;
+        margin-bottom: 12px;
+        letter-spacing: -0.5px;
     }
     
     .summary-card p {
-        font-size: 1rem;
+        font-size: 1.05rem;
         margin: 0;
         font-weight: 500;
+        color: #666;
+    }
+    
+    .summary-card i {
+        margin-right: 8px;
     }
     
     .summary-card.employees { border-left-color: #28a745; }
@@ -73,25 +91,33 @@
     
     .data-table {
         background: white;
-        border-radius: 20px;
-        padding: 30px;
-        margin-bottom: 30px;
-        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-        overflow: hidden;
+        border-radius: 25px;
+        padding: 35px;
+        margin-bottom: 40px;
+        box-shadow: 0 10px 35px rgba(0,0,0,0.12);
+        overflow: visible;
     }
     
     .data-table h4 {
-        font-size: 1.4rem;
-        font-weight: 700;
+        font-size: 1.6rem;
+        font-weight: 800;
         color: #2d3748;
-        margin-bottom: 25px;
-        padding-bottom: 15px;
-        border-bottom: 3px solid #667eea;
+        margin-bottom: 30px;
+        padding-bottom: 20px;
+        border-bottom: 4px solid #667eea;
+        display: flex;
+        align-items: center;
+    }
+    
+    .data-table h4 i {
+        margin-right: 12px;
+        font-size: 1.8rem;
     }
     
     .table {
         margin-bottom: 0;
         font-size: 0.95rem;
+        border-collapse: collapse;
     }
     
     .table thead tr {
@@ -101,111 +127,135 @@
     
     .table th {
         border: none;
-        padding: 18px !important;
+        padding: 20px 15px !important;
         font-weight: 700;
         text-align: center;
         vertical-align: middle;
-        font-size: 0.95rem;
+        font-size: 0.98rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
     }
     
     .table tbody tr {
         transition: all 0.2s ease;
-        border-bottom: 1px solid #e2e8f0;
+        border-bottom: 1px solid #e8ecf1;
     }
     
     .table tbody tr:nth-child(even) {
-        background-color: #f8fafc;
+        background-color: #f9fafb;
     }
     
     .table tbody tr:hover {
-        background-color: #eef2ff !important;
-        box-shadow: inset 0 2px 5px rgba(0,0,0,0.05);
+        background-color: #f0f4ff !important;
+        box-shadow: inset 0 0 10px rgba(102, 126, 234, 0.1);
     }
     
     .table td {
         vertical-align: middle;
-        padding: 16px !important;
+        padding: 18px 15px !important;
         text-align: center;
+        color: #4a5568;
+    }
+    
+    .table td strong {
+        color: #2d3748;
     }
     
     .status-badge {
         display: inline-block;
-        padding: 8px 16px;
-        border-radius: 20px;
+        padding: 10px 18px;
+        border-radius: 25px;
         font-size: 0.85rem;
-        font-weight: 600;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        font-weight: 700;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.12);
     }
     
-    .status-present { background: #d4edda; color: #155724; border: 1px solid #28a745; }
-    .status-absent { background: #f8d7da; color: #721c24; border: 1px solid #dc3545; }
-    .status-available { background: #d4edda; color: #155724; border: 1px solid #28a745; }
-    .status-rented { background: #fff3cd; color: #856404; border: 1px solid #ffc107; }
-    .status-workshop { background: #f8d7da; color: #721c24; border: 1px solid #dc3545; }
+    .status-present { background: #d4edda; color: #155724; border: 2px solid #28a745; }
+    .status-absent { background: #f8d7da; color: #721c24; border: 2px solid #dc3545; }
+    .status-available { background: #d4edda; color: #155724; border: 2px solid #28a745; }
+    .status-rented { background: #fff3cd; color: #856404; border: 2px solid #ffc107; }
+    .status-workshop { background: #f8d7da; color: #721c24; border: 2px solid #dc3545; }
     
     .export-section {
         background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
         color: white;
-        border-radius: 20px;
-        padding: 40px;
-        margin-bottom: 30px;
+        border-radius: 25px;
+        padding: 50px 40px;
+        margin-bottom: 40px;
         text-align: center;
-        box-shadow: 0 10px 40px rgba(79, 172, 254, 0.3);
+        box-shadow: 0 15px 50px rgba(79, 172, 254, 0.4);
     }
     
     .export-section h4 {
-        font-size: 1.5rem;
-        font-weight: 700;
-        margin-bottom: 15px;
+        font-size: 1.8rem;
+        font-weight: 800;
+        margin-bottom: 20px;
+    }
+    
+    .export-section p {
+        font-size: 1.1rem;
+        margin-bottom: 30px;
+        opacity: 0.95;
     }
     
     .export-section .btn {
-        margin: 8px;
-        border-radius: 15px;
-        padding: 12px 30px;
-        font-weight: 600;
+        margin: 10px;
+        border-radius: 20px;
+        padding: 14px 35px;
+        font-weight: 700;
+        font-size: 1rem;
         transition: all 0.3s ease;
+        border: none;
     }
     
     .export-section .btn:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+        transform: translateY(-4px);
+        box-shadow: 0 12px 30px rgba(0,0,0,0.25);
     }
     
     .month-selector {
         background: white;
-        border-radius: 20px;
-        padding: 25px;
-        margin-bottom: 30px;
-        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        border-radius: 25px;
+        padding: 30px;
+        margin-bottom: 40px;
+        box-shadow: 0 10px 35px rgba(0,0,0,0.12);
     }
     
     .month-selector .form-label {
         font-weight: 700;
         color: #4a5568;
-        margin-bottom: 10px;
+        margin-bottom: 12px;
+        font-size: 1rem;
     }
     
     .month-selector .form-select {
         border: 2px solid #e2e8f0;
-        border-radius: 12px;
-        padding: 12px;
+        border-radius: 15px;
+        padding: 12px 15px;
         font-weight: 500;
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
     }
     
     .month-selector .form-select:focus {
         border-color: #667eea;
-        box-shadow: 0 0 0 0.25rem rgba(102, 126, 234, 0.15);
+        box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.15);
+        outline: none;
     }
     
     .month-selector .btn {
-        border-radius: 12px;
-        padding: 12px 30px;
+        border-radius: 15px;
+        padding: 12px 35px;
         font-weight: 700;
+        transition: all 0.3s ease;
+    }
+    
+    .month-selector .btn:hover {
+        transform: translateY(-2px);
     }
     
     .table-responsive {
-        border-radius: 15px;
+        border-radius: 20px;
         overflow: hidden;
     }
     
@@ -218,6 +268,25 @@
         .report-header { page-break-after: avoid; }
     }
     
+    @media (max-width: 992px) {
+        .report-header {
+            padding: 35px 25px;
+            margin-bottom: 30px;
+        }
+        
+        .report-header h1 {
+            font-size: 2.2rem;
+        }
+        
+        .data-table {
+            padding: 25px;
+        }
+        
+        .summary-card {
+            padding: 25px;
+        }
+    }
+    
     @media (max-width: 768px) {
         .report-header {
             padding: 25px;
@@ -228,27 +297,48 @@
             font-size: 1.8rem;
         }
         
+        .report-header p {
+            font-size: 0.95rem;
+        }
+        
         .summary-card {
             padding: 20px;
             margin-bottom: 15px;
         }
         
         .summary-card h3 {
-            font-size: 1.5rem;
+            font-size: 1.6rem;
         }
         
         .data-table {
             padding: 15px;
+            margin-bottom: 25px;
+        }
+        
+        .data-table h4 {
+            font-size: 1.2rem;
             margin-bottom: 20px;
         }
         
         .table th, .table td {
-            padding: 10px !important;
-            font-size: 0.85rem;
+            padding: 12px 8px !important;
+            font-size: 0.8rem;
         }
         
-        .table-responsive {
-            overflow-x: auto;
+        .status-badge {
+            padding: 8px 12px;
+            font-size: 0.75rem;
+        }
+        
+        .export-section {
+            padding: 30px 20px;
+            margin-bottom: 30px;
+        }
+        
+        .export-section .btn {
+            display: block;
+            width: 100%;
+            margin: 8px 0;
         }
     }
 </style>
