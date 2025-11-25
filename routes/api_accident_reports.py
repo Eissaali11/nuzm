@@ -258,22 +258,25 @@ def submit_accident_report(current_employee):
         
         # معالجة صور الحادث الإضافية
         uploaded_images = []
-        images = request.files.getlist('accident_images')
+        # دعم كل من accident_images و accident_images[]
+        images = request.files.getlist('accident_images[]') or request.files.getlist('accident_images')
         
         if images:
+            logger.info(f"Processing {len(images)} accident images for accident {accident.id}")
             # التأكد من وجود المجلد
             os.makedirs(final_upload_dir, exist_ok=True)
             
             for idx, image_file in enumerate(images):
-                if image_file and allowed_file(image_file.filename):
+                if image_file and image_file.filename and allowed_file(image_file.filename, 'image'):
                     # إنشاء اسم ملف آمن وفريد
                     original_filename = secure_filename(image_file.filename)
-                    filename_base = os.path.splitext(original_filename)[0]
-                    unique_filename = f"{uuid.uuid4().hex[:8]}_{filename_base}.jpg"
-                    filepath = os.path.join(upload_dir, unique_filename)
+                    filename_base = os.path.splitext(original_filename)[0] if original_filename else f'photo_{idx}'
+                    unique_filename = f"accident_{uuid.uuid4().hex[:8]}_{filename_base}.jpg"
+                    filepath = os.path.join(final_upload_dir, unique_filename)
                     
                     # حفظ الصورة
                     image_file.save(filepath)
+                    logger.info(f"Saved accident image: {filepath}")
                     
                     # ضغط الصورة
                     compress_image(filepath)
@@ -284,10 +287,11 @@ def submit_accident_report(current_employee):
                         accident_id=accident.id,
                         image_path=relative_path,
                         image_type=request.form.get(f'image_type_{idx}', 'scene'),
-                        caption=request.form.get(f'image_caption_{idx}')
+                        caption=request.form.get(f'image_caption_{idx}', f'صورة الحادث {idx + 1}')
                     )
                     db.session.add(accident_image)
                     uploaded_images.append(relative_path)
+                    logger.info(f"Added accident image to database: {relative_path}")
         
         db.session.commit()
         
