@@ -13,6 +13,7 @@ from services.attendance_analytics import AttendanceAnalytics
 import calendar
 import logging
 import time as time_module  # Renamed to avoid conflict with datetime.time
+from utils.decorators import module_access_required
 
 # Setup logging
 logger = logging.getLogger(__name__)
@@ -3724,3 +3725,130 @@ def update_attendance_page(id):
         print(f"خطأ في تحديث سجل الحضور: {str(e)}")
         flash(f'حدث خطأ: {str(e)}', 'danger')
         return redirect(url_for('attendance.edit_attendance_page', id=id))
+
+@attendance_bp.route('/departments-circles-overview')
+@login_required
+@module_access_required(Module.ATTENDANCE)
+def departments_circles_overview():
+    """لوحة تحكم شاملة تعرض الأقسام والدوائر وبيانات الحضور مع فلاتر"""
+    date_str = request.args.get('date')
+    department_filter = request.args.get('department_id')
+    
+    try:
+        if date_str:
+            selected_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+        else:
+            selected_date = datetime.now().date()
+    except ValueError:
+        selected_date = datetime.now().date()
+    
+    all_departments = Department.query.order_by(Department.name).all()
+    
+    if department_filter:
+        try:
+            departments = [Department.query.get(int(department_filter))]
+        except (ValueError, TypeError):
+            departments = all_departments
+    else:
+        departments = all_departments
+    
+    departments_data = []
+    
+    for dept in departments:
+        active_employees = [emp for emp in dept.employees if emp.status == 'active']
+        
+        locations = set()
+        for emp in active_employees:
+            if emp.location:
+                locations.add(emp.location)
+        
+        circles_data = []
+        total_dept_present = 0
+        total_dept_absent = 0
+        total_dept_leave = 0
+        total_dept_sick = 0
+        
+        for location in sorted(locations):
+            emp_in_circle = [e for e in active_employees if e.location == location]
+            emp_ids = [e.id for e in emp_in_circle]
+            
+            if emp_ids:
+                present = db.session.query(func.count(Attendance.id)).filter(
+                    Attendance.employee_id.in_(emp_ids),
+                    Attendance.date == selected_date,
+                    Attendance.status == 'present'
+                ).scalar() or 0
+                
+                absent = db.session.query(func.count(Attendance.id)).filter(
+                    Attendance.employee_id.in_(emp_ids),
+                    Attendance.date == selected_date,
+                    Attendance.status == 'absent'
+                ).scalar() or 0
+                
+                leave = db.session.query(func.count(Attendance.id)).filter(
+                    Attendance.employee_id.in_(emp_ids),
+                    Attendance.date == selected_date,
+                    Attendance.status == 'leave'
+                ).scalar() or 0
+                
+                sick = db.session.query(func.count(Attendance.id)).filter(
+                    Attendance.employee_id.in_(emp_ids),
+                    Attendance.date == selected_date,
+                    Attendance.status == 'sick'
+                ).scalar() or 0
+                
+                not_registered = len(emp_ids) - (present + absent + leave + sick)
+            else:
+                present = absent = leave = sick = not_registered = 0
+            
+            total_dept_present += present
+            total_dept_absent += absent
+            total_dept_leave += leave
+            total_dept_sick += sick
+            
+            employees_details = []
+            for emp in emp_in_circle:
+                attendance = Attendance.query.filter_by(
+                    employee_id=emp.id,
+                    date=selected_date
+                ).first()
+                
+                emp_data = {
+                    'name': emp.name,
+                    'employee_id': emp.employee_id,
+                    'status': attendance.status if attendance else 'لم يتم التسجيل',
+                    'check_in': attendance.check_in.strftime('%H:%M') if attendance and attendance.check_in else '-',
+                    'check_out': attendance.check_out.strftime('%H:%M') if attendance and attendance.check_out else '-',
+                }
+                employees_details.append(emp_data)
+            
+            circles_data.append({
+                'name': location,
+                'total': len(emp_in_circle),
+                'present': present,
+                'absent': absent,
+                'leave': leave,
+                'sick': sick,
+                'not_registered': not_registered,
+                'employees': employees_details
+            })
+        
+        departments_data.append({
+            'name': dept.name,
+            'id': dept.id,
+            'total_employees': len(active_employees),
+            'total_present': total_dept_present,
+            'total_absent': total_dept_absent,
+            'total_leave': total_dept_leave,
+            'total_sick': total_dept_sick,
+            'circles': circles_data
+        })
+    
+    return render_template(
+        'attendance/departments_circles_overview.html',
+        departments_data=departments_data,
+        all_departments=all_departments,
+        selected_date=selected_date,
+        selected_date_formatted=format_date_hijri(selected_date),
+        selected_department_id=int(department_filter) if department_filter else None
+    )
