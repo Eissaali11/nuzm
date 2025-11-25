@@ -21,8 +21,68 @@ from dotenv import load_dotenv
 import resend
 
 from whatsapp_client import WhatsAppWrapper # <-- استيراد الكلاس
-from routes.notifications import create_safety_check_notification, create_safety_check_review_notification
 
+# دوال الإشعارات المحلية
+def create_safety_check_notification(user_id, vehicle_plate, supervisor_name, check_status, check_id):
+    """إشعار فحص السلامة الخارجية"""
+    from models import Notification
+    
+    status_labels = {
+        'pending': 'قيد الانتظار',
+        'under_review': 'قيد المراجعة',
+        'approved': 'موافق عليه',
+        'rejected': 'مرفوض'
+    }
+    
+    priority_map = {
+        'pending': 'high',
+        'under_review': 'normal',
+        'approved': 'normal',
+        'rejected': 'critical'
+    }
+    
+    status_label = status_labels.get(check_status, check_status)
+    
+    notification = Notification(
+        user_id=user_id,
+        notification_type='safety_check',
+        title=f'فحص السلامة - السيارة {vehicle_plate}',
+        description=f'طلب فحص السلامة الخارجية للسيارة {vehicle_plate} من قبل {supervisor_name} - الحالة: {status_label}',
+        related_entity_type='safety_check',
+        related_entity_id=check_id,
+        priority=priority_map.get(check_status, 'normal'),
+        action_url=url_for('external_safety.admin_external_safety_checks')
+    )
+    db.session.add(notification)
+    db.session.commit()
+    return notification
+
+def create_safety_check_review_notification(user_id, vehicle_plate, action, reviewer_name, check_id):
+    """إشعار بمراجعة/موافقة فحص السلامة"""
+    from models import Notification
+    
+    action_labels = {
+        'approved': 'تمت الموافقة على',
+        'rejected': 'تم رفض',
+        'under_review': 'قيد المراجعة'
+    }
+    
+    priority = 'high' if action in ['rejected'] else 'normal'
+    action_label = action_labels.get(action, action)
+    
+    notification = Notification(
+        user_id=user_id,
+        notification_type='safety_check_review',
+        title=f'{action_label} فحص السلامة - {vehicle_plate}',
+        description=f'تمت مراجعة فحص السلامة للسيارة {vehicle_plate} بواسطة {reviewer_name}: {action_label}',
+        related_entity_type='safety_check',
+        related_entity_id=check_id,
+        priority=priority,
+        action_url=url_for('external_safety.admin_external_safety_checks')
+    )
+    db.session.add(notification)
+    db.session.commit()
+    return notification
 
 
 # قم بتحميل المتغيرات من ملف .env
