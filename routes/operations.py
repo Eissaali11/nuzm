@@ -2272,8 +2272,8 @@ def download_accident_report_pdf(accident_id):
         # إنشاء PDF
         pdf = generate_accident_report_pdf(accident)
         
-        # إنشاء response (output returns bytearray in fpdf2)
-        pdf_output = pdf.output()
+        # إنشاء response (output returns bytearray in fpdf2, convert to bytes)
+        pdf_output = bytes(pdf.output())
         
         response = make_response(pdf_output)
         response.headers['Content-Type'] = 'application/pdf'
