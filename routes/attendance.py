@@ -3822,15 +3822,29 @@ def departments_circles_overview():
             else:
                 employees_without_location.append(emp)
         
-        # تخطي الأقسام التي ليس لديها دوائر جغرافية محددة
-        if not locations_dict:
-            continue
-        
         circles_data = []
         total_dept_present = 0
         total_dept_absent = 0
         total_dept_leave = 0
         total_dept_sick = 0
+        
+        # إذا لم تكن هناك دوائر جغرافية
+        if not locations_dict:
+            # إذا تم اختيار قسم معين، نعرضه مع رسالة أنه لا توجد دوائر
+            if department_filter:
+                departments_data.append({
+                    'name': dept.name,
+                    'id': dept.id,
+                    'total_employees': len(active_employees),
+                    'total_present': 0,
+                    'total_absent': 0,
+                    'total_leave': 0,
+                    'total_sick': 0,
+                    'circles': [],
+                    'no_circles': True
+                })
+            # وإذا كان عرض جميع الأقسام، نتخطى هذا القسم
+            continue
         
         # معالجة كل دائرة جغرافية
         for location in sorted(locations_dict.keys()):

@@ -76,6 +76,21 @@
     <div class="row">
         {% if departments_data %}
             {% for dept in departments_data %}
+            <!-- رسالة القسم بدون دوائر -->
+            {% if dept.no_circles %}
+            <div class="col-12 mb-4">
+                <div class="card shadow-lg border-0" style="border-radius: 15px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                    <div class="card-body text-center py-5">
+                        <i class="fas fa-info-circle" style="font-size: 3rem; color: white; margin-bottom: 15px;"></i>
+                        <h4 class="text-white fw-bold mb-2">{{ dept.name }}</h4>
+                        <p class="text-white mb-0">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            لا يوجد دوائر جغرافية مرتبطة بهذا القسم
+                        </p>
+                    </div>
+                </div>
+            </div>
+            {% else %}
             <div class="col-12 mb-4">
                 <!-- بطاقة القسم الرئيسية -->
                 <div class="card shadow-lg border-0" style="border-radius: 15px; overflow: hidden;">
@@ -468,6 +483,7 @@
                     </div>
                 </div>
             </div>
+            {% endif %}
             {% endfor %}
         {% else %}
         <div class="col-12">
