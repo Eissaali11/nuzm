@@ -4115,11 +4115,38 @@ def circle_accessed_details(department_id, circle_name):
                 EmployeeLocation.recorded_at <= datetime.combine(end_date, time(23, 59, 59))
             ).order_by(EmployeeLocation.recorded_at.desc()).first()
             
-            attendance = Attendance.query.filter(
+            # جلب جميع سجلات الحضور
+            attendance_records = Attendance.query.filter(
                 Attendance.employee_id == emp.id,
                 Attendance.date >= start_date,
                 Attendance.date <= end_date
-            ).order_by(Attendance.date.desc()).first()
+            ).order_by(Attendance.check_in.asc()).all()
+            
+            # استخراج دخول وخروج الصباح والمساء
+            morning_check_in = None
+            morning_check_out = None
+            evening_check_in = None
+            evening_check_out = None
+            
+            for att in attendance_records:
+                if att.check_in:
+                    check_in_sa = att.check_in + saudi_tz
+                    if check_in_sa.hour < 12 and not morning_check_in:
+                        morning_check_in = check_in_sa
+                    elif check_in_sa.hour >= 12 and not evening_check_in:
+                        evening_check_in = check_in_sa
+            
+            # استخراج آخر خروج صباحي وأخر خروج مسائي
+            for att in reversed(attendance_records):
+                if att.check_out:
+                    check_out_sa = att.check_out + saudi_tz
+                    if check_out_sa.hour < 12 and not morning_check_out:
+                        morning_check_out = check_out_sa
+                    elif check_out_sa.hour >= 12 and not evening_check_out:
+                        evening_check_out = check_out_sa
+            
+            # الحصول على آخر سجل
+            attendance = attendance_records[-1] if attendance_records else None
             
             duration_minutes = geo_session.duration_minutes if geo_session.duration_minutes else 0
             
@@ -4135,6 +4162,10 @@ def circle_accessed_details(department_id, circle_name):
                 'status': 'حضور' if (attendance and attendance.status) else 'لم يتم التسجيل',
                 'check_in': format_time_12h_ar_short(check_in_sa) if check_in_sa else '-',
                 'check_out': format_time_12h_ar_short(check_out_sa) if check_out_sa else '-',
+                'morning_check_in': format_time_12h_ar_short(morning_check_in) if morning_check_in else '-',
+                'morning_check_out': format_time_12h_ar_short(morning_check_out) if morning_check_out else '-',
+                'evening_check_in': format_time_12h_ar_short(evening_check_in) if evening_check_in else '-',
+                'evening_check_out': format_time_12h_ar_short(evening_check_out) if evening_check_out else '-',
                 'circle_enter_time': format_time_12h_ar(entry_time_sa) if entry_time_sa else None,
                 'circle_exit_time': format_time_12h_ar(exit_time_sa) if exit_time_sa else None,
                 'duration_minutes': duration_minutes,
@@ -4205,11 +4236,37 @@ def export_circle_details_excel(department_id, circle_name):
         ).order_by(GeofenceSession.entry_time.desc()).first()
         
         if geo_session:
-            attendance = Attendance.query.filter(
+            # جلب جميع سجلات الحضور
+            attendance_records = Attendance.query.filter(
                 Attendance.employee_id == emp.id,
                 Attendance.date >= start_date,
                 Attendance.date <= end_date
-            ).order_by(Attendance.date.desc()).first()
+            ).order_by(Attendance.check_in.asc()).all()
+            
+            # استخراج دخول وخروج الصباح والمساء
+            morning_check_in = None
+            morning_check_out = None
+            evening_check_in = None
+            evening_check_out = None
+            
+            for att in attendance_records:
+                if att.check_in:
+                    check_in_sa = att.check_in + saudi_tz
+                    if check_in_sa.hour < 12 and not morning_check_in:
+                        morning_check_in = check_in_sa
+                    elif check_in_sa.hour >= 12 and not evening_check_in:
+                        evening_check_in = check_in_sa
+            
+            # استخراج آخر خروج صباحي وآخر خروج مسائي
+            for att in reversed(attendance_records):
+                if att.check_out:
+                    check_out_sa = att.check_out + saudi_tz
+                    if check_out_sa.hour < 12 and not morning_check_out:
+                        morning_check_out = check_out_sa
+                    elif check_out_sa.hour >= 12 and not evening_check_out:
+                        evening_check_out = check_out_sa
+            
+            attendance = attendance_records[-1] if attendance_records else None
             
             duration_minutes = geo_session.duration_minutes if geo_session.duration_minutes else 0
             
@@ -4226,12 +4283,14 @@ def export_circle_details_excel(department_id, circle_name):
                 'رقم الجوال': emp.mobile,
                 'الوظيفة': emp.job_title,
                 'حالة الحضور': 'حضور' if attendance else 'لم يتم التسجيل',
-                'دخول الدائرة (السعودية)': format_time_12h_ar(entry_time_sa) if entry_time_sa else '-',
-                'خروج الدائرة (السعودية)': format_time_12h_ar(exit_time_sa) if exit_time_sa else '-',
+                'دخول الدائرة': format_time_12h_ar(entry_time_sa) if entry_time_sa else '-',
+                'خروج الدائرة': format_time_12h_ar(exit_time_sa) if exit_time_sa else '-',
                 'المدة بالدقائق': duration_minutes,
                 'المدة (ساعات ودقائق)': f'{duration_minutes // 60}س {duration_minutes % 60}د' if duration_minutes > 0 else '-',
-                'دخول العمل (السعودية)': format_time_12h_ar_short(check_in_sa) if check_in_sa else '-',
-                'خروج العمل (السعودية)': format_time_12h_ar_short(check_out_sa) if check_out_sa else '-',
+                'دخول صباحي': format_time_12h_ar_short(morning_check_in) if morning_check_in else '-',
+                'خروج صباحي': format_time_12h_ar_short(morning_check_out) if morning_check_out else '-',
+                'دخول مسائي': format_time_12h_ar_short(evening_check_in) if evening_check_in else '-',
+                'خروج مسائي': format_time_12h_ar_short(evening_check_out) if evening_check_out else '-',
                 'GPS - Latitude': emp_location.latitude if (emp_location := db.session.query(EmployeeLocation).filter(EmployeeLocation.employee_id == emp.id, EmployeeLocation.recorded_at >= datetime.combine(start_date, time(0, 0, 0)), EmployeeLocation.recorded_at <= datetime.combine(end_date, time(23, 59, 59))).order_by(EmployeeLocation.recorded_at.desc()).first()) else '-',
                 'GPS - Longitude': emp_location.longitude if emp_location else '-',
             })
