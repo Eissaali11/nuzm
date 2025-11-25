@@ -409,6 +409,7 @@ function initializeDataTables() {
              '<"row"<"col-sm-5"i><"col-sm-7"p>>',
         lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "الكل"]],
     });
+    }
 }
 
 
