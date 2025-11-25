@@ -14,6 +14,8 @@ import calendar
 import logging
 import time as time_module  # Renamed to avoid conflict with datetime.time
 from utils.decorators import module_access_required
+import pandas as pd
+from io import BytesIO
 
 # Setup logging
 logger = logging.getLogger(__name__)
@@ -4113,4 +4115,132 @@ def circle_accessed_details(department_id, circle_name):
         employees_accessed=employees_accessed,
         selected_date=selected_date,
         selected_date_formatted=format_date_hijri(selected_date)
+    )
+
+@attendance_bp.route('/circle-accessed-details/<int:department_id>/<circle_name>/export-excel')
+@login_required
+def export_circle_details_excel(department_id, circle_name):
+    """تصدير تفاصيل الموظفين الواصلين للدائرة إلى ملف Excel"""
+    date_str = request.args.get('date')
+    export_type = request.args.get('type', 'all')  # 'all' أو employee_id
+    employee_id_filter = request.args.get('employee_id', None)
+    
+    # منطقة زمنية السعودية (UTC+3)
+    saudi_tz = timedelta(hours=3)
+    
+    try:
+        if date_str:
+            selected_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+        else:
+            selected_date = datetime.now().date()
+    except ValueError:
+        selected_date = datetime.now().date()
+    
+    # حساب نطاق التواريخ
+    now = datetime.now()
+    today_date = datetime.now().date()
+    eighteen_hours_ago_date = (now - timedelta(hours=18)).date()
+    start_date = min(selected_date, eighteen_hours_ago_date)
+    end_date = today_date
+    
+    dept = Department.query.get(department_id)
+    if not dept:
+        flash('القسم غير موجود', 'danger')
+        return redirect(url_for('attendance.departments_circles_overview'))
+    
+    # جلب الموظفين النشطين في القسم والدائرة المحددة
+    active_employees = [emp for emp in dept.employees if emp.status == 'active' and emp.location and emp.location.strip() == circle_name]
+    
+    # إذا كان هناك فلتر موظف معين
+    if export_type == 'single' and employee_id_filter:
+        try:
+            employee_id_filter = int(employee_id_filter)
+            active_employees = [emp for emp in active_employees if emp.id == employee_id_filter]
+        except:
+            pass
+    
+    data = []
+    
+    for emp in active_employees:
+        geo_session = db.session.query(GeofenceSession).filter(
+            GeofenceSession.employee_id == emp.id,
+            GeofenceSession.entry_time >= datetime.combine(start_date, time(0, 0, 0)),
+            GeofenceSession.entry_time <= datetime.combine(end_date, time(23, 59, 59))
+        ).order_by(GeofenceSession.entry_time.desc()).first()
+        
+        if geo_session:
+            attendance = Attendance.query.filter(
+                Attendance.employee_id == emp.id,
+                Attendance.date >= start_date,
+                Attendance.date <= end_date
+            ).order_by(Attendance.date.desc()).first()
+            
+            duration_minutes = geo_session.duration_minutes if geo_session.duration_minutes else 0
+            
+            # تحويل الأوقات إلى توقيت السعودية
+            entry_time_sa = (geo_session.entry_time + saudi_tz) if geo_session.entry_time else None
+            exit_time_sa = (geo_session.exit_time + saudi_tz) if geo_session.exit_time else None
+            check_in_sa = (attendance.check_in + saudi_tz) if attendance and attendance.check_in else None
+            check_out_sa = (attendance.check_out + saudi_tz) if attendance and attendance.check_out else None
+            
+            data.append({
+                'اسم الموظف': emp.name,
+                'رقم الموظف': emp.employee_id,
+                'رقم الهوية': emp.national_id,
+                'رقم الجوال': emp.mobile,
+                'الوظيفة': emp.job_title,
+                'حالة الحضور': attendance.status if attendance else 'لم يتم التسجيل',
+                'دخول الدائرة (السعودية)': entry_time_sa.strftime('%H:%M:%S') if entry_time_sa else '-',
+                'خروج الدائرة (السعودية)': exit_time_sa.strftime('%H:%M:%S') if exit_time_sa else '-',
+                'المدة بالدقائق': duration_minutes,
+                'المدة (ساعات ودقائق)': f'{duration_minutes // 60}س {duration_minutes % 60}د' if duration_minutes > 0 else '-',
+                'دخول العمل (السعودية)': check_in_sa.strftime('%H:%M') if check_in_sa else '-',
+                'خروج العمل (السعودية)': check_out_sa.strftime('%H:%M') if check_out_sa else '-',
+                'GPS - Latitude': emp_location.latitude if (emp_location := db.session.query(EmployeeLocation).filter(EmployeeLocation.employee_id == emp.id, EmployeeLocation.recorded_at >= datetime.combine(start_date, time(0, 0, 0)), EmployeeLocation.recorded_at <= datetime.combine(end_date, time(23, 59, 59))).order_by(EmployeeLocation.recorded_at.desc()).first()) else '-',
+                'GPS - Longitude': emp_location.longitude if emp_location else '-',
+            })
+    
+    if not data:
+        flash('لا توجد بيانات للتصدير', 'warning')
+        return redirect(url_for('attendance.circle_accessed_details', department_id=department_id, circle_name=circle_name, date=date_str))
+    
+    # إنشاء DataFrame
+    df = pd.DataFrame(data)
+    
+    # إنشاء ملف Excel في الذاكرة
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        df.to_excel(writer, sheet_name='البيانات', index=False, startrow=0)
+        
+        # تنسيق الـ worksheet
+        worksheet = writer.sheets['البيانات']
+        worksheet.sheet_properties.orientation = 'rtl'
+        
+        # تعديل عرض الأعمدة
+        for column in worksheet.columns:
+            max_length = 0
+            column_letter = column[0].column_letter
+            for cell in column:
+                try:
+                    if len(str(cell.value)) > max_length:
+                        max_length = len(str(cell.value))
+                except:
+                    pass
+            adjusted_width = min(max_length + 2, 50)
+            worksheet.column_dimensions[column_letter].width = adjusted_width
+    
+    output.seek(0)
+    
+    # اسم الملف
+    if export_type == 'single' and employee_id_filter:
+        emp = next((e for e in active_employees if e.id == employee_id_filter), None)
+        filename = f'تفاصيل_الموظف_{emp.name if emp else "unknown"}_{selected_date.strftime("%Y-%m-%d")}.xlsx'
+    else:
+        filename = f'تفاصيل_الدائرة_{circle_name}_{selected_date.strftime("%Y-%m-%d")}.xlsx'
+    
+    return send_file(
+        output,
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        as_attachment=True,
+        download_name=filename
     )

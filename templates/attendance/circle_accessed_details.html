@@ -26,10 +26,16 @@
                         التاريخ: <strong>{{ selected_date_formatted }}</strong> | التوقيت: <strong>التوقيت السعودي (UTC+3)</strong>
                     </p>
                 </div>
-                <a href="{{ url_for('attendance.departments_circles_overview', date=selected_date.strftime('%Y-%m-%d'), department_id=department_id) }}" class="btn btn-light">
-                    <i class="fas fa-arrow-left me-2"></i>
-                    العودة
-                </a>
+                <div class="d-flex gap-2 flex-column">
+                    <a href="{{ url_for('attendance.export_circle_details_excel', department_id=department_id, circle_name=circle_name, date=selected_date.strftime('%Y-%m-%d'), type='all') }}" class="btn btn-success">
+                        <i class="fas fa-file-excel me-2"></i>
+                        تصدير الجميع (Excel)
+                    </a>
+                    <a href="{{ url_for('attendance.departments_circles_overview', date=selected_date.strftime('%Y-%m-%d'), department_id=department_id) }}" class="btn btn-light">
+                        <i class="fas fa-arrow-left me-2"></i>
+                        العودة
+                    </a>
+                </div>
             </div>
         </div>
     </div>
@@ -60,11 +66,14 @@
 
                         <!-- محتوى البطاقة -->
                         <div class="card-body p-4">
-                            <!-- حالة الحضور -->
-                            <div class="mb-4">
+                            <!-- حالة الحضور وزر التصدير -->
+                            <div class="d-flex justify-content-between align-items-start mb-4">
                                 <span class="badge" style="background: {% if emp.status == 'حاضر' %}#10b981{% elif emp.status == 'غياب' %}#ef4444{% else %}#6b7280{% endif %}; padding: 8px 12px; font-size: 0.9rem;">
                                     {{ emp.status }}
                                 </span>
+                                <a href="{{ url_for('attendance.export_circle_details_excel', department_id=department_id, circle_name=circle_name, date=selected_date.strftime('%Y-%m-%d'), type='single', employee_id=loop.index) }}" class="btn btn-sm btn-outline-success" title="تصدير بيانات هذا الموظف">
+                                    <i class="fas fa-download"></i>
+                                </a>
                             </div>
 
                             <!-- أوقات الدخول والخروج من الدائرة -->
