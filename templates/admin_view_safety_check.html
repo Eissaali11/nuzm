@@ -393,16 +393,16 @@
 </div>
 
 <!-- Modal للصور -->
-<div id="imageModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.95); z-index:1000; display:flex; align-items:center; justify-content:center;">
-    <div style="position:relative; display:inline-block;">
-        <img id="modalImage" style="max-width:90vw; max-height:90vh; border-radius:8px; box-shadow: 0 0 30px rgba(0,0,0,0.5);" />
+<div id="imageModal" style="display:none !important; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:9999; flex-direction: column; align-items:center; justify-content:center; padding:20px;">
+    <div style="position:relative; display:flex; align-items:center; justify-content:center; width:100%; height:100%;">
+        <img id="modalImage" style="max-width:85vw; max-height:85vh; border-radius:8px; box-shadow: 0 0 40px rgba(0,0,0,0.7); object-fit: contain;" />
         
         <!-- زر الإغلاق على الصورة مباشرة -->
-        <button onclick="closeImageModal()" 
-                style="position:absolute; top:15px; right:15px; background: linear-gradient(135deg, #18b2b0 0%, #0d9488 100%); border:none; width:50px; height:50px; border-radius:50%; cursor:pointer; font-size:28px; display:flex; align-items:center; justify-content:center; color:white; font-weight:bold; transition:all 0.3s ease; box-shadow: 0 4px 15px rgba(24, 178, 176, 0.4);"
-                onmouseover="this.style.transform='scale(1.1)'; this.style.boxShadow='0 6px 20px rgba(24, 178, 176, 0.5)';"
-                onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 15px rgba(24, 178, 176, 0.4)';"
-                title="اضغط لإغلاق أو اضغط Escape">
+        <button id="closeModalBtn" onclick="closeImageModal()" 
+                style="position:absolute; top:30px; right:30px; background: linear-gradient(135deg, #18b2b0 0%, #0d9488 100%); border:2px solid white; width:55px; height:55px; border-radius:50%; cursor:pointer; font-size:32px; display:flex !important; align-items:center; justify-content:center; color:white; font-weight:bold; transition:all 0.3s ease; box-shadow: 0 6px 20px rgba(24, 178, 176, 0.5); z-index:10000; padding:0; line-height:1;"
+                onmouseover="this.style.transform='scale(1.15)'; this.style.boxShadow='0 8px 30px rgba(24, 178, 176, 0.6)';"
+                onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 6px 20px rgba(24, 178, 176, 0.5)';"
+                title="إغلاق (Escape)">
             ✕
         </button>
     </div>
@@ -410,26 +410,32 @@
 
 <script>
     function openModal(src) {
-        document.getElementById('modalImage').src = src;
-        document.getElementById('imageModal').style.display = 'flex';
+        const modal = document.getElementById('imageModal');
+        const img = document.getElementById('modalImage');
+        img.src = src;
+        modal.style.display = 'flex !important';
         document.body.style.overflow = 'hidden';
     }
     
     function closeImageModal() {
-        document.getElementById('imageModal').style.display = 'none';
+        const modal = document.getElementById('imageModal');
+        modal.style.display = 'none !important';
         document.body.style.overflow = 'auto';
     }
     
     // إغلاق عند الضغط على Escape
     document.addEventListener('keydown', function(event) {
         if (event.key === 'Escape') {
-            closeImageModal();
+            const modal = document.getElementById('imageModal');
+            if (modal.style.display === 'flex' || modal.style.display === 'flex !important') {
+                closeImageModal();
+            }
         }
     });
     
     // إغلاق عند الضغط خارج الصورة
     document.getElementById('imageModal').addEventListener('click', function(e) {
-        if (e.target === this) {
+        if (e.target === this || e.target.id === 'modalImage') {
             closeImageModal();
         }
     });
