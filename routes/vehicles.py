@@ -6600,12 +6600,17 @@ def export_vehicles_pdf_english():
 def view_accident_details(id):
     """عرض صفحة تفاصيل الحادثة المرورية"""
     try:
+        from models import VehicleAccidentImage
         accident = VehicleAccident.query.get_or_404(id)
         vehicle = Vehicle.query.get(accident.vehicle_id)
         
+        # جلب صور الحادث المرفقة
+        accident_images = VehicleAccidentImage.query.filter_by(accident_id=id).all()
+        
         return render_template('vehicles/accident_details.html', 
                              accident=accident, 
-                             vehicle=vehicle)
+                             vehicle=vehicle,
+                             accident_images=accident_images)
     except Exception as e:
         current_app.logger.error(f"خطأ في عرض تفاصيل الحادثة: {str(e)}")
         flash("حدث خطأ في عرض تفاصيل الحادثة", "danger")

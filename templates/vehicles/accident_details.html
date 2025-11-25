@@ -525,17 +525,17 @@
         </div>
     </div>
 
-    <!-- المستندات والصور -->
+    <!-- المستندات الأساسية -->
     <div class="detail-card mt-4">
-        <h5><i class="fas fa-images"></i> المستندات والصور</h5>
+        <h5><i class="fas fa-file-contract"></i> المستندات الأساسية</h5>
         
         {% if accident.driver_id_image or accident.driver_license_image or accident.accident_report_file %}
         <div class="row mb-3">
             {% if accident.driver_id_image %}
             <div class="col-md-4 mb-3">
                 <label class="d-block mb-2 fw-bold">صورة الهوية</label>
-                <a href="{{ accident.driver_id_image }}" target="_blank" class="img-thumbnail d-block">
-                    <i class="fas fa-file-pdf me-2"></i>عرض الملف
+                <a href="{{ accident.driver_id_image }}" target="_blank" class="btn btn-sm btn-outline-primary d-block">
+                    <i class="fas fa-file-alt me-2"></i>عرض الملف
                 </a>
             </div>
             {% endif %}
@@ -543,8 +543,8 @@
             {% if accident.driver_license_image %}
             <div class="col-md-4 mb-3">
                 <label class="d-block mb-2 fw-bold">صورة الرخصة</label>
-                <a href="{{ accident.driver_license_image }}" target="_blank" class="img-thumbnail d-block">
-                    <i class="fas fa-file-pdf me-2"></i>عرض الملف
+                <a href="{{ accident.driver_license_image }}" target="_blank" class="btn btn-sm btn-outline-primary d-block">
+                    <i class="fas fa-file-alt me-2"></i>عرض الملف
                 </a>
             </div>
             {% endif %}
@@ -552,16 +552,18 @@
             {% if accident.accident_report_file %}
             <div class="col-md-4 mb-3">
                 <label class="d-block mb-2 fw-bold">تقرير الحادث</label>
-                <a href="{{ accident.accident_report_file }}" target="_blank" class="img-thumbnail d-block">
-                    <i class="fas fa-file-pdf me-2"></i>عرض الملف
+                <a href="{{ accident.accident_report_file }}" target="_blank" class="btn btn-sm btn-outline-primary d-block">
+                    <i class="fas fa-file-alt me-2"></i>عرض الملف
                 </a>
             </div>
             {% endif %}
         </div>
+        {% else %}
+        <div class="text-muted">لا توجد مستندات أساسية مرفقة</div>
         {% endif %}
 
         {% if accident.accident_file_link %}
-        <div class="detail-item mb-3">
+        <div class="detail-item mt-3">
             <label>رابط ملف الحادث</label>
             <div class="value">
                 <a href="{{ accident.accident_file_link }}" target="_blank" class="btn btn-sm btn-outline-primary">
@@ -571,6 +573,38 @@
         </div>
         {% endif %}
     </div>
+
+    <!-- صور الحادث المرفقة -->
+    {% if accident_images and accident_images|length > 0 %}
+    <div class="detail-card mt-4">
+        <h5><i class="fas fa-camera"></i> صور الحادث ({{ accident_images|length }})</h5>
+        <div class="image-gallery">
+            {% for image in accident_images %}
+            <div class="image-item">
+                <a href="{{ image.image_path or image.image_url }}" target="_blank" data-lightbox="accident-gallery" data-title="{{ image.caption or 'صورة الحادث' }}">
+                    <img src="{{ image.image_path or image.image_url }}" alt="{{ image.caption or 'صورة الحادث' }}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22150%22 height=%22150%22%3E%3Crect fill=%22%23f0f0f0%22 width=%22150%22 height=%22150%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 font-family=%22Arial%22 font-size=%2212%22 fill=%22%23999%22 text-anchor=%22middle%22 dy=%22.3em%22%3Eصورة غير متوفرة%3C/text%3E%3C/svg%3E'">
+                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; text-align: center; width: 100%;">
+                        <i class="fas fa-search-plus fa-lg" style="background: rgba(0,0,0,0.6); padding: 10px; border-radius: 50%;"></i>
+                    </div>
+                </a>
+                {% if image.caption %}
+                <div style="padding: 0.5rem; background: #f8f9fa; text-align: center; font-size: 0.85rem; color: #666;">
+                    {{ image.caption }}
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% else %}
+    <div class="detail-card mt-4">
+        <h5><i class="fas fa-camera"></i> صور الحادث</h5>
+        <div class="text-center py-4">
+            <i class="fas fa-image fa-4x text-muted mb-3"></i>
+            <p class="text-muted">لا توجد صور مرفقة للحادث</p>
+        </div>
+    </div>
+    {% endif %}
 
     <!-- خريطة الموقع -->
     {% if accident.latitude and accident.longitude %}
