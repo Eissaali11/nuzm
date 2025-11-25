@@ -635,11 +635,9 @@ def handle_safety_check_submission(vehicle):
         
         # إنشاء إشعار عند إنشاء فحص جديد
         try:
-            # الحصول على معرف المستخدم الإداري (أول مستخدم أو المستخدم الحالي)
-            admin_user = current_user if current_user.is_authenticated else User.query.first()
-            if admin_user:
+            if current_user.is_authenticated:
                 create_safety_check_notification(
-                    user_id=admin_user.id,
+                    user_id=current_user.id,
                     vehicle_plate=safety_check.vehicle_plate_number,
                     supervisor_name=safety_check.driver_name,
                     check_status='pending',
@@ -1443,13 +1441,12 @@ def approve_safety_check(check_id):
         
         # إنشاء إشعار عند الموافقة
         try:
-            admin_user = current_user if current_user.is_authenticated else User.query.first()
-            if admin_user:
+            if current_user.is_authenticated:
                 create_safety_check_review_notification(
-                    user_id=admin_user.id,
+                    user_id=current_user.id,
                     vehicle_plate=safety_check.vehicle_plate_number,
                     action='approved',
-                    reviewer_name=current_user.name if current_user.is_authenticated else 'النظام',
+                    reviewer_name=current_user.name,
                     check_id=safety_check.id
                 )
         except Exception as e:
@@ -1491,13 +1488,12 @@ def reject_safety_check(check_id):
         
         # إنشاء إشعار عند الرفض
         try:
-            admin_user = current_user if current_user.is_authenticated else User.query.first()
-            if admin_user:
+            if current_user.is_authenticated:
                 create_safety_check_review_notification(
-                    user_id=admin_user.id,
+                    user_id=current_user.id,
                     vehicle_plate=safety_check.vehicle_plate_number,
                     action='rejected',
-                    reviewer_name=current_user.name if current_user.is_authenticated else 'النظام',
+                    reviewer_name=current_user.name,
                     check_id=safety_check.id
                 )
         except Exception as e:
