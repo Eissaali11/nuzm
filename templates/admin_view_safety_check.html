@@ -393,23 +393,18 @@
 </div>
 
 <!-- Modal للصور -->
-<div id="imageModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.95); z-index:1000; display:flex; align-items:center; justify-content:center; padding:20px;">
-    <div style="position:relative; width:100%; height:100%; display:flex; align-items:center; justify-content:center;">
-        <img id="modalImage" style="max-width:95%; max-height:95%; border-radius:8px; box-shadow: 0 0 30px rgba(0,0,0,0.5);" />
+<div id="imageModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.95); z-index:1000; display:flex; align-items:center; justify-content:center;">
+    <div style="position:relative; display:inline-block;">
+        <img id="modalImage" style="max-width:90vw; max-height:90vh; border-radius:8px; box-shadow: 0 0 30px rgba(0,0,0,0.5);" />
         
-        <!-- زر الإغلاق العلوي -->
+        <!-- زر الإغلاق على الصورة مباشرة -->
         <button onclick="closeImageModal()" 
-                style="position:absolute; top:30px; right:30px; background: linear-gradient(135deg, #18b2b0 0%, #0d9488 100%); border:none; width:50px; height:50px; border-radius:50%; cursor:pointer; font-size:28px; display:flex; align-items:center; justify-content:center; color:white; font-weight:bold; transition:all 0.3s ease; box-shadow: 0 4px 15px rgba(24, 178, 176, 0.3);"
-                onmouseover="this.style.transform='scale(1.1)'; this.style.boxShadow='0 6px 20px rgba(24, 178, 176, 0.4)';"
-                onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 15px rgba(24, 178, 176, 0.3)';"
+                style="position:absolute; top:15px; right:15px; background: linear-gradient(135deg, #18b2b0 0%, #0d9488 100%); border:none; width:50px; height:50px; border-radius:50%; cursor:pointer; font-size:28px; display:flex; align-items:center; justify-content:center; color:white; font-weight:bold; transition:all 0.3s ease; box-shadow: 0 4px 15px rgba(24, 178, 176, 0.4);"
+                onmouseover="this.style.transform='scale(1.1)'; this.style.boxShadow='0 6px 20px rgba(24, 178, 176, 0.5)';"
+                onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 15px rgba(24, 178, 176, 0.4)';"
                 title="اضغط لإغلاق أو اضغط Escape">
             ✕
         </button>
-        
-        <!-- نص تعليمي -->
-        <div style="position:absolute; bottom:30px; left:30px; color:#cbd5e1; font-size:12px; text-align:right;">
-            اضغط Escape أو اضغط على زر الإغلاق (✕) للإغلاق
-        </div>
     </div>
 </div>
 
