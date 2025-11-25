@@ -3975,7 +3975,6 @@ def departments_circles_overview():
         })
     
     # جلب بيانات التتبع الجغرافي للموظفين
-    from models import EmployeeLocation
     from datetime import datetime as dt
     from sqlalchemy import and_
     
