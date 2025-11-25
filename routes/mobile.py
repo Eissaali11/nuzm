@@ -278,19 +278,43 @@ def index():
     today_str = today.strftime('%Y-%m-%d')
     absences = Attendance.query.filter_by(date=today_str, status='غائب').all()
 
-    # جلب بيانات الموظفين والمواقع للخريطة
+    # جلب جميع الموظفين (بدون تصفية حسب الحالة)
     from models import Geofence
-    employees = Employee.query.filter_by(status='active').all()
-    employee_locations = {}
+    all_employees = Employee.query.options(db.joinedload(Employee.departments)).all()
     
-    for emp in employees:
+    # جلب جميع الأقسام
+    departments = Department.query.all()
+    
+    # بناء employee_locations مع حالة الاتصال
+    employee_locations = {}
+    from datetime import timedelta
+    
+    for emp in all_employees:
         location = EmployeeLocation.query.filter_by(employee_id=emp.id).order_by(EmployeeLocation.recorded_at.desc()).first()
         if location:
+            age_minutes = (datetime.utcnow() - location.recorded_at).total_seconds() / 60
+            
+            # تحديد الحالة
+            if age_minutes < 5:
+                status = 'active'
+            elif age_minutes < 30:
+                status = 'recently_active'
+            elif age_minutes < 360:
+                status = 'inactive'
+            else:
+                status = 'not_registered'
+            
             employee_locations[emp.id] = {
                 'latitude': float(location.latitude),
                 'longitude': float(location.longitude),
                 'name': emp.name,
-                'employee_id': emp.employee_id
+                'employee_id': emp.employee_id,
+                'status': status,
+                'age_minutes': int(age_minutes)
+            }
+        else:
+            employee_locations[emp.id] = {
+                'status': 'not_registered'
             }
     
     # جلب الدوائر الجغرافية
@@ -301,7 +325,8 @@ def index():
         'latitude': float(gf.center_latitude),
         'longitude': float(gf.center_longitude),
         'radius': gf.radius_meters,
-        'color': gf.color
+        'color': gf.color,
+        'department_id': gf.department_id
     } for gf in geofences]
     
     employees_json = json.dumps([{
@@ -309,8 +334,10 @@ def index():
         'name': emp.name,
         'employee_id': emp.employee_id,
         'photo_url': emp.profile_image,
-        'department_name': emp.department.name if emp.department else 'غير محدد'
-    } for emp in employees])
+        'department_name': emp.department.name if emp.department else 'غير محدد',
+        'department_id': emp.departments[0].id if emp.departments else None,
+        'status': emp.status
+    } for emp in all_employees])
     
     employee_locations_json = json.dumps(employee_locations)
     geofences_json = json.dumps(geofences_data)
@@ -321,10 +348,11 @@ def index():
                             absences=absences,
                             notifications_count=notifications_count,
                             now=datetime.now(),
-                            employees=employees,
+                            employees=all_employees,
                             employees_json=employees_json,
                             employee_locations_json=employee_locations_json,
-                            geofences_json=geofences_json)
+                            geofences_json=geofences_json,
+                            departments=departments)
 
 # صفحة تسجيل الدخول - النسخة المحمولة
 @mobile_bp.route('/login', methods=['GET', 'POST'])

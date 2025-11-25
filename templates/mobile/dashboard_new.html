@@ -605,6 +605,24 @@
             <i class="fas fa-map-marker-alt"></i>
             تتبع مواقع الموظفين
         </div>
+
+        <!-- Filters -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+            <select id="departmentFilter" style="padding: 10px; border-radius: 8px; border: 1px solid #ddd; font-family: Cairo;">
+                <option value="">جميع الأقسام</option>
+                {% for dept in departments %}
+                <option value="{{ dept.id }}">{{ dept.name }}</option>
+                {% endfor %}
+            </select>
+            
+            <select id="statusFilter" style="padding: 10px; border-radius: 8px; border: 1px solid #ddd; font-family: Cairo;">
+                <option value="">جميع الحالات</option>
+                <option value="active">نشط 🟢</option>
+                <option value="recently_active">نشط مؤخراً 🟠</option>
+                <option value="inactive">غير نشط 🔴</option>
+                <option value="not_registered">غير مسجل ⚫</option>
+            </select>
+        </div>
         
         <!-- Map Container -->
         <div class="tracking-map-container">
@@ -685,6 +703,81 @@
     let mobileMarkers = {};
     let geofenceCircles = {};
     let currentEmployeeInGeofence = {};
+    let allEmployees = {{ employees_json|safe }};
+
+    function applyFilters() {
+        const deptFilter = document.getElementById('departmentFilter').value;
+        const statusFilter = document.getElementById('statusFilter').value;
+        const employeeLocations = {{ employee_locations_json|safe }};
+
+        // Clear existing markers
+        Object.values(mobileMarkers).forEach(m => {
+            if (m.marker) mobileMap.removeLayer(m.marker);
+        });
+        mobileMarkers = {};
+
+        // Filter and display employees
+        allEmployees.forEach(emp => {
+            const location = employeeLocations[emp.id] || {};
+            
+            // Apply department filter
+            if (deptFilter && emp.department_id != deptFilter) return;
+            
+            // Apply status filter
+            if (statusFilter && location.status !== statusFilter) return;
+
+            if (location.latitude !== undefined) {
+                const photoUrl = emp.photo_url ? `/static/${emp.photo_url}` : 'https://via.placeholder.com/40?text=' + emp.name[0];
+                
+                let borderColor = '#667eea';
+                if (location.status === 'active') borderColor = '#10b981';
+                else if (location.status === 'recently_active') borderColor = '#f59e0b';
+                else if (location.status === 'inactive') borderColor = '#ef4444';
+
+                const customIcon = L.divIcon({
+                    className: 'custom-employee-marker',
+                    html: `
+                        <div style="
+                            width: 45px;
+                            height: 45px;
+                            border-radius: 50%;
+                            border: 3px solid ${borderColor};
+                            overflow: hidden;
+                            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+                            background: white;
+                        ">
+                            <img src="${photoUrl}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='https://via.placeholder.com/40?text=${emp.name[0]}'">
+                        </div>
+                    `,
+                    iconSize: [45, 45],
+                    iconAnchor: [22, 45],
+                    popupAnchor: [0, -45]
+                });
+
+                const marker = L.marker([location.latitude, location.longitude], {icon: customIcon})
+                    .bindPopup(`
+                        <div style="text-align: center; font-family: Cairo, sans-serif; padding: 8px;">
+                            <strong>${emp.name}</strong><br>
+                            الموظف #${emp.employee_id || 'N/A'}<br>
+                            <small>${emp.department_name}</small><br>
+                            <small style="color: #999;">آخر تحديث: ${location.age_minutes || 0} دقيقة</small>
+                        </div>
+                    `);
+                
+                marker.addTo(mobileMap);
+                mobileMarkers[emp.id] = { marker, location, data: emp };
+                
+                checkGeofenceProximity(emp.id, location);
+            }
+        });
+
+        // Fit bounds if there are markers
+        if (Object.keys(mobileMarkers).length > 0) {
+            const markers = Object.values(mobileMarkers).map(m => m.marker);
+            const group = new L.featureGroup(markers);
+            mobileMap.fitBounds(group.getBounds(), { padding: [50, 50] });
+        }
+    }
 
     function initMobileMap() {
         mobileMap = L.map('mobileMap').setView([24.7136, 46.6753], 6);
@@ -709,58 +802,12 @@
             geofenceCircles[gf.id] = { circle, data: gf };
         });
 
-        // Add markers for employees مع صورهم
-        const employees = {{ employees_json|safe }};
-        const employeeLocations = {{ employee_locations_json|safe }};
+        // Apply initial filters
+        applyFilters();
 
-        employees.forEach(emp => {
-            const location = employeeLocations[emp.id];
-            if (location) {
-                // Create custom marker with employee photo
-                const photoUrl = emp.photo_url ? `/static/${emp.photo_url}` : 'https://via.placeholder.com/40?text=' + emp.name[0];
-                
-                const customIcon = L.divIcon({
-                    className: 'custom-employee-marker',
-                    html: `
-                        <div style="
-                            width: 45px;
-                            height: 45px;
-                            border-radius: 50%;
-                            border: 3px solid #667eea;
-                            overflow: hidden;
-                            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-                            background: white;
-                        ">
-                            <img src="${photoUrl}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='https://via.placeholder.com/40?text=${emp.name[0]}'">
-                        </div>
-                    `,
-                    iconSize: [45, 45],
-                    iconAnchor: [22, 45],
-                    popupAnchor: [0, -45]
-                });
-
-                const marker = L.marker([location.latitude, location.longitude], {icon: customIcon})
-                    .bindPopup(`
-                        <div style="text-align: center; font-family: Cairo, sans-serif;">
-                            <strong>${emp.name}</strong><br>
-                            الموظف #${emp.employee_id || 'N/A'}<br>
-                            <small>${emp.department_name}</small>
-                        </div>
-                    `);
-                
-                marker.addTo(mobileMap);
-                mobileMarkers[emp.id] = { marker, location, data: emp };
-                
-                // Check if employee is in any geofence
-                checkGeofenceProximity(emp.id, location);
-            }
-        });
-
-        if (Object.keys(mobileMarkers).length > 0) {
-            const markers = Object.values(mobileMarkers).map(m => m.marker);
-            const group = new L.featureGroup(markers);
-            mobileMap.fitBounds(group.getBounds(), { padding: [50, 50] });
-        }
+        // Add filter event listeners
+        document.getElementById('departmentFilter').addEventListener('change', applyFilters);
+        document.getElementById('statusFilter').addEventListener('change', applyFilters);
     }
 
     // دالة للتحقق من الدوائر الجغرافية
