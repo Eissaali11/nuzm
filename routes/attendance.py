@@ -22,6 +22,43 @@ logger = logging.getLogger(__name__)
 
 attendance_bp = Blueprint('attendance', __name__)
 
+def format_time_12h_ar(dt):
+    """تحويل الوقت من 24 ساعة إلى 12 ساعة بصيغة عربية (صباح/مساء)"""
+    if not dt:
+        return '-'
+    hour = dt.hour
+    minute = dt.minute
+    second = dt.second
+    
+    # تحديد صباح أو مساء
+    period = 'ص' if hour < 12 else 'م'
+    
+    # تحويل الساعة
+    if hour > 12:
+        hour = hour - 12
+    elif hour == 0:
+        hour = 12
+    
+    return f'{hour}:{minute:02d}:{second:02d} {period}'
+
+def format_time_12h_ar_short(dt):
+    """تحويل الوقت من 24 ساعة إلى 12 ساعة بصيغة قصيرة (بدون ثوانٍ)"""
+    if not dt:
+        return '-'
+    hour = dt.hour
+    minute = dt.minute
+    
+    # تحديد صباح أو مساء
+    period = 'ص' if hour < 12 else 'م'
+    
+    # تحويل الساعة
+    if hour > 12:
+        hour = hour - 12
+    elif hour == 0:
+        hour = 12
+    
+    return f'{hour}:{minute:02d} {period}'
+
 @attendance_bp.route('/')
 def index():
     """List attendance records with filtering options - shows all employees"""
@@ -4096,10 +4133,10 @@ def circle_accessed_details(department_id, circle_name):
                 'name': emp.name,
                 'employee_id': emp.employee_id,
                 'status': 'حضور' if (attendance and attendance.status) else 'لم يتم التسجيل',
-                'check_in': check_in_sa.strftime('%H:%M') if check_in_sa else '-',
-                'check_out': check_out_sa.strftime('%H:%M') if check_out_sa else '-',
-                'circle_enter_time': entry_time_sa.strftime('%H:%M:%S') if entry_time_sa else None,
-                'circle_exit_time': exit_time_sa.strftime('%H:%M:%S') if exit_time_sa else None,
+                'check_in': format_time_12h_ar_short(check_in_sa) if check_in_sa else '-',
+                'check_out': format_time_12h_ar_short(check_out_sa) if check_out_sa else '-',
+                'circle_enter_time': format_time_12h_ar(entry_time_sa) if entry_time_sa else None,
+                'circle_exit_time': format_time_12h_ar(exit_time_sa) if exit_time_sa else None,
                 'duration_minutes': duration_minutes,
                 'duration_display': f'{duration_minutes // 60}س {duration_minutes % 60}د' if duration_minutes > 0 else '-',
                 'gps_latitude': emp_location.latitude if emp_location else None,
@@ -4188,13 +4225,13 @@ def export_circle_details_excel(department_id, circle_name):
                 'رقم الهوية': emp.national_id,
                 'رقم الجوال': emp.mobile,
                 'الوظيفة': emp.job_title,
-                'حالة الحضور': attendance.status if attendance else 'لم يتم التسجيل',
-                'دخول الدائرة (السعودية)': entry_time_sa.strftime('%H:%M:%S') if entry_time_sa else '-',
-                'خروج الدائرة (السعودية)': exit_time_sa.strftime('%H:%M:%S') if exit_time_sa else '-',
+                'حالة الحضور': 'حضور' if attendance else 'لم يتم التسجيل',
+                'دخول الدائرة (السعودية)': format_time_12h_ar(entry_time_sa) if entry_time_sa else '-',
+                'خروج الدائرة (السعودية)': format_time_12h_ar(exit_time_sa) if exit_time_sa else '-',
                 'المدة بالدقائق': duration_minutes,
                 'المدة (ساعات ودقائق)': f'{duration_minutes // 60}س {duration_minutes % 60}د' if duration_minutes > 0 else '-',
-                'دخول العمل (السعودية)': check_in_sa.strftime('%H:%M') if check_in_sa else '-',
-                'خروج العمل (السعودية)': check_out_sa.strftime('%H:%M') if check_out_sa else '-',
+                'دخول العمل (السعودية)': format_time_12h_ar_short(check_in_sa) if check_in_sa else '-',
+                'خروج العمل (السعودية)': format_time_12h_ar_short(check_out_sa) if check_out_sa else '-',
                 'GPS - Latitude': emp_location.latitude if (emp_location := db.session.query(EmployeeLocation).filter(EmployeeLocation.employee_id == emp.id, EmployeeLocation.recorded_at >= datetime.combine(start_date, time(0, 0, 0)), EmployeeLocation.recorded_at <= datetime.combine(end_date, time(23, 59, 59))).order_by(EmployeeLocation.recorded_at.desc()).first()) else '-',
                 'GPS - Longitude': emp_location.longitude if emp_location else '-',
             })
