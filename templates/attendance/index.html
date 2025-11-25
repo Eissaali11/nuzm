@@ -662,7 +662,11 @@
                                 {% if attendance.check_in %}
                                 <span class="badge bg-light text-dark">
                                     <i class="fas fa-clock me-1"></i>
-                                    {{ attendance.check_in.strftime('%H:%M') }}
+                                    {% set hour = attendance.check_in.hour %}
+                                    {% set minute = attendance.check_in.minute %}
+                                    {% set period = 'ص' if hour < 12 else 'م' %}
+                                    {% set display_hour = 12 if hour == 0 else (hour - 12 if hour > 12 else hour) %}
+                                    {{ display_hour }}:{{ '%02d' % minute }} {{ period }}
                                 </span>
                                 {% else %}
                                 <span>-</span>
@@ -672,7 +676,11 @@
                                 {% if attendance.check_out %}
                                 <span class="badge bg-light text-dark">
                                     <i class="fas fa-clock me-1"></i>
-                                    {{ attendance.check_out.strftime('%H:%M') }}
+                                    {% set hour = attendance.check_out.hour %}
+                                    {% set minute = attendance.check_out.minute %}
+                                    {% set period = 'ص' if hour < 12 else 'م' %}
+                                    {% set display_hour = 12 if hour == 0 else (hour - 12 if hour > 12 else hour) %}
+                                    {{ display_hour }}:{{ '%02d' % minute }} {{ period }}
                                 </span>
                                 {% else %}
                                 <span>-</span>
