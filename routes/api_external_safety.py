@@ -143,14 +143,20 @@ def create_safety_check(current_employee):
     try:
         data = request.get_json()
         
+        logger.info(f"📥 [ExternalSafety API] Received request from employee: {current_employee.name} (ID: {current_employee.employee_id})")
+        
         if not data:
+            logger.warning("📭 [ExternalSafety API] No data in request body")
             return jsonify({
                 'success': False,
                 'message': 'لا توجد بيانات'
             }), 400
         
+        logger.info(f"📋 [ExternalSafety API] Request data: {data}")
+        
         vehicle_id = data.get('vehicle_id')
         if not vehicle_id:
+            logger.warning("⚠️ [ExternalSafety API] Vehicle ID is missing")
             return jsonify({
                 'success': False,
                 'message': 'رقم السيارة مطلوب'
@@ -158,6 +164,7 @@ def create_safety_check(current_employee):
         
         vehicle = Vehicle.query.get(vehicle_id)
         if not vehicle:
+            logger.error(f"❌ [ExternalSafety API] Vehicle not found: ID={vehicle_id}")
             return jsonify({
                 'success': False,
                 'message': 'السيارة غير موجودة'
@@ -165,10 +172,11 @@ def create_safety_check(current_employee):
         
         driver_name = data.get('driver_name') or current_employee.name
         driver_national_id = data.get('driver_national_id') or current_employee.national_id
-        driver_department = data.get('driver_department') or current_employee.department.name if current_employee.department else 'غير محدد'
+        driver_department = data.get('driver_department') or (current_employee.department.name if current_employee.department else 'غير محدد')
         driver_city = data.get('driver_city', 'الرياض')
         
         if not all([driver_name, driver_national_id, driver_department, driver_city]):
+            logger.warning(f"⚠️ [ExternalSafety API] Missing required fields. Name: {driver_name}, ID: {driver_national_id}, Dept: {driver_department}, City: {driver_city}")
             return jsonify({
                 'success': False,
                 'message': 'يرجى تعبئة جميع البيانات المطلوبة'
@@ -190,7 +198,11 @@ def create_safety_check(current_employee):
         db.session.add(safety_check)
         db.session.commit()
         
-        logger.info(f"Safety check created: ID={safety_check.id}, Vehicle={vehicle.plate_number}, Employee={current_employee.name}")
+        logger.info(f"✅ [ExternalSafety API] Safety check created successfully!")
+        logger.info(f"   Check ID: {safety_check.id}")
+        logger.info(f"   Vehicle: {vehicle.plate_number}")
+        logger.info(f"   Driver: {driver_name}")
+        logger.info(f"   Employee: {current_employee.name}")
         
         return jsonify({
             'success': True,
@@ -205,7 +217,11 @@ def create_safety_check(current_employee):
     
     except Exception as e:
         db.session.rollback()
-        logger.error(f"Error creating safety check: {str(e)}")
+        logger.error(f"❌ [ExternalSafety API] Error creating safety check:")
+        logger.error(f"   Error: {str(e)}")
+        logger.error(f"   Type: {type(e).__name__}")
+        import traceback
+        logger.error(f"   Traceback: {traceback.format_exc()}")
         return jsonify({
             'success': False,
             'message': 'حدث خطأ أثناء إنشاء الفحص',
