@@ -1,0 +1,139 @@
+{% extends "layout.html" %}
+
+{% block title %}تفاصيل الموظفين الواصلين للدائرة{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh;">
+    <!-- رأس الصفحة -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <h1 class="h2 mb-2" style="color: white; font-weight: 700;">
+                        <i class="fas fa-map-marked-alt me-3"></i>
+                        تفاصيل الموظفين الواصلين إلى الدائرة
+                    </h1>
+                    <p style="color: rgba(255,255,255,0.8);">
+                        <i class="fas fa-map-pin me-2"></i>
+                        الدائرة: <strong>{{ circle_name }}</strong>
+                    </p>
+                    <p style="color: rgba(255,255,255,0.8);">
+                        <i class="fas fa-building me-2"></i>
+                        القسم: <strong>{{ department_name }}</strong>
+                    </p>
+                    <p style="color: rgba(255,255,255,0.8);">
+                        <i class="fas fa-calendar me-2"></i>
+                        التاريخ: <strong>{{ selected_date_formatted }}</strong>
+                    </p>
+                </div>
+                <a href="{{ url_for('attendance.departments_circles_overview', date=selected_date.strftime('%Y-%m-%d'), department_id=department_id) }}" class="btn btn-light">
+                    <i class="fas fa-arrow-left me-2"></i>
+                    العودة
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- محتوى التفاصيل -->
+    <div class="row">
+        <div class="col-12">
+            {% if employees_accessed %}
+            <div class="row g-3">
+                {% for emp in employees_accessed %}
+                <div class="col-lg-6 col-xl-4">
+                    <div class="card border-start border-5 shadow-lg" style="border-color: #8b5cf6; height: 100%;">
+                        <div class="card-body">
+                            <!-- معلومات الموظف -->
+                            <div class="text-center mb-3">
+                                <div class="mb-2">
+                                    <i class="fas fa-user-circle fa-4x text-primary"></i>
+                                </div>
+                                <h5 class="card-title mb-1">{{ emp.name }}</h5>
+                                <small class="text-muted">{{ emp.employee_id }}</small>
+                                <div class="mt-2">
+                                    <span class="badge bg-primary">{{ emp.status }}</span>
+                                </div>
+                            </div>
+
+                            <hr class="my-3">
+
+                            <!-- أوقات الدخول والخروج -->
+                            <div class="row g-2 mb-3">
+                                <div class="col-6">
+                                    <div class="p-2" style="background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(34, 197, 94, 0.05) 100%); border-radius: 8px; border-left: 3px solid #22c55e;">
+                                        <small class="fw-bold text-muted d-block mb-1">⏰ الدخول</small>
+                                        <div class="fw-bold text-success" style="font-size: 1rem;">
+                                            {% if emp.circle_enter_time %}
+                                            {{ emp.circle_enter_time }}
+                                            {% else %}
+                                            <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="p-2" style="background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(239, 68, 68, 0.05) 100%); border-radius: 8px; border-left: 3px solid #ef4444;">
+                                        <small class="fw-bold text-muted d-block mb-1">🚪 الخروج</small>
+                                        <div class="fw-bold text-danger" style="font-size: 1rem;">
+                                            {% if emp.circle_exit_time %}
+                                            {{ emp.circle_exit_time }}
+                                            {% else %}
+                                            <span class="badge bg-success">لا يزال داخل</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- المدة الزمنية -->
+                            <div class="alert alert-info mb-3" style="background: linear-gradient(135deg, rgba(96, 165, 250, 0.1) 0%, rgba(96, 165, 250, 0.05) 100%); border: 1px solid #60a5fa;">
+                                <div class="text-center">
+                                    <i class="fas fa-hourglass-half text-info me-2" style="font-size: 1.3rem;"></i>
+                                    <div class="fw-bold" style="font-size: 1.5rem; color: #0284c7;">{{ emp.duration_display }}</div>
+                                    <small class="text-muted">المدة داخل الدائرة</small>
+                                </div>
+                            </div>
+
+                            <!-- بيانات الحضور -->
+                            <div class="row g-2 mb-3">
+                                <div class="col-6">
+                                    <small class="fw-bold text-muted d-block mb-1">📍 دخول العمل</small>
+                                    <small class="text-muted">{{ emp.check_in }}</small>
+                                </div>
+                                <div class="col-6">
+                                    <small class="fw-bold text-muted d-block mb-1">🚪 خروج العمل</small>
+                                    <small class="text-muted">{{ emp.check_out }}</small>
+                                </div>
+                            </div>
+
+                            <!-- GPS -->
+                            {% if emp.gps_latitude and emp.gps_longitude %}
+                            <div class="alert alert-light p-2">
+                                <small class="fw-bold text-muted d-block mb-1">📍 الموقع GPS</small>
+                                <small class="text-monospace" style="font-size: 0.85rem;">
+                                    {{ "%.4f"|format(emp.gps_latitude|float) }}<br>
+                                    {{ "%.4f"|format(emp.gps_longitude|float) }}
+                                </small>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="card shadow-lg border-0 text-center py-5" style="border-radius: 15px;">
+                <i class="fas fa-inbox fa-4x text-muted mb-3"></i>
+                <p class="text-muted fw-bold fs-5">لا توجد موظفين واصلين لهذه الدائرة</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+    html[dir="rtl"] {
+        direction: rtl;
+    }
+</style>
+{% endblock %}

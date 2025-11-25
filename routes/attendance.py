@@ -4027,3 +4027,80 @@ def departments_circles_overview():
         selected_department_id=int(department_filter) if department_filter else None,
         locations_by_employee=locations_by_employee
     )
+
+@attendance_bp.route('/circle-accessed-details/<int:department_id>/<circle_name>')
+@login_required
+def circle_accessed_details(department_id, circle_name):
+    """صفحة منفصلة لعرض تفاصيل الموظفين الواصلين للدائرة"""
+    date_str = request.args.get('date')
+    
+    try:
+        if date_str:
+            selected_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+        else:
+            selected_date = datetime.now().date()
+    except ValueError:
+        selected_date = datetime.now().date()
+    
+    # حساب نطاق التواريخ
+    now = datetime.now()
+    today_date = datetime.now().date()
+    eighteen_hours_ago_date = (now - timedelta(hours=18)).date()
+    start_date = min(selected_date, eighteen_hours_ago_date)
+    end_date = today_date
+    
+    dept = Department.query.get(department_id)
+    if not dept:
+        flash('القسم غير موجود', 'danger')
+        return redirect(url_for('attendance.departments_circles_overview'))
+    
+    # جلب الموظفين النشطين في القسم والدائرة المحددة
+    active_employees = [emp for emp in dept.employees if emp.status == 'active' and emp.location and emp.location.strip() == circle_name]
+    
+    employees_accessed = []
+    
+    for emp in active_employees:
+        geo_session = db.session.query(GeofenceSession).filter(
+            GeofenceSession.employee_id == emp.id,
+            GeofenceSession.entry_time >= datetime.combine(start_date, time(0, 0, 0)),
+            GeofenceSession.entry_time <= datetime.combine(end_date, time(23, 59, 59))
+        ).order_by(GeofenceSession.entry_time.desc()).first()
+        
+        if geo_session:
+            emp_location = db.session.query(EmployeeLocation).filter(
+                EmployeeLocation.employee_id == emp.id,
+                EmployeeLocation.recorded_at >= datetime.combine(start_date, time(0, 0, 0)),
+                EmployeeLocation.recorded_at <= datetime.combine(end_date, time(23, 59, 59))
+            ).order_by(EmployeeLocation.recorded_at.desc()).first()
+            
+            attendance = Attendance.query.filter(
+                Attendance.employee_id == emp.id,
+                Attendance.date >= start_date,
+                Attendance.date <= end_date
+            ).order_by(Attendance.date.desc()).first()
+            
+            duration_minutes = geo_session.duration_minutes if geo_session.duration_minutes else 0
+            
+            employees_accessed.append({
+                'name': emp.name,
+                'employee_id': emp.employee_id,
+                'status': attendance.status if attendance else 'لم يتم التسجيل',
+                'check_in': attendance.check_in.strftime('%H:%M') if attendance and attendance.check_in else '-',
+                'check_out': attendance.check_out.strftime('%H:%M') if attendance and attendance.check_out else '-',
+                'circle_enter_time': geo_session.entry_time.strftime('%H:%M:%S') if geo_session.entry_time else None,
+                'circle_exit_time': geo_session.exit_time.strftime('%H:%M:%S') if geo_session.exit_time else None,
+                'duration_minutes': duration_minutes,
+                'duration_display': f'{duration_minutes // 60}س {duration_minutes % 60}د' if duration_minutes > 0 else '-',
+                'gps_latitude': emp_location.latitude if emp_location else None,
+                'gps_longitude': emp_location.longitude if emp_location else None,
+            })
+    
+    return render_template(
+        'attendance/circle_accessed_details.html',
+        circle_name=circle_name,
+        department_name=dept.name,
+        department_id=department_id,
+        employees_accessed=employees_accessed,
+        selected_date=selected_date,
+        selected_date_formatted=format_date_hijri(selected_date)
+    )
