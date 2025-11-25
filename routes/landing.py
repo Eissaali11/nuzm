@@ -224,7 +224,7 @@ def contact():
 @landing_bp.route('/about')
 def about():
     """صفحة من نحن"""
-    return render_template('about.html')
+    return render_template('landing/about.html')
 
 @landing_bp.route('/privacy')
 def privacy():
