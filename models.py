@@ -2881,3 +2881,32 @@ class VehicleInspectionImage(db.Model):
     def __repr__(self):
         return f'<VehicleInspectionImage #{self.id} - Inspection {self.inspection_record_id}>'
 
+
+class Notification(db.Model):
+    """نموذج الإشعارات الشامل"""
+    __tablename__ = 'notifications'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), nullable=False, index=True)
+    
+    # نوع الإشعار
+    notification_type = db.Column(db.String(50), nullable=False)  # absence, document_expiry, operations, etc
+    title = db.Column(db.String(255), nullable=False)
+    description = db.Column(db.Text)
+    
+    # معرف الكيان المرتبط (موظف، وثيقة، مركبة، إلخ)
+    related_entity_type = db.Column(db.String(50))  # employee, vehicle, document, etc
+    related_entity_id = db.Column(db.Integer)
+    
+    # معلومات إضافية
+    priority = db.Column(db.String(20), default='normal')  # low, normal, high, critical
+    is_read = db.Column(db.Boolean, default=False, index=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    read_at = db.Column(db.DateTime)
+    
+    # رابط للتوجيه عند النقر
+    action_url = db.Column(db.String(500))
+    
+    def __repr__(self):
+        return f'<Notification #{self.id} - {self.notification_type} - User {self.user_id}>'
+

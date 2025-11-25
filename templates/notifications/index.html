@@ -1,0 +1,226 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- PAGE HEADER -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="d-flex align-items-center justify-content-between">
+                <h1 class="text-primary">
+                    <i class="fas fa-bell me-2"></i>الإشعارات
+                </h1>
+                {% if notifications.total > 0 %}
+                <button class="btn btn-outline-primary btn-sm" id="markAllAsReadBtn">
+                    <i class="fas fa-check-double me-2"></i>تحديد الكل كمقروء
+                </button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- FILTERS ROW -->
+    <div class="row mb-3">
+        <div class="col-md-12">
+            <div class="btn-group" role="group">
+                <a href="{{ url_for('notifications.index') }}" class="btn btn-outline-secondary {% if not request.args.get('type') %}active{% endif %}">
+                    الكل
+                </a>
+                <a href="{{ url_for('notifications.index', type='absence') }}" class="btn btn-outline-secondary {% if request.args.get('type') == 'absence' %}active{% endif %}">
+                    غياب الموظفين
+                </a>
+                <a href="{{ url_for('notifications.index', type='document_expiry') }}" class="btn btn-outline-secondary {% if request.args.get('type') == 'document_expiry' %}active{% endif %}">
+                    انتهاء الصلاحيات
+                </a>
+                <a href="{{ url_for('notifications.index', type='operations') }}" class="btn btn-outline-secondary {% if request.args.get('type') == 'operations' %}active{% endif %}">
+                    العمليات
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- NOTIFICATIONS LIST -->
+    {% if notifications.items %}
+    <div class="row">
+        <div class="col-md-12">
+            {% for notification in notifications.items %}
+            <div class="card mb-3 notification-card {% if not notification.is_read %}border-primary{% endif %}" data-notification-id="{{ notification.id }}">
+                <div class="card-body">
+                    <div class="row align-items-start">
+                        <!-- ICON & CONTENT -->
+                        <div class="col-md-10">
+                            <div class="d-flex align-items-start">
+                                <!-- ICON -->
+                                <div class="me-3">
+                                    {% if notification.notification_type == 'absence' %}
+                                        <span class="badge bg-danger p-2"><i class="fas fa-user-slash fa-lg"></i></span>
+                                    {% elif notification.notification_type == 'document_expiry' %}
+                                        <span class="badge bg-warning p-2"><i class="fas fa-exclamation-triangle fa-lg"></i></span>
+                                    {% elif notification.notification_type == 'operations' %}
+                                        <span class="badge bg-info p-2"><i class="fas fa-cogs fa-lg"></i></span>
+                                    {% else %}
+                                        <span class="badge bg-secondary p-2"><i class="fas fa-bell fa-lg"></i></span>
+                                    {% endif %}
+                                </div>
+
+                                <!-- CONTENT -->
+                                <div class="flex-grow-1">
+                                    <h5 class="card-title mb-1">
+                                        {{ notification.title }}
+                                        {% if not notification.is_read %}
+                                        <span class="badge bg-primary">جديد</span>
+                                        {% endif %}
+                                    </h5>
+                                    <p class="card-text text-muted mb-2">{{ notification.description }}</p>
+                                    <small class="text-muted">
+                                        <i class="fas fa-clock me-1"></i>
+                                        {{ notification.created_at.strftime('%Y-%m-%d %H:%M') }}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ACTIONS -->
+                        <div class="col-md-2 text-end">
+                            <div class="btn-group-vertical w-100" role="group">
+                                {% if notification.action_url %}
+                                <a href="{{ notification.action_url }}" class="btn btn-sm btn-primary mb-2">
+                                    <i class="fas fa-arrow-left me-1"></i>عرض التفاصيل
+                                </a>
+                                {% endif %}
+                                {% if not notification.is_read %}
+                                <button class="btn btn-sm btn-outline-secondary mark-as-read-btn mb-2" data-id="{{ notification.id }}">
+                                    <i class="fas fa-check me-1"></i>تحديد كمقروء
+                                </button>
+                                {% endif %}
+                                <button class="btn btn-sm btn-outline-danger delete-notification-btn" data-id="{{ notification.id }}">
+                                    <i class="fas fa-trash me-1"></i>حذف
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- PAGINATION -->
+    {% if notifications.pages > 1 %}
+    <nav aria-label="Page navigation" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if notifications.has_prev %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('notifications.index', page=notifications.prev_num) }}">
+                    السابق
+                </a>
+            </li>
+            {% endif %}
+
+            {% for page_num in notifications.iter_pages() %}
+                {% if page_num %}
+                    {% if page_num == notifications.page %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ page_num }}</span>
+                    </li>
+                    {% else %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('notifications.index', page=page_num) }}">
+                            {{ page_num }}
+                        </a>
+                    </li>
+                    {% endif %}
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">...</span>
+                </li>
+                {% endif %}
+            {% endfor %}
+
+            {% if notifications.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('notifications.index', page=notifications.next_num) }}">
+                    التالي
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+
+    {% else %}
+    <!-- EMPTY STATE -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="alert alert-info text-center p-5">
+                <i class="fas fa-info-circle fa-3x mb-3 d-block"></i>
+                <h5>لا توجد إشعارات</h5>
+                <p class="text-muted">ستظهر الإشعارات هنا عند حدوث أي أحداث مهمة</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    .notification-card {
+        border-radius: 8px;
+        border-left: 4px solid #ccc;
+        transition: all 0.3s ease;
+    }
+
+    .notification-card.border-primary {
+        border-left-color: #0d6efd;
+        background-color: rgba(13, 110, 253, 0.05);
+    }
+
+    .notification-card:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
+    }
+
+    .notification-card .badge {
+        font-size: 1rem;
+        padding: 0.5rem !important;
+        min-width: 2.5rem;
+        min-height: 2.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+</style>
+
+<script>
+// تحديث إشعار كمقروء
+document.querySelectorAll('.mark-as-read-btn').forEach(btn => {
+    btn.addEventListener('click', async function() {
+        const id = this.dataset.id;
+        const response = await fetch(`/notifications/${id}/mark-as-read`, {method: 'POST'});
+        if (response.ok) {
+            document.querySelector(`[data-notification-id="${id}"]`).classList.remove('border-primary');
+            this.closest('.btn-group-vertical').innerHTML = '<button class="btn btn-sm btn-outline-danger delete-notification-btn"><i class="fas fa-trash me-1"></i>حذف</button>';
+        }
+    });
+});
+
+// حذف إشعار
+document.querySelectorAll('.delete-notification-btn').forEach(btn => {
+    btn.addEventListener('click', async function() {
+        const id = this.dataset.id;
+        if (confirm('هل تريد حذف هذا الإشعار؟')) {
+            const response = await fetch(`/notifications/${id}/delete`, {method: 'POST'});
+            if (response.ok) {
+                document.querySelector(`[data-notification-id="${id}"]`).remove();
+            }
+        }
+    });
+});
+
+// تحديد الكل كمقروء
+document.getElementById('markAllAsReadBtn')?.addEventListener('click', async function() {
+    const response = await fetch('/notifications/mark-all-as-read', {method: 'POST'});
+    if (response.ok) {
+        location.reload();
+    }
+});
+</script>
+{% endblock %}
