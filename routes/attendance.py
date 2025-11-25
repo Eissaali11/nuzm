@@ -4377,9 +4377,10 @@ def export_circle_details_excel(department_id, circle_name):
 @attendance_bp.route('/mark-circle-employees-attendance/<int:department_id>/<circle_name>', methods=['POST'])
 @login_required
 def mark_circle_employees_attendance(department_id, circle_name):
-    """تسجيل الموظفين الواصلين للدائرة كحاضرين"""
+    """تسجيل الموظفين الواصلين للدائرة كحاضرين مع أوقات الدخول والخروج"""
     try:
         date_str = request.args.get('date')
+        saudi_tz = timedelta(hours=3)
         
         try:
             if date_str:
@@ -4396,35 +4397,68 @@ def mark_circle_employees_attendance(department_id, circle_name):
         # جلب الموظفين النشطين في القسم والدائرة المحددة
         active_employees = [emp for emp in dept.employees if emp.status == 'active' and emp.location and emp.location.strip() == circle_name]
         
-        # جلب جميع من لديهم حضور من الدائرة الجغرافية
+        # جلب جميع جلسات الدائرة من التاريخ المختار إلى اليوم
         start_date = selected_date
         end_date = datetime.now().date()
         
-        geo_sessions = db.session.query(GeofenceSession).filter(
-            GeofenceSession.employee_id.in_([emp.id for emp in active_employees]),
-            GeofenceSession.entry_time >= datetime.combine(start_date, time(0, 0, 0)),
-            GeofenceSession.entry_time <= datetime.combine(end_date, time(23, 59, 59))
-        ).all()
-        
-        employee_ids_with_geofence = set([geo.employee_id for geo in geo_sessions])
-        
         marked_count = 0
+        
         for emp in active_employees:
-            if emp.id in employee_ids_with_geofence:
+            # جلب جميع جلسات الدائرة الجغرافية لهذا الموظف
+            geo_sessions = db.session.query(GeofenceSession).filter(
+                GeofenceSession.employee_id == emp.id,
+                GeofenceSession.entry_time >= datetime.combine(start_date, time(0, 0, 0)),
+                GeofenceSession.entry_time <= datetime.combine(end_date, time(23, 59, 59))
+            ).order_by(GeofenceSession.entry_time.asc()).all()
+            
+            if geo_sessions:
+                # استخراج أول دخول صباحي وآخر خروج مسائي
+                morning_check_in = None
+                evening_check_out = None
+                
+                for geo in geo_sessions:
+                    # أول دخول صباحي
+                    if geo.entry_time and not morning_check_in:
+                        entry_sa = geo.entry_time + saudi_tz
+                        if entry_sa.hour < 12:
+                            morning_check_in = geo.entry_time
+                    
+                    # آخر خروج مسائي
+                    if geo.exit_time:
+                        exit_sa = geo.exit_time + saudi_tz
+                        if exit_sa.hour >= 12:
+                            evening_check_out = geo.exit_time
+                
+                # إذا لم نجد دخول صباحي، نأخذ أول دخول عام
+                if not morning_check_in and geo_sessions:
+                    morning_check_in = geo_sessions[0].entry_time
+                
+                # إذا لم نجد خروج مسائي، نأخذ آخر خروج عام
+                if not evening_check_out and geo_sessions:
+                    evening_check_out = geo_sessions[-1].exit_time
+                
+                # تحديث أو إنشاء سجل الحضور
                 existing_attendance = Attendance.query.filter(
                     Attendance.employee_id == emp.id,
                     Attendance.date == selected_date
                 ).first()
                 
                 if existing_attendance:
+                    # تحديث السجل الموجود
+                    if morning_check_in:
+                        existing_attendance.check_in = morning_check_in.time() if isinstance(morning_check_in, datetime) else morning_check_in
+                    if evening_check_out:
+                        existing_attendance.check_out = evening_check_out.time() if isinstance(evening_check_out, datetime) else evening_check_out
                     existing_attendance.status = 'present'
                     existing_attendance.updated_at = datetime.utcnow()
                 else:
+                    # إنشاء سجل حضور جديد
                     attendance = Attendance(
                         employee_id=emp.id,
                         date=selected_date,
                         status='present',
-                        check_in=datetime.utcnow().time(),
+                        check_in=morning_check_in.time() if isinstance(morning_check_in, datetime) else morning_check_in,
+                        check_out=evening_check_out.time() if isinstance(evening_check_out, datetime) else evening_check_out,
                     )
                     db.session.add(attendance)
                 
@@ -4434,7 +4468,7 @@ def mark_circle_employees_attendance(department_id, circle_name):
         
         return jsonify({
             'success': True,
-            'message': f'تم تسجيل {marked_count} موظف كحاضرين',
+            'message': f'تم تسجيل {marked_count} موظف كحاضرين مع أوقات الدخول والخروج',
             'count': marked_count
         }), 200
         
