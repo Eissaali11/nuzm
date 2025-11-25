@@ -1,0 +1,315 @@
+{% extends "base.html" %}
+
+{% block title %}لوحة تحكم الأقسام والدوائر{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- رأس الصفحة -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-0">
+                        <i class="fas fa-building me-2 text-primary"></i>
+                        لوحة تحكم الأقسام والدوائر
+                    </h1>
+                    <p class="text-muted mt-2">
+                        <i class="fas fa-calendar me-1"></i>
+                        {{ selected_date_formatted }}
+                    </p>
+                </div>
+                <a href="{{ url_for('attendance_dashboard.index') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-1"></i>
+                    العودة
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- الفلاتر -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <form class="row g-3" method="get">
+                        <!-- فلتر التاريخ -->
+                        <div class="col-md-4">
+                            <label for="date" class="form-label">
+                                <i class="fas fa-calendar me-1"></i>
+                                التاريخ
+                            </label>
+                            <input type="date" class="form-control" id="date" name="date" 
+                                   value="{{ selected_date.strftime('%Y-%m-%d') }}">
+                        </div>
+
+                        <!-- فلتر القسم -->
+                        <div class="col-md-4">
+                            <label for="department_id" class="form-label">
+                                <i class="fas fa-filter me-1"></i>
+                                الأقسام
+                            </label>
+                            <select class="form-select" id="department_id" name="department_id">
+                                <option value="">جميع الأقسام</option>
+                                {% for dept in all_departments %}
+                                <option value="{{ dept.id }}" 
+                                    {% if selected_department_id == dept.id %}selected{% endif %}>
+                                    {{ dept.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- أزرار الإجراءات -->
+                        <div class="col-md-4 d-flex align-items-end gap-2">
+                            <button type="submit" class="btn btn-primary flex-grow-1">
+                                <i class="fas fa-search me-1"></i>
+                                بحث
+                            </button>
+                            <a href="{{ url_for('attendance_dashboard.departments_circles_overview') }}" 
+                               class="btn btn-outline-secondary">
+                                <i class="fas fa-redo me-1"></i>
+                                إعادة تعيين
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- محتوى الأقسام والدوائر -->
+    <div class="row">
+        <div class="col-12">
+            {% if departments_data %}
+                {% for dept in departments_data %}
+                <div class="card mb-4 shadow-sm">
+                    <!-- رأس القسم -->
+                    <div class="card-header bg-gradient" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                        <div class="row align-items-center">
+                            <div class="col-md-6">
+                                <h4 class="mb-0 text-white">
+                                    <i class="fas fa-sitemap me-2"></i>
+                                    {{ dept.name }}
+                                </h4>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="row text-white text-center small">
+                                    <div class="col-3">
+                                        <div class="fw-bold">{{ dept.total_employees }}</div>
+                                        <div>إجمالي الموظفين</div>
+                                    </div>
+                                    <div class="col-3" style="border-right: 1px solid rgba(255,255,255,0.3); border-left: 1px solid rgba(255,255,255,0.3);">
+                                        <div class="fw-bold text-success">{{ dept.total_present }}</div>
+                                        <div>الحضور</div>
+                                    </div>
+                                    <div class="col-3">
+                                        <div class="fw-bold text-danger">{{ dept.total_absent }}</div>
+                                        <div>الغياب</div>
+                                    </div>
+                                    <div class="col-3">
+                                        <div class="fw-bold text-info">{{ dept.total_leave + dept.total_sick }}</div>
+                                        <div>إجازات</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- محتوى القسم - الدوائر -->
+                    <div class="card-body">
+                        {% if dept.circles %}
+                            <div class="row">
+                                {% for circle in dept.circles %}
+                                <div class="col-md-6 mb-4">
+                                    <div class="card h-100 border-start border-primary" style="border-width: 4px;">
+                                        <!-- رأس الدائرة -->
+                                        <div class="card-header bg-light">
+                                            <h5 class="mb-0">
+                                                <i class="fas fa-map-marker-alt me-2 text-danger"></i>
+                                                {{ circle.name }}
+                                            </h5>
+                                        </div>
+
+                                        <!-- إحصائيات الدائرة -->
+                                        <div class="card-body">
+                                            <div class="row mb-3">
+                                                <div class="col-6">
+                                                    <div class="p-3 bg-light rounded">
+                                                        <div class="text-muted small">إجمالي الموظفين</div>
+                                                        <div class="h4 mb-0 fw-bold">{{ circle.total }}</div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-6">
+                                                    <div class="p-3 bg-light rounded">
+                                                        <div class="text-muted small">المسجلين</div>
+                                                        <div class="h4 mb-0 fw-bold">
+                                                            {{ circle.present + circle.absent + circle.leave + circle.sick }}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- تفاصيل الحضور -->
+                                            <div class="row mb-3">
+                                                <div class="col-6 col-sm-3">
+                                                    <div class="text-center">
+                                                        <div class="badge bg-success p-2 mb-2 w-100">
+                                                            <i class="fas fa-check me-1"></i>
+                                                            حاضر
+                                                        </div>
+                                                        <div class="h5 fw-bold text-success">{{ circle.present }}</div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-6 col-sm-3">
+                                                    <div class="text-center">
+                                                        <div class="badge bg-danger p-2 mb-2 w-100">
+                                                            <i class="fas fa-times me-1"></i>
+                                                            غائب
+                                                        </div>
+                                                        <div class="h5 fw-bold text-danger">{{ circle.absent }}</div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-6 col-sm-3">
+                                                    <div class="text-center">
+                                                        <div class="badge bg-info p-2 mb-2 w-100">
+                                                            <i class="fas fa-umbrella me-1"></i>
+                                                            إجازة
+                                                        </div>
+                                                        <div class="h5 fw-bold text-info">{{ circle.leave }}</div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-6 col-sm-3">
+                                                    <div class="text-center">
+                                                        <div class="badge bg-warning p-2 mb-2 w-100">
+                                                            <i class="fas fa-hospital me-1"></i>
+                                                            مرضية
+                                                        </div>
+                                                        <div class="h5 fw-bold text-warning">{{ circle.sick }}</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {% if circle.not_registered > 0 %}
+                                            <div class="alert alert-warning mb-3">
+                                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                                <strong>{{ circle.not_registered }}</strong> موظف لم يتم تسجيل حضورهم بعد
+                                            </div>
+                                            {% endif %}
+
+                                            <!-- تفاصيل الموظفين -->
+                                            <div class="mb-3">
+                                                <button class="btn btn-sm btn-outline-primary w-100" 
+                                                        type="button" 
+                                                        data-bs-toggle="collapse" 
+                                                        data-bs-target="#employees-{{ dept.id }}-{{ loop.index }}">
+                                                    <i class="fas fa-chevron-down me-2"></i>
+                                                    عرض تفاصيل الموظفين ({{ circle.employees|length }})
+                                                </button>
+                                            </div>
+
+                                            <div class="collapse" id="employees-{{ dept.id }}-{{ loop.index }}">
+                                                <div class="table-responsive mt-3">
+                                                    <table class="table table-sm table-hover">
+                                                        <thead class="table-light">
+                                                            <tr>
+                                                                <th>الاسم</th>
+                                                                <th>الرقم</th>
+                                                                <th>الحالة</th>
+                                                                <th>الدخول</th>
+                                                                <th>الخروج</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            {% for emp in circle.employees %}
+                                                            <tr>
+                                                                <td>
+                                                                    <small>{{ emp.name }}</small>
+                                                                </td>
+                                                                <td>
+                                                                    <small class="text-muted">{{ emp.employee_id }}</small>
+                                                                </td>
+                                                                <td>
+                                                                    {% if emp.status == 'present' %}
+                                                                    <span class="badge bg-success">حاضر</span>
+                                                                    {% elif emp.status == 'absent' %}
+                                                                    <span class="badge bg-danger">غائب</span>
+                                                                    {% elif emp.status == 'leave' %}
+                                                                    <span class="badge bg-info">إجازة</span>
+                                                                    {% elif emp.status == 'sick' %}
+                                                                    <span class="badge bg-warning text-dark">مرضية</span>
+                                                                    {% else %}
+                                                                    <span class="badge bg-secondary">{{ emp.status }}</span>
+                                                                    {% endif %}
+                                                                </td>
+                                                                <td>
+                                                                    <small>{{ emp.check_in }}</small>
+                                                                </td>
+                                                                <td>
+                                                                    <small>{{ emp.check_out }}</small>
+                                                                </td>
+                                                            </tr>
+                                                            {% endfor %}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">لا توجد دوائر محددة لهذا القسم</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+            <div class="alert alert-info text-center py-5">
+                <i class="fas fa-info-circle me-2 fa-2x"></i>
+                <p class="mt-3">لا توجد بيانات للعرض</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+.bg-gradient {
+    background-attachment: fixed;
+}
+
+.card {
+    border: none;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+.badge {
+    font-size: 0.85rem;
+    padding: 0.5rem 0.75rem;
+}
+
+.table-responsive {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+@media (max-width: 768px) {
+    .card-header {
+        flex-direction: column;
+    }
+    
+    .row > div:nth-child(2) {
+        margin-top: 1rem;
+    }
+}
+</style>
+{% endblock %}

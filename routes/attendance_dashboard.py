@@ -28,8 +28,9 @@ attendance_dashboard_bp = Blueprint('attendance_dashboard', __name__)
 @login_required
 @module_access_required(Module.ATTENDANCE)
 def departments_circles_overview():
-    """لوحة تحكم شاملة تعرض الأقسام والدوائر وبيانات الحضور"""
+    """لوحة تحكم شاملة تعرض الأقسام والدوائر وبيانات الحضور مع فلاتر"""
     date_str = request.args.get('date')
+    department_filter = request.args.get('department_id')  # None = جميع الأقسام
     
     try:
         if date_str:
@@ -39,8 +40,18 @@ def departments_circles_overview():
     except ValueError:
         selected_date = datetime.now().date()
     
-    # جمع جميع الأقسام مع الدوائر والحضور
-    departments = Department.query.order_by(Department.name).all()
+    # جمع جميع الأقسام للفلتر
+    all_departments = Department.query.order_by(Department.name).all()
+    
+    # تحديد الأقسام المراد عرضها بناءً على الفلتر
+    if department_filter:
+        try:
+            departments = [Department.query.get(int(department_filter))]
+        except (ValueError, TypeError):
+            departments = all_departments
+    else:
+        departments = all_departments
+    
     departments_data = []
     
     for dept in departments:
@@ -141,8 +152,10 @@ def departments_circles_overview():
     return render_template(
         'attendance/departments_circles_overview.html',
         departments_data=departments_data,
+        all_departments=all_departments,
         selected_date=selected_date,
-        selected_date_formatted=format_date_hijri(selected_date)
+        selected_date_formatted=format_date_hijri(selected_date),
+        selected_department_id=int(department_filter) if department_filter else None
     )
 
 @attendance_dashboard_bp.route('/')
