@@ -1699,13 +1699,30 @@ def export_safety_check_pdf(check_id):
         # تحويل الصور إلى base64
         for image in safety_check.safety_images:
             try:
-                image_path = os.path.join(current_app.config.get('UPLOAD_FOLDER', 'static/uploads'), image.image_path)
-                if os.path.exists(image_path):
-                    with open(image_path, 'rb') as img_file:
-                        image.image_base64 = base64.b64encode(img_file.read()).decode()
+                # محاولة عدة مسارات للملف
+                possible_paths = [
+                    os.path.join(current_app.root_path, 'static/uploads', image.image_path),
+                    os.path.join(current_app.root_path, image.image_path),
+                    os.path.join('static/uploads', image.image_path),
+                    image.image_path
+                ]
+                
+                img_file_path = None
+                for path in possible_paths:
+                    if os.path.exists(path):
+                        img_file_path = path
+                        break
+                
+                if img_file_path:
+                    with open(img_file_path, 'rb') as img_file:
+                        image_data = img_file.read()
+                        image.image_base64 = base64.b64encode(image_data).decode()
+                        current_app.logger.info(f"تم قراءة الصورة: {img_file_path}, حجم: {len(image_data)}")
                 else:
+                    current_app.logger.warning(f"لم يتم العثور على الصورة: {image.image_path}")
                     image.image_base64 = ''
-            except:
+            except Exception as e:
+                current_app.logger.error(f"خطأ في تحويل الصورة: {str(e)}")
                 image.image_base64 = ''
         
         # الحصول على مسار الشعار
