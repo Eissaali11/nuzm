@@ -221,8 +221,58 @@ def contact():
     """صفحة التواصل"""
     return render_template('landing/contact.html')
 
-@landing_bp.route('/about')
+@landing_bp.route('/nuzum/about')
 def about():
+    """صفحة من نحن"""
+    return render_template('landing/about.html')
+
+@landing_bp.route('/nuzum/support')
+def support():
+    """صفحة الدعم"""
+    return render_template('landing/support.html')
+
+@landing_bp.route('/nuzum/help')
+def help():
+    """صفحة المساعدة"""
+    return render_template('landing/help.html')
+
+@landing_bp.route('/nuzum/guide')
+def guide():
+    """صفحة الدليل"""
+    return render_template('landing/guide.html')
+
+@landing_bp.route('/nuzum/company')
+def company():
+    """صفحة الشركة"""
+    return render_template('landing/company.html')
+
+@landing_bp.route('/nuzum/news')
+def news():
+    """صفحة الأخبار"""
+    return render_template('landing/news.html')
+
+@landing_bp.route('/nuzum/jobs')
+def jobs():
+    """صفحة الوظائف"""
+    return render_template('landing/jobs.html')
+
+@landing_bp.route('/nuzum/privacy')
+def privacy():
+    """صفحة سياسة الخصوصية"""
+    return render_template('landing/privacy.html')
+
+@landing_bp.route('/nuzum/terms')
+def terms():
+    """صفحة شروط الاستخدام"""
+    return render_template('landing/terms.html')
+
+@landing_bp.route('/nuzum/cookies')
+def cookies():
+    """صفحة ملفات تعريف الارتباط"""
+    return render_template('landing/cookies.html')
+
+@landing_bp.route('/about')
+def about_old():
     """صفحة من نحن"""
     return render_template('landing/about.html')
 

@@ -1,0 +1,49 @@
+{% extends "landing/layout.html" %}
+{% block title %}المساعدة - نُظم{% endblock %}
+{% block extra_css %}
+<style>
+    .page-hero { background: linear-gradient(135deg, #1e3a5c 0%, #2c5282 100%); color: white; padding: 80px 0; }
+    .help-section { padding: 60px 0; }
+    .help-card { background: white; border: 1px solid #e0e0e0; padding: 30px; border-radius: 10px; margin-bottom: 20px; }
+    .help-card h3 { color: #1e3a5c; margin-bottom: 15px; font-weight: 700; }
+    .help-card:hover { box-shadow: 0 5px 15px rgba(0,0,0,0.1); transition: all 0.3s; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="page-hero">
+    <div class="container">
+        <h1 style="font-size: 3.5rem; font-weight: 900;">المساعدة والدعم</h1>
+        <p>ابدأ مع نُظم بسهولة</p>
+    </div>
+</div>
+<div class="help-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-6 mb-4">
+                <div class="help-card">
+                    <h3><i class="fas fa-play-circle me-2"></i>البدء السريع</h3>
+                    <p>تعرف على أساسيات النظام وكيفية البدء في خمس دقائق فقط.</p>
+                </div>
+            </div>
+            <div class="col-md-6 mb-4">
+                <div class="help-card">
+                    <h3><i class="fas fa-book me-2"></i>الدليل الشامل</h3>
+                    <p>اقرأ الدليل الكامل لجميع ميزات النظام والعمليات.</p>
+                </div>
+            </div>
+            <div class="col-md-6 mb-4">
+                <div class="help-card">
+                    <h3><i class="fas fa-video me-2"></i>فيديوهات تعليمية</h3>
+                    <p>شاهد سلسلة من الفيديوهات التعليمية خطوة بخطوة.</p>
+                </div>
+            </div>
+            <div class="col-md-6 mb-4">
+                <div class="help-card">
+                    <h3><i class="fas fa-comments me-2"></i>الدردشة المباشرة</h3>
+                    <p>تحدث مع فريق الدعم مباشرة للحصول على المساعدة الفورية.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

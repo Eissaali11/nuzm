@@ -1,0 +1,46 @@
+{% extends "landing/layout.html" %}
+{% block title %}الوظائف - نُظم{% endblock %}
+{% block extra_css %}
+<style>
+    .page-hero { background: linear-gradient(135deg, #1e3a5c 0%, #2c5282 100%); color: white; padding: 80px 0; }
+    .jobs-section { padding: 60px 0; }
+    .job-card { background: white; border-right: 4px solid #1e3a5c; padding: 30px; border-radius: 10px; margin-bottom: 20px; }
+    .job-card h3 { color: #1e3a5c; margin-bottom: 10px; font-weight: 700; }
+    .job-meta { color: #666; font-size: 0.9rem; margin-bottom: 15px; }
+    .apply-btn { background: linear-gradient(135deg, #1e3a5c, #2c5282); color: white; padding: 10px 20px; border-radius: 5px; text-decoration: none; display: inline-block; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="page-hero">
+    <div class="container">
+        <h1 style="font-size: 3.5rem; font-weight: 900;">الفرص الوظيفية</h1>
+        <p>انضم إلى فريقنا المميز</p>
+    </div>
+</div>
+<div class="jobs-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-8 mx-auto">
+                <div class="job-card">
+                    <h3>مهندس برمجيات</h3>
+                    <div class="job-meta">الرياض | عقد دائم | متوسط</div>
+                    <p>نبحث عن مهندس برمجيات ذو خبرة في Python و Flask.</p>
+                    <a href="#" class="apply-btn">تقديم الطلب</a>
+                </div>
+                <div class="job-card">
+                    <h3>مسؤول دعم فني</h3>
+                    <div class="job-meta">الرياض | عقد دائم | متوسط</div>
+                    <p>للتواصل مع العملاء وحل المشاكل التقنية.</p>
+                    <a href="#" class="apply-btn">تقديم الطلب</a>
+                </div>
+                <div class="job-card">
+                    <h3>مصمم واجهات المستخدم</h3>
+                    <div class="job-meta">الرياض | عقد دائم | متوسط</div>
+                    <p>تصميم واجهات جميلة وسهلة الاستخدام.</p>
+                    <a href="#" class="apply-btn">تقديم الطلب</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

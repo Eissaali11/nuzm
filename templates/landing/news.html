@@ -1,0 +1,63 @@
+{% extends "landing/layout.html" %}
+{% block title %}الأخبار - نُظم{% endblock %}
+{% block extra_css %}
+<style>
+    .page-hero { background: linear-gradient(135deg, #1e3a5c 0%, #2c5282 100%); color: white; padding: 80px 0; }
+    .news-section { padding: 60px 0; }
+    .news-card { background: white; border: 1px solid #e0e0e0; border-radius: 10px; overflow: hidden; transition: all 0.3s; }
+    .news-card:hover { transform: translateY(-5px); box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+    .news-date { background: #1e3a5c; color: white; padding: 10px 15px; font-size: 0.9rem; }
+    .news-content { padding: 25px; }
+    .news-content h4 { color: #1e3a5c; margin-bottom: 10px; font-weight: 700; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="page-hero">
+    <div class="container">
+        <h1 style="font-size: 3.5rem; font-weight: 900;">الأخبار والتحديثات</h1>
+        <p>آخر الأخبار والتطورات</p>
+    </div>
+</div>
+<div class="news-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-6 mb-4">
+                <div class="news-card">
+                    <div class="news-date">25 نوفمبر 2024</div>
+                    <div class="news-content">
+                        <h4>إطلاق ميزات جديدة</h4>
+                        <p>أطلقنا ميزات جديدة في نظام الإشعارات المتقدمة والتقارير الذكية.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-4">
+                <div class="news-card">
+                    <div class="news-date">20 نوفمبر 2024</div>
+                    <div class="news-content">
+                        <h4>تحديث الأمان</h4>
+                        <p>تحديثات أمان شاملة لضمان حماية أعلى لبيانات عملائنا.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-4">
+                <div class="news-card">
+                    <div class="news-date">15 نوفمبر 2024</div>
+                    <div class="news-content">
+                        <h4>توسع الشركة</h4>
+                        <p>انضمام 10 عملاء جدد إلى عائلة نُظم هذا الشهر.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-4">
+                <div class="news-card">
+                    <div class="news-date">10 نوفمبر 2024</div>
+                    <div class="news-content">
+                        <h4>تطبيق جديد</h4>
+                        <p>إطلاق تطبيق الهاتف المحمول المحسّن مع واجهة جديدة.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,67 @@
+{% extends "landing/layout.html" %}
+{% block title %}الشركة - نُظم{% endblock %}
+{% block extra_css %}
+<style>
+    .page-hero { background: linear-gradient(135deg, #1e3a5c 0%, #2c5282 100%); color: white; padding: 80px 0; }
+    .section { padding: 60px 0; }
+    .info-box { background: linear-gradient(135deg, #f8f9fa, #e9ecef); padding: 30px; border-radius: 10px; text-align: center; }
+    .info-box h3 { color: #1e3a5c; margin-bottom: 10px; font-weight: 700; }
+    .info-box .number { font-size: 2.5rem; color: #2c5282; font-weight: 900; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="page-hero">
+    <div class="container">
+        <h1 style="font-size: 3.5rem; font-weight: 900;">عن الشركة</h1>
+        <p>رحلتنا نحو التميز والابتكار</p>
+    </div>
+</div>
+<div class="section">
+    <div class="container">
+        <h2 style="text-align: center; color: #1e3a5c; margin-bottom: 50px; font-size: 2.5rem;">إنجازاتنا</h2>
+        <div class="row">
+            <div class="col-md-3 mb-4">
+                <div class="info-box">
+                    <div class="number">50+</div>
+                    <h3>عميل</h3>
+                    <p>شركة وموسسة</p>
+                </div>
+            </div>
+            <div class="col-md-3 mb-4">
+                <div class="info-box">
+                    <div class="number">1000+</div>
+                    <h3>موظف</h3>
+                    <p>يستخدمون النظام</p>
+                </div>
+            </div>
+            <div class="col-md-3 mb-4">
+                <div class="info-box">
+                    <div class="number">99.9%</div>
+                    <h3>التوفر</h3>
+                    <p>مضمونة</p>
+                </div>
+            </div>
+            <div class="col-md-3 mb-4">
+                <div class="info-box">
+                    <div class="number">24/7</div>
+                    <h3>الدعم</h3>
+                    <p>مستمر</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="section" style="background: #f8f9fa;">
+    <div class="container">
+        <h2 style="text-align: center; color: #1e3a5c; margin-bottom: 50px; font-size: 2.5rem;">رؤيتنا</h2>
+        <div class="row">
+            <div class="col-md-8 mx-auto">
+                <p style="font-size: 1.1rem; line-height: 1.8; color: #555; text-align: center;">
+                    نسعى لأن نصبح الحل الأول والموثوق للمؤسسات السعودية في مجال إدارة الموارد البشرية والمركبات، 
+                    مع الحفاظ على أعلى معايير الجودة والأمان والخصوصية.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,69 @@
+{% extends "landing/layout.html" %}
+{% block title %}الدعم - نُظم{% endblock %}
+{% block extra_css %}
+<style>
+    .page-hero { background: linear-gradient(135deg, #1e3a5c 0%, #2c5282 100%); color: white; padding: 80px 0; }
+    .faq-section { padding: 80px 0; }
+    .faq-item { background: #f8f9fa; padding: 25px; margin-bottom: 20px; border-radius: 10px; border-right: 4px solid #1e3a5c; }
+    .faq-item h4 { color: #1e3a5c; margin-bottom: 10px; font-weight: 700; }
+    .contact-card { background: linear-gradient(135deg, #1e3a5c, #2c5282); color: white; padding: 40px; border-radius: 15px; text-align: center; }
+    .contact-card i { font-size: 2.5rem; margin-bottom: 15px; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="page-hero">
+    <div class="container">
+        <h1 style="font-size: 3.5rem; font-weight: 900;">الدعم الفني</h1>
+        <p>نحن هنا لمساعدتك 24/7</p>
+    </div>
+</div>
+<div class="faq-section">
+    <div class="container">
+        <h2 style="text-align: center; font-size: 2.5rem; color: #1e3a5c; margin-bottom: 50px;">الأسئلة الشائعة</h2>
+        <div class="row">
+            <div class="col-md-8 mx-auto">
+                <div class="faq-item">
+                    <h4>كيفية تفعيل حسابي؟</h4>
+                    <p>يتم تفعيل حسابك فور التسجيل. ستتلقى بريد تأكيد على بريدك الإلكتروني.</p>
+                </div>
+                <div class="faq-item">
+                    <h4>هل يمكن تغيير الخطة لاحقاً؟</h4>
+                    <p>نعم، يمكنك تغيير خطتك في أي وقت من لوحة التحكم.</p>
+                </div>
+                <div class="faq-item">
+                    <h4>ما مدة فترة التجربة المجانية؟</h4>
+                    <p>فترة التجربة المجانية 14 يوم بدون الحاجة لإدخال بطاقة ائتمان.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div style="background: #f8f9fa; padding: 80px 0;">
+    <div class="container">
+        <h2 style="text-align: center; font-size: 2.5rem; color: #1e3a5c; margin-bottom: 50px;">تواصل معنا</h2>
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <div class="contact-card">
+                    <i class="fas fa-phone"></i>
+                    <h4>الهاتف</h4>
+                    <p>+966 11 1234 5678</p>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="contact-card">
+                    <i class="fas fa-envelope"></i>
+                    <h4>البريد الإلكتروني</h4>
+                    <p>support@nuzum.sa</p>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="contact-card">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <h4>العنوان</h4>
+                    <p>الرياض، المملكة العربية السعودية</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

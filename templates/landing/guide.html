@@ -1,0 +1,44 @@
+{% extends "landing/layout.html" %}
+{% block title %}الدليل - نُظم{% endblock %}
+{% block extra_css %}
+<style>
+    .page-hero { background: linear-gradient(135deg, #1e3a5c 0%, #2c5282 100%); color: white; padding: 80px 0; }
+    .guide-section { padding: 60px 0; }
+    .guide-item { background: #f8f9fa; padding: 30px; border-radius: 10px; margin-bottom: 20px; border-right: 4px solid #1e3a5c; }
+    .guide-item h3 { color: #1e3a5c; margin-bottom: 15px; font-weight: 700; }
+    .step-number { background: #1e3a5c; color: white; width: 40px; height: 40px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-left: 10px; font-weight: 700; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="page-hero">
+    <div class="container">
+        <h1 style="font-size: 3.5rem; font-weight: 900;">دليل الاستخدام</h1>
+        <p>تعلم كيفية الاستفادة القصوى من نُظم</p>
+    </div>
+</div>
+<div class="guide-section">
+    <div class="container">
+        <h2 style="text-align: center; color: #1e3a5c; margin-bottom: 50px; font-size: 2.5rem;">خطوات الاستخدام</h2>
+        <div class="row">
+            <div class="col-md-8 mx-auto">
+                <div class="guide-item">
+                    <h3>1. إنشاء حسابك <span class="step-number">1</span></h3>
+                    <p>ابدأ بإنشاء حساب جديد بسهولة في ثوانٍ معدودة.</p>
+                </div>
+                <div class="guide-item">
+                    <h3>2. إضافة الموظفين <span class="step-number">2</span></h3>
+                    <p>أضف بيانات موظفيك والقسم الذي ينتمون إليه.</p>
+                </div>
+                <div class="guide-item">
+                    <h3>3. تكوين النظام <span class="step-number">3</span></h3>
+                    <p>قم بتخصيص النظام حسب احتياجات شركتك.</p>
+                </div>
+                <div class="guide-item">
+                    <h3>4. البدء بالعمل <span class="step-number">4</span></h3>
+                    <p>ابدأ بتسجيل الحضور والعمليات الأساسية.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
