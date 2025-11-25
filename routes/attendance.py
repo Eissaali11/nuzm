@@ -3746,6 +3746,8 @@ def departments_circles_overview():
     if department_filter:
         try:
             departments = [Department.query.get(int(department_filter))]
+            if not departments[0]:
+                departments = all_departments
         except (ValueError, TypeError):
             departments = all_departments
     else:
@@ -3754,12 +3756,22 @@ def departments_circles_overview():
     departments_data = []
     
     for dept in departments:
+        # جلب جميع الموظفين النشطين في القسم
         active_employees = [emp for emp in dept.employees if emp.status == 'active']
         
-        locations = set()
+        # تجميع الموظفين حسب الدوائر الجغرافية - مع تنظيف المسافات الزائدة
+        locations_dict = {}
+        employees_without_location = []
+        
         for emp in active_employees:
             if emp.location:
-                locations.add(emp.location)
+                # تنظيف المسافات وتوحيد الأسماء
+                location_name = emp.location.strip()
+                if location_name not in locations_dict:
+                    locations_dict[location_name] = []
+                locations_dict[location_name].append(emp)
+            else:
+                employees_without_location.append(emp)
         
         circles_data = []
         total_dept_present = 0
@@ -3767,11 +3779,13 @@ def departments_circles_overview():
         total_dept_leave = 0
         total_dept_sick = 0
         
-        for location in sorted(locations):
-            emp_in_circle = [e for e in active_employees if e.location == location]
+        # معالجة كل دائرة جغرافية
+        for location in sorted(locations_dict.keys()):
+            emp_in_circle = locations_dict[location]
             emp_ids = [e.id for e in emp_in_circle]
             
             if emp_ids:
+                # جلب بيانات الحضور لهذه الدائرة في التاريخ المحدد
                 present = db.session.query(func.count(Attendance.id)).filter(
                     Attendance.employee_id.in_(emp_ids),
                     Attendance.date == selected_date,
@@ -3805,6 +3819,7 @@ def departments_circles_overview():
             total_dept_leave += leave
             total_dept_sick += sick
             
+            # جلب تفاصيل الموظفين في هذه الدائرة
             employees_details = []
             for emp in emp_in_circle:
                 attendance = Attendance.query.filter_by(
@@ -3821,6 +3836,7 @@ def departments_circles_overview():
                 }
                 employees_details.append(emp_data)
             
+            # إضافة بيانات الدائرة
             circles_data.append({
                 'name': location,
                 'total': len(emp_in_circle),
@@ -3832,6 +3848,68 @@ def departments_circles_overview():
                 'employees': employees_details
             })
         
+        # معالجة الموظفين بدون دائرة جغرافية محددة
+        if employees_without_location:
+            emp_ids = [e.id for e in employees_without_location]
+            present = db.session.query(func.count(Attendance.id)).filter(
+                Attendance.employee_id.in_(emp_ids),
+                Attendance.date == selected_date,
+                Attendance.status == 'present'
+            ).scalar() or 0
+            
+            absent = db.session.query(func.count(Attendance.id)).filter(
+                Attendance.employee_id.in_(emp_ids),
+                Attendance.date == selected_date,
+                Attendance.status == 'absent'
+            ).scalar() or 0
+            
+            leave = db.session.query(func.count(Attendance.id)).filter(
+                Attendance.employee_id.in_(emp_ids),
+                Attendance.date == selected_date,
+                Attendance.status == 'leave'
+            ).scalar() or 0
+            
+            sick = db.session.query(func.count(Attendance.id)).filter(
+                Attendance.employee_id.in_(emp_ids),
+                Attendance.date == selected_date,
+                Attendance.status == 'sick'
+            ).scalar() or 0
+            
+            not_registered = len(emp_ids) - (present + absent + leave + sick)
+            
+            total_dept_present += present
+            total_dept_absent += absent
+            total_dept_leave += leave
+            total_dept_sick += sick
+            
+            employees_details = []
+            for emp in employees_without_location:
+                attendance = Attendance.query.filter_by(
+                    employee_id=emp.id,
+                    date=selected_date
+                ).first()
+                
+                emp_data = {
+                    'name': emp.name,
+                    'employee_id': emp.employee_id,
+                    'status': attendance.status if attendance else 'لم يتم التسجيل',
+                    'check_in': attendance.check_in.strftime('%H:%M') if attendance and attendance.check_in else '-',
+                    'check_out': attendance.check_out.strftime('%H:%M') if attendance and attendance.check_out else '-',
+                }
+                employees_details.append(emp_data)
+            
+            circles_data.append({
+                'name': '🔵 بدون دائرة محددة',
+                'total': len(employees_without_location),
+                'present': present,
+                'absent': absent,
+                'leave': leave,
+                'sick': sick,
+                'not_registered': not_registered,
+                'employees': employees_details
+            })
+        
+        # إضافة بيانات القسم
         departments_data.append({
             'name': dept.name,
             'id': dept.id,
