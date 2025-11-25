@@ -545,6 +545,119 @@ def mobile_tracking():
                           now=datetime.utcnow())
 
 
+# صفحة تفاصيل الدائرة الجغرافية
+@mobile_bp.route('/geofence/<int:geofence_id>')
+@login_required
+def geofence_details(geofence_id):
+    """عرض تفاصيل دائرة جغرافية معينة"""
+    from models import Geofence, EmployeeLocation, GeofenceSession, GeofenceEvent
+    from math import radians, sin, cos, sqrt, atan2
+    
+    geofence = Geofence.query.get_or_404(geofence_id)
+    
+    # جلب الموظفين المعينين لهذه الدائرة
+    assigned_employees = geofence.assigned_employees
+    
+    # حساب من هو داخل الدائرة حالياً
+    employees_inside = []
+    employees_outside = []
+    
+    def calculate_distance(lat1, lon1, lat2, lon2):
+        R = 6371000  # نصف قطر الأرض بالمتر
+        phi1 = radians(lat1)
+        phi2 = radians(lat2)
+        delta_phi = radians(lat2 - lat1)
+        delta_lambda = radians(lon2 - lon1)
+        a = sin(delta_phi/2)**2 + cos(phi1) * cos(phi2) * sin(delta_lambda/2)**2
+        c = 2 * atan2(sqrt(a), sqrt(1-a))
+        return R * c
+    
+    center_lat = float(geofence.center_latitude)
+    center_lng = float(geofence.center_longitude)
+    radius = geofence.radius_meters
+    
+    for emp in assigned_employees:
+        location = EmployeeLocation.query.filter_by(employee_id=emp.id).order_by(EmployeeLocation.recorded_at.desc()).first()
+        if location and location.latitude and location.longitude:
+            distance = calculate_distance(center_lat, center_lng, float(location.latitude), float(location.longitude))
+            age_minutes = (datetime.utcnow() - location.recorded_at).total_seconds() / 60
+            
+            emp_data = {
+                'employee': emp,
+                'location': location,
+                'distance': int(distance),
+                'age_minutes': int(age_minutes),
+                'is_active': age_minutes < 30
+            }
+            
+            if distance <= radius:
+                employees_inside.append(emp_data)
+            else:
+                employees_outside.append(emp_data)
+        else:
+            employees_outside.append({
+                'employee': emp,
+                'location': None,
+                'distance': None,
+                'age_minutes': None,
+                'is_active': False
+            })
+    
+    # جلب آخر الأحداث (دخول/خروج)
+    recent_events = GeofenceEvent.query.filter_by(geofence_id=geofence_id).order_by(GeofenceEvent.recorded_at.desc()).limit(20).all()
+    
+    # جلب الجلسات النشطة
+    active_sessions = GeofenceSession.query.filter_by(geofence_id=geofence_id, is_active=True).all()
+    
+    # إحصائيات اليوم
+    today = datetime.utcnow().date()
+    today_start = datetime.combine(today, datetime.min.time())
+    
+    today_entries = GeofenceEvent.query.filter(
+        GeofenceEvent.geofence_id == geofence_id,
+        GeofenceEvent.event_type == 'enter',
+        GeofenceEvent.recorded_at >= today_start
+    ).count()
+    
+    today_exits = GeofenceEvent.query.filter(
+        GeofenceEvent.geofence_id == geofence_id,
+        GeofenceEvent.event_type == 'exit',
+        GeofenceEvent.recorded_at >= today_start
+    ).count()
+    
+    stats = {
+        'total_assigned': len(assigned_employees),
+        'inside_count': len(employees_inside),
+        'outside_count': len(employees_outside),
+        'active_sessions': len(active_sessions),
+        'today_entries': today_entries,
+        'today_exits': today_exits
+    }
+    
+    # بيانات JSON للخريطة
+    employees_locations_json = []
+    for emp_data in employees_inside + employees_outside:
+        if emp_data['location']:
+            employees_locations_json.append({
+                'id': emp_data['employee'].id,
+                'name': emp_data['employee'].name,
+                'latitude': float(emp_data['location'].latitude),
+                'longitude': float(emp_data['location'].longitude),
+                'photo_url': emp_data['employee'].profile_image,
+                'is_inside': emp_data['distance'] <= radius if emp_data['distance'] else False,
+                'distance': emp_data['distance']
+            })
+    
+    return render_template('mobile/geofence_details.html',
+                          geofence=geofence,
+                          employees_inside=employees_inside,
+                          employees_outside=employees_outside,
+                          recent_events=recent_events,
+                          stats=stats,
+                          employees_json=json.dumps(employees_locations_json),
+                          now=datetime.utcnow())
+
+
 # API لجلب مواقع الموظفين المباشرة (Real-time)
 @mobile_bp.route('/api/live-locations')
 @login_required

@@ -684,12 +684,12 @@
             </div>
             <div class="geofence-section">
                 {% for geofence_data in employees_by_geofence %}
-                <div class="geofence-card" onclick="focusOnGeofence({{ geofence_data.geofence.id }}, {{ geofence_data.geofence.center_latitude }}, {{ geofence_data.geofence.center_longitude }}, {{ geofence_data.geofence.radius_meters or 500 }})" style="cursor: pointer;">
+                <div class="geofence-card" onclick="window.location.href='/mobile/geofence/{{ geofence_data.geofence.id }}'" style="cursor: pointer;">
                     <div class="geofence-header">
                         <div class="geofence-name">
                             <i class="fas fa-map-marker-alt"></i>
                             {{ geofence_data.geofence.name }}
-                            <i class="fas fa-external-link-alt" style="font-size: 0.7rem; margin-right: 5px; opacity: 0.7;"></i>
+                            <i class="fas fa-chevron-left" style="font-size: 0.8rem; margin-right: auto; opacity: 0.7;"></i>
                         </div>
                         <div class="geofence-count">
                             {{ geofence_data.employees|length }} موظف
