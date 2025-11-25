@@ -1,149 +1,398 @@
 {% extends 'layout.html' %}
 
+{% block extra_css %}
+<style>
+    * {
+        direction: rtl;
+    }
+    
+    body {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    }
+    
+    .hero-about {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 80px 40px;
+        border-radius: 20px;
+        margin: 40px 0;
+        text-align: center;
+        box-shadow: 0 15px 50px rgba(102, 126, 234, 0.3);
+    }
+    
+    .hero-about h1 {
+        font-size: 3rem;
+        font-weight: 900;
+        margin-bottom: 20px;
+    }
+    
+    .hero-about p {
+        font-size: 1.3rem;
+        opacity: 0.95;
+    }
+    
+    .feature-card {
+        background: white;
+        border-radius: 20px;
+        padding: 30px;
+        margin-bottom: 25px;
+        box-shadow: 0 10px 35px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+        border-left: 6px solid;
+    }
+    
+    .feature-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+    }
+    
+    .feature-card.green { border-left-color: #28a745; }
+    .feature-card.blue { border-left-color: #007bff; }
+    .feature-card.warning { border-left-color: #ffc107; }
+    .feature-card.info { border-left-color: #17a2b8; }
+    
+    .feature-card h3 {
+        font-weight: 700;
+        margin-bottom: 15px;
+        font-size: 1.4rem;
+    }
+    
+    .feature-card .icon {
+        font-size: 2.5rem;
+        margin-bottom: 15px;
+    }
+    
+    .stats-section {
+        background: white;
+        border-radius: 20px;
+        padding: 40px;
+        margin: 40px 0;
+        box-shadow: 0 10px 35px rgba(0,0,0,0.1);
+    }
+    
+    .stat-box {
+        text-align: center;
+        padding: 20px;
+        margin: 20px 0;
+    }
+    
+    .stat-box h2 {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: #667eea;
+    }
+    
+    .stat-box p {
+        font-size: 1.1rem;
+        color: #666;
+        font-weight: 500;
+    }
+    
+    .timeline {
+        background: white;
+        border-radius: 20px;
+        padding: 40px;
+        margin: 40px 0;
+        box-shadow: 0 10px 35px rgba(0,0,0,0.1);
+    }
+    
+    .timeline-item {
+        padding: 20px;
+        margin: 20px 0;
+        border-right: 4px solid #667eea;
+        position: relative;
+    }
+    
+    .timeline-item::after {
+        content: '';
+        position: absolute;
+        right: -12px;
+        top: 30px;
+        width: 24px;
+        height: 24px;
+        background: #667eea;
+        border-radius: 50%;
+        border: 4px solid white;
+    }
+    
+    .values-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 25px;
+        margin: 40px 0;
+    }
+    
+    .value-card {
+        background: white;
+        border-radius: 15px;
+        padding: 25px;
+        text-align: center;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+    }
+    
+    .value-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+    }
+    
+    .value-card .icon {
+        font-size: 3rem;
+        margin-bottom: 15px;
+    }
+    
+    .value-card h4 {
+        font-weight: 700;
+        margin-bottom: 10px;
+    }
+    
+    .team-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 20px;
+        padding: 50px 40px;
+        margin: 40px 0;
+        text-align: center;
+    }
+    
+    .team-section h2 {
+        font-size: 2.5rem;
+        margin-bottom: 30px;
+    }
+    
+    .cta-button {
+        display: inline-block;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 18px 50px;
+        border-radius: 15px;
+        text-decoration: none;
+        font-weight: 700;
+        font-size: 1.1rem;
+        margin: 15px;
+        transition: all 0.3s ease;
+        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+    }
+    
+    .cta-button:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 30px rgba(102, 126, 234, 0.4);
+        color: white;
+    }
+    
+    .section-title {
+        font-size: 2rem;
+        font-weight: 800;
+        margin-bottom: 30px;
+        color: #2d3748;
+        text-align: center;
+    }
+    
+    @media (max-width: 768px) {
+        .hero-about {
+            padding: 50px 20px;
+        }
+        
+        .hero-about h1 {
+            font-size: 2rem;
+        }
+        
+        .section-title {
+            font-size: 1.5rem;
+        }
+        
+        .feature-card {
+            padding: 20px;
+        }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container my-5">
-    <div class="row justify-content-center">
-        <div class="col-lg-10">
-            <!-- Header -->
-            <div class="card mb-4 fade-in">
-                <div class="card-body text-center py-5">
-                    <h1 class="display-4 mb-3">
-                        <i class="fas fa-info-circle text-primary me-3"></i>
-                        من نحن
-                    </h1>
-                    <p class="lead text-muted">نظام نُظم لإدارة الموارد البشرية والعمليات</p>
+<div class="container-fluid p-0">
+    <!-- Hero Section -->
+    <div class="container">
+        <div class="hero-about">
+            <i class="fas fa-building" style="font-size: 3.5rem; margin-bottom: 20px;"></i>
+            <h1>من نحن؟</h1>
+            <p>نحن هنا لتبسيط إدارة الموارد البشرية وتحسين الإنتاجية</p>
+        </div>
+    </div>
+
+    <!-- About Content -->
+    <div class="container">
+        <!-- نبذة عن نُظم -->
+        <div class="feature-card blue">
+            <i class="fas fa-info-circle icon"></i>
+            <h3>نبذة عن نُظم</h3>
+            <p style="font-size: 1.05rem; line-height: 1.8;">
+                <strong>نُظم</strong> هو نظام متكامل وشامل لإدارة الموارد البشرية، مصمم خصيصاً لخدمة الشركات والمؤسسات في المملكة العربية السعودية. 
+                يجمع النظام بين الكفاءة والموثوقية ليوفر حلاً متطوراً يشمل إدارة الموظفين، المركبات، الحضور والانصراف، والتقارير المالية الشاملة.
+                مع تقنيات حديثة وواجهة سهلة الاستخدام، نُظم يساعد المؤسسات على تحقيق أهدافها بكفاءة عالية.
+            </p>
+        </div>
+
+        <!-- الإحصائيات -->
+        <div class="stats-section">
+            <h2 class="section-title">أرقام تثبت نجاحنا</h2>
+            <div class="row">
+                <div class="col-md-3 col-sm-6">
+                    <div class="stat-box">
+                        <h2>500+</h2>
+                        <p>شركة وموسسة</p>
+                    </div>
                 </div>
-            </div>
-
-            <!-- Main Content -->
-            <div class="card slide-up">
-                <div class="card-body p-5">
-                    <div class="mb-5">
-                        <h2 class="text-primary mb-4">
-                            <i class="fas fa-building me-2"></i>
-                            نبذة عن نُظم
-                        </h2>
-                        <p class="lead mb-4">
-                            <strong>نُظم</strong> هو نظام متكامل لإدارة الموارد البشرية مصمم خصيصاً للشركات في المملكة العربية السعودية. 
-                            يهدف النظام إلى توفير حلول شاملة لإدارة شؤون الموظفين، المركبات، الحضور والانصراف، والتقارير الإدارية.
-                        </p>
+                <div class="col-md-3 col-sm-6">
+                    <div class="stat-box">
+                        <h2>50K+</h2>
+                        <p>موظف مدار</p>
                     </div>
-
-                    <div class="mb-5">
-                        <h3 class="text-primary mb-4">
-                            <i class="fas fa-bullseye me-2"></i>
-                            أهدافنا
-                        </h3>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <div class="d-flex align-items-start">
-                                    <i class="fas fa-check-circle text-success fs-4 me-3 mt-1"></i>
-                                    <div>
-                                        <h5>تبسيط العمليات الإدارية</h5>
-                                        <p class="text-muted">أتمتة المهام اليومية وتقليل الأعباء الإدارية</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <div class="d-flex align-items-start">
-                                    <i class="fas fa-check-circle text-success fs-4 me-3 mt-1"></i>
-                                    <div>
-                                        <h5>تحسين الإنتاجية</h5>
-                                        <p class="text-muted">توفير الوقت والجهد من خلال نظام موحد وفعال</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <div class="d-flex align-items-start">
-                                    <i class="fas fa-check-circle text-success fs-4 me-3 mt-1"></i>
-                                    <div>
-                                        <h5>حماية البيانات</h5>
-                                        <p class="text-muted">ضمان أمان المعلومات وخصوصية بيانات الموظفين</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <div class="d-flex align-items-start">
-                                    <i class="fas fa-check-circle text-success fs-4 me-3 mt-1"></i>
-                                    <div>
-                                        <h5>التقارير الذكية</h5>
-                                        <p class="text-muted">توفير تقارير شاملة لدعم اتخاذ القرارات الإدارية</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <div class="stat-box">
+                        <h2>99.9%</h2>
+                        <p>نسبة الموثوقية</p>
                     </div>
-
-                    <div class="mb-5">
-                        <h3 class="text-primary mb-4">
-                            <i class="fas fa-cogs me-2"></i>
-                            الخدمات الرئيسية
-                        </h3>
-                        <div class="list-group">
-                            <div class="list-group-item bg-transparent border-primary mb-2">
-                                <div class="d-flex w-100 justify-content-between">
-                                    <h5 class="mb-1">
-                                        <i class="fas fa-users text-primary me-2"></i>
-                                        إدارة الموظفين
-                                    </h5>
-                                </div>
-                                <p class="mb-1 text-muted">نظام شامل لإدارة بيانات الموظفين، الوثائق، الملفات الشخصية، والسجلات الوظيفية</p>
-                            </div>
-                            <div class="list-group-item bg-transparent border-success mb-2">
-                                <div class="d-flex w-100 justify-content-between">
-                                    <h5 class="mb-1">
-                                        <i class="fas fa-car text-success me-2"></i>
-                                        إدارة المركبات
-                                    </h5>
-                                </div>
-                                <p class="mb-1 text-muted">تتبع المركبات، التسليم والاستلام، الصيانة، والتقارير التفصيلية</p>
-                            </div>
-                            <div class="list-group-item bg-transparent border-info mb-2">
-                                <div class="d-flex w-100 justify-content-between">
-                                    <h5 class="mb-1">
-                                        <i class="fas fa-calendar-check text-info me-2"></i>
-                                        نظام الحضور والانصراف
-                                    </h5>
-                                </div>
-                                <p class="mb-1 text-muted">تسجيل الحضور اليومي، حساب ساعات العمل، والإجازات</p>
-                            </div>
-                            <div class="list-group-item bg-transparent border-warning mb-2">
-                                <div class="d-flex w-100 justify-content-between">
-                                    <h5 class="mb-1">
-                                        <i class="fas fa-money-bill-wave text-warning me-2"></i>
-                                        إدارة الرواتب
-                                    </h5>
-                                </div>
-                                <p class="mb-1 text-muted">حساب الرواتب، البدلات، الخصومات، والتقارير المالية</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="alert alert-info border-info">
-                        <h5 class="alert-heading">
-                            <i class="fas fa-shield-alt me-2"></i>
-                            نظام آمن وموثوق
-                        </h5>
-                        <p class="mb-0">
-                            نُظم هو نظام إدارة موارد بشرية شرعي ومرخص، مصمم لخدمة الشركات والمؤسسات. 
-                            جميع نماذج تسجيل الدخول والبيانات المطلوبة هي لأغراض إدارية مشروعة فقط، 
-                            ونحن ملتزمون بحماية خصوصية المستخدمين وأمان البيانات.
-                        </p>
-                    </div>
-
-                    <div class="text-center mt-5">
-                        <a href="{{ url_for('dashboard.index') }}" class="btn btn-primary btn-lg">
-                            <i class="fas fa-home me-2"></i>
-                            العودة إلى الصفحة الرئيسية
-                        </a>
-                        <a href="{{ url_for('contact') }}" class="btn btn-outline-primary btn-lg ms-2">
-                            <i class="fas fa-envelope me-2"></i>
-                            اتصل بنا
-                        </a>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <div class="stat-box">
+                        <h2>24/7</h2>
+                        <p>دعم فني</p>
                     </div>
                 </div>
             </div>
         </div>
+
+        <!-- قيمنا الأساسية -->
+        <h2 class="section-title">قيمنا الأساسية</h2>
+        <div class="values-grid">
+            <div class="value-card">
+                <div class="icon text-success">
+                    <i class="fas fa-rocket"></i>
+                </div>
+                <h4>الابتكار</h4>
+                <p>نسعى للتطور المستمر وتطبيق أحدث التقنيات في مجال إدارة الموارد البشرية</p>
+            </div>
+            
+            <div class="value-card">
+                <div class="icon text-primary">
+                    <i class="fas fa-handshake"></i>
+                </div>
+                <h4>الموثوقية</h4>
+                <p>نلتزم بتقديم خدمات موثوقة وآمنة تحافظ على سرية بيانات عملائنا</p>
+            </div>
+            
+            <div class="value-card">
+                <div class="icon text-warning">
+                    <i class="fas fa-star"></i>
+                </div>
+                <h4>التميز</h4>
+                <p>نسعى للتميز في كل جانب من جوانب خدماتنا لضمان رضا العملاء</p>
+            </div>
+            
+            <div class="value-card">
+                <div class="icon text-info">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <h4>الأمان</h4>
+                <p>حماية البيانات والخصوصية هي أولويتنا الأولى في كل عملياتنا</p>
+            </div>
+            
+            <div class="value-card">
+                <div class="icon text-danger">
+                    <i class="fas fa-users"></i>
+                </div>
+                <h4>فريق محترف</h4>
+                <p>فريق متخصص وذو خبرة عالية في تطوير وتشغيل نظم إدارة الموارد البشرية</p>
+            </div>
+            
+            <div class="value-card">
+                <div class="icon" style="color: #764ba2;">
+                    <i class="fas fa-lightbulb"></i>
+                </div>
+                <h4>الحلول الذكية</h4>
+                <p>نقدم حلولاً مبتكرة وذكية تناسب احتياجات كل مؤسسة</p>
+            </div>
+        </div>
+
+        <!-- الخدمات الرئيسية -->
+        <h2 class="section-title">الخدمات الرئيسية</h2>
+        <div class="row">
+            <div class="col-md-6 mb-4">
+                <div class="feature-card green">
+                    <i class="fas fa-users icon" style="color: #28a745;"></i>
+                    <h3>إدارة الموظفين</h3>
+                    <p>نظام متكامل لإدارة بيانات الموظفين، الوثائق، الملفات الشخصية، والعقود الوظيفية بكل سهولة</p>
+                </div>
+            </div>
+            
+            <div class="col-md-6 mb-4">
+                <div class="feature-card info">
+                    <i class="fas fa-car icon" style="color: #17a2b8;"></i>
+                    <h3>إدارة المركبات</h3>
+                    <p>تتبع متقدم للمركبات، التسليم والاستلام، الصيانة، والتقارير التفصيلية الشاملة</p>
+                </div>
+            </div>
+            
+            <div class="col-md-6 mb-4">
+                <div class="feature-card warning">
+                    <i class="fas fa-calendar-check icon" style="color: #ffc107;"></i>
+                    <h3>نظام الحضور والانصراف</h3>
+                    <p>تسجيل دقيق للحضور اليومي، حساب ساعات العمل الإضافية، وإدارة الإجازات</p>
+                </div>
+            </div>
+            
+            <div class="col-md-6 mb-4">
+                <div class="feature-card blue">
+                    <i class="fas fa-money-bill-wave icon" style="color: #007bff;"></i>
+                    <h3>إدارة الرواتب والمحاسبة</h3>
+                    <p>حساب دقيق للرواتب والبدلات والخصومات مع تقارير مالية احترافية</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- الفريق والمهمة -->
+        <div class="team-section">
+            <h2>فريقنا ومهمتنا</h2>
+            <p style="font-size: 1.2rem; line-height: 1.8; max-width: 900px; margin: 30px auto;">
+                نحن فريق متخصص من الخبراء في مجال تطوير أنظمة إدارة الموارد البشرية. 
+                مهمتنا هي توفير حلول متطورة وآمنة تساعد المؤسسات على تحسين إنتاجيتها وكفاءتها الإدارية.
+                نؤمن بأن التكنولوجيا يجب أن تخدم الإنسان وتسهل عمله، وليس العكس.
+            </p>
+        </div>
+
+        <!-- الرؤية والرسالة -->
+        <div class="row mb-5">
+            <div class="col-md-6 mb-4">
+                <div class="feature-card green">
+                    <i class="fas fa-binoculars icon" style="color: #28a745;"></i>
+                    <h3>رؤيتنا</h3>
+                    <p>أن نكون الحل الأول والموثوق به للمؤسسات في المملكة العربية السعودية في مجال إدارة الموارد البشرية والعمليات الإدارية</p>
+                </div>
+            </div>
+            
+            <div class="col-md-6 mb-4">
+                <div class="feature-card blue">
+                    <i class="fas fa-compass icon" style="color: #007bff;"></i>
+                    <h3>رسالتنا</h3>
+                    <p>توفير أنظمة إدارة حديثة وموثوقة تمكن المؤسسات من إدارة عملياتها بكفاءة وأمان تام</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- CTA Buttons -->
+        <div style="text-align: center; margin: 60px 0;">
+            <a href="{{ url_for('landing.index') }}" class="cta-button">
+                <i class="fas fa-home me-2"></i>العودة للصفحة الرئيسية
+            </a>
+            <a href="{{ url_for('landing.contact') }}" class="cta-button" style="background: linear-gradient(135deg, #28a745 0%, #1e8449 100%); box-shadow: 0 8px 20px rgba(40, 167, 69, 0.3);">
+                <i class="fas fa-envelope me-2"></i>اتصل بنا
+            </a>
+            <a href="{{ url_for('auth.login') }}" class="cta-button" style="background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%); color: #333; box-shadow: 0 8px 20px rgba(255, 193, 7, 0.3);">
+                <i class="fas fa-sign-in-alt me-2"></i>تسجيل الدخول
+            </a>
+        </div>
     </div>
 </div>
+
 {% endblock %}
