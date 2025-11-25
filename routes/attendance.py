@@ -3866,6 +3866,7 @@ def departments_circles_overview():
                     accessed_employees.append(emp.name)
                 
                 emp_data = {
+                    'id': emp.id,
                     'name': emp.name,
                     'employee_id': emp.employee_id,
                     'status': attendance.status if attendance else 'لم يتم التسجيل',
@@ -3982,7 +3983,7 @@ def departments_circles_overview():
     from sqlalchemy.orm import aliased
     from sqlalchemy import func as sql_func
     
-    all_active_emp_ids = [e.id for dept in departments_data for circle in dept['circles'] for e_data in circle['employees']]
+    all_active_emp_ids = [e_data['id'] for dept in departments_data for circle in dept['circles'] for e_data in circle['employees']]
     
     # بناء dictionary لبيانات التتبع
     locations_by_employee = {}
