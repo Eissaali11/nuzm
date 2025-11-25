@@ -4437,6 +4437,23 @@ def mark_circle_employees_attendance(department_id, circle_name):
                 if not evening_check_out and geo_sessions:
                     evening_check_out = geo_sessions[-1].exit_time
                 
+                # تحويل الأوقات من UTC إلى UTC (بدون تحويل - الأوقات المخزنة هي UTC)
+                # لكن نحفظ فقط الـ time بدون التاريخ
+                check_in_time = None
+                check_out_time = None
+                
+                if morning_check_in:
+                    if isinstance(morning_check_in, datetime):
+                        check_in_time = morning_check_in.time()
+                    else:
+                        check_in_time = morning_check_in
+                
+                if evening_check_out:
+                    if isinstance(evening_check_out, datetime):
+                        check_out_time = evening_check_out.time()
+                    else:
+                        check_out_time = evening_check_out
+                
                 # تحديث أو إنشاء سجل الحضور
                 existing_attendance = Attendance.query.filter(
                     Attendance.employee_id == emp.id,
@@ -4445,10 +4462,10 @@ def mark_circle_employees_attendance(department_id, circle_name):
                 
                 if existing_attendance:
                     # تحديث السجل الموجود
-                    if morning_check_in:
-                        existing_attendance.check_in = morning_check_in.time() if isinstance(morning_check_in, datetime) else morning_check_in
-                    if evening_check_out:
-                        existing_attendance.check_out = evening_check_out.time() if isinstance(evening_check_out, datetime) else evening_check_out
+                    if check_in_time:
+                        existing_attendance.check_in = check_in_time
+                    if check_out_time:
+                        existing_attendance.check_out = check_out_time
                     existing_attendance.status = 'present'
                     existing_attendance.updated_at = datetime.utcnow()
                 else:
@@ -4457,8 +4474,8 @@ def mark_circle_employees_attendance(department_id, circle_name):
                         employee_id=emp.id,
                         date=selected_date,
                         status='present',
-                        check_in=morning_check_in.time() if isinstance(morning_check_in, datetime) else morning_check_in,
-                        check_out=evening_check_out.time() if isinstance(evening_check_out, datetime) else evening_check_out,
+                        check_in=check_in_time,
+                        check_out=check_out_time,
                     )
                     db.session.add(attendance)
                 
