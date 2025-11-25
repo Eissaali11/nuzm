@@ -54,7 +54,7 @@ def create_expiry_notification(user_id, document_type, employee_name, days_until
     
     notification = Notification(
         user_id=user_id,
-        notification_type='expiry',
+        notification_type='document_expiry',
         title=title,
         description=description,
         related_entity_type='document',
