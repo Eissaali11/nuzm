@@ -1206,7 +1206,7 @@ def view(id):
     rental = VehicleRental.query.filter_by(vehicle_id=id, is_active=True).first()
     project_assignments = VehicleProject.query.filter_by(vehicle_id=id).order_by(VehicleProject.start_date.desc()).all()
     periodic_inspections = VehiclePeriodicInspection.query.filter_by(vehicle_id=id).order_by(VehiclePeriodicInspection.inspection_date.desc()).all()
-    accidents = VehicleAccident.query.filter_by(vehicle_id=id).order_by(VehicleAccident.accident_date.desc()).all()
+    accidents = VehicleAccident.query.filter_by(vehicle_id=id, review_status='approved').order_by(VehicleAccident.accident_date.desc()).all()
     external_authorizations = ExternalAuthorization.query.filter_by(vehicle_id=id).order_by(ExternalAuthorization.created_at.desc()).all()
     external_safety_checks = VehicleExternalSafetyCheck.query.filter_by(vehicle_id=id).order_by(VehicleExternalSafetyCheck.inspection_date.desc()).all()
 
