@@ -25,14 +25,28 @@ SECRET_KEY = os.environ.get('SESSION_SECRET')
 if not SECRET_KEY:
     raise RuntimeError("SESSION_SECRET environment variable is required for JWT authentication")
 
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'heic', 'heif'}
+ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'heic', 'heif'}
+ALLOWED_DOCUMENT_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg', 'heic', 'heif'}
 MAX_FILE_SIZE = 50 * 1024 * 1024
 
 
-def allowed_file(filename):
+def allowed_file(filename, file_type='image'):
+    """
+    التحقق من امتداد الملف
+    file_type: 'image' للصور فقط، 'document' للصور و PDF
+    """
     if not filename or not isinstance(filename, str):
         return False
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+    
+    if '.' not in filename:
+        return False
+    
+    ext = filename.rsplit('.', 1)[1].lower()
+    
+    if file_type == 'document':
+        return ext in ALLOWED_DOCUMENT_EXTENSIONS
+    else:
+        return ext in ALLOWED_IMAGE_EXTENSIONS
 
 
 def compress_image(filepath, max_size=(1920, 1920), quality=85):
@@ -161,12 +175,55 @@ def submit_accident_report(current_employee):
             except:
                 logger.warning(f"Invalid time format: {accident_time_str}")
         
+        # إنشاء مجلد مؤقت للملفات
+        temp_upload_dir = os.path.join('static', 'uploads', 'accidents', 'temp', str(uuid.uuid4().hex[:8]))
+        os.makedirs(temp_upload_dir, exist_ok=True)
+        
+        # معالجة صورة الهوية
+        driver_id_image_path = None
+        id_image = request.files.get('driver_id_image')
+        if id_image and allowed_file(id_image.filename, 'image'):
+            filename = f"id_{uuid.uuid4().hex[:8]}.jpg"
+            filepath = os.path.join(temp_upload_dir, filename)
+            id_image.save(filepath)
+            compress_image(filepath)
+            driver_id_image_path = filepath.replace('static/', '')
+        
+        # معالجة صورة الرخصة
+        driver_license_image_path = None
+        license_image = request.files.get('driver_license_image')
+        if license_image and allowed_file(license_image.filename, 'image'):
+            filename = f"license_{uuid.uuid4().hex[:8]}.jpg"
+            filepath = os.path.join(temp_upload_dir, filename)
+            license_image.save(filepath)
+            compress_image(filepath)
+            driver_license_image_path = filepath.replace('static/', '')
+        
+        # معالجة تقرير الحادث (PDF أو صورة)
+        accident_report_file_path = None
+        report_file = request.files.get('accident_report_file')
+        if report_file and allowed_file(report_file.filename, 'document'):
+            ext = report_file.filename.rsplit('.', 1)[1].lower()
+            filename = f"report_{uuid.uuid4().hex[:8]}.{ext}"
+            filepath = os.path.join(temp_upload_dir, filename)
+            report_file.save(filepath)
+            
+            # ضغط إذا كانت صورة
+            if ext in ALLOWED_IMAGE_EXTENSIONS:
+                compress_image(filepath)
+            
+            accident_report_file_path = filepath.replace('static/', '')
+        
         # إنشاء سجل الحادث
         accident = VehicleAccident(
             vehicle_id=vehicle_id,
             accident_date=accident_date,
             accident_time=accident_time_obj,
             driver_name=driver_name,
+            driver_phone=request.form.get('driver_phone'),
+            driver_id_image=driver_id_image_path,
+            driver_license_image=driver_license_image_path,
+            accident_report_file=accident_report_file_path,
             reported_by_employee_id=current_employee.id,
             reported_via='mobile_app',
             review_status='pending',
@@ -184,14 +241,27 @@ def submit_accident_report(current_employee):
         db.session.add(accident)
         db.session.flush()  # للحصول على ID
         
-        # معالجة الصور المرفقة
+        # نقل المجلد المؤقت إلى المجلد النهائي
+        final_upload_dir = os.path.join('static', 'uploads', 'accidents', str(accident.id))
+        if os.path.exists(temp_upload_dir):
+            import shutil
+            shutil.move(temp_upload_dir, final_upload_dir)
+            
+            # تحديث المسارات في قاعدة البيانات
+            if accident.driver_id_image:
+                accident.driver_id_image = accident.driver_id_image.replace('temp/' + temp_upload_dir.split('/')[-1], str(accident.id))
+            if accident.driver_license_image:
+                accident.driver_license_image = accident.driver_license_image.replace('temp/' + temp_upload_dir.split('/')[-1], str(accident.id))
+            if accident.accident_report_file:
+                accident.accident_report_file = accident.accident_report_file.replace('temp/' + temp_upload_dir.split('/')[-1], str(accident.id))
+        
+        # معالجة صور الحادث الإضافية
         uploaded_images = []
-        images = request.files.getlist('images')
+        images = request.files.getlist('accident_images')
         
         if images:
-            # إنشاء مجلد للصور
-            upload_dir = os.path.join('static', 'uploads', 'accidents', str(accident.id))
-            os.makedirs(upload_dir, exist_ok=True)
+            # التأكد من وجود المجلد
+            os.makedirs(final_upload_dir, exist_ok=True)
             
             for idx, image_file in enumerate(images):
                 if image_file and allowed_file(image_file.filename):

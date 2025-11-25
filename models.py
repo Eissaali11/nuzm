@@ -1378,6 +1378,10 @@ class VehicleAccident(db.Model):
     accident_date = db.Column(db.Date, nullable=False, index=True)  # تاريخ الحادث
     accident_time = db.Column(db.Time)  # وقت الحادث
     driver_name = db.Column(db.String(100), nullable=False)  # اسم السائق
+    driver_phone = db.Column(db.String(20))  # رقم الهاتف المربوط بأبشر
+    driver_id_image = db.Column(db.String(500))  # صورة الهوية
+    driver_license_image = db.Column(db.String(500))  # صورة الرخصة
+    accident_report_file = db.Column(db.String(500))  # تقرير الحادث (صورة أو PDF)
     reported_by_employee_id = db.Column(db.Integer, db.ForeignKey('employee.id'), nullable=True)  # الموظف الذي أبلغ
     reported_via = db.Column(db.String(50), default='mobile_app')  # mobile_app, web, manual
     
