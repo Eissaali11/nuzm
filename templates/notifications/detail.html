@@ -1,0 +1,116 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- Back Button -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <a href="{{ url_for('notifications.index') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-right me-2"></i>العودة للإشعارات
+            </a>
+        </div>
+    </div>
+
+    <!-- Notification Detail Card -->
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card">
+                <div class="card-header d-flex align-items-center">
+                    {% if notification.notification_type == 'absence' %}
+                        <span class="badge bg-danger p-2 me-3"><i class="fas fa-user-slash fa-lg"></i></span>
+                    {% elif notification.notification_type == 'document_expiry' %}
+                        <span class="badge bg-warning p-2 me-3"><i class="fas fa-exclamation-triangle fa-lg"></i></span>
+                    {% elif notification.notification_type == 'operations' %}
+                        <span class="badge bg-info p-2 me-3"><i class="fas fa-cogs fa-lg"></i></span>
+                    {% else %}
+                        <span class="badge bg-secondary p-2 me-3"><i class="fas fa-bell fa-lg"></i></span>
+                    {% endif %}
+                    <h5 class="mb-0">{{ notification.title }}</h5>
+                </div>
+                <div class="card-body">
+                    <p class="lead">{{ notification.description }}</p>
+                    
+                    <hr>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong><i class="fas fa-tag me-2"></i>النوع:</strong>
+                                {% if notification.notification_type == 'absence' %}
+                                    غياب موظف
+                                {% elif notification.notification_type == 'document_expiry' %}
+                                    انتهاء صلاحية
+                                {% elif notification.notification_type == 'operations' %}
+                                    عملية
+                                {% else %}
+                                    إشعار عام
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong><i class="fas fa-flag me-2"></i>الأولوية:</strong>
+                                {% if notification.priority == 'critical' %}
+                                    <span class="badge bg-danger">حرجة</span>
+                                {% elif notification.priority == 'high' %}
+                                    <span class="badge bg-warning">عالية</span>
+                                {% elif notification.priority == 'normal' %}
+                                    <span class="badge bg-primary">عادية</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">منخفضة</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong><i class="fas fa-clock me-2"></i>تاريخ الإنشاء:</strong>
+                                {{ notification.created_at.strftime('%Y-%m-%d %H:%M') }}
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong><i class="fas fa-eye me-2"></i>الحالة:</strong>
+                                {% if notification.is_read %}
+                                    <span class="badge bg-success">مقروء</span>
+                                    {% if notification.read_at %}
+                                        ({{ notification.read_at.strftime('%Y-%m-%d %H:%M') }})
+                                    {% endif %}
+                                {% else %}
+                                    <span class="badge bg-primary">جديد</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="d-flex justify-content-between">
+                        {% if notification.action_url %}
+                        <a href="{{ notification.action_url }}" class="btn btn-primary">
+                            <i class="fas fa-external-link-alt me-2"></i>الذهاب للتفاصيل
+                        </a>
+                        {% else %}
+                        <span></span>
+                        {% endif %}
+                        <button class="btn btn-outline-danger" onclick="deleteNotification({{ notification.id }})">
+                            <i class="fas fa-trash me-2"></i>حذف الإشعار
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function deleteNotification(id) {
+    if (confirm('هل تريد حذف هذا الإشعار؟')) {
+        fetch(`/notifications/${id}/delete`, {method: 'POST'})
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.href = '{{ url_for("notifications.index") }}';
+                }
+            });
+    }
+}
+</script>
+{% endblock %}

@@ -468,6 +468,10 @@ with app.app_context():
     # استيراد وتسجيل إدارة صفحة الهبوط
     from routes.landing_admin import landing_admin_bp
     app.register_blueprint(landing_admin_bp, url_prefix='/landing-admin')
+    
+    # استيراد وتسجيل نظام الإشعارات
+    from routes.notifications import notifications_bp
+    app.register_blueprint(notifications_bp)
 
     @app.route('/uploads/<path:filename>')
     def uploaded_file(filename):
