@@ -22,6 +22,77 @@ logger = logging.getLogger(__name__)
 
 attendance_bp = Blueprint('attendance', __name__)
 
+
+def create_absence_notification(user_id, employee_name, absence_date, department_name, employee_id):
+    """إشعار غياب موظف"""
+    from models import Notification, User
+    
+    notification = Notification(
+        user_id=user_id,
+        notification_type='attendance',
+        title=f'غياب موظف - {employee_name}',
+        description=f'تم تسجيل غياب الموظف {employee_name} من قسم {department_name} بتاريخ {absence_date}',
+        related_entity_type='attendance',
+        related_entity_id=employee_id,
+        priority='normal',
+        action_url=url_for('attendance.index')
+    )
+    db.session.add(notification)
+    return notification
+
+
+@attendance_bp.route('/test-notifications', methods=['GET', 'POST'])
+def test_absence_notifications():
+    """اختبار إنشاء إشعارات الغياب لجميع المستخدمين"""
+    try:
+        from models import Notification, User
+        
+        today = datetime.now().date()
+        
+        # الحصول على موظفين غائبين اليوم
+        absent_employees = Employee.query.join(Attendance).filter(
+            func.date(Attendance.date) == today,
+            Attendance.status == 'absent'
+        ).limit(5).all()
+        
+        if not absent_employees:
+            # إذا لم يوجد غياب، نأخذ أي موظفين للاختبار
+            absent_employees = Employee.query.limit(3).all()
+        
+        if not absent_employees:
+            return jsonify({'success': False, 'message': 'لا توجد سجلات غياب'}), 404
+        
+        all_users = User.query.all()
+        
+        notification_count = 0
+        for emp in absent_employees:
+            dept_name = emp.departments[0].name if emp.departments else 'غير محدد'
+            
+            for user in all_users:
+                try:
+                    create_absence_notification(
+                        user_id=user.id,
+                        employee_name=emp.name or 'غير محدد',
+                        absence_date=today.strftime('%Y-%m-%d'),
+                        department_name=dept_name,
+                        employee_id=emp.id
+                    )
+                    notification_count += 1
+                except Exception as e:
+                    pass
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': f'تم إنشاء {notification_count} إشعار لـ {len(absent_employees)} موظف',
+            'employees_count': len(absent_employees),
+            'users_count': len(all_users)
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
 def format_time_12h_ar(dt):
     """تحويل الوقت من 24 ساعة إلى 12 ساعة بصيغة عربية (صباح/مساء)"""
     if not dt:
