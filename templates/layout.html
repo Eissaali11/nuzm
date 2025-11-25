@@ -698,10 +698,12 @@
                     <div class="action-bar">
                         <!-- Floating Notification Icon -->
                         {% if current_user.is_authenticated %}
-                        <a href="{{ url_for('notifications.index') }}" class="notification-floating-btn position-relative me-3" title="الإشعارات">
-                            <i class="fas fa-bell fa-lg"></i>
-                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger notification-badge" id="headerNotificationBadge" style="display: none;">0</span>
-                        </a>
+                        <div class="notification-header-container">
+                            <a href="{{ url_for('notifications.index') }}" class="notification-floating-btn position-relative" title="الإشعارات">
+                                <i class="fas fa-bell fa-lg" style="color: white;"></i>
+                                <span class="badge bg-danger rounded-circle" id="headerNotificationBadge" style="display: none; position: absolute; top: -8px; right: -8px; font-size: 10px; min-width: 18px;">0</span>
+                            </a>
+                        </div>
                         {% endif %}
                         <div>
                             <h4 class="mb-0 page-title">
@@ -720,7 +722,8 @@
                                 request.path %} التقارير والإحصائيات {% elif
                                 '/employee-stats' in request.path %} إحصائيات
                                 الموظفين {% elif '/users' in request.path %}
-                                إدارة المستخدمين {% elif '/operations' in
+                                إدارة المستخدمين {% elif '/notifications' in
+                                request.path %} الإشعارات {% elif '/operations' in
 
                                 request.path %} 
                                 إدارة المستخدمين {% endif %}
@@ -846,27 +849,36 @@
 
             // دالة لتحديث عداد الإشعارات العامة
             function updateNotificationBadge() {
-                fetch('{{ url_for("notifications.unread_count") }}')
-                    .then(response => response.json())
-                    .then(data => {
-                        const sidebarBadge = document.getElementById('sidebarNotificationBadge');
-                        const headerBadge = document.getElementById('headerNotificationBadge');
-                        
-                        if (data.unread_count > 0) {
-                            if (sidebarBadge) {
-                                sidebarBadge.textContent = data.unread_count;
-                                sidebarBadge.style.display = 'inline-block';
+                try {
+                    fetch('{{ url_for("notifications.unread_count") }}')
+                        .then(response => {
+                            if (!response.ok) throw new Error('Network response was not ok');
+                            return response.json();
+                        })
+                        .then(data => {
+                            const sidebarBadge = document.getElementById('sidebarNotificationBadge');
+                            const headerBadge = document.getElementById('headerNotificationBadge');
+                            
+                            const count = data.unread_count || 0;
+                            
+                            if (count > 0) {
+                                if (sidebarBadge) {
+                                    sidebarBadge.textContent = count > 99 ? '99+' : count;
+                                    sidebarBadge.style.display = 'inline-block';
+                                }
+                                if (headerBadge) {
+                                    headerBadge.textContent = count > 99 ? '99+' : count;
+                                    headerBadge.style.display = 'block';
+                                }
+                            } else {
+                                if (sidebarBadge) sidebarBadge.style.display = 'none';
+                                if (headerBadge) headerBadge.style.display = 'none';
                             }
-                            if (headerBadge) {
-                                headerBadge.textContent = data.unread_count;
-                                headerBadge.style.display = 'inline-block';
-                            }
-                        } else {
-                            if (sidebarBadge) sidebarBadge.style.display = 'none';
-                            if (headerBadge) headerBadge.style.display = 'none';
-                        }
-                    })
-                    .catch(error => console.error('خطأ في تحديث الإشعارات:', error));
+                        })
+                        .catch(error => console.error('خطأ في تحديث الإشعارات:', error));
+                } catch (e) {
+                    console.error('خطأ في دالة updateNotificationBadge:', e);
+                }
             }
 
             // Set current year for footer

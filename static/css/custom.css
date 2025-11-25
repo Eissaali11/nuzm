@@ -1740,20 +1740,31 @@ table {
 /* Notification System Styles */
 /* ============================================= */
 
-.notification-floating-btn {
-    color: #fff;
-    text-decoration: none;
-    padding: 8px 12px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    transition: all 0.3s ease;
+.notification-header-container {
     display: flex;
     align-items: center;
     justify-content: center;
+    position: relative;
+}
+
+.notification-floating-btn {
+    color: #fff;
+    text-decoration: none;
+    padding: 10px 14px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    width: 44px;
+    height: 44px;
 }
 
 .notification-floating-btn:hover {
     color: #fff;
+    text-decoration: none;
     transform: scale(1.1);
     box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
