@@ -243,6 +243,20 @@
                                                 </div>
                                             </div>
 
+                                            <!-- بيانات الوصول إلى الدوائر -->
+                                            <div class="row g-2 mb-3">
+                                                <div class="col-12">
+                                                    <div style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%); padding: 12px; border-radius: 8px; border-left: 4px solid #8b5cf6;">
+                                                        <i class="fas fa-door-open text-primary me-2"></i>
+                                                        <strong>الوصول إلى الدائرة:</strong>
+                                                        <span class="badge bg-primary ms-2">{{ circle.accessed_count }} داخل</span>
+                                                        <div class="mt-2 small text-muted">
+                                                            <strong>الداخلون:</strong> {{ circle.accessed_employees }}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
                                             <!-- تحذير الموظفين غير المسجلين -->
                                             {% if circle.not_registered > 0 %}
                                             <div class="alert alert-warning p-2 mb-3" style="border-radius: 8px; border-left: 4px solid #ffc107;">
@@ -273,6 +287,8 @@
                                                                 <th style="border: none;">الحالة</th>
                                                                 <th style="border: none;">الدخول</th>
                                                                 <th style="border: none;">الخروج</th>
+                                                                <th style="border: none;">📍 الموقع GPS</th>
+                                                                <th style="border: none;">🚪 دخول الدائرة</th>
                                                             </tr>
                                                         </thead>
                                                         <tbody>
@@ -304,6 +320,26 @@
                                                                 </td>
                                                                 <td>
                                                                     <small class="text-muted">{{ emp.check_out }}</small>
+                                                                </td>
+                                                                <td>
+                                                                    {% if emp.gps_latitude and emp.gps_longitude %}
+                                                                    <small class="text-muted" title="GPS: {{ emp.gps_latitude }}, {{ emp.gps_longitude }}">
+                                                                        📍 {{ "%.4f"|format(emp.gps_latitude|float) }}
+                                                                        <br>{{ "%.4f"|format(emp.gps_longitude|float) }}
+                                                                    </small>
+                                                                    {% else %}
+                                                                    <small class="text-muted">-</small>
+                                                                    {% endif %}
+                                                                </td>
+                                                                <td>
+                                                                    {% if emp.accessed_circle %}
+                                                                    <span class="badge bg-success" style="border-radius: 6px;">✓ دخل</span>
+                                                                    {% if emp.circle_enter_time %}
+                                                                    <small class="d-block text-muted mt-1">{{ emp.circle_enter_time.strftime('%H:%M') if emp.circle_enter_time else '-' }}</small>
+                                                                    {% endif %}
+                                                                    {% else %}
+                                                                    <span class="badge bg-secondary" style="border-radius: 6px;">✕ لم يدخل</span>
+                                                                    {% endif %}
                                                                 </td>
                                                             </tr>
                                                             {% endfor %}

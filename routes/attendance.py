@@ -3835,6 +3835,9 @@ def departments_circles_overview():
             
             # جلب تفاصيل الموظفين في هذه الدائرة (آخر سجل خلال 18 ساعة)
             employees_details = []
+            accessed_count = 0
+            accessed_employees = []
+            
             for emp in emp_in_circle:
                 attendance = Attendance.query.filter(
                     Attendance.employee_id == emp.id,
@@ -3842,16 +3845,45 @@ def departments_circles_overview():
                     Attendance.date <= end_date
                 ).order_by(Attendance.date.desc()).first()
                 
+                # جلب بيانات التتبع الجغرافي (GPS)
+                location_data = EmployeeLocation.query.filter(
+                    EmployeeLocation.employee_id == emp.id,
+                    EmployeeLocation.recorded_at >= datetime.combine(start_date, time(0, 0, 0)),
+                    EmployeeLocation.recorded_at <= datetime.combine(end_date, time(23, 59, 59))
+                ).order_by(EmployeeLocation.recorded_at.desc()).first()
+                
+                # جلب بيانات الوصول إلى الدوائر (GeofenceSession)
+                from models import GeofenceSession
+                geofence_session = GeofenceSession.query.filter(
+                    GeofenceSession.employee_id == emp.id,
+                    GeofenceSession.enter_time >= datetime.combine(start_date, time(0, 0, 0)),
+                    GeofenceSession.enter_time <= datetime.combine(end_date, time(23, 59, 59))
+                ).order_by(GeofenceSession.enter_time.desc()).first()
+                
+                # تحديد ما إذا كان الموظف قد دخل الدائرة
+                accessed = geofence_session is not None
+                if accessed:
+                    accessed_count += 1
+                    accessed_employees.append(emp.name)
+                
                 emp_data = {
                     'name': emp.name,
                     'employee_id': emp.employee_id,
                     'status': attendance.status if attendance else 'لم يتم التسجيل',
                     'check_in': attendance.check_in.strftime('%H:%M') if attendance and attendance.check_in else '-',
                     'check_out': attendance.check_out.strftime('%H:%M') if attendance and attendance.check_out else '-',
+                    # بيانات التتبع الجغرافي
+                    'gps_latitude': location_data.latitude if location_data else None,
+                    'gps_longitude': location_data.longitude if location_data else None,
+                    'gps_recorded_at': location_data.recorded_at if location_data else None,
+                    # بيانات الوصول إلى الدائرة
+                    'accessed_circle': accessed,
+                    'circle_enter_time': geofence_session.enter_time if geofence_session else None,
+                    'circle_exit_time': geofence_session.exit_time if geofence_session else None,
                 }
                 employees_details.append(emp_data)
             
-            # إضافة بيانات الدائرة
+            # إضافة بيانات الدائرة مع معلومات الوصول
             circles_data.append({
                 'name': location,
                 'total': len(emp_in_circle),
@@ -3860,6 +3892,8 @@ def departments_circles_overview():
                 'leave': leave,
                 'sick': sick,
                 'not_registered': not_registered,
+                'accessed_count': accessed_count,
+                'accessed_employees': ', '.join(accessed_employees) if accessed_employees else 'لا أحد',
                 'employees': employees_details
             })
         
