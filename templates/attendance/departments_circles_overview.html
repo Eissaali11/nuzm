@@ -341,7 +341,7 @@
                                                                     {% if emp.accessed_circle %}
                                                                     <span class="badge bg-success" style="border-radius: 6px;">✓ دخل</span>
                                                                     {% if emp.circle_enter_time %}
-                                                                    <small class="d-block text-muted mt-1">{{ emp.circle_enter_time.strftime('%H:%M') if emp.circle_enter_time else '-' }}</small>
+                                                                    <small class="d-block text-muted mt-1">{{ emp.circle_enter_time }}</small>
                                                                     {% endif %}
                                                                     {% else %}
                                                                     <span class="badge bg-secondary" style="border-radius: 6px;">✕ لم يدخل</span>
