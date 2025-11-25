@@ -4421,24 +4421,23 @@ def mark_circle_employees_attendance(department_id, circle_name):
                     if geo.entry_time and not morning_check_in:
                         entry_sa = geo.entry_time + saudi_tz
                         if entry_sa.hour < 12:
-                            morning_check_in = geo.entry_time
+                            morning_check_in = entry_sa  # احفظ الوقت بعد التحويل للتوقيت السعودي
                     
                     # آخر خروج مسائي
                     if geo.exit_time:
                         exit_sa = geo.exit_time + saudi_tz
                         if exit_sa.hour >= 12:
-                            evening_check_out = geo.exit_time
+                            evening_check_out = exit_sa  # احفظ الوقت بعد التحويل للتوقيت السعودي
                 
-                # إذا لم نجد دخول صباحي، نأخذ أول دخول عام
+                # إذا لم نجد دخول صباحي، نأخذ أول دخول عام + تحويل للتوقيت السعودي
                 if not morning_check_in and geo_sessions:
-                    morning_check_in = geo_sessions[0].entry_time
+                    morning_check_in = geo_sessions[0].entry_time + saudi_tz
                 
-                # إذا لم نجد خروج مسائي، نأخذ آخر خروج عام
+                # إذا لم نجد خروج مسائي، نأخذ آخر خروج عام + تحويل للتوقيت السعودي
                 if not evening_check_out and geo_sessions:
-                    evening_check_out = geo_sessions[-1].exit_time
+                    evening_check_out = geo_sessions[-1].exit_time + saudi_tz
                 
-                # تحويل الأوقات من UTC إلى UTC (بدون تحويل - الأوقات المخزنة هي UTC)
-                # لكن نحفظ فقط الـ time بدون التاريخ
+                # حفظ الأوقات بعد تحويلها للتوقيت السعودي
                 check_in_time = None
                 check_out_time = None
                 
