@@ -355,12 +355,202 @@ def index():
                             geofences_json=geofences_json,
                             departments=departments)
 
+
+# ===================== صفحة التتبع المباشر الكاملة للموبايل =====================
+@mobile_bp.route('/tracking')
+@login_required
+def mobile_tracking():
+    """صفحة تتبع الموظفين المباشر للموبايل - مماثلة لصفحة الكمبيوتر"""
+    from math import radians, sin, cos, sqrt, atan2
+    from models import Geofence, EmployeeLocation
+    from sqlalchemy import func as sql_func, and_
+    
+    cutoff_time_active = datetime.utcnow() - timedelta(hours=1)
+    cutoff_time_location = datetime.utcnow() - timedelta(hours=24)
+    
+    all_employees = Employee.query.options(db.joinedload(Employee.departments)).all()
+    employee_ids = [emp.id for emp in all_employees]
+    
+    latest_locations_subq = db.session.query(
+        EmployeeLocation.employee_id,
+        EmployeeLocation.id.label('location_id'),
+        sql_func.row_number().over(
+            partition_by=EmployeeLocation.employee_id,
+            order_by=EmployeeLocation.recorded_at.desc()
+        ).label('rn')
+    ).filter(
+        EmployeeLocation.employee_id.in_(employee_ids)
+    ).subquery()
+    
+    latest_locations_query = db.session.query(
+        EmployeeLocation
+    ).join(
+        latest_locations_subq,
+        and_(
+            EmployeeLocation.id == latest_locations_subq.c.location_id,
+            latest_locations_subq.c.rn == 1
+        )
+    ).all()
+    
+    locations_by_employee = {loc.employee_id: loc for loc in latest_locations_query}
+    
+    active_employees = []
+    inactive_employees = []
+    employees_with_vehicles = []
+    
+    for emp in all_employees:
+        latest_location = locations_by_employee.get(emp.id)
+        
+        if latest_location and latest_location.recorded_at >= cutoff_time_active:
+            active_employees.append({
+                'employee': emp,
+                'location': latest_location,
+                'departments': [d.name for d in emp.departments]
+            })
+            
+            if latest_location.vehicle_id:
+                employees_with_vehicles.append({
+                    'employee': emp,
+                    'location': latest_location,
+                    'vehicle': latest_location.vehicle
+                })
+        else:
+            inactive_employees.append(emp)
+    
+    all_geofences = Geofence.query.filter_by(is_active=True).all()
+    
+    employees_inside_geofences = []
+    employees_outside_geofences = []
+    geofence_stats = []
+    employees_inside_any_geofence = set()
+    
+    for geofence in all_geofences:
+        inside_count = 0
+        inside_employees = []
+        
+        for emp in all_employees:
+            latest_location = locations_by_employee.get(emp.id)
+            
+            if latest_location and latest_location.recorded_at >= cutoff_time_location:
+                lat1, lon1 = float(latest_location.latitude), float(latest_location.longitude)
+                lat2, lon2 = float(geofence.center_latitude), float(geofence.center_longitude)
+                
+                R = 6371000
+                dlat = radians(lat2 - lat1)
+                dlon = radians(lon2 - lon1)
+                a = sin(dlat/2)**2 + cos(radians(lat1)) * cos(radians(lat2)) * sin(dlon/2)**2
+                c = 2 * atan2(sqrt(a), sqrt(1-a))
+                distance = R * c
+                
+                if distance <= geofence.radius_meters:
+                    inside_count += 1
+                    inside_employees.append({
+                        'employee': emp,
+                        'location': latest_location,
+                        'distance': distance
+                    })
+                    employees_inside_any_geofence.add(emp.id)
+        
+        geofence_stats.append({
+            'geofence': geofence,
+            'employees': inside_employees,
+            'count': inside_count
+        })
+    
+    for emp_data in active_employees:
+        emp = emp_data['employee']
+        if emp.id not in employees_inside_any_geofence:
+            employees_outside_geofences.append({
+                'employee': emp,
+                'location': emp_data['location']
+            })
+    
+    for emp_data in active_employees:
+        emp = emp_data['employee']
+        for geofence in all_geofences:
+            latest_location = locations_by_employee.get(emp.id)
+            if latest_location:
+                lat1, lon1 = float(latest_location.latitude), float(latest_location.longitude)
+                lat2, lon2 = float(geofence.center_latitude), float(geofence.center_longitude)
+                
+                R = 6371000
+                dlat = radians(lat2 - lat1)
+                dlon = radians(lon2 - lon1)
+                a = sin(dlat/2)**2 + cos(radians(lat1)) * cos(radians(lat2)) * sin(dlon/2)**2
+                c = 2 * atan2(sqrt(a), sqrt(1-a))
+                distance = R * c
+                
+                if distance <= geofence.radius_meters:
+                    emp_data['geofence'] = geofence
+                    break
+        
+        if latest_location and latest_location.vehicle_id and latest_location.vehicle:
+            emp_data['vehicle'] = latest_location.vehicle
+    
+    stats = {
+        'total_employees': len(all_employees),
+        'active_employees': len(active_employees),
+        'inactive_employees': len(inactive_employees),
+        'inside_geofences_count': len(employees_inside_any_geofence),
+        'outside_geofences_count': len(employees_outside_geofences),
+        'on_vehicles_count': len(employees_with_vehicles)
+    }
+    
+    employee_locations = {}
+    for emp in all_employees:
+        location = locations_by_employee.get(emp.id)
+        if location and location.latitude is not None and location.longitude is not None:
+            try:
+                age_minutes = (datetime.utcnow() - location.recorded_at).total_seconds() / 60
+                if age_minutes < 5:
+                    status = 'active'
+                elif age_minutes < 30:
+                    status = 'recently_active'
+                elif age_minutes < 360:
+                    status = 'inactive'
+                else:
+                    status = 'not_registered'
+                
+                employee_locations[str(emp.id)] = {
+                    'latitude': float(location.latitude),
+                    'longitude': float(location.longitude),
+                    'name': emp.name,
+                    'employee_id': emp.employee_id,
+                    'status': status,
+                    'age_minutes': int(age_minutes),
+                    'photo_url': emp.profile_image
+                }
+            except:
+                employee_locations[str(emp.id)] = {'status': 'not_registered'}
+        else:
+            employee_locations[str(emp.id)] = {'status': 'not_registered'}
+    
+    geofences_data = [{
+        'id': gf.id,
+        'name': gf.name,
+        'center_latitude': float(gf.center_latitude),
+        'center_longitude': float(gf.center_longitude),
+        'radius_meters': gf.radius_meters,
+        'color': gf.color
+    } for gf in all_geofences]
+    
+    return render_template('mobile/tracking.html',
+                          stats=stats,
+                          employees_active=active_employees,
+                          employees_inactive=inactive_employees,
+                          employees_by_geofence=geofence_stats,
+                          employees_outside_geofences=employees_outside_geofences,
+                          employee_locations_json=json.dumps(employee_locations),
+                          geofences_json=json.dumps(geofences_data),
+                          now=datetime.utcnow())
+
+
 # API لجلب مواقع الموظفين المباشرة (Real-time)
 @mobile_bp.route('/api/live-locations')
 @login_required
 def get_live_locations():
     """جلب مواقع الموظفين الحية مباشرة من قاعدة البيانات"""
-    from models import Geofence
+    from models import Geofence, EmployeeLocation
     
     all_employees = Employee.query.all()
     employee_locations = {}
