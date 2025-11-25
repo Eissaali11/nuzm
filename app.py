@@ -370,6 +370,7 @@ with app.app_context():
     from routes.users import users_bp
     from routes.mass_attendance import mass_attendance_bp
     from routes.attendance_dashboard import attendance_dashboard_bp
+    from routes.e_invoicing import e_invoicing_bp
 
 
     # تعطيل تقارير الورشة مؤقتاً حتى يتم حل مشكلة WeasyPrint
@@ -427,6 +428,7 @@ with app.app_context():
     app.register_blueprint(users_bp, url_prefix='/users')
     app.register_blueprint(mass_attendance_bp, url_prefix='/mass-attendance')
     app.register_blueprint(attendance_dashboard_bp, url_prefix='/attendance-dashboard')
+    app.register_blueprint(e_invoicing_bp, url_prefix="/e-invoicing")
     # app.register_blueprint(workshop_reports_bp, url_prefix='/workshop-reports')
     app.register_blueprint(employee_portal_bp, url_prefix='/employee-portal')
     app.register_blueprint(insights_bp, url_prefix='/insights')
