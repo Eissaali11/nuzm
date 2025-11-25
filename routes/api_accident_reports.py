@@ -339,7 +339,7 @@ def submit_accident_report(current_employee):
         
         # إنشاء إشعارات للمسؤولين عند تسجيل حادثة جديدة
         try:
-            from routes.notifications import get_all_admin_users
+            from routes.notifications import get_all_admin_users, create_accident_notification
             admin_users = get_all_admin_users()
             for admin_user in admin_users:
                 create_accident_notification(
