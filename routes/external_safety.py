@@ -633,11 +633,13 @@ def handle_safety_check_submission(vehicle):
         # حفظ جميع التغييرات
         db.session.commit()
         
-        # إنشاء إشعار عند إنشاء فحص جديد
+        # إنشاء إشعارات للمسؤولين عند إنشاء فحص جديد
         try:
-            if current_user.is_authenticated:
+            from routes.notifications import get_all_admin_users, create_safety_check_notification
+            admin_users = get_all_admin_users()
+            for admin_user in admin_users:
                 create_safety_check_notification(
-                    user_id=current_user.id,
+                    user_id=admin_user.id,
                     vehicle_plate=safety_check.vehicle_plate_number,
                     supervisor_name=safety_check.driver_name,
                     check_status='pending',

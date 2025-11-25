@@ -337,13 +337,16 @@ def submit_accident_report(current_employee):
         
         db.session.commit()
         
-        # إنشاء إشعار عند تسجيل حادثة جديدة
+        # إنشاء إشعارات للمسؤولين عند تسجيل حادثة جديدة
         try:
-            if current_employee and current_employee.user_id:
+            from routes.notifications import get_all_admin_users
+            admin_users = get_all_admin_users()
+            for admin_user in admin_users:
                 create_accident_notification(
-                    user_id=current_employee.user_id,
+                    user_id=admin_user.id,
                     vehicle_plate=vehicle.plate_number,
                     driver_name=driver_name,
+                    accident_type=request.form.get('severity', 'متوسط'),
                     accident_id=accident.id,
                     severity=request.form.get('severity', 'متوسط')
                 )
