@@ -3822,6 +3822,10 @@ def departments_circles_overview():
             else:
                 employees_without_location.append(emp)
         
+        # تخطي الأقسام التي ليس لديها دوائر جغرافية محددة
+        if not locations_dict:
+            continue
+        
         circles_data = []
         total_dept_present = 0
         total_dept_absent = 0
