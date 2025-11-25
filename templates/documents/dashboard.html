@@ -4,185 +4,319 @@
 
 {% block extra_css %}
 <style>
-    .dashboard-container {
-        padding: 30px;
-        background: #f8f9fa;
-        min-height: 100vh;
+    * {
+        direction: rtl;
     }
 
-    .dashboard-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border-radius: 20px;
-        padding: 40px;
-        margin-bottom: 30px;
-        color: white;
-        box-shadow: 0 10px 40px rgba(102, 126, 234, 0.3);
+    .dashboard-container {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+        min-height: 100vh;
+        padding: 40px 20px;
         position: relative;
         overflow: hidden;
     }
 
-    .dashboard-header::before {
+    .dashboard-container::before {
         content: '';
-        position: absolute;
+        position: fixed;
         top: -50%;
-        right: -20%;
-        width: 400px;
-        height: 400px;
-        background: radial-gradient(circle, rgba(255, 255, 255, 0.15) 0%, transparent 70%);
-        animation: float 6s ease-in-out infinite;
+        left: -50%;
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 50%);
+        pointer-events: none;
+        animation: float-bg 20s ease-in-out infinite;
+        z-index: 0;
     }
 
-    @keyframes float {
-        0%, 100% { transform: translate(0, 0); }
-        50% { transform: translate(-30px, -30px); }
+    @keyframes float-bg {
+        0%, 100% { transform: translate(0, 0) scale(1); }
+        50% { transform: translate(-30px, -30px) scale(1.1); }
     }
 
-    .dashboard-title {
-        font-size: 32px;
-        font-weight: 700;
+    .dashboard-content {
+        position: relative;
+        z-index: 1;
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+
+    /* HEADER */
+    .dashboard-header {
+        margin-bottom: 50px;
+        text-align: right;
+    }
+
+    .header-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
         margin-bottom: 10px;
-        position: relative;
-        z-index: 1;
     }
 
-    .dashboard-subtitle {
+    .header-icon {
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 40px;
+        color: white;
+        box-shadow: 0 20px 50px rgba(59, 130, 246, 0.3);
+        animation: bounce 3s ease-in-out infinite;
+    }
+
+    @keyframes bounce {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
+    }
+
+    .header-text h1 {
+        font-size: 42px;
+        font-weight: 800;
+        color: white;
+        margin: 0;
+        background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        text-shadow: 0 0 30px rgba(59, 130, 246, 0.2);
+    }
+
+    .header-text p {
         font-size: 16px;
-        opacity: 0.9;
-        position: relative;
-        z-index: 1;
+        color: #cbd5e1;
+        margin: 5px 0 0 0;
     }
 
-    /* Stats Cards */
+    /* STATS GRID */
     .stats-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 24px;
-        margin-bottom: 30px;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 28px;
+        margin-bottom: 50px;
     }
 
     .stat-card {
-        background: white;
-        border-radius: 16px;
-        padding: 28px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-        transition: all 0.3s ease;
-        border-left: 4px solid;
+        background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(51, 65, 85, 0.6) 100%);
+        border: 1px solid rgba(148, 163, 184, 0.2);
+        border-radius: 20px;
+        padding: 32px;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        backdrop-filter: blur(10px);
+    }
+
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(circle, var(--gradient-color) 0%, transparent 70%);
+        opacity: 0;
+        transition: opacity 0.4s ease;
     }
 
     .stat-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+        border-color: rgba(148, 163, 184, 0.5);
+        transform: translateY(-12px);
+        box-shadow: 0 30px 60px rgba(0, 0, 0, 0.3);
+    }
+
+    .stat-card:hover::before {
+        opacity: 0.1;
     }
 
     .stat-card.total {
-        border-left-color: #667eea;
+        --gradient-color: rgba(59, 130, 246, 0.5);
     }
 
     .stat-card.expired {
-        border-left-color: #dc3545;
+        --gradient-color: rgba(239, 68, 68, 0.5);
     }
 
     .stat-card.warning {
-        border-left-color: #ffc107;
+        --gradient-color: rgba(251, 146, 60, 0.5);
     }
 
     .stat-card.valid {
-        border-left-color: #28a745;
+        --gradient-color: rgba(34, 197, 94, 0.5);
     }
 
     .stat-header {
         display: flex;
         align-items: center;
-        gap: 15px;
-        margin-bottom: 15px;
+        gap: 20px;
+        margin-bottom: 20px;
     }
 
     .stat-icon {
-        width: 60px;
-        height: 60px;
+        width: 70px;
+        height: 70px;
+        border-radius: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 32px;
+        flex-shrink: 0;
+    }
+
+    .stat-card.total .stat-icon {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%);
+        color: #60a5fa;
+    }
+
+    .stat-card.expired .stat-icon {
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(248, 113, 113, 0.2) 100%);
+        color: #f87171;
+    }
+
+    .stat-card.warning .stat-icon {
+        background: linear-gradient(135deg, rgba(251, 146, 60, 0.2) 0%, rgba(253, 186, 116, 0.2) 100%);
+        color: #fdba74;
+    }
+
+    .stat-card.valid .stat-icon {
+        background: linear-gradient(135deg, rgba(34, 197, 94, 0.2) 0%, rgba(74, 222, 128, 0.2) 100%);
+        color: #4ade80;
+    }
+
+    .stat-content h3 {
+        font-size: 14px;
+        color: #cbd5e1;
+        font-weight: 600;
+        margin: 0;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .stat-value {
+        font-size: 48px;
+        font-weight: 900;
+        background: linear-gradient(135deg, #e0e7ff 0%, #f3e8ff 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-top: 8px;
+    }
+
+    /* CHART SECTION */
+    .chart-section {
+        background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(51, 65, 85, 0.6) 100%);
+        border: 1px solid rgba(148, 163, 184, 0.2);
+        border-radius: 20px;
+        padding: 40px;
+        margin-bottom: 50px;
+        backdrop-filter: blur(10px);
+        transition: all 0.4s ease;
+    }
+
+    .chart-section:hover {
+        border-color: rgba(148, 163, 184, 0.5);
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+    }
+
+    .chart-header {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 30px;
+    }
+
+    .chart-icon {
+        width: 50px;
+        height: 50px;
+        background: linear-gradient(135deg, #3b82f6, #8b5cf6);
         border-radius: 14px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 26px;
+        font-size: 24px;
+        color: white;
     }
 
-    .stat-card.total .stat-icon {
-        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
-        color: #667eea;
+    .chart-header h2 {
+        font-size: 24px;
+        font-weight: 700;
+        color: white;
+        margin: 0;
     }
 
-    .stat-card.expired .stat-icon {
-        background: linear-gradient(135deg, rgba(220, 53, 69, 0.1) 0%, rgba(245, 87, 108, 0.1) 100%);
-        color: #dc3545;
+    .chart-container {
+        position: relative;
+        height: 300px;
     }
 
-    .stat-card.warning .stat-icon {
-        background: linear-gradient(135deg, rgba(255, 193, 7, 0.1) 0%, rgba(255, 152, 0, 0.1) 100%);
-        color: #ffc107;
+    /* DOCUMENTS SECTIONS */
+    .documents-sections {
+        margin-top: 50px;
     }
 
-    .stat-card.valid .stat-icon {
-        background: linear-gradient(135deg, rgba(40, 167, 69, 0.1) 0%, rgba(34, 139, 34, 0.1) 100%);
-        color: #28a745;
-    }
-
-    .stat-value {
-        font-size: 36px;
-        font-weight: 800;
-        color: #2d3748;
-        margin-bottom: 5px;
-    }
-
-    .stat-label {
-        font-size: 14px;
-        color: #718096;
-        font-weight: 600;
-    }
-
-    /* Document Lists */
     .documents-section {
-        background: white;
-        border-radius: 16px;
-        padding: 30px;
-        margin-bottom: 30px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(51, 65, 85, 0.6) 100%);
+        border: 1px solid rgba(148, 163, 184, 0.2);
+        border-radius: 20px;
+        padding: 40px;
+        margin-bottom: 40px;
+        backdrop-filter: blur(10px);
+        transition: all 0.4s ease;
+    }
+
+    .documents-section:hover {
+        border-color: rgba(148, 163, 184, 0.5);
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
     }
 
     .section-header {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        margin-bottom: 25px;
-        padding-bottom: 15px;
-        border-bottom: 2px solid #e9ecef;
+        margin-bottom: 30px;
+        padding-bottom: 20px;
+        border-bottom: 2px solid rgba(148, 163, 184, 0.2);
     }
 
     .section-title {
-        font-size: 22px;
-        font-weight: 700;
-        color: #2d3748;
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: 18px;
+        font-size: 24px;
+        font-weight: 700;
+        color: white;
     }
 
     .section-icon {
-        width: 44px;
-        height: 44px;
-        border-radius: 12px;
+        width: 56px;
+        height: 56px;
+        border-radius: 16px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 20px;
+        font-size: 26px;
+        flex-shrink: 0;
+    }
+
+    .section-expired .section-icon {
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(248, 113, 113, 0.2) 100%);
+        color: #f87171;
+    }
+
+    .section-warning .section-icon {
+        background: linear-gradient(135deg, rgba(251, 146, 60, 0.2) 0%, rgba(253, 186, 116, 0.2) 100%);
+        color: #fdba74;
     }
 
     .view-all-btn {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
         color: white;
         border: none;
-        border-radius: 10px;
-        padding: 10px 20px;
+        border-radius: 12px;
+        padding: 12px 28px;
         font-size: 14px;
         font-weight: 600;
         text-decoration: none;
@@ -190,36 +324,52 @@
         display: inline-flex;
         align-items: center;
         gap: 8px;
+        box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
     }
 
     .view-all-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        transform: translateY(-3px);
+        box-shadow: 0 15px 35px rgba(59, 130, 246, 0.4);
         color: white;
     }
 
+    /* DOCUMENT ITEMS */
     .document-item {
-        background: #f8f9fa;
-        border-radius: 12px;
-        padding: 20px;
-        margin-bottom: 15px;
-        border-right: 4px solid #667eea;
-        transition: all 0.3s ease;
+        background: rgba(51, 65, 85, 0.4);
+        border-right: 4px solid;
+        border-radius: 14px;
+        padding: 24px;
+        margin-bottom: 16px;
+        transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
     }
 
     .document-item:hover {
-        transform: translateX(-5px);
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        transform: translateX(-8px);
+        background: rgba(59, 130, 246, 0.1);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
     }
 
     .document-item.expired {
-        border-right-color: #dc3545;
-        background: linear-gradient(135deg, rgba(220, 53, 69, 0.05) 0%, rgba(255, 255, 255, 1) 100%);
+        border-right-color: #f87171;
+    }
+
+    .document-item.expired:hover {
+        background: rgba(239, 68, 68, 0.1);
     }
 
     .document-item.warning {
-        border-right-color: #ffc107;
-        background: linear-gradient(135deg, rgba(255, 193, 7, 0.05) 0%, rgba(255, 255, 255, 1) 100%);
+        border-right-color: #fdba74;
+    }
+
+    .document-item.warning:hover {
+        background: rgba(251, 146, 60, 0.1);
+    }
+
+    .doc-content {
+        flex: 1;
     }
 
     .doc-header {
@@ -227,22 +377,25 @@
         align-items: center;
         justify-content: space-between;
         margin-bottom: 12px;
+        gap: 15px;
     }
 
-    .doc-employee {
+    .doc-name {
         font-size: 18px;
         font-weight: 700;
-        color: #2d3748;
+        color: white;
     }
 
     .doc-type {
         display: inline-block;
         padding: 6px 14px;
-        background: #e9ecef;
+        background: rgba(139, 92, 246, 0.2);
+        border: 1px solid rgba(139, 92, 246, 0.4);
         border-radius: 8px;
-        font-size: 13px;
+        font-size: 12px;
         font-weight: 600;
-        color: #495057;
+        color: #c4b5fd;
+        white-space: nowrap;
     }
 
     .doc-expiry {
@@ -250,217 +403,304 @@
         align-items: center;
         gap: 8px;
         font-size: 14px;
-        color: #6c757d;
+        color: #94a3b8;
     }
 
     .document-item.expired .doc-expiry {
-        color: #dc3545;
+        color: #f87171;
         font-weight: 600;
     }
 
     .document-item.warning .doc-expiry {
-        color: #ff9800;
+        color: #fdba74;
         font-weight: 600;
     }
 
-    /* Chart Container */
-    .chart-container {
-        background: white;
-        border-radius: 16px;
-        padding: 30px;
-        margin-bottom: 30px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    .doc-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        flex-shrink: 0;
     }
 
-    .chart-title {
-        font-size: 20px;
-        font-weight: 700;
-        color: #2d3748;
-        margin-bottom: 20px;
+    .document-item.expired .doc-icon {
+        background: rgba(239, 68, 68, 0.2);
+        color: #f87171;
     }
 
+    .document-item.warning .doc-icon {
+        background: rgba(251, 146, 60, 0.2);
+        color: #fdba74;
+    }
+
+    /* EMPTY STATE */
     .empty-state {
         text-align: center;
-        padding: 60px 20px;
-        color: #718096;
+        padding: 80px 40px;
     }
 
     .empty-icon {
-        font-size: 64px;
-        margin-bottom: 20px;
-        opacity: 0.3;
+        font-size: 80px;
+        margin-bottom: 25px;
+        color: #64748b;
+        opacity: 0.5;
+    }
+
+    .empty-state h3 {
+        font-size: 28px;
+        font-weight: 700;
+        color: white;
+        margin: 0 0 12px 0;
+    }
+
+    .empty-state p {
+        font-size: 16px;
+        color: #94a3b8;
+        margin: 0;
+    }
+
+    /* RESPONSIVE */
+    @media (max-width: 768px) {
+        .dashboard-container {
+            padding: 20px 10px;
+        }
+
+        .stats-grid {
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .stat-card {
+            padding: 24px;
+        }
+
+        .header-text h1 {
+            font-size: 32px;
+        }
+
+        .section-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .document-item {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .doc-header {
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: flex-start;
+        }
     }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="dashboard-container">
-    <!-- Dashboard Header -->
-    <div class="dashboard-header">
-        <div class="dashboard-title">
-            <i class="fas fa-chart-pie"></i>
-            داش بورد الوثائق
+    <div class="dashboard-content">
+        <!-- HEADER -->
+        <div class="dashboard-header">
+            <div class="header-top">
+                <div class="header-text">
+                    <h1>
+                        <i class="fas fa-file-shield me-3"></i>إدارة الوثائق
+                    </h1>
+                    <p>نظرة عامة شاملة على جميع الوثائق والصلاحيات</p>
+                </div>
+                <div class="header-icon">
+                    <i class="fas fa-file-contract"></i>
+                </div>
+            </div>
         </div>
-        <div class="dashboard-subtitle">
-            عرض شامل لجميع الوثائق والإحصائيات التفصيلية
+
+        <!-- STATS GRID -->
+        <div class="stats-grid">
+            <!-- Total Documents -->
+            <div class="stat-card total">
+                <div class="stat-header">
+                    <div class="stat-icon">
+                        <i class="fas fa-folder-open"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3>إجمالي الوثائق</h3>
+                        <div class="stat-value">{{ total_documents }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Expired Documents -->
+            <div class="stat-card expired">
+                <div class="stat-header">
+                    <div class="stat-icon">
+                        <i class="fas fa-exclamation-circle"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3>وثائق منتهية</h3>
+                        <div class="stat-value">{{ expired_documents }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Expiring Soon -->
+            <div class="stat-card warning">
+                <div class="stat-header">
+                    <div class="stat-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3>قريبة من الانتهاء</h3>
+                        <div class="stat-value">{{ expiring_soon + expiring_later }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Valid Documents -->
+            <div class="stat-card valid">
+                <div class="stat-header">
+                    <div class="stat-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3>وثائق سارية</h3>
+                        <div class="stat-value">{{ valid_documents }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CHART -->
+        <div class="chart-section">
+            <div class="chart-header">
+                <div class="chart-icon">
+                    <i class="fas fa-chart-doughnut"></i>
+                </div>
+                <h2>توزيع الوثائق حسب الحالة</h2>
+            </div>
+            <div class="chart-container">
+                <canvas id="statusChart"></canvas>
+            </div>
+        </div>
+
+        <!-- DOCUMENTS SECTIONS -->
+        <div class="documents-sections">
+            {% if expired_docs %}
+            <div class="documents-section section-expired">
+                <div class="section-header">
+                    <div class="section-title">
+                        <div class="section-icon">
+                            <i class="fas fa-times-circle"></i>
+                        </div>
+                        <span>وثائق منتهية الصلاحية</span>
+                    </div>
+                    <a href="{{ url_for('documents.index', expiring='expired') }}" class="view-all-btn">
+                        <span>عرض الكل</span>
+                        <i class="fas fa-arrow-left"></i>
+                    </a>
+                </div>
+
+                {% for doc in expired_docs %}
+                <div class="document-item expired">
+                    <div class="doc-icon">
+                        <i class="fas fa-file"></i>
+                    </div>
+                    <div class="doc-content">
+                        <div class="doc-header">
+                            <div class="doc-name">{{ doc.employee.name }}</div>
+                            <div class="doc-type">{{ doc.document_type }}</div>
+                        </div>
+                        <div class="doc-expiry">
+                            <i class="fas fa-calendar-times"></i>
+                            <span>انتهت منذ <strong>{{ (current_date - doc.expiry_date).days }}</strong> يوم</span>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {% if expiring_docs %}
+            <div class="documents-section section-warning">
+                <div class="section-header">
+                    <div class="section-title">
+                        <div class="section-icon">
+                            <i class="fas fa-hourglass-end"></i>
+                        </div>
+                        <span>وثائق قريبة من الانتهاء</span>
+                    </div>
+                    <a href="{{ url_for('documents.index', expiring='soon') }}" class="view-all-btn">
+                        <span>عرض الكل</span>
+                        <i class="fas fa-arrow-left"></i>
+                    </a>
+                </div>
+
+                {% for doc in expiring_docs %}
+                <div class="document-item warning">
+                    <div class="doc-icon">
+                        <i class="fas fa-file"></i>
+                    </div>
+                    <div class="doc-content">
+                        <div class="doc-header">
+                            <div class="doc-name">{{ doc.employee.name }}</div>
+                            <div class="doc-type">{{ doc.document_type }}</div>
+                        </div>
+                        <div class="doc-expiry">
+                            <i class="fas fa-hourglass-half"></i>
+                            <span>متبقي <strong>{{ (doc.expiry_date - current_date).days }}</strong> يوم</span>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {% if not expired_docs and not expiring_docs %}
+            <div class="documents-section">
+                <div class="empty-state">
+                    <div class="empty-icon">
+                        <i class="fas fa-clipboard-check"></i>
+                    </div>
+                    <h3>جميع الوثائق سارية المفعول! ✨</h3>
+                    <p>لا توجد وثائق منتهية أو قريبة من الانتهاء</p>
+                </div>
+            </div>
+            {% endif %}
         </div>
     </div>
-
-    <!-- Statistics Cards -->
-    <div class="stats-grid">
-        <div class="stat-card total">
-            <div class="stat-header">
-                <div class="stat-icon">
-                    <i class="fas fa-file-alt"></i>
-                </div>
-                <div>
-                    <div class="stat-value">{{ total_documents }}</div>
-                    <div class="stat-label">إجمالي الوثائق</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="stat-card expired">
-            <div class="stat-header">
-                <div class="stat-icon">
-                    <i class="fas fa-exclamation-triangle"></i>
-                </div>
-                <div>
-                    <div class="stat-value">{{ expired_documents }}</div>
-                    <div class="stat-label">وثائق منتهية</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="stat-card warning">
-            <div class="stat-header">
-                <div class="stat-icon">
-                    <i class="fas fa-clock"></i>
-                </div>
-                <div>
-                    <div class="stat-value">{{ expiring_soon + expiring_later }}</div>
-                    <div class="stat-label">قريبة من الانتهاء</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="stat-card valid">
-            <div class="stat-header">
-                <div class="stat-icon">
-                    <i class="fas fa-check-circle"></i>
-                </div>
-                <div>
-                    <div class="stat-value">{{ valid_documents }}</div>
-                    <div class="stat-label">وثائق سارية</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Charts -->
-    <div class="chart-container">
-        <div class="chart-title">توزيع الوثائق حسب الحالة</div>
-        <canvas id="statusChart" height="120"></canvas>
-    </div>
-
-    <!-- Expired Documents -->
-    {% if expired_docs %}
-    <div class="documents-section">
-        <div class="section-header">
-            <div class="section-title">
-                <div class="section-icon" style="background: linear-gradient(135deg, rgba(220, 53, 69, 0.1) 0%, rgba(245, 87, 108, 0.1) 100%); color: #dc3545;">
-                    <i class="fas fa-times-circle"></i>
-                </div>
-                وثائق منتهية
-            </div>
-            <a href="{{ url_for('documents.index', expiring='expired') }}" class="view-all-btn">
-                عرض الكل
-                <i class="fas fa-arrow-left"></i>
-            </a>
-        </div>
-
-        {% for doc in expired_docs %}
-        <div class="document-item expired">
-            <div class="doc-header">
-                <div class="doc-employee">{{ doc.employee.name }}</div>
-                <div class="doc-type">{{ doc.document_type }}</div>
-            </div>
-            <div class="doc-expiry">
-                <i class="fas fa-calendar-times"></i>
-                انتهت منذ {{ (current_date - doc.expiry_date).days }} يوم
-            </div>
-        </div>
-        {% endfor %}
-    </div>
-    {% endif %}
-
-    <!-- Expiring Soon Documents -->
-    {% if expiring_docs %}
-    <div class="documents-section">
-        <div class="section-header">
-            <div class="section-title">
-                <div class="section-icon" style="background: linear-gradient(135deg, rgba(255, 193, 7, 0.1) 0%, rgba(255, 152, 0, 0.1) 100%); color: #ffc107;">
-                    <i class="fas fa-exclamation-triangle"></i>
-                </div>
-                وثائق قريبة من الانتهاء
-            </div>
-            <a href="{{ url_for('documents.index', expiring='soon') }}" class="view-all-btn">
-                عرض الكل
-                <i class="fas fa-arrow-left"></i>
-            </a>
-        </div>
-
-        {% for doc in expiring_docs %}
-        <div class="document-item warning">
-            <div class="doc-header">
-                <div class="doc-employee">{{ doc.employee.name }}</div>
-                <div class="doc-type">{{ doc.document_type }}</div>
-            </div>
-            <div class="doc-expiry">
-                <i class="fas fa-hourglass-half"></i>
-                متبقي {{ (doc.expiry_date - current_date).days }} يوم
-            </div>
-        </div>
-        {% endfor %}
-    </div>
-    {% endif %}
-
-    {% if not expired_docs and not expiring_docs %}
-    <div class="documents-section">
-        <div class="empty-state">
-            <div class="empty-icon">
-                <i class="fas fa-clipboard-check"></i>
-            </div>
-            <h4>جميع الوثائق سارية المفعول!</h4>
-            <p>لا توجد وثائق منتهية أو قريبة من الانتهاء</p>
-        </div>
-    </div>
-    {% endif %}
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
 <script>
-    // رسم بياني لحالة الوثائق
     const ctx = document.getElementById('statusChart').getContext('2d');
+    const gradient1 = ctx.createLinearGradient(0, 0, 0, 300);
+    gradient1.addColorStop(0, 'rgba(34, 197, 94, 0.8)');
+    gradient1.addColorStop(1, 'rgba(34, 197, 94, 0.2)');
+
+    const gradient2 = ctx.createLinearGradient(0, 0, 0, 300);
+    gradient2.addColorStop(0, 'rgba(251, 146, 60, 0.8)');
+    gradient2.addColorStop(1, 'rgba(251, 146, 60, 0.2)');
+
+    const gradient3 = ctx.createLinearGradient(0, 0, 0, 300);
+    gradient3.addColorStop(0, 'rgba(239, 68, 68, 0.8)');
+    gradient3.addColorStop(1, 'rgba(239, 68, 68, 0.2)');
+
     new Chart(ctx, {
         type: 'doughnut',
         data: {
-            labels: ['سارية', 'قريبة من الانتهاء', 'منتهية'],
+            labels: ['وثائق سارية', 'قريبة من الانتهاء', 'منتهية'],
             datasets: [{
                 data: [{{ valid_documents }}, {{ expiring_soon + expiring_later }}, {{ expired_documents }}],
-                backgroundColor: [
-                    'rgba(40, 167, 69, 0.8)',
-                    'rgba(255, 193, 7, 0.8)',
-                    'rgba(220, 53, 69, 0.8)'
-                ],
-                borderColor: [
-                    'rgba(40, 167, 69, 1)',
-                    'rgba(255, 193, 7, 1)',
-                    'rgba(220, 53, 69, 1)'
-                ],
-                borderWidth: 2
+                backgroundColor: [gradient1, gradient2, gradient3],
+                borderColor: ['#22c55e', '#fb923c', '#ef4444'],
+                borderWidth: 2,
+                borderRadius: 10
             }]
         },
         options: {
@@ -471,12 +711,33 @@
                     position: 'bottom',
                     labels: {
                         font: {
-                            family: 'Tajawal',
-                            size: 14
+                            family: 'Tajawal, sans-serif',
+                            size: 14,
+                            weight: 600
                         },
-                        padding: 20,
-                        usePointStyle: true
+                        padding: 25,
+                        usePointStyle: true,
+                        pointStyle: 'circle',
+                        color: '#cbd5e1'
                     }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    padding: 15,
+                    titleFont: {
+                        family: 'Tajawal, sans-serif',
+                        size: 14,
+                        weight: 600
+                    },
+                    bodyFont: {
+                        family: 'Tajawal, sans-serif',
+                        size: 13
+                    },
+                    borderColor: 'rgba(148, 163, 184, 0.3)',
+                    borderWidth: 1,
+                    displayColors: true,
+                    padding: 12,
+                    titleMarginBottom: 8
                 }
             }
         }
