@@ -149,6 +149,17 @@ class GoogleDriveService:
             from googleapiclient.discovery import build
             from googleapiclient.http import MediaFileUpload
             
+            # التحقق من وجود الملف وحجمه
+            if not os.path.exists(file_path):
+                logger.error(f"الملف غير موجود: {file_path}")
+                return None
+            
+            file_size = os.path.getsize(file_path)
+            logger.info(f"جاري رفع ملف بحجم {file_size} بايت: {file_path}")
+            
+            if file_size == 0:
+                logger.warning(f"تحذير: الملف فارغ: {file_path}")
+            
             # إنشاء الـ credentials
             SCOPES = [
                 'https://www.googleapis.com/auth/drive.file',
@@ -171,28 +182,37 @@ class GoogleDriveService:
             }
             
             # رفع الملف إلى Shared Drive
-            # Note: استخدام non-resumable upload للملفات الصغيرة لتجنب مشكلة quota
-            file_size = os.path.getsize(file_path)
-            use_resumable = file_size > 5 * 1024 * 1024  # 5MB
+            # استخدام resumable=True دائماً لضمان رفع مستقر
+            media = MediaFileUpload(file_path, mimetype='application/octet-stream', resumable=True)
             
-            media = MediaFileUpload(file_path, resumable=use_resumable)
-            file = service.files().create(
+            request = service.files().create(
                 body=file_metadata,
                 media_body=media,
                 fields='id,name,webViewLink,webContentLink',
                 supportsAllDrives=True
-            ).execute()
+            )
             
-            logger.info(f"تم رفع الملف بنجاح: {file_name}")
+            # إكمال الرفع
+            response = None
+            while response is None:
+                try:
+                    status, response = request.next_chunk()
+                    if status:
+                        logger.info(f"تم رفع {int(status.progress() * 100)}% من {file_name}")
+                except Exception as e:
+                    logger.error(f"خطأ أثناء الرفع المستأنف: {e}")
+                    return None
+            
+            logger.info(f"تم رفع الملف بنجاح: {file_name} (ID: {response.get('id')})")
             return {
-                'file_id': file.get('id'),
-                'file_name': file.get('name'),
-                'web_view_link': file.get('webViewLink'),
-                'download_link': file.get('webContentLink')
+                'file_id': response.get('id'),
+                'file_name': response.get('name'),
+                'web_view_link': response.get('webViewLink'),
+                'download_link': response.get('webContentLink')
             }
                 
         except Exception as e:
-            logger.error(f"خطأ في رفع الملف {file_path}: {e}")
+            logger.error(f"خطأ في رفع الملف {file_path}: {e}", exc_info=True)
             return None
     
     def upload_vehicle_operation(
