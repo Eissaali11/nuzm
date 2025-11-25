@@ -29,7 +29,7 @@ def create_absence_notification(user_id, employee_name, absence_date, department
     
     notification = Notification(
         user_id=user_id,
-        notification_type='attendance',
+        notification_type='absence',
         title=f'غياب موظف - {employee_name}',
         description=f'تم تسجيل غياب الموظف {employee_name} من قسم {department_name} بتاريخ {absence_date}',
         related_entity_type='attendance',
