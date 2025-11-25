@@ -4120,7 +4120,7 @@ def circle_accessed_details(department_id, circle_name):
                 Attendance.employee_id == emp.id,
                 Attendance.date >= start_date,
                 Attendance.date <= end_date
-            ).order_by(Attendance.check_in.asc()).all()
+            ).all()
             
             # استخراج دخول وخروج الصباح والمساء
             morning_check_in = None
@@ -4128,21 +4128,30 @@ def circle_accessed_details(department_id, circle_name):
             evening_check_in = None
             evening_check_out = None
             
+            # معالجة جميع السجلات
             for att in attendance_records:
-                if att.check_in:
+                # استخراج أول دخول صباحي
+                if att.check_in and not morning_check_in:
                     check_in_sa = att.check_in + saudi_tz
-                    if check_in_sa.hour < 12 and not morning_check_in:
+                    if check_in_sa.hour < 12:
                         morning_check_in = check_in_sa
-                    elif check_in_sa.hour >= 12 and not evening_check_in:
+                
+                # استخراج أول دخول مسائي
+                if att.check_in and not evening_check_in:
+                    check_in_sa = att.check_in + saudi_tz
+                    if check_in_sa.hour >= 12:
                         evening_check_in = check_in_sa
-            
-            # استخراج آخر خروج صباحي وأخر خروج مسائي
-            for att in reversed(attendance_records):
+                
+                # استخراج أخر خروج صباحي
                 if att.check_out:
                     check_out_sa = att.check_out + saudi_tz
-                    if check_out_sa.hour < 12 and not morning_check_out:
+                    if check_out_sa.hour < 12:
                         morning_check_out = check_out_sa
-                    elif check_out_sa.hour >= 12 and not evening_check_out:
+                
+                # استخراج أخر خروج مسائي
+                if att.check_out:
+                    check_out_sa = att.check_out + saudi_tz
+                    if check_out_sa.hour >= 12:
                         evening_check_out = check_out_sa
             
             # الحصول على آخر سجل
@@ -4241,7 +4250,7 @@ def export_circle_details_excel(department_id, circle_name):
                 Attendance.employee_id == emp.id,
                 Attendance.date >= start_date,
                 Attendance.date <= end_date
-            ).order_by(Attendance.check_in.asc()).all()
+            ).all()
             
             # استخراج دخول وخروج الصباح والمساء
             morning_check_in = None
@@ -4249,21 +4258,30 @@ def export_circle_details_excel(department_id, circle_name):
             evening_check_in = None
             evening_check_out = None
             
+            # معالجة جميع السجلات
             for att in attendance_records:
-                if att.check_in:
+                # استخراج أول دخول صباحي
+                if att.check_in and not morning_check_in:
                     check_in_sa = att.check_in + saudi_tz
-                    if check_in_sa.hour < 12 and not morning_check_in:
+                    if check_in_sa.hour < 12:
                         morning_check_in = check_in_sa
-                    elif check_in_sa.hour >= 12 and not evening_check_in:
+                
+                # استخراج أول دخول مسائي
+                if att.check_in and not evening_check_in:
+                    check_in_sa = att.check_in + saudi_tz
+                    if check_in_sa.hour >= 12:
                         evening_check_in = check_in_sa
-            
-            # استخراج آخر خروج صباحي وآخر خروج مسائي
-            for att in reversed(attendance_records):
+                
+                # استخراج أخر خروج صباحي
                 if att.check_out:
                     check_out_sa = att.check_out + saudi_tz
-                    if check_out_sa.hour < 12 and not morning_check_out:
+                    if check_out_sa.hour < 12:
                         morning_check_out = check_out_sa
-                    elif check_out_sa.hour >= 12 and not evening_check_out:
+                
+                # استخراج أخر خروج مسائي
+                if att.check_out:
+                    check_out_sa = att.check_out + saudi_tz
+                    if check_out_sa.hour >= 12:
                         evening_check_out = check_out_sa
             
             attendance = attendance_records[-1] if attendance_records else None
