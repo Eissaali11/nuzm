@@ -94,8 +94,9 @@ def token_required(f):
         try:
             data = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
             
-            # البحث عن الموظف
-            current_employee = Employee.query.filter_by(employee_id=data.get('employee_id')).first()
+            # البحث عن الموظف (تحويل employee_id إلى string لأنه varchar في قاعدة البيانات)
+            employee_id_from_token = str(data.get('employee_id')) if data.get('employee_id') else None
+            current_employee = Employee.query.filter_by(employee_id=employee_id_from_token).first() if employee_id_from_token else None
             
             if not current_employee and 'id' in data:
                 current_employee = Employee.query.get(data.get('id'))
