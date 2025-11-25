@@ -113,62 +113,88 @@
 
             <!-- Accidents List -->
             <div class="card">
+                <div class="card-header bg-light">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-list me-2"></i>
+                            قائمة التقارير
+                        </h5>
+                        <div id="bulkActions" style="display: none;">
+                            <button type="button" class="btn btn-danger" onclick="deleteSelected()">
+                                <i class="fas fa-trash me-2"></i>
+                                حذف المحدد (<span id="selectedCount">0</span>)
+                            </button>
+                        </div>
+                    </div>
+                </div>
                 <div class="card-body">
                     {% if accidents %}
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>#</th>
-                                    <th>المركبة</th>
-                                    <th>السائق</th>
-                                    <th>رقم الهاتف</th>
-                                    <th>تاريخ الحادث</th>
-                                    <th>الحالة</th>
-                                    <th>تاريخ الإرسال</th>
-                                    <th>إجراءات</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for accident in accidents %}
-                                <tr>
-                                    <td>{{ accident.id }}</td>
-                                    <td>
-                                        <strong>{{ accident.vehicle.plate_number }}</strong><br>
-                                        <small class="text-muted">{{ accident.vehicle.model }}</small>
-                                    </td>
-                                    <td>{{ accident.driver_name }}</td>
-                                    <td>
-                                        {% if accident.driver_phone %}
-                                        <i class="fas fa-phone me-1"></i>{{ accident.driver_phone }}
-                                        {% else %}
-                                        <span class="text-muted">-</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>{{ accident.accident_date.strftime('%Y-%m-%d') }}</td>
-                                    <td>
-                                        {% if accident.review_status == 'pending' %}
-                                        <span class="badge bg-warning">في انتظار المراجعة</span>
-                                        {% elif accident.review_status == 'under_review' %}
-                                        <span class="badge bg-info">قيد المراجعة</span>
-                                        {% elif accident.review_status == 'approved' %}
-                                        <span class="badge bg-success">معتمد</span>
-                                        {% elif accident.review_status == 'rejected' %}
-                                        <span class="badge bg-danger">مرفوض</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>{{ accident.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
-                                    <td>
-                                        <a href="{{ url_for('operations.view_accident_report', accident_id=accident.id) }}" 
-                                           class="btn btn-sm btn-primary">
-                                            <i class="fas fa-eye me-1"></i>عرض
-                                        </a>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
+                    <form id="bulkDeleteForm" method="POST" action="{{ url_for('operations.delete_accident_reports') }}">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th width="50">
+                                            <input type="checkbox" id="selectAll" class="form-check-input" 
+                                                   onchange="toggleSelectAll(this)">
+                                        </th>
+                                        <th>#</th>
+                                        <th>المركبة</th>
+                                        <th>السائق</th>
+                                        <th>رقم الهاتف</th>
+                                        <th>تاريخ الحادث</th>
+                                        <th>الحالة</th>
+                                        <th>تاريخ الإرسال</th>
+                                        <th>إجراءات</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for accident in accidents %}
+                                    <tr>
+                                        <td>
+                                            <input type="checkbox" name="accident_ids" 
+                                                   value="{{ accident.id }}" 
+                                                   class="form-check-input accident-checkbox"
+                                                   onchange="updateBulkActions()">
+                                        </td>
+                                        <td>{{ accident.id }}</td>
+                                        <td>
+                                            <strong>{{ accident.vehicle.plate_number }}</strong><br>
+                                            <small class="text-muted">{{ accident.vehicle.model }}</small>
+                                        </td>
+                                        <td>{{ accident.driver_name }}</td>
+                                        <td>
+                                            {% if accident.driver_phone %}
+                                            <i class="fas fa-phone me-1"></i>{{ accident.driver_phone }}
+                                            {% else %}
+                                            <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ accident.accident_date.strftime('%Y-%m-%d') }}</td>
+                                        <td>
+                                            {% if accident.review_status == 'pending' %}
+                                            <span class="badge bg-warning">في انتظار المراجعة</span>
+                                            {% elif accident.review_status == 'under_review' %}
+                                            <span class="badge bg-info">قيد المراجعة</span>
+                                            {% elif accident.review_status == 'approved' %}
+                                            <span class="badge bg-success">معتمد</span>
+                                            {% elif accident.review_status == 'rejected' %}
+                                            <span class="badge bg-danger">مرفوض</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ accident.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                        <td>
+                                            <a href="{{ url_for('operations.view_accident_report', accident_id=accident.id) }}" 
+                                               class="btn btn-sm btn-primary">
+                                                <i class="fas fa-eye me-1"></i>عرض
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </form>
                     {% else %}
                     <div class="text-center py-5">
                         <i class="fas fa-inbox fa-4x text-muted mb-3"></i>
@@ -181,4 +207,52 @@
         </div>
     </div>
 </div>
+
+<script>
+// تحديد/إلغاء تحديد الكل
+function toggleSelectAll(checkbox) {
+    const checkboxes = document.querySelectorAll('.accident-checkbox');
+    checkboxes.forEach(cb => {
+        cb.checked = checkbox.checked;
+    });
+    updateBulkActions();
+}
+
+// تحديث حالة أزرار الإجراءات الجماعية
+function updateBulkActions() {
+    const selectedCheckboxes = document.querySelectorAll('.accident-checkbox:checked');
+    const count = selectedCheckboxes.length;
+    const bulkActions = document.getElementById('bulkActions');
+    const selectedCount = document.getElementById('selectedCount');
+    const selectAll = document.getElementById('selectAll');
+    
+    selectedCount.textContent = count;
+    
+    if (count > 0) {
+        bulkActions.style.display = 'block';
+    } else {
+        bulkActions.style.display = 'none';
+    }
+    
+    // تحديث حالة "تحديد الكل"
+    const allCheckboxes = document.querySelectorAll('.accident-checkbox');
+    selectAll.checked = count === allCheckboxes.length;
+    selectAll.indeterminate = count > 0 && count < allCheckboxes.length;
+}
+
+// حذف المحدد
+function deleteSelected() {
+    const selectedCheckboxes = document.querySelectorAll('.accident-checkbox:checked');
+    const count = selectedCheckboxes.length;
+    
+    if (count === 0) {
+        alert('الرجاء تحديد تقرير واحد على الأقل للحذف');
+        return;
+    }
+    
+    if (confirm(`هل أنت متأكد من حذف ${count} تقرير؟\n\nتحذير: سيتم حذف جميع الملفات والصور المرتبطة بالتقارير المحددة نهائياً!`)) {
+        document.getElementById('bulkDeleteForm').submit();
+    }
+}
+</script>
 {% endblock %}

@@ -2196,3 +2196,62 @@ def review_accident_report(accident_id):
         flash(f'حدث خطأ: {str(e)}', 'danger')
     
     return redirect(url_for('operations.view_accident_report', accident_id=accident_id))
+
+
+@operations_bp.route('/accident-reports/delete', methods=['POST'])
+@login_required
+def delete_accident_reports():
+    """حذف مجموعة من تقارير الحوادث"""
+    from models import VehicleAccident, VehicleAccidentImage
+    import os
+    import shutil
+    
+    if current_user.role != UserRole.ADMIN:
+        flash('غير مسموح لك بالوصول لهذه الصفحة', 'danger')
+        return redirect(url_for('operations.list_accident_reports'))
+    
+    accident_ids = request.form.getlist('accident_ids')
+    
+    if not accident_ids:
+        flash('الرجاء تحديد تقرير واحد على الأقل للحذف', 'warning')
+        return redirect(url_for('operations.list_accident_reports'))
+    
+    try:
+        deleted_count = 0
+        for accident_id in accident_ids:
+            accident = VehicleAccident.query.get(int(accident_id))
+            if accident:
+                # حذف الملفات من السيرفر
+                accident_folder = os.path.join('static', 'uploads', 'accidents', str(accident.id))
+                if os.path.exists(accident_folder):
+                    try:
+                        shutil.rmtree(accident_folder)
+                        current_app.logger.info(f"تم حذف مجلد التقرير: {accident_folder}")
+                    except Exception as e:
+                        current_app.logger.error(f"خطأ في حذف مجلد التقرير {accident_folder}: {e}")
+                
+                # حذف صور الحادث من قاعدة البيانات
+                VehicleAccidentImage.query.filter_by(accident_id=accident.id).delete()
+                
+                # حذف التقرير من قاعدة البيانات
+                db.session.delete(accident)
+                deleted_count += 1
+                
+                # تسجيل العملية
+                log_audit(
+                    user_id=current_user.id,
+                    action='delete_accident_report',
+                    entity_type='vehicle_accident',
+                    entity_id=accident.id,
+                    details=f'حذف تقرير حادث للمركبة {accident.vehicle.plate_number}'
+                )
+        
+        db.session.commit()
+        flash(f'تم حذف {deleted_count} تقرير بنجاح', 'success')
+        
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"خطأ في حذف تقارير الحوادث: {e}")
+        flash(f'حدث خطأ أثناء الحذف: {str(e)}', 'danger')
+    
+    return redirect(url_for('operations.list_accident_reports'))
