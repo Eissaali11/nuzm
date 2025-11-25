@@ -1682,19 +1682,26 @@ def view_safety_check_pdf(check_id):
 
 @external_safety_bp.route('/admin/external-safety-check/<int:check_id>/pdf/download')
 def export_safety_check_pdf(check_id):
-    """تصدير طلب فحص السلامة كملف PDF بتصميم احترافي"""
+    """تصدير طلب فحص السلامة كملف PDF بتصميم احترافي عصري"""
     if not current_user.is_authenticated:
         flash('يرجى تسجيل الدخول أولاً', 'error')
         return redirect(url_for('external_safety.admin_external_safety_checks'))
     
     try:
+        from weasyprint import HTML, CSS
+        from io import BytesIO
+        
         safety_check = VehicleExternalSafetyCheck.query.options(
             db.selectinload(VehicleExternalSafetyCheck.safety_images)
         ).get_or_404(check_id)
         
-        # استخدام دالة FPDF الاحترافية
-        from utils.fpdf_arabic_report import generate_safety_check_report_pdf
-        pdf_buffer = generate_safety_check_report_pdf(safety_check)
+        # إنشاء HTML للـ PDF بتصميم احترافي
+        html_content = render_template('safety_check_pdf_template.html', safety_check=safety_check, now=datetime.now())
+        
+        # تحويل HTML إلى PDF
+        pdf_buffer = BytesIO()
+        HTML(string=html_content, base_url=current_app.config.get('SERVER_NAME', 'localhost')).write_pdf(pdf_buffer)
+        pdf_buffer.seek(0)
         
         # تسجيل العملية
         log_audit(

@@ -83,3 +83,4 @@ requests
 requests
 apscheduler
 google-api-python-client
+weasyprint
