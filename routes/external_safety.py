@@ -1690,17 +1690,37 @@ def export_safety_check_pdf(check_id):
     try:
         from weasyprint import HTML, CSS
         from io import BytesIO
+        import base64
         
         safety_check = VehicleExternalSafetyCheck.query.options(
             db.selectinload(VehicleExternalSafetyCheck.safety_images)
         ).get_or_404(check_id)
         
+        # تحويل الصور إلى base64
+        for image in safety_check.safety_images:
+            try:
+                image_path = os.path.join(current_app.config.get('UPLOAD_FOLDER', 'static/uploads'), image.image_path)
+                if os.path.exists(image_path):
+                    with open(image_path, 'rb') as img_file:
+                        image.image_base64 = base64.b64encode(img_file.read()).decode()
+                else:
+                    image.image_base64 = ''
+            except:
+                image.image_base64 = ''
+        
+        # الحصول على مسار الشعار
+        logo_path = os.path.join(current_app.root_path, 'static/img/logo.png')
+        logo_uri = f"file://{logo_path}"
+        
         # إنشاء HTML للـ PDF بتصميم احترافي
-        html_content = render_template('safety_check_pdf_template.html', safety_check=safety_check, now=datetime.now())
+        html_content = render_template('safety_check_pdf_template.html', 
+                                      safety_check=safety_check, 
+                                      now=datetime.now(),
+                                      logo_path=logo_uri)
         
         # تحويل HTML إلى PDF
         pdf_buffer = BytesIO()
-        HTML(string=html_content, base_url=current_app.config.get('SERVER_NAME', 'localhost')).write_pdf(pdf_buffer)
+        HTML(string=html_content).write_pdf(pdf_buffer)
         pdf_buffer.seek(0)
         
         # تسجيل العملية
