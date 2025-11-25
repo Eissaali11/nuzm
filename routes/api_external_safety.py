@@ -80,20 +80,35 @@ def token_required(f):
         
         try:
             data = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
-            current_employee = Employee.query.get(data['employee_id'])
+            
+            # البحث عن الموظف بـ employee_id أولاً
+            current_employee = Employee.query.get(data.get('employee_id'))
+            
+            # إذا لم يجد بـ employee_id، حاول البحث بـ national_id
+            if not current_employee and 'national_id' in data:
+                current_employee = Employee.query.filter_by(national_id=data.get('national_id')).first()
+            
+            # إذا لم يجد بهما، حاول البحث بـ user_id عن طريق جدول User
+            if not current_employee and 'user_id' in data:
+                user = User.query.get(data.get('user_id'))
+                if user:
+                    current_employee = Employee.query.filter_by(user_id=user.id).first()
             
             if not current_employee:
+                logger.error(f"Employee not found. Token data: {data}")
                 return jsonify({
                     'success': False,
-                    'message': 'الموظف غير موجود'
+                    'message': 'الموظف غير موجود في قاعدة البيانات'
                 }), 401
             
         except jwt.ExpiredSignatureError:
+            logger.warning("Expired token attempted to access external safety API")
             return jsonify({
                 'success': False,
-                'message': 'التوكن منتهي الصلاحية'
+                'message': 'التوكن منتهي الصلاحية. يرجى تسجيل الدخول مجدداً'
             }), 401
-        except jwt.InvalidTokenError:
+        except jwt.InvalidTokenError as e:
+            logger.error(f"Invalid token: {str(e)}")
             return jsonify({
                 'success': False,
                 'message': 'التوكن غير صالح'
