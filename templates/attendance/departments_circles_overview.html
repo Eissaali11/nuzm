@@ -1,25 +1,25 @@
 {% extends "layout.html" %}
 
-{% block title %}لوحة تحكم الأقسام والدوائر{% endblock %}
+{% block title %}لوحة تحكم الأقسام والدوائر الجغرافية{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4">
+<div class="container-fluid py-4" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh;">
     <!-- رأس الصفحة -->
     <div class="row mb-4">
         <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center">
+            <div class="d-flex justify-content-between align-items-start">
                 <div>
-                    <h1 class="h3 mb-0">
-                        <i class="fas fa-building me-2 text-primary"></i>
-                        لوحة تحكم الأقسام والدوائر
+                    <h1 class="h2 mb-2" style="color: white; font-weight: 700;">
+                        <i class="fas fa-map-marker-alt me-3"></i>
+                        لوحة تحكم الدوائر الجغرافية
                     </h1>
-                    <p class="text-muted mt-2">
-                        <i class="fas fa-calendar me-1"></i>
+                    <p style="color: rgba(255,255,255,0.8);">
+                        <i class="fas fa-calendar me-2"></i>
                         {{ selected_date_formatted }}
                     </p>
                 </div>
-                <a href="{{ url_for('attendance.index') }}" class="btn btn-outline-secondary">
-                    <i class="fas fa-arrow-left me-1"></i>
+                <a href="{{ url_for('attendance.index') }}" class="btn btn-light">
+                    <i class="fas fa-arrow-left me-2"></i>
                     العودة
                 </a>
             </div>
@@ -29,27 +29,27 @@
     <!-- الفلاتر -->
     <div class="row mb-4">
         <div class="col-12">
-            <div class="card shadow-sm">
+            <div class="card shadow-lg border-0">
                 <div class="card-body">
                     <form class="row g-3" method="get">
                         <!-- فلتر التاريخ -->
-                        <div class="col-md-4">
-                            <label for="date" class="form-label">
-                                <i class="fas fa-calendar me-1"></i>
-                                التاريخ
+                        <div class="col-md-5">
+                            <label for="date" class="form-label fw-bold">
+                                <i class="fas fa-calendar-alt me-2"></i>
+                                اختر التاريخ
                             </label>
-                            <input type="date" class="form-control" id="date" name="date" 
-                                   value="{{ selected_date.strftime('%Y-%m-%d') }}">
+                            <input type="date" class="form-control form-control-lg" id="date" name="date" 
+                                   value="{{ selected_date.strftime('%Y-%m-%d') }}" style="border-radius: 8px;">
                         </div>
 
                         <!-- فلتر القسم -->
-                        <div class="col-md-4">
-                            <label for="department_id" class="form-label">
-                                <i class="fas fa-filter me-1"></i>
-                                الأقسام
+                        <div class="col-md-5">
+                            <label for="department_id" class="form-label fw-bold">
+                                <i class="fas fa-building me-2"></i>
+                                اختر القسم
                             </label>
-                            <select class="form-select" id="department_id" name="department_id">
-                                <option value="">جميع الأقسام</option>
+                            <select class="form-select form-select-lg" id="department_id" name="department_id" style="border-radius: 8px;">
+                                <option value="">📊 جميع الأقسام</option>
                                 {% for dept in all_departments %}
                                 <option value="{{ dept.id }}" 
                                     {% if selected_department_id == dept.id %}selected{% endif %}>
@@ -60,16 +60,11 @@
                         </div>
 
                         <!-- أزرار الإجراءات -->
-                        <div class="col-md-4 d-flex align-items-end gap-2">
-                            <button type="submit" class="btn btn-primary flex-grow-1">
-                                <i class="fas fa-search me-1"></i>
+                        <div class="col-md-2 d-flex align-items-end gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg flex-grow-1" style="border-radius: 8px;">
+                                <i class="fas fa-search me-2"></i>
                                 بحث
                             </button>
-                            <a href="{{ url_for('attendance_dashboard.departments_circles_overview') }}" 
-                               class="btn btn-outline-secondary">
-                                <i class="fas fa-redo me-1"></i>
-                                إعادة تعيين
-                            </a>
                         </div>
                     </form>
                 </div>
@@ -79,149 +74,210 @@
 
     <!-- محتوى الأقسام والدوائر -->
     <div class="row">
-        <div class="col-12">
-            {% if departments_data %}
-                {% for dept in departments_data %}
-                <div class="card mb-4 shadow-sm">
+        {% if departments_data %}
+            {% for dept in departments_data %}
+            <div class="col-12 mb-4">
+                <!-- بطاقة القسم الرئيسية -->
+                <div class="card shadow-lg border-0" style="border-radius: 15px; overflow: hidden;">
                     <!-- رأس القسم -->
-                    <div class="card-header bg-gradient" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <div class="card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; padding: 30px;">
                         <div class="row align-items-center">
-                            <div class="col-md-6">
-                                <h4 class="mb-0 text-white">
-                                    <i class="fas fa-sitemap me-2"></i>
+                            <div class="col-md-4">
+                                <h3 class="mb-0 text-white fw-bold" style="font-size: 1.8rem;">
+                                    <i class="fas fa-building me-3"></i>
                                     {{ dept.name }}
-                                </h4>
+                                </h3>
                             </div>
-                            <div class="col-md-6">
-                                <div class="row text-white text-center small">
-                                    <div class="col-3">
-                                        <div class="fw-bold">{{ dept.total_employees }}</div>
-                                        <div>إجمالي الموظفين</div>
+                            <div class="col-md-8">
+                                <div class="row text-white text-center">
+                                    <!-- عدد الدوائر -->
+                                    <div class="col-md-3">
+                                        <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 10px;">
+                                            <i class="fas fa-map-pin" style="font-size: 1.5rem; margin-bottom: 8px;"></i>
+                                            <div style="font-size: 0.9rem; opacity: 0.9; margin-bottom: 8px;">عدد الدوائر</div>
+                                            <div style="font-size: 1.5rem; font-weight: bold;">{{ dept.circles|length }}</div>
+                                        </div>
                                     </div>
-                                    <div class="col-3" style="border-right: 1px solid rgba(255,255,255,0.3); border-left: 1px solid rgba(255,255,255,0.3);">
-                                        <div class="fw-bold text-success">{{ dept.total_present }}</div>
-                                        <div>الحضور</div>
+                                    <!-- إجمالي الموظفين -->
+                                    <div class="col-md-3">
+                                        <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 10px;">
+                                            <i class="fas fa-users" style="font-size: 1.5rem; margin-bottom: 8px;"></i>
+                                            <div style="font-size: 0.9rem; opacity: 0.9; margin-bottom: 8px;">إجمالي الموظفين</div>
+                                            <div style="font-size: 1.5rem; font-weight: bold;">{{ dept.total_employees }}</div>
+                                        </div>
                                     </div>
-                                    <div class="col-3">
-                                        <div class="fw-bold text-danger">{{ dept.total_absent }}</div>
-                                        <div>الغياب</div>
+                                    <!-- الحضور -->
+                                    <div class="col-md-3">
+                                        <div style="background: rgba(75, 192, 75, 0.2); padding: 15px; border-radius: 10px;">
+                                            <i class="fas fa-check-circle" style="font-size: 1.5rem; margin-bottom: 8px; color: #4bc04b;"></i>
+                                            <div style="font-size: 0.9rem; opacity: 0.9; margin-bottom: 8px;">الحاضرون</div>
+                                            <div style="font-size: 1.5rem; font-weight: bold; color: #4bc04b;">{{ dept.total_present }}</div>
+                                        </div>
                                     </div>
-                                    <div class="col-3">
-                                        <div class="fw-bold text-info">{{ dept.total_leave + dept.total_sick }}</div>
-                                        <div>إجازات</div>
+                                    <!-- معدل الحضور -->
+                                    <div class="col-md-3">
+                                        <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 10px;">
+                                            <i class="fas fa-chart-pie" style="font-size: 1.5rem; margin-bottom: 8px;"></i>
+                                            <div style="font-size: 0.9rem; opacity: 0.9; margin-bottom: 8px;">معدل الحضور</div>
+                                            {% if dept.total_employees > 0 %}
+                                                <div style="font-size: 1.5rem; font-weight: bold;">{{ ((dept.total_present / dept.total_employees * 100)|round(1))|string + '%' }}</div>
+                                            {% else %}
+                                                <div style="font-size: 1.5rem; font-weight: bold;">0%</div>
+                                            {% endif %}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- محتوى القسم - الدوائر -->
-                    <div class="card-body">
+                    <!-- محتوى الدوائر -->
+                    <div class="card-body p-4">
                         {% if dept.circles %}
+                            <!-- إحصائيات عامة للقسم -->
+                            <div class="row mb-4">
+                                <div class="col-md-3">
+                                    <div class="p-4 rounded-lg text-center" style="background: linear-gradient(135deg, rgba(52, 211, 153, 0.1) 0%, rgba(52, 211, 153, 0.05) 100%); border: 2px solid rgba(52, 211, 153, 0.3); border-radius: 12px;">
+                                        <i class="fas fa-check text-success" style="font-size: 2rem; margin-bottom: 10px;"></i>
+                                        <div class="text-muted small mb-1">حاضرون</div>
+                                        <div class="h3 text-success fw-bold">{{ dept.total_present }}</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="p-4 rounded-lg text-center" style="background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(239, 68, 68, 0.05) 100%); border: 2px solid rgba(239, 68, 68, 0.3); border-radius: 12px;">
+                                        <i class="fas fa-times text-danger" style="font-size: 2rem; margin-bottom: 10px;"></i>
+                                        <div class="text-muted small mb-1">غائبون</div>
+                                        <div class="h3 text-danger fw-bold">{{ dept.total_absent }}</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="p-4 rounded-lg text-center" style="background: linear-gradient(135deg, rgba(96, 165, 250, 0.1) 0%, rgba(96, 165, 250, 0.05) 100%); border: 2px solid rgba(96, 165, 250, 0.3); border-radius: 12px;">
+                                        <i class="fas fa-umbrella text-info" style="font-size: 2rem; margin-bottom: 10px;"></i>
+                                        <div class="text-muted small mb-1">إجازات</div>
+                                        <div class="h3 text-info fw-bold">{{ dept.total_leave }}</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="p-4 rounded-lg text-center" style="background: linear-gradient(135deg, rgba(251, 191, 36, 0.1) 0%, rgba(251, 191, 36, 0.05) 100%); border: 2px solid rgba(251, 191, 36, 0.3); border-radius: 12px;">
+                                        <i class="fas fa-hospital text-warning" style="font-size: 2rem; margin-bottom: 10px;"></i>
+                                        <div class="text-muted small mb-1">مرضيات</div>
+                                        <div class="h3 text-warning fw-bold">{{ dept.total_sick }}</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <hr class="my-4">
+
+                            <!-- الدوائر -->
+                            <h5 class="fw-bold mb-3" style="color: #333;">
+                                <i class="fas fa-map-location-dot me-2"></i>
+                                الدوائر الجغرافية ({{ dept.circles|length }})
+                            </h5>
+
                             <div class="row">
                                 {% for circle in dept.circles %}
-                                <div class="col-md-6 mb-4">
-                                    <div class="card h-100 border-start border-primary" style="border-width: 4px;">
+                                <div class="col-lg-6 mb-4">
+                                    <div class="card h-100 shadow-sm" style="border-radius: 12px; border: 1px solid #e0e0e0; overflow: hidden;">
                                         <!-- رأس الدائرة -->
-                                        <div class="card-header bg-light">
-                                            <h5 class="mb-0">
-                                                <i class="fas fa-map-marker-alt me-2 text-danger"></i>
-                                                {{ circle.name }}
-                                            </h5>
+                                        <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 15px; display: flex; align-items: center; justify-content: space-between;">
+                                            <div>
+                                                <h5 class="mb-0 fw-bold" style="font-size: 1.1rem;">
+                                                    <i class="fas fa-map-marker-alt me-2"></i>
+                                                    {{ circle.name }}
+                                                </h5>
+                                            </div>
+                                            <div class="badge bg-white text-dark" style="font-size: 1rem;">
+                                                {{ circle.total }} موظف
+                                            </div>
                                         </div>
 
-                                        <!-- إحصائيات الدائرة -->
-                                        <div class="card-body">
-                                            <div class="row mb-3">
+                                        <!-- محتوى الدائرة -->
+                                        <div class="card-body p-3">
+                                            <!-- شريط التقدم -->
+                                            <div class="mb-3">
+                                                <div class="d-flex justify-content-between mb-2" style="font-size: 0.9rem;">
+                                                    <span>نسبة الحضور</span>
+                                                    <strong>
+                                                        {% if circle.total > 0 %}
+                                                            {{ ((circle.present / circle.total * 100)|round(1))|string + '%' }}
+                                                        {% else %}
+                                                            0%
+                                                        {% endif %}
+                                                    </strong>
+                                                </div>
+                                                <div class="progress" style="height: 8px; border-radius: 10px;">
+                                                    {% if circle.total > 0 %}
+                                                        <div class="progress-bar bg-success" role="progressbar" 
+                                                             style="width: {{ (circle.present / circle.total * 100)|round(1) }}%;" 
+                                                             aria-valuenow="{{ (circle.present / circle.total * 100)|round(1) }}" 
+                                                             aria-valuemin="0" aria-valuemax="100"></div>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+
+                                            <!-- إحصائيات الحالات -->
+                                            <div class="row g-2 mb-3">
                                                 <div class="col-6">
-                                                    <div class="p-3 bg-light rounded">
-                                                        <div class="text-muted small">إجمالي الموظفين</div>
-                                                        <div class="h4 mb-0 fw-bold">{{ circle.total }}</div>
+                                                    <div style="background: linear-gradient(135deg, rgba(52, 211, 153, 0.1) 0%, rgba(52, 211, 153, 0.05) 100%); padding: 12px; border-radius: 8px; text-align: center;">
+                                                        <div class="text-success fw-bold" style="font-size: 1.3rem;">{{ circle.present }}</div>
+                                                        <small class="text-muted">حاضرون</small>
                                                     </div>
                                                 </div>
                                                 <div class="col-6">
-                                                    <div class="p-3 bg-light rounded">
-                                                        <div class="text-muted small">المسجلين</div>
-                                                        <div class="h4 mb-0 fw-bold">
-                                                            {{ circle.present + circle.absent + circle.leave + circle.sick }}
-                                                        </div>
+                                                    <div style="background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(239, 68, 68, 0.05) 100%); padding: 12px; border-radius: 8px; text-align: center;">
+                                                        <div class="text-danger fw-bold" style="font-size: 1.3rem;">{{ circle.absent }}</div>
+                                                        <small class="text-muted">غائبون</small>
+                                                    </div>
+                                                </div>
+                                                <div class="col-6">
+                                                    <div style="background: linear-gradient(135deg, rgba(96, 165, 250, 0.1) 0%, rgba(96, 165, 250, 0.05) 100%); padding: 12px; border-radius: 8px; text-align: center;">
+                                                        <div class="text-info fw-bold" style="font-size: 1.3rem;">{{ circle.leave }}</div>
+                                                        <small class="text-muted">إجازات</small>
+                                                    </div>
+                                                </div>
+                                                <div class="col-6">
+                                                    <div style="background: linear-gradient(135deg, rgba(251, 191, 36, 0.1) 0%, rgba(251, 191, 36, 0.05) 100%); padding: 12px; border-radius: 8px; text-align: center;">
+                                                        <div class="text-warning fw-bold" style="font-size: 1.3rem;">{{ circle.sick }}</div>
+                                                        <small class="text-muted">مرضيات</small>
                                                     </div>
                                                 </div>
                                             </div>
 
-                                            <!-- تفاصيل الحضور -->
-                                            <div class="row mb-3">
-                                                <div class="col-6 col-sm-3">
-                                                    <div class="text-center">
-                                                        <div class="badge bg-success p-2 mb-2 w-100">
-                                                            <i class="fas fa-check me-1"></i>
-                                                            حاضر
-                                                        </div>
-                                                        <div class="h5 fw-bold text-success">{{ circle.present }}</div>
-                                                    </div>
-                                                </div>
-                                                <div class="col-6 col-sm-3">
-                                                    <div class="text-center">
-                                                        <div class="badge bg-danger p-2 mb-2 w-100">
-                                                            <i class="fas fa-times me-1"></i>
-                                                            غائب
-                                                        </div>
-                                                        <div class="h5 fw-bold text-danger">{{ circle.absent }}</div>
-                                                    </div>
-                                                </div>
-                                                <div class="col-6 col-sm-3">
-                                                    <div class="text-center">
-                                                        <div class="badge bg-info p-2 mb-2 w-100">
-                                                            <i class="fas fa-umbrella me-1"></i>
-                                                            إجازة
-                                                        </div>
-                                                        <div class="h5 fw-bold text-info">{{ circle.leave }}</div>
-                                                    </div>
-                                                </div>
-                                                <div class="col-6 col-sm-3">
-                                                    <div class="text-center">
-                                                        <div class="badge bg-warning p-2 mb-2 w-100">
-                                                            <i class="fas fa-hospital me-1"></i>
-                                                            مرضية
-                                                        </div>
-                                                        <div class="h5 fw-bold text-warning">{{ circle.sick }}</div>
-                                                    </div>
-                                                </div>
-                                            </div>
-
+                                            <!-- تحذير الموظفين غير المسجلين -->
                                             {% if circle.not_registered > 0 %}
-                                            <div class="alert alert-warning mb-3">
+                                            <div class="alert alert-warning p-2 mb-3" style="border-radius: 8px; border-left: 4px solid #ffc107;">
                                                 <i class="fas fa-exclamation-triangle me-2"></i>
-                                                <strong>{{ circle.not_registered }}</strong> موظف لم يتم تسجيل حضورهم بعد
+                                                <small><strong>{{ circle.not_registered }}</strong> موظف لم يتم تسجيل حضورهم</small>
                                             </div>
                                             {% endif %}
 
-                                            <!-- تفاصيل الموظفين -->
-                                            <div class="mb-3">
-                                                <button class="btn btn-sm btn-outline-primary w-100" 
-                                                        type="button" 
-                                                        data-bs-toggle="collapse" 
-                                                        data-bs-target="#employees-{{ dept.id }}-{{ loop.index }}">
-                                                    <i class="fas fa-chevron-down me-2"></i>
-                                                    عرض تفاصيل الموظفين ({{ circle.employees|length }})
-                                                </button>
-                                            </div>
+                                            <!-- زر عرض التفاصيل -->
+                                            <button class="btn btn-sm btn-outline-primary w-100" 
+                                                    type="button" 
+                                                    data-bs-toggle="collapse" 
+                                                    data-bs-target="#employees-{{ dept.id }}-{{ loop.index }}"
+                                                    style="border-radius: 8px;">
+                                                <i class="fas fa-users me-2"></i>
+                                                عرض الموظفين
+                                                <span class="badge bg-primary ms-2">{{ circle.employees|length }}</span>
+                                            </button>
 
-                                            <div class="collapse" id="employees-{{ dept.id }}-{{ loop.index }}">
-                                                <div class="table-responsive mt-3">
-                                                    <table class="table table-sm table-hover">
-                                                        <thead class="table-light">
+                                            <!-- تفاصيل الموظفين -->
+                                            <div class="collapse mt-3" id="employees-{{ dept.id }}-{{ loop.index }}">
+                                                <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                                                    <table class="table table-sm table-hover mb-0" style="font-size: 0.9rem;">
+                                                        <thead style="position: sticky; top: 0; background: #f8f9fa;">
                                                             <tr>
-                                                                <th>الاسم</th>
-                                                                <th>الرقم</th>
-                                                                <th>الحالة</th>
-                                                                <th>الدخول</th>
-                                                                <th>الخروج</th>
+                                                                <th style="border: none;">الاسم</th>
+                                                                <th style="border: none;">الرقم</th>
+                                                                <th style="border: none;">الحالة</th>
+                                                                <th style="border: none;">الدخول</th>
+                                                                <th style="border: none;">الخروج</th>
                                                             </tr>
                                                         </thead>
                                                         <tbody>
                                                             {% for emp in circle.employees %}
-                                                            <tr>
+                                                            <tr style="border-top: 1px solid #e0e0e0;">
                                                                 <td>
                                                                     <small>{{ emp.name }}</small>
                                                                 </td>
@@ -230,22 +286,24 @@
                                                                 </td>
                                                                 <td>
                                                                     {% if emp.status == 'present' %}
-                                                                    <span class="badge bg-success">حاضر</span>
+                                                                    <span class="badge bg-success" style="border-radius: 6px;">حاضر</span>
                                                                     {% elif emp.status == 'absent' %}
-                                                                    <span class="badge bg-danger">غائب</span>
+                                                                    <span class="badge bg-danger" style="border-radius: 6px;">غائب</span>
                                                                     {% elif emp.status == 'leave' %}
-                                                                    <span class="badge bg-info">إجازة</span>
+                                                                    <span class="badge bg-info" style="border-radius: 6px;">إجازة</span>
                                                                     {% elif emp.status == 'sick' %}
-                                                                    <span class="badge bg-warning text-dark">مرضية</span>
+                                                                    <span class="badge bg-warning text-dark" style="border-radius: 6px;">مرضية</span>
+                                                                    {% elif emp.status == 'لم يتم التسجيل' %}
+                                                                    <span class="badge bg-secondary" style="border-radius: 6px;">لم يسجل</span>
                                                                     {% else %}
-                                                                    <span class="badge bg-secondary">{{ emp.status }}</span>
+                                                                    <span class="badge bg-secondary" style="border-radius: 6px;">{{ emp.status }}</span>
                                                                     {% endif %}
                                                                 </td>
                                                                 <td>
-                                                                    <small>{{ emp.check_in }}</small>
+                                                                    <small class="text-muted">{{ emp.check_in }}</small>
                                                                 </td>
                                                                 <td>
-                                                                    <small>{{ emp.check_out }}</small>
+                                                                    <small class="text-muted">{{ emp.check_out }}</small>
                                                                 </td>
                                                             </tr>
                                                             {% endfor %}
@@ -261,55 +319,85 @@
                         {% else %}
                         <div class="text-center py-5">
                             <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
-                            <p class="text-muted">لا توجد دوائر محددة لهذا القسم</p>
+                            <p class="text-muted fw-bold">لا توجد دوائر محددة لهذا القسم</p>
                         </div>
                         {% endif %}
                     </div>
                 </div>
-                {% endfor %}
-            {% else %}
-            <div class="alert alert-info text-center py-5">
-                <i class="fas fa-info-circle me-2 fa-2x"></i>
-                <p class="mt-3">لا توجد بيانات للعرض</p>
             </div>
-            {% endif %}
+            {% endfor %}
+        {% else %}
+        <div class="col-12">
+            <div class="card shadow-lg border-0 text-center py-5" style="border-radius: 15px;">
+                <i class="fas fa-inbox fa-4x text-muted mb-3"></i>
+                <p class="text-muted fw-bold fs-5">لا توجد بيانات للعرض</p>
+                <p class="text-muted">حاول تغيير التاريخ أو اختيار قسم آخر</p>
+            </div>
         </div>
+        {% endif %}
     </div>
 </div>
 
 <style>
-.bg-gradient {
-    background-attachment: fixed;
-}
-
-.card {
-    border: none;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
-}
-
-.badge {
-    font-size: 0.85rem;
-    padding: 0.5rem 0.75rem;
-}
-
-.table-responsive {
-    max-height: 400px;
-    overflow-y: auto;
-}
-
-@media (max-width: 768px) {
-    .card-header {
-        flex-direction: column;
+    html[dir="rtl"] {
+        direction: rtl;
     }
-    
-    .row > div:nth-child(2) {
-        margin-top: 1rem;
+
+    .table-hover tbody tr:hover {
+        background-color: rgba(102, 126, 234, 0.05) !important;
     }
-}
+
+    .card {
+        border: none;
+        transition: all 0.3s ease;
+    }
+
+    .card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12) !important;
+    }
+
+    .badge {
+        font-weight: 600;
+        padding: 0.5rem 0.75rem;
+    }
+
+    .progress {
+        background-color: rgba(0, 0, 0, 0.05);
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+    }
+
+    .btn-primary:hover {
+        background: linear-gradient(135deg, #5568d3 0%, #6a3f8f 100%);
+    }
+
+    .form-control, .form-select {
+        border: 2px solid #e0e0e0;
+        transition: all 0.3s ease;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+
+    @media (max-width: 768px) {
+        .container-fluid {
+            padding: 0.5rem;
+        }
+
+        .card-header {
+            flex-direction: column;
+        }
+
+        h1 {
+            font-size: 1.3rem !important;
+        }
+    }
 </style>
+
 {% endblock %}
