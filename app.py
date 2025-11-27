@@ -14,6 +14,11 @@ from flask_migrate import Migrate  # أضف هذا الاستيراد في ال�
 from dotenv import load_dotenv
 load_dotenv()  # تحميل المتغيرات البيئية من ملف .env
 
+# تحميل إعدادات تحسين الأداء
+try:
+    import performance_config  # noqa: F401
+except ImportError:
+    pass
 
 # app.py
 from whatsapp_client import WhatsAppWrapper

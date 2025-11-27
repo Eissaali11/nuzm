@@ -1,20 +1,19 @@
 # performance_config.py - Performance optimization config
 import os
 from functools import wraps
-from flask import request, g
-from app import app
-from datetime import datetime, timedelta
+from datetime import datetime
 
 # Cache config
 CACHE_ENABLED = True
 CACHE_TIMEOUT = 300  # 5 minutes
 
-# Query optimization
+# Query optimization decorator
 def cache_result(timeout=CACHE_TIMEOUT):
-    """Decorator for caching function results"""
+    """Decorator for caching function results in request context"""
     def decorator(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
+            from flask import g
             if not CACHE_ENABLED:
                 return f(*args, **kwargs)
             
@@ -79,12 +78,11 @@ class QueryOptimizer:
         
         return query.all()
 
-# Image optimization
+# Image optimization helper
 class ImageOptimizer:
     @staticmethod
     def should_optimize_image(file_path):
         """Check if image needs optimization"""
-        import os
         if not os.path.exists(file_path):
             return False
         
@@ -96,7 +94,6 @@ class ImageOptimizer:
         """Optimize image size and quality"""
         try:
             from PIL import Image
-            import os
             
             if not os.path.exists(file_path):
                 return False
@@ -120,34 +117,7 @@ class ImageOptimizer:
             
             return True
         except Exception as e:
-            app.logger.error(f"Image optimization failed: {e}")
+            print(f"Image optimization failed: {e}")
             return False
-
-# Response optimization
-@app.before_request
-def before_request():
-    """Pre-request optimizations"""
-    g._start_time = datetime.utcnow()
-    g._cache = {}
-
-@app.after_request
-def after_request(response):
-    """Post-request optimizations"""
-    if hasattr(g, '_start_time'):
-        elapsed = (datetime.utcnow() - g._start_time).total_seconds()
-        if elapsed > 1:
-            app.logger.warning(f"Slow request: {request.path} took {elapsed:.2f}s")
-    
-    # Add caching headers
-    if response.content_type and response.content_type.startswith('text/html'):
-        response.cache_control.max_age = 60
-    elif response.content_type and (
-        response.content_type.startswith('image/') or 
-        response.content_type.startswith('application/javascript') or
-        response.content_type.startswith('text/css')
-    ):
-        response.cache_control.max_age = 86400  # 1 day
-    
-    return response
 
 print("✅ Performance optimization module loaded")
