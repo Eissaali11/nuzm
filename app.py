@@ -94,23 +94,13 @@ app.config["SQLALCHEMY_DATABASE_URI"] = database_url
 
 # Configure engine options based on database type
 if database_url.startswith("postgresql://") or database_url.startswith("postgres://"):
-    # PostgreSQL optimized settings (Conservative for Replit/Neon)
+    # PostgreSQL optimized settings
     app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
         "pool_recycle": 300,
         "pool_pre_ping": True,
-        "pool_timeout": 20,
-        "pool_size": 5,  # Reduced from 10 to avoid hitting connection limits
-        "max_overflow": 2,  # Reduced from 5
-        "pool_reset_on_return": "rollback",
-        "echo": False,
-        "connect_args": {
-            "connect_timeout": 10,
-            "keepalives": 1,
-            "keepalives_idle": 30,
-            "keepalives_interval": 10,
-            "keepalives_count": 5,
-            "statement_timeout": 30000,  # 30 seconds per query
-        }
+        "pool_timeout": 30,
+        "pool_size": 5,
+        "max_overflow": 2,
     }
 elif database_url.startswith("mysql://"):
     # MySQL optimized settings
