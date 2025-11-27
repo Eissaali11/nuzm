@@ -818,7 +818,8 @@ def login():
     form = LoginForm()
 
     if form.validate_on_submit():
-        user = User.query.filter_by(email=form.username.data).first()
+        # البحث عن المستخدم بـ username أو email
+        user = User.query.filter((User.username == form.username.data) | (User.email == form.username.data)).first()
 
         if user and check_password_hash(user.password_hash, form.password.data):
             login_user(user, remember=form.remember.data)
