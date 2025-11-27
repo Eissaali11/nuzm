@@ -243,6 +243,7 @@ def receive_employee_location():
         if not is_location_changed(employee.id, lat, lng):
             # تحديث الـ cache لكن بدون حفظ في قاعدة البيانات
             update_location_cache(employee.id, lat, lng)
+            logger.info(f"📍 CACHED (no distance): {employee.name} ({job_number})")
             return jsonify({
                 'success': True,
                 'message': 'الموقع لم يتغير (cached)',
@@ -255,6 +256,7 @@ def receive_employee_location():
             minutes_remaining = (MIN_TIME_BETWEEN_SAVES - time_elapsed) / 60
             # تحديث الـ cache فقط
             update_location_cache(employee.id, lat, lng)
+            logger.info(f"⏳ Throttled: {employee.name} ({job_number}) - انتظر {minutes_remaining:.1f} دقيقة")
             return jsonify({
                 'success': True,
                 'message': f'يجب الانتظار {minutes_remaining:.1f} دقيقة قبل التسجيل التالي',
@@ -265,6 +267,7 @@ def receive_employee_location():
         # تحديث الموقع المخزن مؤقتاً
         update_location_cache(employee.id, lat, lng)
         update_last_saved_time(employee.id)
+        logger.info(f"✅ SAVED (5-min interval): {employee.name} ({job_number}) - lat: {lat:.4f}, lng: {lng:.4f}")
         
         # تحليل وقت التسجيل
         recorded_at = datetime.utcnow()
