@@ -45,13 +45,12 @@ def index():
     # تحميل الإعدادات المحفوظة
     settings = load_landing_settings()
     
-    # إحصائيات النظام (يمكن استخدام الإعدادات المحفوظة أو الحقيقية)
+    # إحصائيات النظام - استخدام الأرقام المحفوظة فقط (لا تأثير على قاعدة البيانات)
     stats = settings.get('stats', {
-        'employees': Employee.query.count(),
-        'vehicles': Vehicle.query.count(), 
-        'departments': Department.query.count(),
-        'users': User.query.count(),
-        'salary_records': Salary.query.count()
+        'companies': 5,
+        'employees': 8,
+        'vehicles': 3,
+        'satisfaction': 9
     })
     
     # ميزات النظام
