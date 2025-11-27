@@ -821,7 +821,7 @@ def login():
         # البحث عن المستخدم بـ username أو email
         user = User.query.filter((User.username == form.username.data) | (User.email == form.username.data)).first()
 
-        if user and check_password_hash(user.password_hash, form.password.data):
+        if user and user.check_password(form.password.data):
             login_user(user, remember=form.remember.data)
             next_page = request.args.get('next')
             return redirect(next_page or url_for('mobile.index'))
