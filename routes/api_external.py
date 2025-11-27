@@ -257,11 +257,12 @@ def receive_employee_location():
         db.session.add(location)
         db.session.flush()
         
-        # معالجة الدوائر الجغرافية بدون حظر
-        try:
-            process_geofence_events(employee, lat, lng)
-        except Exception as e:
-            logger.warning(f"تحذير في معالجة الدوائر الجغرافية: {str(e)}")
+        # معالجة الدوائر الجغرافية بدون حظر (معطلة مؤقتاً لتحسين الأداء)
+        # يمكن تفعيلها لاحقاً باستخدام async tasks
+        # try:
+        #     process_geofence_events(employee, lat, lng)
+        # except Exception as e:
+        #     logger.warning(f"تحذير في معالجة الدوائر الجغرافية: {str(e)}")
         
         db.session.commit()
         
