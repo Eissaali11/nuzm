@@ -33,11 +33,13 @@ logger = logging.getLogger(__name__)
 # ============================================
 # تخزين آخر موقع وآخر طلب لكل موظف
 last_employee_location = {}  # {employee_id: {'lat': x, 'lng': y, 'time': timestamp}}
+last_saved_location = {}  # {employee_id: timestamp} - آخر وقت تم فيه حفظ موقع حقيقي
 rate_limit_tracker = {}  # {employee_id: [timestamps_of_requests]}
 
 RATE_LIMIT_REQUESTS_PER_SECOND = 5
 RATE_LIMIT_WINDOW_SECONDS = 1
 MIN_DISTANCE_METERS = 100  # لا تسجل الموقع إذا لم يتغير أكثر من 100 متر
+MIN_TIME_BETWEEN_SAVES = 300  # 5 دقائق - الحد الأدنى بين حفظ المواقع المتتالية
 
 
 # ============================================
@@ -94,6 +96,22 @@ def is_location_changed(employee_id, latitude, longitude):
     )
     
     return distance >= MIN_DISTANCE_METERS
+
+
+def check_time_since_last_save(employee_id):
+    """التحقق من الوقت المنقضي منذ آخر حفظ موقع (كل 5 دقائق)"""
+    current_time = time()
+    
+    if employee_id not in last_saved_location:
+        return True  # أول طلب - اقبله
+    
+    time_elapsed = current_time - last_saved_location[employee_id]
+    return time_elapsed >= MIN_TIME_BETWEEN_SAVES
+
+
+def update_last_saved_time(employee_id):
+    """تحديث آخر وقت تم فيه حفظ موقع"""
+    last_saved_location[employee_id] = time()
 
 
 def update_location_cache(employee_id, latitude, longitude):
@@ -231,8 +249,22 @@ def receive_employee_location():
                 'cached': True
             }), 200
         
+        # ⏱️ التحقق من الفاصل الزمني (5 دقائق بين كل حفظ)
+        if not check_time_since_last_save(employee.id):
+            time_elapsed = time() - last_saved_location.get(employee.id, 0)
+            minutes_remaining = (MIN_TIME_BETWEEN_SAVES - time_elapsed) / 60
+            # تحديث الـ cache فقط
+            update_location_cache(employee.id, lat, lng)
+            return jsonify({
+                'success': True,
+                'message': f'يجب الانتظار {minutes_remaining:.1f} دقيقة قبل التسجيل التالي',
+                'wait_minutes': minutes_remaining,
+                'throttled': True
+            }), 200
+        
         # تحديث الموقع المخزن مؤقتاً
         update_location_cache(employee.id, lat, lng)
+        update_last_saved_time(employee.id)
         
         # تحليل وقت التسجيل
         recorded_at = datetime.utcnow()
