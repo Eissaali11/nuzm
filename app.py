@@ -723,16 +723,57 @@ def cleanup_old_location_data():
             db.session.rollback()
             return 0
 
+# وظيفة حذف أحداث الدوائر الجغرافية القديمة (أقدم من 24 ساعة)
+def cleanup_old_geofence_events():
+    """حذف جلسات وأحداث الدوائر الجغرافية الأقدم من 24 ساعة"""
+    with app.app_context():
+        from models import GeofenceEvent, GeofenceSession
+        from datetime import datetime, timedelta
+        from sqlalchemy import update
+        
+        try:
+            cutoff_time = datetime.utcnow() - timedelta(hours=24)
+            
+            # أولاً: فصل الـ FK constraints - تعيين entry_event_id و exit_event_id إلى NULL
+            db.session.execute(
+                update(GeofenceSession).where(
+                    GeofenceSession.entry_time < cutoff_time
+                ).values(entry_event_id=None, exit_event_id=None)
+            )
+            
+            # حذف جميع الـ sessions التي دخلت قبل 24 ساعة
+            old_sessions = db.session.query(GeofenceSession).filter(
+                GeofenceSession.entry_time < cutoff_time
+            ).delete()
+            
+            # حذف الأحداث القديمة
+            old_events = db.session.query(GeofenceEvent).filter(
+                GeofenceEvent.recorded_at < cutoff_time
+            ).delete()
+            
+            db.session.commit()
+            
+            if old_events > 0 or old_sessions > 0:
+                logger.info(f"✅ حذف {old_sessions} جلسة و {old_events} حدث دائرة جغرافية قديمة (> 24 ساعة)")
+            
+            return old_events + old_sessions
+        except Exception as e:
+            logger.error(f"خطأ في حذف أحداث الدوائر الجغرافية: {str(e)}")
+            db.session.rollback()
+            return 0
+
 # تشغيل تنظيف البيانات عند بدء التطبيق وكل 6 ساعات
 import atexit
 from apscheduler.schedulers.background import BackgroundScheduler
 
 scheduler = BackgroundScheduler()
 scheduler.add_job(func=cleanup_old_location_data, trigger="interval", hours=6)
+scheduler.add_job(func=cleanup_old_geofence_events, trigger="interval", hours=24)
 scheduler.start()
 
 # تشغيل التنظيف عند بدء التطبيق
 cleanup_old_location_data()
+cleanup_old_geofence_events()
 
 # إيقاف المجدول عند إيقاف التطبيق
 atexit.register(lambda: scheduler.shutdown())

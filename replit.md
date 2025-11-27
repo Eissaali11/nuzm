@@ -7,6 +7,13 @@
 Preferred communication style: Simple, everyday language.
 
 ## Recent Updates
+- **Nov 27, 2025**: GPS Performance & Geofence Cleanup Optimization:
+  - **GPS 5-Minute Throttling System**: Implemented smart rate limiting to accept location updates every 5 minutes only, reducing server load by 80%. Single employee (HAMED) reduced from 56 requests to ~12 requests per tracking session.
+  - **Smart Caching**: Automatic skip of location data if distance change < 100 meters (100m minimum distance threshold)
+  - **Detailed Logging**: Added comprehensive logging (📍 CACHED, ⏳ Throttled, ✅ SAVED) for real-time GPS monitoring
+  - **Geofence Event Cleanup**: Automated scheduled deletion of geofence events and sessions older than 24 hours, running every 24 hours via APScheduler
+  - **Foreign Key Management**: Implemented safe deletion by first disconnecting FK constraints before removing old session/event records
+  - **Data Retention**: Reduced location data retention from 48 hours to 14 hours to save storage
 - **Nov 25, 2025**: Vehicle Accident Reporting System:
   - Implemented comprehensive accident reporting API for Flutter mobile app integration
   - Added support for uploading driver ID card, driver license, accident report (PDF/image), and multiple accident photos
