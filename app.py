@@ -446,7 +446,8 @@ with app.app_context():
     app.register_blueprint(voicehub_bp, url_prefix="/voicehub")
     app.register_blueprint(ai_services_bp, url_prefix='/ai')
     app.register_blueprint(email_queue_bp)
-    app.register_blueprint(api_external_bp)  # API خارجي لتتبع المواقع
+    # تعطيل مؤقتاً لتقليل ضغط الخادم
+    # app.register_blueprint(api_external_bp)  # API خارجي لتتبع المواقع
     app.register_blueprint(properties_bp, url_prefix='/properties')
     app.register_blueprint(google_drive_settings_bp)  # إعدادات Google Drive
     app.register_blueprint(geofences_bp)  # الدوائر الجغرافية
