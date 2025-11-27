@@ -699,15 +699,15 @@ def contact():
 
 # ================== نهاية صفحات المعلومات الثابتة ==================
 
-# وظيفة حذف البيانات القديمة (أقدم من 48 ساعة)
+# وظيفة حذف البيانات القديمة (أقدم من 14 ساعة)
 def cleanup_old_location_data():
-    """حذف مواقع الموظفين الأقدم من 48 ساعة"""
+    """حذف مواقع الموظفين الأقدم من 14 ساعة"""
     with app.app_context():
         from models import EmployeeLocation
         from datetime import datetime, timedelta
         
         try:
-            cutoff_time = datetime.utcnow() - timedelta(hours=48)
+            cutoff_time = datetime.utcnow() - timedelta(hours=14)
             old_locations = EmployeeLocation.query.filter(
                 EmployeeLocation.recorded_at < cutoff_time
             ).delete()
