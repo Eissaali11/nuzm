@@ -14,11 +14,6 @@ from flask_migrate import Migrate  # أضف هذا الاستيراد في ال�
 from dotenv import load_dotenv
 load_dotenv()  # تحميل المتغيرات البيئية من ملف .env
 
-# تحميل إعدادات تحسين الأداء
-try:
-    import performance_config  # noqa: F401
-except ImportError:
-    pass
 
 # app.py
 from whatsapp_client import WhatsAppWrapper
@@ -99,8 +94,16 @@ if database_url.startswith("postgresql://") or database_url.startswith("postgres
         "pool_recycle": 300,
         "pool_pre_ping": True,
         "pool_timeout": 30,
-        "pool_size": 5,
-        "max_overflow": 2,
+        "pool_size": 10,
+        "max_overflow": 5,
+        "pool_reset_on_return": "rollback",
+        "connect_args": {
+            "connect_timeout": 10,
+            "keepalives": 1,
+            "keepalives_idle": 30,
+            "keepalives_interval": 10,
+            "keepalives_count": 5,
+        }
     }
 elif database_url.startswith("mysql://"):
     # MySQL optimized settings

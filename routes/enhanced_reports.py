@@ -3,7 +3,6 @@
 """
 from flask import Blueprint, render_template, request, jsonify, make_response, send_file
 from sqlalchemy import func
-from sqlalchemy.orm import joinedload
 from datetime import datetime, date, timedelta
 from io import BytesIO
 from app import db
@@ -29,9 +28,9 @@ def index():
     current_year = datetime.now().year
     current_month = datetime.now().month
     
-    # الحصول على قائمة الأقسام والموظفين مع eager loading لتحسين الأداء
-    departments = Department.query.options(joinedload(Department.employees)).all()
-    employees = Employee.query.options(joinedload(Employee.departments)).filter(Employee.status == 'active').all()
+    # الحصول على قائمة الأقسام والموظفين
+    departments = Department.query.all()
+    employees = Employee.query.all()
     
     return render_template('reports/enhanced.html', 
                          departments=departments,
@@ -53,31 +52,26 @@ def salaries_pdf():
     year = int(request.args.get('year', current_year))
     department_id = request.args.get('department_id', '')
     
-    # استعلام الرواتب مع eager loading للموظفين لتحسين الأداء
-    salaries_query = Salary.query.options(
-        joinedload(Salary.employee)
-    ).filter_by(
+    # استعلام الرواتب
+    salaries_query = Salary.query.filter_by(
         month=month,
         year=year
     )
     
     # تطبيق فلتر القسم إذا كان محدداً
     if department_id:
-        # الحصول على معرفات الموظفين في القسم المحدد مع eager loading
-        dept_employees = Employee.query.options(
-            joinedload(Employee.departments)
-        ).filter_by(department_id=department_id).all()
-        dept_employee_ids = [e.id for e in dept_employees]
+        # الحصول على معرفات الموظفين في القسم المحدد
+        dept_employee_ids = [e.id for e in Employee.query.filter_by(department_id=department_id).all()]
         salaries_query = salaries_query.filter(Salary.employee_id.in_(dept_employee_ids))
         department = Department.query.get(department_id)
         department_name = department.name if department else ""
     else:
         department_name = "جميع الأقسام"
     
-    # الحصول على بيانات الرواتب - الموظف محمل مسبقاً مع eager loading
+    # الحصول على بيانات الرواتب مع تفاصيل الموظفين
     salaries_data = []
     for salary in salaries_query.all():
-        employee = salary.employee  # استخدام العلاقة المحملة مسبقاً
+        employee = Employee.query.get(salary.employee_id)
         if employee:
             salaries_data.append({
                 'employee_name': employee.name,
