@@ -37,7 +37,7 @@ rate_limit_tracker = {}  # {employee_id: [timestamps_of_requests]}
 
 RATE_LIMIT_REQUESTS_PER_SECOND = 5
 RATE_LIMIT_WINDOW_SECONDS = 1
-MIN_DISTANCE_METERS = 10  # لا تسجل الموقع إذا لم يتغير أكثر من 10 متر
+MIN_DISTANCE_METERS = 100  # لا تسجل الموقع إذا لم يتغير أكثر من 100 متر
 
 
 # ============================================
