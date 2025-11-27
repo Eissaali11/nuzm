@@ -133,6 +133,8 @@ def format_time_12h_ar_short(dt):
 @attendance_bp.route('/')
 def index():
     """List attendance records with filtering options - shows all employees"""
+    from sqlalchemy.orm import joinedload
+    
     # Get filter parameters
     date_str = request.args.get('date', datetime.now().strftime('%Y-%m-%d'))
     department_id = request.args.get('department_id', '')
@@ -156,8 +158,10 @@ def index():
     else:
         departments = Department.query.all()
     
-    # Build employee query (active employees only)
-    employee_query = Employee.query.filter_by(status='active')
+    # Build employee query (active employees only) with eager loading
+    employee_query = Employee.query.filter_by(status='active').options(
+        joinedload(Employee.departments)
+    )
     
     # Apply department filter if specified
     if department_id and department_id != '':
@@ -168,15 +172,15 @@ def index():
     # Get all active employees
     employees = employee_query.all()
     
-    # Get actual attendance records for this date
-    attendance_query = Attendance.query.filter(Attendance.date == date)
-    if department_id and department_id != '':
-        attendance_query = attendance_query.join(Employee).join(employee_departments).filter(
-            employee_departments.c.department_id == int(department_id)
-        )
+    # Get actual attendance records for this date efficiently
+    employee_ids = [emp.id for emp in employees]
+    attendance_query = Attendance.query.filter(
+        Attendance.date == date,
+        Attendance.employee_id.in_(employee_ids)
+    )
     
     # Build a map of employee_id -> attendance record
-    attendance_map = {att.employee_id: att for att in attendance_query.all()}
+    attendance_map = {att.employee_id: att for att in attendance_query}
     
     # Build unified attendance list
     unified_attendances = []
