@@ -1,9 +1,10 @@
 """
 API Endpoints الخارجية - بدون مصادقة
 تستخدم للتطبيقات الخارجية مثل تطبيق الأندرويد لتتبع المواقع
+محسّنة للأداء مع Rate Limiting و Caching
 """
 from flask import Blueprint, request, jsonify
-from datetime import datetime
+from datetime import datetime, timedelta
 from models import (
     Employee, EmployeeLocation, Geofence, GeofenceEvent, GeofenceSession, employee_departments, 
     VehicleHandover, db, Attendance, Salary, EmployeeRequest, EmployeeLiability,
@@ -11,10 +12,11 @@ from models import (
 )
 from sqlalchemy import func, and_, or_, extract
 from sqlalchemy.orm import joinedload
-from datetime import date, timedelta
+from datetime import date
 import os
 import logging
 from utils.geofence_session_manager import SessionManager
+from time import time
 
 # إنشاء Blueprint
 api_external_bp = Blueprint('api_external', __name__, url_prefix='/api/external')
@@ -25,6 +27,82 @@ LOCATION_API_KEY = os.environ.get('LOCATION_API_KEY', 'test_location_key_2025')
 # إعداد السجلات
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# ============================================
+# Rate Limiting و Caching
+# ============================================
+# تخزين آخر موقع وآخر طلب لكل موظف
+last_employee_location = {}  # {employee_id: {'lat': x, 'lng': y, 'time': timestamp}}
+rate_limit_tracker = {}  # {employee_id: [timestamps_of_requests]}
+
+RATE_LIMIT_REQUESTS_PER_SECOND = 5
+RATE_LIMIT_WINDOW_SECONDS = 1
+MIN_DISTANCE_METERS = 10  # لا تسجل الموقع إذا لم يتغير أكثر من 10 متر
+
+
+# ============================================
+# دوال Rate Limiting
+# ============================================
+def check_rate_limit(employee_id):
+    """التحقق من Rate Limit للموظف"""
+    current_time = time()
+    
+    if employee_id not in rate_limit_tracker:
+        rate_limit_tracker[employee_id] = []
+    
+    # حذف الطلبات القديمة خارج النافذة الزمنية
+    rate_limit_tracker[employee_id] = [
+        t for t in rate_limit_tracker[employee_id] 
+        if current_time - t < RATE_LIMIT_WINDOW_SECONDS
+    ]
+    
+    # التحقق من عدد الطلبات
+    if len(rate_limit_tracker[employee_id]) >= RATE_LIMIT_REQUESTS_PER_SECOND:
+        return False, "تم تجاوز حد الطلبات المسموح به"
+    
+    # إضافة الطلب الحالي
+    rate_limit_tracker[employee_id].append(current_time)
+    return True, None
+
+
+def calculate_distance(lat1, lon1, lat2, lon2):
+    """حساب المسافة بين نقطتين بالكيلومتر"""
+    from math import radians, sin, cos, sqrt, atan2
+    
+    R = 6371  # نصف قطر الأرض بالكيلومتر
+    lat1, lon1, lat2, lon2 = map(radians, [lat1, lon1, lat2, lon2])
+    
+    dlat = lat2 - lat1
+    dlon = lon2 - lon1
+    
+    a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
+    c = 2 * atan2(sqrt(a), sqrt(1-a))
+    distance = R * c
+    
+    return distance * 1000  # تحويل لمتر
+
+
+def is_location_changed(employee_id, latitude, longitude):
+    """التحقق مما إذا تغير الموقع بشكل كافي"""
+    if employee_id not in last_employee_location:
+        return True
+    
+    last_loc = last_employee_location[employee_id]
+    distance = calculate_distance(
+        last_loc['lat'], last_loc['lng'],
+        latitude, longitude
+    )
+    
+    return distance >= MIN_DISTANCE_METERS
+
+
+def update_location_cache(employee_id, latitude, longitude):
+    """تحديث الموقع المخزن مؤقتاً"""
+    last_employee_location[employee_id] = {
+        'lat': latitude,
+        'lng': longitude,
+        'time': time()
+    }
 
 
 def process_geofence_events(employee, latitude, longitude):
@@ -106,143 +184,102 @@ def process_geofence_events(employee, latitude, longitude):
 @api_external_bp.route('/employee-location', methods=['POST'])
 def receive_employee_location():
     """
-    استقبال موقع الموظف من تطبيق الأندرويد
-    
-    مثال على البيانات المُرسلة:
-    {
-        "api_key": "test_location_key_2025",
-        "job_number": "EMP12345",
-        "latitude": 24.7136,
-        "longitude": 46.6753,
-        "accuracy": 10.5,
-        "recorded_at": "2025-11-07T10:30:00Z"
-    }
+    استقبال موقع الموظف من تطبيق الأندرويد (محسّنة للأداء)
+    مع Rate Limiting و Caching تلقائي
     """
     try:
-        # الحصول على البيانات
         data = request.get_json()
         
         if not data:
-            logger.warning(f"طلب فارغ من {request.remote_addr}")
-            return jsonify({
-                'success': False,
-                'error': 'لا توجد بيانات في الطلب'
-            }), 400
+            return jsonify({'success': False, 'error': 'لا توجد بيانات'}), 400
         
         # التحقق من مفتاح API
-        api_key = data.get('api_key')
-        if not api_key or api_key != LOCATION_API_KEY:
-            logger.warning(f"محاولة وصول بمفتاح خاطئ من {request.remote_addr}")
-            return jsonify({
-                'success': False,
-                'error': 'مفتاح API غير صحيح'
-            }), 401
+        if data.get('api_key') != LOCATION_API_KEY:
+            return jsonify({'success': False, 'error': 'مفتاح API غير صحيح'}), 401
         
-        # التحقق من البيانات المطلوبة
         job_number = data.get('job_number')
-        latitude = data.get('latitude')
-        longitude = data.get('longitude')
-        
         if not job_number:
-            return jsonify({
-                'success': False,
-                'error': 'الرقم الوظيفي مطلوب'
-            }), 400
+            return jsonify({'success': False, 'error': 'الرقم الوظيفي مطلوب'}), 400
         
-        if latitude is None or longitude is None:
-            return jsonify({
-                'success': False,
-                'error': 'الإحداثيات (latitude, longitude) مطلوبة'
-            }), 400
+        # البحث عن الموظف
+        employee = Employee.query.filter_by(employee_id=job_number).first()
+        if not employee:
+            return jsonify({'success': False, 'error': 'موظف غير موجود'}), 404
+        
+        # التحقق من Rate Limit
+        allowed, error_msg = check_rate_limit(employee.id)
+        if not allowed:
+            return jsonify({'success': False, 'error': error_msg}), 429
         
         # التحقق من صحة الإحداثيات
         try:
-            lat = float(latitude)
-            lng = float(longitude)
+            lat = float(data.get('latitude'))
+            lng = float(data.get('longitude'))
             
-            # التحقق من النطاق المعقول للإحداثيات
-            if not (-90 <= lat <= 90):
-                return jsonify({
-                    'success': False,
-                    'error': 'latitude يجب أن يكون بين -90 و 90'
-                }), 400
-            
-            if not (-180 <= lng <= 180):
-                return jsonify({
-                    'success': False,
-                    'error': 'longitude يجب أن يكون بين -180 و 180'
-                }), 400
-                
+            if not (-90 <= lat <= 90) or not (-180 <= lng <= 180):
+                return jsonify({'success': False, 'error': 'إحداثيات غير صحيحة'}), 400
         except (ValueError, TypeError):
+            return jsonify({'success': False, 'error': 'إحداثيات غير صحيحة'}), 400
+        
+        # 🔥 تحسين الأداء: تخطي الموقع إذا لم يتغير بشكل كافي
+        if not is_location_changed(employee.id, lat, lng):
+            # تحديث الـ cache لكن بدون حفظ في قاعدة البيانات
+            update_location_cache(employee.id, lat, lng)
             return jsonify({
-                'success': False,
-                'error': 'الإحداثيات يجب أن تكون أرقام صحيحة'
-            }), 400
+                'success': True,
+                'message': 'الموقع لم يتغير (cached)',
+                'cached': True
+            }), 200
         
-        # البحث عن الموظف باستخدام job_number
-        employee = Employee.query.filter_by(employee_id=job_number).first()
-        
-        if not employee:
-            logger.warning(f"موظف غير موجود: {job_number} من {request.remote_addr}")
-            return jsonify({
-                'success': False,
-                'error': f'لم يتم العثور على موظف بالرقم الوظيفي: {job_number}'
-            }), 404
-        
-        # البيانات الاختيارية
-        accuracy = data.get('accuracy')
-        recorded_at_str = data.get('recorded_at')
-        notes = data.get('notes', '')
+        # تحديث الموقع المخزن مؤقتاً
+        update_location_cache(employee.id, lat, lng)
         
         # تحليل وقت التسجيل
-        if recorded_at_str:
+        recorded_at = datetime.utcnow()
+        if data.get('recorded_at'):
             try:
-                recorded_at = datetime.fromisoformat(recorded_at_str.replace('Z', '+00:00'))
+                recorded_at = datetime.fromisoformat(data['recorded_at'].replace('Z', '+00:00'))
             except:
-                recorded_at = datetime.utcnow()
-        else:
-            recorded_at = datetime.utcnow()
+                pass
         
-        # إنشاء سجل الموقع الجديد
+        # إنشاء وحفظ سجل الموقع
         location = EmployeeLocation(
             employee_id=employee.id,
             latitude=lat,
             longitude=lng,
-            accuracy_m=float(accuracy) if accuracy else None,
+            accuracy_m=float(data.get('accuracy')) if data.get('accuracy') else None,
             source='android_app',
             recorded_at=recorded_at,
             received_at=datetime.utcnow(),
-            notes=notes
+            notes=data.get('notes', '')
         )
         
-        # حفظ في قاعدة البيانات
         db.session.add(location)
+        db.session.flush()
+        
+        # معالجة الدوائر الجغرافية بدون حظر
+        try:
+            process_geofence_events(employee, lat, lng)
+        except Exception as e:
+            logger.warning(f"تحذير في معالجة الدوائر الجغرافية: {str(e)}")
+        
         db.session.commit()
         
-        # معالجة الدوائر الجغرافية (كشف تلقائي للدخول/الخروج)
-        process_geofence_events(employee, lat, lng)
-        
-        # تسجيل النجاح
-        logger.info(f"✅ تم حفظ موقع الموظف {employee.name} ({job_number}) من {request.remote_addr}")
+        logger.info(f"✅ موقع: {employee.name} ({job_number})")
         
         return jsonify({
             'success': True,
-            'message': 'تم حفظ الموقع بنجاح',
+            'message': 'تم حفظ الموقع',
             'data': {
                 'employee_name': employee.name,
-                'location_id': location.id,
-                'recorded_at': location.recorded_at.isoformat(),
-                'received_at': location.received_at.isoformat()
+                'location_id': location.id
             }
         }), 200
         
     except Exception as e:
-        logger.error(f"خطأ في حفظ الموقع: {str(e)}")
+        logger.error(f"خطأ: {str(e)}")
         db.session.rollback()
-        return jsonify({
-            'success': False,
-            'error': 'حدث خطأ في الخادم'
-        }), 500
+        return jsonify({'success': False, 'error': 'خطأ في الخادم'}), 500
 
 
 @api_external_bp.route('/test', methods=['GET'])
