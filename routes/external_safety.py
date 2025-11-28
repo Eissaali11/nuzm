@@ -1630,22 +1630,33 @@ def edit_safety_check(check_id):
             safety_check.driver_city = request.form.get('driver_city', '')
             safety_check.notes = request.form.get('notes', '')
             
-            # معالجة رفع ملف PDF
+            # معالجة رفع ملف PDF - بترتيب آمن
             if 'pdf_file' in request.files:
                 pdf_file = request.files['pdf_file']
                 if pdf_file and pdf_file.filename:
                     # التحقق من نوع الملف
                     if pdf_file.filename.lower().endswith('.pdf'):
-                        # حذف الملف القديم إذا كان موجوداً
-                        if safety_check.pdf_file_path:
-                            delete_image(safety_check.pdf_file_path)
-                        
-                        # حفظ الملف الجديد
+                        # 1️⃣ حفظ الملف الجديد أولاً
                         filename = f"{uuid.uuid4()}_{pdf_file.filename}"
                         pdf_path = upload_image(pdf_file, 'safety_checks_pdfs', filename)
-                        safety_check.pdf_file_path = pdf_path
                         
-                        current_app.logger.info(f'تم رفع ملف PDF للفحص {safety_check.id}: {pdf_path}')
+                        if pdf_path:
+                            # 2️⃣ حفظ مسار القديم للحذف لاحقاً
+                            old_pdf_path = safety_check.pdf_file_path
+                            # 3️⃣ تحديث DB
+                            safety_check.pdf_file_path = pdf_path
+                            current_app.logger.info(f'تم رفع ملف PDF للفحص {safety_check.id}: {pdf_path}')
+                            
+                            # 4️⃣ حذف القديم بعد نجاح الحفظ
+                            if old_pdf_path:
+                                try:
+                                    delete_image(old_pdf_path)
+                                    current_app.logger.info(f'✅ تم حذف PDF القديم: {old_pdf_path}')
+                                except Exception as del_err:
+                                    current_app.logger.warning(f'⚠️ لم يتم حذف PDF القديم: {del_err}')
+                        else:
+                            flash('فشل في رفع ملف PDF', 'error')
+                            return render_template('admin_edit_safety_check.html', safety_check=safety_check)
                     else:
                         flash('يرجى رفع ملف بصيغة PDF فقط', 'error')
                         return render_template('admin_edit_safety_check.html', safety_check=safety_check)

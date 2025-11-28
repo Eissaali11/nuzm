@@ -607,19 +607,25 @@ def edit_advance_payment(request_id):
                     
                     file_path = os.path.join(upload_dir, filename)
                     
-                    # حذف الصورة القديمة إذا كانت موجودة
-                    import glob
-                    old_files = glob.glob(os.path.join(upload_dir, f"request_{request_id}_image.*"))
-                    for old_file in old_files:
-                        try:
-                            os.remove(old_file)
-                        except Exception:
-                            pass
-                    
-                    # حفظ الصورة الجديدة
+                    # 1️⃣ حفظ الصورة الجديدة أولاً
                     image_file.save(file_path)
                     
-                    logger.info(f"✅ تم تحديث صورة السلفة #{request_id}: {file_path}")
+                    # 2️⃣ التحقق من نجاح الحفظ
+                    if os.path.exists(file_path) and os.path.getsize(file_path) > 0:
+                        logger.info(f"✅ تم تحديث صورة السلفة #{request_id}: {file_path}")
+                        
+                        # 3️⃣ حذف الصور القديمة فقط بعد نجاح الحفظ
+                        import glob
+                        old_files = glob.glob(os.path.join(upload_dir, f"request_{request_id}_image.*"))
+                        for old_file in old_files:
+                            if old_file != file_path:  # لا تحذف الملف الجديد
+                                try:
+                                    os.remove(old_file)
+                                    logger.info(f"✅ حذف الصورة القديمة: {old_file}")
+                                except Exception as del_err:
+                                    logger.warning(f"⚠️ لم يتم حذف الصورة القديمة: {del_err}")
+                    else:
+                        logger.error(f"❌ فشل في حفظ الصورة: {file_path}")
                 else:
                     flash('صيغة الصورة غير مدعومة. استخدم PNG, JPG, JPEG, أو HEIC', 'warning')
         
@@ -715,36 +721,42 @@ def edit_car_wash(request_id):
                         from werkzeug.utils import secure_filename
                         import uuid
                         
-                        # حذف الصورة القديمة من نفس النوع إن وجدت
-                        old_media = CarWashMedia.query.filter_by(
-                            wash_request_id=car_wash_data.id,
-                            media_type=media_type_map[photo_field]
-                        ).first()
-                        
-                        if old_media:
-                            if old_media.local_path:
-                                old_file = os.path.join('static', old_media.local_path)
-                                if os.path.exists(old_file):
-                                    try:
-                                        os.remove(old_file)
-                                    except Exception:
-                                        pass
-                            db.session.delete(old_media)
-                        
-                        # حفظ الصورة الجديدة
+                        # 1️⃣ حفظ الصورة الجديدة أولاً
                         filename = secure_filename(photo_file.filename)
                         unique_filename = f"wash_{request_id}_{photo_field}_{uuid.uuid4().hex[:8]}.{file_extension}"
                         file_path = os.path.join(upload_dir, unique_filename)
                         photo_file.save(file_path)
                         
-                        # إنشاء سجل جديد
-                        new_media = CarWashMedia()
-                        new_media.wash_request_id = car_wash_data.id
-                        new_media.media_type = media_type_map[photo_field]
-                        new_media.local_path = f"uploads/car_wash/{unique_filename}"
-                        db.session.add(new_media)
-                        
-                        logger.info(f"✅ تم رفع صورة جديدة: {photo_field}")
+                        # 2️⃣ التحقق من نجاح الحفظ
+                        if os.path.exists(file_path) and os.path.getsize(file_path) > 0:
+                            # 3️⃣ البحث عن الصورة القديمة للحذف
+                            old_media = CarWashMedia.query.filter_by(
+                                wash_request_id=car_wash_data.id,
+                                media_type=media_type_map[photo_field]
+                            ).first()
+                            
+                            # 4️⃣ حذف القديمة فقط بعد نجاح حفظ الجديدة
+                            if old_media:
+                                if old_media.local_path:
+                                    old_file = os.path.join('static', old_media.local_path)
+                                    if os.path.exists(old_file):
+                                        try:
+                                            os.remove(old_file)
+                                            logger.info(f"✅ حذف الصورة القديمة: {old_file}")
+                                        except Exception as del_err:
+                                            logger.warning(f"⚠️ لم يتم حذف الصورة القديمة: {del_err}")
+                                db.session.delete(old_media)
+                            
+                            # إنشاء سجل جديد
+                            new_media = CarWashMedia()
+                            new_media.wash_request_id = car_wash_data.id
+                            new_media.media_type = media_type_map[photo_field]
+                            new_media.local_path = f"uploads/car_wash/{unique_filename}"
+                            db.session.add(new_media)
+                            
+                            logger.info(f"✅ تم رفع صورة جديدة: {photo_field}")
+                        else:
+                            logger.error(f"❌ فشل في حفظ الصورة: {file_path}")
         
         db.session.commit()
         
