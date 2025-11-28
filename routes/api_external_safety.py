@@ -275,7 +275,11 @@ def upload_safety_check_image(current_employee, check_id):
         filename = f"{uuid.uuid4()}.{file_ext}"
         
         file_data = file.read()
-        temp_path = f"/tmp/{filename}"
+        
+        # حفظ مؤقتاً في مجلد آمن بدلاً من /tmp
+        temp_dir = os.path.join(current_app.static_folder, '.temp')
+        os.makedirs(temp_dir, exist_ok=True)
+        temp_path = os.path.join(temp_dir, filename)
         
         with open(temp_path, 'wb') as f:
             f.write(file_data)
@@ -287,7 +291,12 @@ def upload_safety_check_image(current_employee, check_id):
         
         object_key = upload_image(compressed_data, 'safety_checks', filename)
         
-        os.remove(temp_path)
+        # حذف الملف المؤقت فقط بعد نجاح الرفع
+        try:
+            if os.path.exists(temp_path):
+                os.remove(temp_path)
+        except:
+            pass
         
         file_size = len(compressed_data)
         

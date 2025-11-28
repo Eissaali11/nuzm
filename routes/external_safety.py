@@ -2388,8 +2388,10 @@ def admin_create_check_from_images():
                 file_ext = original_filename.rsplit('.', 1)[1].lower()
                 unique_filename = f"safety_check_{safety_check.id}_{uuid.uuid4().hex}.{file_ext}"
                 
-                # حفظ مؤقتاً للضغط
-                temp_path = f"/tmp/{unique_filename}"
+                # حفظ مؤقتاً للضغط في مجلد آمن بدلاً من /tmp
+                temp_dir = os.path.join(current_app.static_folder, '.temp')
+                os.makedirs(temp_dir, exist_ok=True)
+                temp_path = os.path.join(temp_dir, unique_filename)
                 image_file.save(temp_path)
                 
                 # ضغط الصورة
@@ -2402,8 +2404,12 @@ def admin_create_check_from_images():
                 # رفع إلى Object Storage
                 object_key = upload_image(compressed_data, 'safety_checks', unique_filename)
                 
-                # حذف الملف المؤقت
-                os.remove(temp_path)
+                # حذف الملف المؤقت فقط بعد نجاح الرفع
+                try:
+                    if os.path.exists(temp_path):
+                        os.remove(temp_path)
+                except:
+                    pass
                 
                 # إنشاء سجل الصورة
                 image_record = VehicleSafetyImage()

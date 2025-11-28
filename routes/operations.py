@@ -1946,8 +1946,8 @@ def share_package(operation_id):
     
     operation = OperationRequest.query.get_or_404(operation_id)
     
-    # مسار مجلد مؤقت لتجميع الملفات
-    temp_dir = f'/tmp/operation_{operation_id}_{datetime.now().strftime("%Y%m%d_%H%M%S")}'
+    # مسار مجلد مؤقت لتجميع الملفات في مجلد آمن بدلاً من /tmp
+    temp_dir = os.path.join(current_app.static_folder, '.temp', f'operation_{operation_id}_{datetime.now().strftime("%Y%m%d_%H%M%S")}')
     zip_path = None
     
     try:
@@ -2107,7 +2107,10 @@ def share_package(operation_id):
                     current_app.logger.warning(f'فشل في نسخ الصورة: {str(e)}')
         
         # 5. إنشاء ملف ZIP
-        zip_path = f'/tmp/operation_{operation_id}_package.zip'
+        # حفظ ملف ZIP في مجلد آمن بدلاً من /tmp
+        zip_dir = os.path.join(current_app.static_folder, '.temp')
+        os.makedirs(zip_dir, exist_ok=True)
+        zip_path = os.path.join(zip_dir, f'operation_{operation_id}_package.zip')
         with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
             for root, dirs, files in os.walk(temp_dir):
                 for file in files:
