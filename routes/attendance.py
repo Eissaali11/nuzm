@@ -3743,20 +3743,7 @@ def update_attendance_page(id):
                 import os
                 from werkzeug.utils import secure_filename
                 
-                # حذف الملف القديم إذا كان موجوداً
-                if attendance.sick_leave_file:
-                    # التعامل مع المسارات القديمة والجديدة
-                    if attendance.sick_leave_file.startswith('static/'):
-                        old_file_path = attendance.sick_leave_file
-                    else:
-                        old_file_path = os.path.join('static', attendance.sick_leave_file)
-                    
-                    if os.path.exists(old_file_path):
-                        try:
-                            os.remove(old_file_path)
-                        except:
-                            pass
-                
+                # 💾 لا حذف للملفات القديمة - الاحتفاظ بجميع الملفات للأمان
                 # حفظ الملف الجديد
                 filename = secure_filename(file.filename)
                 file_path = upload_image(file, 'sick_leaves', filename)
@@ -3766,20 +3753,9 @@ def update_attendance_page(id):
                         file_path = file_path[7:]  # إزالة "static/"
                     attendance.sick_leave_file = file_path
         elif status != 'sick':
-            # إذا تم تغيير الحالة من مرضي إلى حالة أخرى، نحذف ملف الإجازة المرضية
+            # إذا تم تغيير الحالة من مرضي إلى حالة أخرى، نزيل المرجع من قاعدة البيانات
+            # 💾 لا حذف للملفات الفعلية - الاحتفاظ بجميع الملفات للأمان
             if attendance.sick_leave_file:
-                import os
-                # التعامل مع المسارات القديمة والجديدة
-                if attendance.sick_leave_file.startswith('static/'):
-                    old_file_path = attendance.sick_leave_file
-                else:
-                    old_file_path = os.path.join('static', attendance.sick_leave_file)
-                
-                if os.path.exists(old_file_path):
-                    try:
-                        os.remove(old_file_path)
-                    except:
-                        pass
                 attendance.sick_leave_file = None
         
         # معالجة أوقات الدخول والخروج

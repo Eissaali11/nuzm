@@ -414,16 +414,8 @@ def delete_document(document_id):
             employee_name = document.employee.name if document.employee else 'غير محدد'
             document_type = document.document_type
             
-            # حذف الملف من الخادم إذا كان موجوداً
-            if hasattr(document, 'file_path') and document.file_path:
-                import os
-                file_path = os.path.join('static', document.file_path)
-                if os.path.exists(file_path):
-                    try:
-                        os.remove(file_path)
-                        print(f"تم حذف الملف: {file_path}")
-                    except Exception as e:
-                        print(f"خطأ في حذف الملف {file_path}: {e}")
+            # 💾 الملف يبقى محفوظاً - نحذف فقط المرجع من قاعدة البيانات
+            # لا حذف للملفات الفعلية - الاحتفاظ بجميع الوثائق للأمان
             
             # حذف الوثيقة من قاعدة البيانات
             db.session.delete(document)

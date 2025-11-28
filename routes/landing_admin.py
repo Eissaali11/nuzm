@@ -239,12 +239,7 @@ def update_feature(index):
                     file_path = os.path.join(upload_path, filename)
                     image_file.save(file_path)
                     
-                    # حذف الصورة القديمة إذا كانت موجودة
-                    if 'image' in existing_feature and existing_feature['image']:
-                        old_image_path = existing_feature['image'].replace('/static/', 'static/')
-                        if os.path.exists(old_image_path):
-                            os.remove(old_image_path)
-                    
+                    # 💾 لا حذف للصور القديمة - الاحتفاظ بجميع النسخ للأمان
                     features[index]['image'] = f"/static/uploads/features/{filename}"
                 
                 # إزالة الأيقونة إذا كانت موجودة

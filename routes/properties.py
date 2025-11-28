@@ -459,14 +459,11 @@ def delete_image(image_id):
     property_id = image.property_id
     
     try:
-        # حذف الملف الفعلي
-        if os.path.exists(image.image_path):
-            os.remove(image.image_path)
-        
+        # 💾 الملف يبقى محفوظاً - نحذف فقط المرجع من قاعدة البيانات
         db.session.delete(image)
         db.session.commit()
         
-        flash('تم حذف الصورة بنجاح!', 'success')
+        flash('تم حذف الصورة (الملف محفوظ بشكل آمن)!', 'success')
         
     except Exception as e:
         db.session.rollback()

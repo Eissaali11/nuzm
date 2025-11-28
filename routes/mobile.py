@@ -3091,13 +3091,8 @@ def delete_vehicle_document(vehicle_id):
     file_path = getattr(vehicle, field_name)
     
     if file_path:
-        # حذف الملف من النظام
-        if os.path.exists(file_path):
-            try:
-                os.remove(file_path)
-            except Exception as e:
-                flash(f'خطأ في حذف الملف: {str(e)}', 'error')
-        
+        # 💾 الملف يبقى محفوظاً - نحذف فقط المرجع من قاعدة البيانات
+        # لا حذف للملفات الفعلية
         # حذف المسار من قاعدة البيانات
         setattr(vehicle, field_name, None)
         
@@ -3531,7 +3526,7 @@ def save_file(file, folder):
                 jpeg_filename = unique_filename.rsplit('.', 1)[0] + '.jpg'
                 jpeg_path = os.path.join(upload_folder, jpeg_filename)
                 img.save(jpeg_path, 'JPEG', quality=90)
-                os.remove(file_path)
+                # 💾 الملف الأصلي يبقى محفوظاً - لا حذف للملفات
                 unique_filename = jpeg_filename
                 final_file_path = jpeg_path
                 current_app.logger.info(f"save_file: HEIC conversion successful: {jpeg_path}")
@@ -6871,12 +6866,7 @@ def edit_external_authorization(vehicle_id, auth_id):
                     file_path = os.path.join(upload_dir, filename)
                     file.save(file_path)
 
-                    # حذف الملف القديم إذا كان موجوداً
-                    if authorization.file_path:
-                        old_file_path = os.path.join(current_app.static_folder, 'uploads', 'authorizations', authorization.file_path.split('/')[-1])
-                        if os.path.exists(old_file_path):
-                            os.remove(old_file_path)
-
+                    # 💾 لا حذف للملفات القديمة - الاحتفاظ بجميع الملفات للأمان
                     authorization.file_path = f"uploads/authorizations/{filename}"
 
             db.session.commit()
@@ -6905,12 +6895,8 @@ def delete_external_authorization(vehicle_id, auth_id):
     authorization = ExternalAuthorization.query.get_or_404(auth_id)
 
     try:
-        # حذف الملف المرفق إذا كان موجوداً
-        if authorization.file_path:
-            file_path = os.path.join(current_app.static_folder, 'uploads', 'authorizations', authorization.file_path.split('/')[-1])
-            if os.path.exists(file_path):
-                os.remove(file_path)
-
+        # 💾 الملف يبقى محفوظاً - نحذف فقط المرجع من قاعدة البيانات
+        # لا حذف للملفات الفعلية
         db.session.delete(authorization)
         db.session.commit()
         flash('تم حذف التفويض بنجاح', 'success')
@@ -7052,20 +7038,10 @@ def delete_handover(handover_id):
         handover_type = handover.handover_type
         person_name = handover.person_name
 
-        # حذف الصور المرتبطة أولاً
+        # 💾 حذف الصور من قاعدة البيانات فقط - الملفات تبقى محفوظة
         images = VehicleHandoverImage.query.filter_by(handover_record_id=handover_id).all()
         for image in images:
-            # حذف الملف من الخادم إذا كان موجوداً
-            if image.file_path and os.path.exists(os.path.join('static', image.file_path)):
-                try:
-                    os.remove(os.path.join('static', image.file_path))
-                except:
-                    pass
-            if image.image_path and os.path.exists(os.path.join('static', image.image_path)):
-                try:
-                    os.remove(os.path.join('static', image.image_path))
-                except:
-                    pass
+            # لا حذف للملفات الفعلية - الاحتفاظ بجميع الصور للأمان
             db.session.delete(image)
 
         # حذف سجل التسليم/الاستلام
