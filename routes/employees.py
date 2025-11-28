@@ -45,53 +45,59 @@ def verify_employee_image(image_path):
         return None
 
 def save_employee_image(file, employee_id, image_type):
-    """حفظ صورة الموظف وإرجاع المسار"""
-    if file and file.filename:
-        try:
-            # التأكد من وجود المجلد
-            os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-            
-            # إنشاء اسم ملف فريد
-            filename = secure_filename(file.filename)
-            name, ext = os.path.splitext(filename)
-            
-            # إذا لم يكن هناك امتداد، نستنتجه من نوع الملف
-            if not ext:
-                # محاولة استخراج الامتداد من content_type
-                content_type = file.content_type
-                if content_type:
-                    if 'pdf' in content_type:
-                        ext = '.pdf'
-                    elif 'jpeg' in content_type or 'jpg' in content_type:
-                        ext = '.jpg'
-                    elif 'png' in content_type:
-                        ext = '.png'
-                    elif 'gif' in content_type:
-                        ext = '.gif'
-                    else:
-                        ext = '.jpg'  # افتراضي
-                else:
-                    ext = '.jpg'  # افتراضي
-            
-            unique_filename = f"{employee_id}_{image_type}_{datetime.now().strftime('%Y%m%d_%H%M%S')}{ext}"
-            
-            filepath = os.path.join(UPLOAD_FOLDER, unique_filename)
-            
-            # حفظ الملف والتأكد من النجاح
-            file.save(filepath)
-            
-            # التحقق من وجود الملف بعد الحفظ
-            if os.path.exists(filepath) and os.path.getsize(filepath) > 0:
-                relative_path = f"uploads/employees/{unique_filename}"
-                print(f"✅ تم حفظ الصورة: {relative_path} ({os.path.getsize(filepath)} bytes)")
-                return relative_path
+    """حفظ صورة الموظف وإرجاع المسار - مع تحقق صارم من النجاح"""
+    if not file or not file.filename:
+        print(f"❌ لا يوجد ملف للحفظ")
+        return None
+    
+    try:
+        # التأكد من وجود المجلد
+        os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+        
+        # إنشاء اسم ملف فريد
+        filename = secure_filename(file.filename)
+        name, ext = os.path.splitext(filename)
+        
+        # إذا لم يكن هناك امتداد، نستنتجه من نوع الملف
+        if not ext:
+            content_type = file.content_type or ''
+            if 'pdf' in content_type:
+                ext = '.pdf'
+            elif 'jpeg' in content_type or 'jpg' in content_type:
+                ext = '.jpg'
+            elif 'png' in content_type:
+                ext = '.png'
+            elif 'gif' in content_type:
+                ext = '.gif'
             else:
-                print(f"❌ فشل حفظ الصورة: الملف غير موجود أو فارغ {filepath}")
-                return None
-        except Exception as e:
-            print(f"❌ خطأ في حفظ الصورة: {str(e)}")
+                ext = '.jpg'
+        
+        unique_filename = f"{employee_id}_{image_type}_{datetime.now().strftime('%Y%m%d_%H%M%S')}{ext}"
+        filepath = os.path.join(UPLOAD_FOLDER, unique_filename)
+        
+        # حفظ الملف
+        file.save(filepath)
+        
+        # ✅ تحقق صارم من النجاح
+        if not os.path.exists(filepath):
+            print(f"❌ الملف غير موجود بعد الحفظ: {filepath}")
             return None
-    return None
+        
+        file_size = os.path.getsize(filepath)
+        if file_size == 0:
+            print(f"❌ الملف فارغ: {filepath}")
+            os.remove(filepath)
+            return None
+        
+        relative_path = f"uploads/employees/{unique_filename}"
+        print(f"✅ حفظ نجح: {relative_path} ({file_size} bytes)")
+        return relative_path
+        
+    except Exception as e:
+        print(f"❌ خطأ في حفظ الصورة: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return None
 
 @employees_bp.route('/')
 @login_required
@@ -1810,57 +1816,60 @@ def upload_image(id):
         flash('لم يتم اختيار ملف', 'danger')
         return redirect(url_for('employees.view', id=id))
     
-    # حفظ الصورة
+    # حفظ الصورة - التحقق الصارم
     image_path = save_employee_image(file, employee.employee_id, image_type)
-    if image_path:
-        try:
-            # حذف الصورة القديمة إذا كانت موجودة
-            old_path = None
-            if image_type == 'profile':
-                old_path = employee.profile_image
-                employee.profile_image = image_path
-            elif image_type == 'national_id':
-                old_path = employee.national_id_image
-                employee.national_id_image = image_path
-            elif image_type == 'license':
-                old_path = employee.license_image
-                employee.license_image = image_path
-            
-            # حذف الصورة القديمة من الملفات - بحذر
-            if old_path:
-                # محاولة بناء المسار الصحيح
+    
+    if not image_path:
+        flash('❌ فشل في رفع الصورة. تأكد من أن الملف من النوع المسموح', 'danger')
+        return redirect(url_for('employees.view', id=id))
+    
+    try:
+        # 1️⃣ حفظ الصورة الجديدة في قاعدة البيانات أولاً
+        old_path = None
+        if image_type == 'profile':
+            old_path = employee.profile_image
+            employee.profile_image = image_path
+        elif image_type == 'national_id':
+            old_path = employee.national_id_image
+            employee.national_id_image = image_path
+        elif image_type == 'license':
+            old_path = employee.license_image
+            employee.license_image = image_path
+        
+        # 2️⃣ تأكيد التغييرات في قاعدة البيانات
+        db.session.commit()
+        print(f"✅ DB: تم حفظ {image_path} في قاعدة البيانات")
+        
+        # 3️⃣ حذف الملف القديم فقط **بعد** نجاح حفظ الجديد
+        if old_path:
+            try:
                 if old_path.startswith('static/'):
                     old_file_path = old_path
                 else:
                     old_file_path = os.path.join('static', old_path)
                 
-                # التحقق والحذف بأمان
-                try:
-                    if os.path.exists(old_file_path):
-                        os.remove(old_file_path)
-                        print(f"✅ تم حذف الملف القديم: {old_file_path}")
-                except Exception as del_err:
-                    print(f"⚠️  تحذير: فشل حذف الملف القديم: {del_err}")
-                    # لا نرفع استثناء - الملف الجديد محفوظ بالفعل
-            
-            # حفظ الصورة الجديدة في قاعدة البيانات قبل حذف القديمة
-            db.session.commit()
-            print(f"✅ تم حفظ الصورة الجديدة: {image_path}")
-            
-            # رسائل النجاح حسب نوع الصورة
-            success_messages = {
-                'profile': 'تم رفع الصورة الشخصية بنجاح ✅',
-                'national_id': 'تم رفع صورة الهوية بنجاح ✅',
-                'license': 'تم رفع صورة الرخصة بنجاح ✅'
-            }
-            flash(success_messages[image_type], 'success')
-            
-        except Exception as e:
-            db.session.rollback()
-            print(f"❌ خطأ في حفظ الصورة: {str(e)}")
-            flash(f'خطأ في حفظ الصورة: {str(e)}', 'danger')
-    else:
-        flash('فشل في رفع الصورة. تأكد من أن الملف من النوع المسموح (PNG, JPG, JPEG, GIF)', 'danger')
+                if os.path.exists(old_file_path):
+                    os.remove(old_file_path)
+                    print(f"✅ FS: حذف الملف القديم {old_file_path}")
+                else:
+                    print(f"⚠️  الملف القديم غير موجود: {old_file_path}")
+            except Exception as del_err:
+                print(f"⚠️  تحذير: لم يتم حذف الملف القديم: {del_err}")
+        
+        # رسالة النجاح
+        success_messages = {
+            'profile': '✅ تم رفع الصورة الشخصية بنجاح',
+            'national_id': '✅ تم رفع صورة الهوية بنجاح',
+            'license': '✅ تم رفع صورة الرخصة بنجاح'
+        }
+        flash(success_messages.get(image_type, '✅ تم رفع الصورة بنجاح'), 'success')
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"❌ خطأ: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        flash(f'❌ خطأ: {str(e)}', 'danger')
     
     return redirect(url_for('employees.view', id=id))
 
