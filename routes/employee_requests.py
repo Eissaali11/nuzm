@@ -614,16 +614,8 @@ def edit_advance_payment(request_id):
                     if os.path.exists(file_path) and os.path.getsize(file_path) > 0:
                         logger.info(f"✅ تم تحديث صورة السلفة #{request_id}: {file_path}")
                         
-                        # 3️⃣ حذف الصور القديمة فقط بعد نجاح الحفظ
-                        import glob
-                        old_files = glob.glob(os.path.join(upload_dir, f"request_{request_id}_image.*"))
-                        for old_file in old_files:
-                            if old_file != file_path:  # لا تحذف الملف الجديد
-                                try:
-                                    os.remove(old_file)
-                                    logger.info(f"✅ حذف الصورة القديمة: {old_file}")
-                                except Exception as del_err:
-                                    logger.warning(f"⚠️ لم يتم حذف الصورة القديمة: {del_err}")
+                        # 💾 الصور القديمة تبقى محفوظة - لا نحذف الملفات الفعلية
+                        logger.info(f"💾 الصور القديمة محفوظة للأمان (طلب رقم {request_id})")
                     else:
                         logger.error(f"❌ فشل في حفظ الصورة: {file_path}")
                 else:
@@ -685,16 +677,11 @@ def edit_car_wash(request_id):
             for media_id in delete_media_ids:
                 media = CarWashMedia.query.get(media_id)
                 if media and media.wash_request_id == car_wash_data.id:
-                    # حذف الملف المحلي إذا كان موجوداً
+                    # 💾 الملف يبقى محفوظاً - نحذف فقط المرجع من DB
                     if media.local_path:
-                        local_file = os.path.join('static', media.local_path)
-                        if os.path.exists(local_file):
-                            try:
-                                os.remove(local_file)
-                            except Exception:
-                                pass
+                        logger.info(f"💾 الصورة محفوظة للأمان: {media.local_path}")
                     db.session.delete(media)
-                    logger.info(f"✅ تم حذف الصورة #{media_id}")
+                    logger.info(f"✅ تم إزالة مرجع الصورة #{media_id}")
         
         # رفع صور جديدة
         photo_fields = ['photo_plate', 'photo_front', 'photo_back', 'photo_right_side', 'photo_left_side']
@@ -735,16 +722,10 @@ def edit_car_wash(request_id):
                                 media_type=media_type_map[photo_field]
                             ).first()
                             
-                            # 4️⃣ حذف القديمة فقط بعد نجاح حفظ الجديدة
+                            # 💾 الصورة القديمة تبقى محفوظة - نحذف فقط المرجع من DB
                             if old_media:
                                 if old_media.local_path:
-                                    old_file = os.path.join('static', old_media.local_path)
-                                    if os.path.exists(old_file):
-                                        try:
-                                            os.remove(old_file)
-                                            logger.info(f"✅ حذف الصورة القديمة: {old_file}")
-                                        except Exception as del_err:
-                                            logger.warning(f"⚠️ لم يتم حذف الصورة القديمة: {del_err}")
+                                    logger.info(f"💾 الصورة القديمة محفوظة للأمان: {old_media.local_path}")
                                 db.session.delete(old_media)
                             
                             # إنشاء سجل جديد

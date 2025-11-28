@@ -2060,14 +2060,9 @@ def update_car_wash_request(current_employee, request_id):
             for media_id in delete_media_ids:
                 media = CarWashMedia.query.get(int(media_id))
                 if media and media.wash_request_id == car_wash_data.id:
-                    # حذف الملف المحلي
+                    # 💾 الملف يبقى محفوظاً - نحذف فقط المرجع من DB
                     if media.local_path:
-                        local_file = os.path.join('static', media.local_path)
-                        if os.path.exists(local_file):
-                            try:
-                                os.remove(local_file)
-                            except Exception:
-                                pass
+                        logger.info(f"💾 الصورة محفوظة للأمان: {media.local_path}")
                     db.session.delete(media)
         
         # رفع صور جديدة
@@ -2099,13 +2094,9 @@ def update_car_wash_request(current_employee, request_id):
                             ).first()
                             
                             if old_media:
+                                # 💾 الصورة القديمة تبقى محفوظة - نحذف فقط المرجع من DB
                                 if old_media.local_path:
-                                    old_file = os.path.join('static', old_media.local_path)
-                                    if os.path.exists(old_file):
-                                        try:
-                                            os.remove(old_file)
-                                        except Exception:
-                                            pass
+                                    logger.info(f"💾 الصورة القديمة محفوظة للأمان: {old_media.local_path}")
                                 db.session.delete(old_media)
                             
                             # حفظ الصورة الجديدة
@@ -2229,13 +2220,9 @@ def update_car_inspection_request(current_employee, request_id):
             for media_id in delete_media_ids:
                 media = CarInspectionMedia.query.get(int(media_id))
                 if media and media.inspection_request_id == inspection_data.id:
+                    # 💾 الملف يبقى محفوظاً - نحذف فقط المرجع من DB
                     if media.local_path:
-                        local_file = os.path.join('static', media.local_path)
-                        if os.path.exists(local_file):
-                            try:
-                                os.remove(local_file)
-                            except Exception:
-                                pass
+                        logger.info(f"💾 الملف محفوظ للأمان: {media.local_path}")
                     db.session.delete(media)
         
         # رفع ملفات جديدة
@@ -2336,30 +2323,16 @@ def delete_request(current_employee, request_id):
                 'message': 'لا يمكن حذف طلب تمت معالجته'
             }), 400
         
-        # حذف الملفات المرتبطة حسب نوع الطلب
+        # 💾 الملفات تبقى محفوظة - لا نحذف الملفات الفعلية
         if emp_request.request_type == RequestType.CAR_WASH:
             car_wash = CarWashRequest.query.filter_by(request_id=request_id).first()
             if car_wash:
-                for media in car_wash.media_files:
-                    if media.local_path:
-                        local_file = os.path.join('static', media.local_path)
-                        if os.path.exists(local_file):
-                            try:
-                                os.remove(local_file)
-                            except Exception:
-                                pass
+                logger.info(f"💾 ملفات غسيل السيارة محفوظة للأمان ({len(car_wash.media_files)} ملف)")
         
         elif emp_request.request_type == RequestType.CAR_INSPECTION:
             inspection = CarInspectionRequest.query.filter_by(request_id=request_id).first()
             if inspection:
-                for media in inspection.media_files:
-                    if media.local_path:
-                        local_file = os.path.join('static', media.local_path)
-                        if os.path.exists(local_file):
-                            try:
-                                os.remove(local_file)
-                            except Exception:
-                                pass
+                logger.info(f"💾 ملفات الفحص محفوظة للأمان ({len(inspection.media_files)} ملف)")
         
         # حذف الطلب (cascade سيحذف البيانات المرتبطة)
         db.session.delete(emp_request)
@@ -2416,14 +2389,9 @@ def delete_car_wash_media(current_employee, request_id, media_id):
         if not media:
             return jsonify({'success': False, 'message': 'الصورة غير موجودة'}), 404
         
-        # حذف الملف المحلي
+        # 💾 الملف يبقى محفوظاً - نحذف فقط المرجع من DB
         if media.local_path:
-            local_file = os.path.join('static', media.local_path)
-            if os.path.exists(local_file):
-                try:
-                    os.remove(local_file)
-                except Exception:
-                    pass
+            logger.info(f"💾 الصورة محفوظة للأمان: {media.local_path}")
         
         db.session.delete(media)
         db.session.commit()
@@ -2476,14 +2444,9 @@ def delete_car_inspection_media(current_employee, request_id, media_id):
         if not media:
             return jsonify({'success': False, 'message': 'الملف غير موجود'}), 404
         
-        # حذف الملف المحلي
+        # 💾 الملف يبقى محفوظاً - نحذف فقط المرجع من DB
         if media.local_path:
-            local_file = os.path.join('static', media.local_path)
-            if os.path.exists(local_file):
-                try:
-                    os.remove(local_file)
-                except Exception:
-                    pass
+            logger.info(f"💾 الملف محفوظ للأمان: {media.local_path}")
         
         db.session.delete(media)
         db.session.commit()

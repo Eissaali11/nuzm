@@ -2268,15 +2268,9 @@ def edit_workshop(id):
                         old_delivery_path = workshop.delivery_receipt
                         # 3️⃣ تحديث DB
                         workshop.delivery_receipt = receipt_path
-                        # 4️⃣ حذف القديم بعد نجاح الحفظ
+                        # 💾 الملف القديم يبقى محفوظاً - لا نحذف الملفات الفعلية
                         if old_delivery_path:
-                            try:
-                                old_file_path = os.path.join(current_app.static_folder, old_delivery_path)
-                                if os.path.exists(old_file_path):
-                                    os.remove(old_file_path)
-                                    print(f"✅ حذف الملف القديم: {old_file_path}")
-                            except Exception as del_err:
-                                print(f"⚠️ تحذير: لم يتم حذف الملف القديم: {del_err}")
+                            print(f"💾 الملف القديم محفوظ للأمان: {old_delivery_path}")
             
             # معالجة إيصال الاستلام
             if 'pickup_receipt' in request.files:
@@ -2289,15 +2283,9 @@ def edit_workshop(id):
                         old_pickup_path = workshop.pickup_receipt
                         # 3️⃣ تحديث DB
                         workshop.pickup_receipt = receipt_path
-                        # 4️⃣ حذف القديم بعد نجاح الحفظ
+                        # 💾 الملف القديم يبقى محفوظاً - لا نحذف الملفات الفعلية
                         if old_pickup_path:
-                            try:
-                                old_file_path = os.path.join(current_app.static_folder, old_pickup_path)
-                                if os.path.exists(old_file_path):
-                                    os.remove(old_file_path)
-                                    print(f"✅ حذف الملف القديم: {old_file_path}")
-                            except Exception as del_err:
-                                print(f"⚠️ تحذير: لم يتم حذف الملف القديم: {del_err}")
+                            print(f"💾 الملف القديم محفوظ للأمان: {old_pickup_path}")
 
             # --- 3.2. معالجة الصور ---
             # إضافة سجلات تشخيص
@@ -2331,14 +2319,9 @@ def edit_workshop(id):
                         image_type='before'
                     ).all()
                     for old_image in old_before_images:
+                        # 💾 الصورة القديمة تبقى محفوظة - نحذف فقط المرجع من DB
                         if old_image.image_path:
-                            try:
-                                old_file_path = os.path.join(current_app.static_folder, old_image.image_path)
-                                if os.path.exists(old_file_path):
-                                    os.remove(old_file_path)
-                                    print(f"✅ حذف صورة قديمة: {old_file_path}")
-                            except Exception as del_err:
-                                print(f"⚠️ تحذير: لم يتم حذف الصورة: {del_err}")
+                            print(f"💾 الصورة القديمة محفوظة للأمان: {old_image.image_path}")
                         db.session.delete(old_image)
                     
                     # 3️⃣ إضافة السجلات الجديدة
@@ -2372,14 +2355,9 @@ def edit_workshop(id):
                         image_type='after'
                     ).all()
                     for old_image in old_after_images:
+                        # 💾 الصورة القديمة تبقى محفوظة - نحذف فقط المرجع من DB
                         if old_image.image_path:
-                            try:
-                                old_file_path = os.path.join(current_app.static_folder, old_image.image_path)
-                                if os.path.exists(old_file_path):
-                                    os.remove(old_file_path)
-                                    print(f"✅ حذف صورة قديمة: {old_file_path}")
-                            except Exception as del_err:
-                                print(f"⚠️ تحذير: لم يتم حذف الصورة: {del_err}")
+                            print(f"💾 الصورة القديمة محفوظة للأمان: {old_image.image_path}")
                         db.session.delete(old_image)
                     
                     # 3️⃣ إضافة السجلات الجديدة
@@ -2634,10 +2612,8 @@ def delete_workshop_image(id):
                 flash('يجب كتابة كلمة "تأكيد" للمتابعة مع عملية الحذف!', 'danger')
                 return redirect(url_for('vehicles.confirm_delete_workshop_image', id=id))
 
-        # حذف الملف الفعلي إذا كان موجوداً
-        file_path = os.path.join(current_app.static_folder, image.image_path)
-        if os.path.exists(file_path):
-                os.remove(file_path)
+        # 💾 الملف يبقى محفوظاً - نحذف فقط المرجع من قاعدة البيانات
+        print(f"💾 الصورة محفوظة للأمان: {image.image_path}")
 
         db.session.delete(image)
         db.session.commit()
@@ -5142,11 +5118,9 @@ def edit_external_authorization(vehicle_id, auth_id):
                     file_path = os.path.join(upload_dir, filename)
                     file.save(file_path)
 
-                    # حذف الملف القديم إذا كان موجوداً
+                    # 💾 الملف القديم يبقى محفوظاً - لا نحذف الملفات الفعلية
                     if auth.file_path:
-                        old_file_path = os.path.join(current_app.static_folder, 'uploads', 'authorizations', auth.file_path.split('/')[-1])
-                        if os.path.exists(old_file_path):
-                            os.remove(old_file_path)
+                        print(f"💾 الملف القديم محفوظ للأمان: {auth.file_path}")
 
                     auth.file_path = f"static/uploads/authorizations/{filename}"
 
@@ -5210,15 +5184,13 @@ def delete_external_authorization(vehicle_id, auth_id):
     auth = ExternalAuthorization.query.get_or_404(auth_id)
 
     try:
-        # حذف الملف المرفق إذا كان موجوداً
+        # 💾 الملف يبقى محفوظاً - نحذف فقط المرجع من قاعدة البيانات
         if auth.file_path:
-            file_path = os.path.join(current_app.static_folder, 'uploads', 'authorizations', auth.file_path.split('/')[-1])
-            if os.path.exists(file_path):
-                os.remove(file_path)
+            print(f"💾 الملف محفوظ للأمان: {auth.file_path}")
 
         db.session.delete(auth)
         db.session.commit()
-        flash('تم حذف التفويض بنجاح', 'success')
+        flash('تم حذف التفويض (الملف محفوظ بشكل آمن)', 'success')
     except Exception as e:
         db.session.rollback()
         flash(f'حدث خطأ أثناء حذف التفويض: {str(e)}', 'error')
@@ -5456,10 +5428,8 @@ def vehicle_license_image(vehicle_id):
             # حذف صورة الرخصة
             if vehicle.license_image:
                 try:
-                    # حذف الملف من النظام
-                    file_path = os.path.join('static', 'uploads', 'vehicles', vehicle.license_image)
-                    if os.path.exists(file_path):
-                        os.remove(file_path)
+                    # 💾 الملف يبقى محفوظاً - نحذف فقط المرجع من قاعدة البيانات
+                    print(f"💾 صورة الرخصة محفوظة للأمان: {vehicle.license_image}")
 
                     # حذف المرجع من قاعدة البيانات
                     vehicle.license_image = None
@@ -5501,11 +5471,9 @@ def vehicle_license_image(vehicle_id):
                 upload_dir = os.path.join('static', 'uploads', 'vehicles')
                 os.makedirs(upload_dir, exist_ok=True)
 
-                # حذف الصورة القديمة إذا كانت موجودة
+                # 💾 الصورة القديمة تبقى محفوظة - لا نحذف الملفات الفعلية
                 if vehicle.license_image:
-                    old_file_path = os.path.join(upload_dir, vehicle.license_image)
-                    if os.path.exists(old_file_path):
-                        os.remove(old_file_path)
+                    print(f"💾 الصورة القديمة محفوظة للأمان: {vehicle.license_image}")
 
                 # تأمين اسم الملف وإضافة timestamp لتجنب التضارب
                 filename = secure_filename(file.filename)
@@ -5778,9 +5746,8 @@ def delete_document(id):
     file_path = getattr(vehicle, field_name)
 
     if file_path:
-        # حذف الملف من النظام
-        if os.path.exists(file_path):
-            os.remove(file_path)
+        # 💾 الملف يبقى محفوظاً - نحذف فقط المرجع من قاعدة البيانات
+        print(f"💾 الملف محفوظ للأمان: {file_path}")
 
         # حذف المرجع من قاعدة البيانات
         setattr(vehicle, field_name, None)
@@ -6410,15 +6377,10 @@ def delete_handover_image(image_id):
                 # الحصول على الصورة
                 image = VehicleHandoverImage.query.get_or_404(image_id)
                 
-                # حذف الملف من النظام إذا كان موجوداً
-                import os
+                # 💾 الملف يبقى محفوظاً - نحذف فقط المرجع من قاعدة البيانات
                 file_path = image.get_path()
                 if file_path:
-                        # محاولة حذف من المسار الكامل
-                        full_path = os.path.join('static', file_path) if not file_path.startswith('static') else file_path
-                        if os.path.exists(full_path):
-                                os.remove(full_path)
-                                current_app.logger.info(f"تم حذف الملف: {full_path}")
+                        current_app.logger.info(f"💾 الصورة محفوظة للأمان: {file_path}")
                 
                 # حذف السجل من قاعدة البيانات
                 db.session.delete(image)
