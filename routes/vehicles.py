@@ -364,31 +364,50 @@ SAFETY_CHECK_STATUS_CHOICES = [
 
 # الوظائف المساعدة
 def save_file(file, folder='vehicles'):
-        """حفظ الملف (صورة أو PDF) في المجلد المحدد وإرجاع المسار ونوع الملف"""
-        if not file:
+        """حفظ الملف (صورة أو PDF) في المجلد المحدد وإرجاع المسار ونوع الملف - مع تحقق صارم"""
+        if not file or not file.filename:
                 return None, None
 
-        # إنشاء اسم فريد للملف
-        filename = secure_filename(file.filename)
-        unique_filename = f"{uuid.uuid4()}_{filename}"
+        try:
+                # إنشاء اسم فريد للملف
+                filename = secure_filename(file.filename)
+                unique_filename = f"{uuid.uuid4()}_{filename}"
 
-        # التأكد من وجود المجلد
-        upload_folder = os.path.join(current_app.static_folder, 'uploads', folder)
-        os.makedirs(upload_folder, exist_ok=True)
+                # التأكد من وجود المجلد
+                upload_folder = os.path.join(current_app.static_folder, 'uploads', folder)
+                os.makedirs(upload_folder, exist_ok=True)
 
-        # حفظ الملف
-        file_path = os.path.join(upload_folder, unique_filename)
-        file.save(file_path)
+                # حفظ الملف
+                file_path = os.path.join(upload_folder, unique_filename)
+                file.save(file_path)
 
-        # تحديد نوع الملف (صورة أو PDF)
-        file_type = 'pdf' if filename.lower().endswith('.pdf') else 'image'
+                # ✅ تحقق صارم من نجاح الحفظ
+                if not os.path.exists(file_path):
+                        print(f"❌ الملف غير موجود بعد الحفظ: {file_path}")
+                        return None, None
+                
+                file_size = os.path.getsize(file_path)
+                if file_size == 0:
+                        print(f"❌ الملف فارغ: {file_path}")
+                        os.remove(file_path)
+                        return None, None
 
-        # إرجاع المسار النسبي للملف ونوعه
-        return f"static/uploads/{folder}/{unique_filename}", file_type
+                # تحديد نوع الملف (صورة أو PDF)
+                file_type = 'pdf' if filename.lower().endswith('.pdf') else 'image'
+
+                relative_path = f"static/uploads/{folder}/{unique_filename}"
+                print(f"✅ حفظ نجح: {relative_path} ({file_size} bytes)")
+                return relative_path, file_type
+                
+        except Exception as e:
+                print(f"❌ خطأ في حفظ الملف: {str(e)}")
+                import traceback
+                traceback.print_exc()
+                return None, None
 
 # للحفاظ على التوافق مع الكود القديم
 def save_image(file, folder='vehicles'):
-        """وظيفة محفوظة للتوافق مع الكود القديم"""
+        """وظيفة محفوظة للتوافق مع الكود القديم - مع تحقق صارم"""
         file_path, _ = save_file(file, folder)
         return file_path
 
@@ -2237,36 +2256,48 @@ def edit_workshop(id):
             workshop.notes = notes
             workshop.updated_at = datetime.utcnow()
 
-            # --- 3.1. معالجة ملفات الإيصالات ---
+            # --- 3.1. معالجة ملفات الإيصالات - بترتيب آمن ---
             # معالجة إيصال التسليم
             if 'delivery_receipt' in request.files:
                 delivery_receipt_file = request.files['delivery_receipt']
                 if delivery_receipt_file and delivery_receipt_file.filename:
-                    # حذف الإيصال القديم إذا وجد
-                    if workshop.delivery_receipt:
-                        old_file_path = os.path.join(current_app.static_folder, workshop.delivery_receipt)
-                        if os.path.exists(old_file_path):
-                            os.remove(old_file_path)
-                    
-                    # حفظ الإيصال الجديد
+                    # 1️⃣ حفظ الإيصال الجديد أولاً
                     receipt_path, _ = save_file(delivery_receipt_file, 'workshop')
                     if receipt_path:
+                        # 2️⃣ حفظ مسار القديم للحذف لاحقاً
+                        old_delivery_path = workshop.delivery_receipt
+                        # 3️⃣ تحديث DB
                         workshop.delivery_receipt = receipt_path
+                        # 4️⃣ حذف القديم بعد نجاح الحفظ
+                        if old_delivery_path:
+                            try:
+                                old_file_path = os.path.join(current_app.static_folder, old_delivery_path)
+                                if os.path.exists(old_file_path):
+                                    os.remove(old_file_path)
+                                    print(f"✅ حذف الملف القديم: {old_file_path}")
+                            except Exception as del_err:
+                                print(f"⚠️ تحذير: لم يتم حذف الملف القديم: {del_err}")
             
             # معالجة إيصال الاستلام
             if 'pickup_receipt' in request.files:
                 pickup_receipt_file = request.files['pickup_receipt']
                 if pickup_receipt_file and pickup_receipt_file.filename:
-                    # حذف الإيصال القديم إذا وجد
-                    if workshop.pickup_receipt:
-                        old_file_path = os.path.join(current_app.static_folder, workshop.pickup_receipt)
-                        if os.path.exists(old_file_path):
-                            os.remove(old_file_path)
-                    
-                    # حفظ الإيصال الجديد
+                    # 1️⃣ حفظ الإيصال الجديد أولاً
                     receipt_path, _ = save_file(pickup_receipt_file, 'workshop')
                     if receipt_path:
+                        # 2️⃣ حفظ مسار القديم للحذف لاحقاً
+                        old_pickup_path = workshop.pickup_receipt
+                        # 3️⃣ تحديث DB
                         workshop.pickup_receipt = receipt_path
+                        # 4️⃣ حذف القديم بعد نجاح الحفظ
+                        if old_pickup_path:
+                            try:
+                                old_file_path = os.path.join(current_app.static_folder, old_pickup_path)
+                                if os.path.exists(old_file_path):
+                                    os.remove(old_file_path)
+                                    print(f"✅ حذف الملف القديم: {old_file_path}")
+                            except Exception as del_err:
+                                print(f"⚠️ تحذير: لم يتم حذف الملف القديم: {del_err}")
 
             # --- 3.2. معالجة الصور ---
             # إضافة سجلات تشخيص
@@ -2280,21 +2311,8 @@ def edit_workshop(id):
                 current_app.logger.info(f"صورة قبل {i+1}: {img.filename}")
             
             if before_images and any(img.filename for img in before_images):
-                # حذف الصور القديمة من نوع "before"
-                old_before_images = VehicleWorkshopImage.query.filter_by(
-                    workshop_record_id=workshop.id, 
-                    image_type='before'
-                ).all()
-                for old_image in old_before_images:
-                    # حذف الملف من النظام
-                    if old_image.image_path:
-                        old_file_path = os.path.join(current_app.static_folder, old_image.image_path)
-                        if os.path.exists(old_file_path):
-                            os.remove(old_file_path)
-                    # حذف السجل من قاعدة البيانات
-                    db.session.delete(old_image)
-                
-                # إضافة الصور الجديدة
+                # 1️⃣ حفظ الصور الجديدة أولاً
+                new_before_records = []
                 for image in before_images:
                     if image and image.filename:
                         image_path = save_image(image, 'workshop')
@@ -2304,7 +2322,28 @@ def edit_workshop(id):
                                 image_type='before',
                                 image_path=image_path
                             )
-                            db.session.add(image_record)
+                            new_before_records.append(image_record)
+                
+                # 2️⃣ فقط إذا نجح حفظ صور جديدة، احذف القديمة
+                if new_before_records:
+                    old_before_images = VehicleWorkshopImage.query.filter_by(
+                        workshop_record_id=workshop.id, 
+                        image_type='before'
+                    ).all()
+                    for old_image in old_before_images:
+                        if old_image.image_path:
+                            try:
+                                old_file_path = os.path.join(current_app.static_folder, old_image.image_path)
+                                if os.path.exists(old_file_path):
+                                    os.remove(old_file_path)
+                                    print(f"✅ حذف صورة قديمة: {old_file_path}")
+                            except Exception as del_err:
+                                print(f"⚠️ تحذير: لم يتم حذف الصورة: {del_err}")
+                        db.session.delete(old_image)
+                    
+                    # 3️⃣ إضافة السجلات الجديدة
+                    for record in new_before_records:
+                        db.session.add(record)
 
             # معالجة صور "بعد الإصلاح"
             after_images = request.files.getlist('after_images')
@@ -2313,21 +2352,8 @@ def edit_workshop(id):
                 current_app.logger.info(f"صورة بعد {i+1}: {img.filename}")
             
             if after_images and any(img.filename for img in after_images):
-                # حذف الصور القديمة من نوع "after"
-                old_after_images = VehicleWorkshopImage.query.filter_by(
-                    workshop_record_id=workshop.id, 
-                    image_type='after'
-                ).all()
-                for old_image in old_after_images:
-                    # حذف الملف من النظام
-                    if old_image.image_path:
-                        old_file_path = os.path.join(current_app.static_folder, old_image.image_path)
-                        if os.path.exists(old_file_path):
-                            os.remove(old_file_path)
-                    # حذف السجل من قاعدة البيانات
-                    db.session.delete(old_image)
-                
-                # إضافة الصور الجديدة
+                # 1️⃣ حفظ الصور الجديدة أولاً
+                new_after_records = []
                 for image in after_images:
                     if image and image.filename:
                         image_path = save_image(image, 'workshop')
@@ -2337,7 +2363,28 @@ def edit_workshop(id):
                                 image_type='after',
                                 image_path=image_path
                             )
-                            db.session.add(image_record)
+                            new_after_records.append(image_record)
+                
+                # 2️⃣ فقط إذا نجح حفظ صور جديدة، احذف القديمة
+                if new_after_records:
+                    old_after_images = VehicleWorkshopImage.query.filter_by(
+                        workshop_record_id=workshop.id, 
+                        image_type='after'
+                    ).all()
+                    for old_image in old_after_images:
+                        if old_image.image_path:
+                            try:
+                                old_file_path = os.path.join(current_app.static_folder, old_image.image_path)
+                                if os.path.exists(old_file_path):
+                                    os.remove(old_file_path)
+                                    print(f"✅ حذف صورة قديمة: {old_file_path}")
+                            except Exception as del_err:
+                                print(f"⚠️ تحذير: لم يتم حذف الصورة: {del_err}")
+                        db.session.delete(old_image)
+                    
+                    # 3️⃣ إضافة السجلات الجديدة
+                    for record in new_after_records:
+                        db.session.add(record)
 
             db.session.commit()
 
@@ -2750,7 +2797,7 @@ def save_base64_image(base64_string, subfolder):
 def save_uploaded_file(file, subfolder):
         """
         تحفظ ملف مرفوع (من request.files) في مجلد فرعي داخل uploads،
-        وتُرجع المسار النسبي.
+        وتُرجع المسار النسبي - مع تحقق صارم من النجاح.
         """
         if not file or not file.filename:
                 return None
@@ -2763,19 +2810,31 @@ def save_uploaded_file(file, subfolder):
                 # الحصول على اسم آمن للملف وإنشاء اسم فريد
                 from werkzeug.utils import secure_filename
                 filename_secure = secure_filename(file.filename)
-                # فصل الاسم والامتداد
                 name, ext = os.path.splitext(filename_secure)
-                # إنشاء اسم فريد لمنع الكتابة فوق الملفات
                 unique_filename = f"{name}_{uuid.uuid4().hex[:8]}{ext}"
 
                 file_path = os.path.join(upload_folder, unique_filename)
                 file.save(file_path)
 
-                # إرجاع المسار النسبي
-                return os.path.join('static', 'uploads', subfolder, unique_filename)
+                # ✅ تحقق صارم من نجاح الحفظ
+                if not os.path.exists(file_path):
+                        print(f"❌ الملف غير موجود بعد الحفظ: {file_path}")
+                        return None
+                
+                file_size = os.path.getsize(file_path)
+                if file_size == 0:
+                        print(f"❌ الملف فارغ: {file_path}")
+                        os.remove(file_path)
+                        return None
+
+                relative_path = os.path.join('static', 'uploads', subfolder, unique_filename)
+                print(f"✅ حفظ نجح: {relative_path} ({file_size} bytes)")
+                return relative_path
 
         except Exception as e:
-                print(f"Error saving uploaded file: {e}")
+                print(f"❌ خطأ في حفظ الملف: {e}")
+                import traceback
+                traceback.print_exc()
                 return None
 
 
