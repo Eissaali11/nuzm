@@ -567,8 +567,10 @@ def handle_safety_check_submission(vehicle):
                         file_data = file.read()
                         file.seek(0)  # إعادة المؤشر للبداية
                         
-                        # حفظ مؤقتاً للضغط
-                        temp_path = f"/tmp/{filename}"
+                        # حفظ مؤقتاً للضغط في مجلد آمن بدلاً من /tmp
+                        temp_dir = os.path.join(current_app.static_folder, '.temp')
+                        os.makedirs(temp_dir, exist_ok=True)
+                        temp_path = os.path.join(temp_dir, filename)
                         with open(temp_path, 'wb') as f:
                             f.write(file_data)
                         
@@ -582,8 +584,12 @@ def handle_safety_check_submission(vehicle):
                         # رفع إلى Object Storage
                         object_key = upload_image(compressed_data, 'safety_checks', filename)
                         
-                        # حذف الملف المؤقت
-                        os.remove(temp_path)
+                        # حذف الملف المؤقت فقط بعد نجاح الرفع
+                        try:
+                            if os.path.exists(temp_path):
+                                os.remove(temp_path)
+                        except:
+                            pass
                         
                         # حفظ في قاعدة البيانات
                         safety_image = VehicleSafetyImage()
@@ -630,9 +636,12 @@ def handle_safety_check_submission(vehicle):
                         
                         # إنشاء اسم ملف آمن
                         filename = f"{uuid.uuid4()}.{ext}"
-                        temp_path = f"/tmp/{filename}"
                         
-                        # حفظ مؤقتاً
+                        # حفظ مؤقتاً في مجلد آمن بدلاً من /tmp
+                        temp_dir = os.path.join(current_app.static_folder, '.temp')
+                        os.makedirs(temp_dir, exist_ok=True)
+                        temp_path = os.path.join(temp_dir, filename)
+                        
                         with open(temp_path, 'wb') as f:
                             f.write(image_bytes)
                         
@@ -650,8 +659,12 @@ def handle_safety_check_submission(vehicle):
                         # رفع إلى Object Storage
                         object_key = upload_image(compressed_data, 'safety_checks', filename)
                         
-                        # حذف الملف المؤقت
-                        os.remove(temp_path)
+                        # حذف الملف المؤقت فقط بعد نجاح الرفع
+                        try:
+                            if os.path.exists(temp_path):
+                                os.remove(temp_path)
+                        except:
+                            pass
                         
                         # حفظ معلومات الصورة في قاعدة البيانات
                         description = notes_list[i] if i < len(notes_list) else None
