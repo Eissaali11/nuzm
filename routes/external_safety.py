@@ -1581,14 +1581,9 @@ def delete_external_safety_check(check_id):
     
     # POST method
     try:
-        # حذف الصور المرتبطة من الخادم
-        import os
-        for image in safety_check.safety_images:
-            if image.image_path:
-                image_full_path = os.path.join(current_app.root_path, image.image_path)
-                if os.path.exists(image_full_path):
-                    os.remove(image_full_path)
-                    current_app.logger.info(f"تم حذف الصورة: {image_full_path}")
+        # 💾 الصور تبقى محفوظة - لا نحذف الملفات الفعلية
+        # نحذف فقط المراجع من قاعدة البيانات للأمان
+        current_app.logger.info(f"💾 الصور محفوظة للأمان ({len(safety_check.safety_images)} صورة)")
         
         # تسجيل العملية قبل الحذف
         log_audit(
@@ -1792,13 +1787,8 @@ def delete_safety_check(check_id):
     try:
         safety_check = VehicleExternalSafetyCheck.query.get_or_404(check_id)
         
-        # حذف الصور المرفقة
-        for image in safety_check.safety_images:
-            try:
-                if os.path.exists(image.image_path):
-                    os.remove(image.image_path)
-            except Exception as e:
-                current_app.logger.error(f"خطأ في حذف الصورة: {str(e)}")
+        # 💾 الصور تبقى محفوظة - لا نحذف الملفات الفعلية
+        current_app.logger.info(f"💾 الصور محفوظة للأمان ({len(safety_check.safety_images)} صورة)")
         
         # تسجيل العملية قبل الحذف
         log_audit(
@@ -2268,15 +2258,9 @@ def bulk_delete_safety_checks():
         # حذف كل طلب مع صوره
         for safety_check in safety_checks:
             try:
-                # حذف الصور المرفقة من الخادم
-                images_deleted = 0
-                for image in safety_check.safety_images:
-                    if image.image_path:
-                        image_full_path = os.path.join(current_app.root_path, image.image_path)
-                        if os.path.exists(image_full_path):
-                            os.remove(image_full_path)
-                            images_deleted += 1
-                            current_app.logger.info(f"تم حذف الصورة: {image_full_path}")
+                # 💾 الصور تبقى محفوظة - لا نحذف الملفات الفعلية
+                images_count = len(safety_check.safety_images)
+                current_app.logger.info(f"💾 الصور محفوظة للأمان ({images_count} صورة)")
                 
                 # تسجيل العملية قبل الحذف
                 log_audit(

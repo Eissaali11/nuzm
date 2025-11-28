@@ -1808,21 +1808,9 @@ def upload_image(id):
         db.session.commit()
         print(f"✅ DB: تم حفظ {image_path} في قاعدة البيانات")
         
-        # 3️⃣ حذف الملف القديم فقط **بعد** نجاح حفظ الجديد
+        # 💾 الملف القديم يبقى محفوظاً - لا يتم حذف الملفات الفعلية
         if old_path:
-            try:
-                if old_path.startswith('static/'):
-                    old_file_path = old_path
-                else:
-                    old_file_path = os.path.join('static', old_path)
-                
-                if os.path.exists(old_file_path):
-                    os.remove(old_file_path)
-                    print(f"✅ FS: حذف الملف القديم {old_file_path}")
-                else:
-                    print(f"⚠️  الملف القديم غير موجود: {old_file_path}")
-            except Exception as del_err:
-                print(f"⚠️  تحذير: لم يتم حذف الملف القديم: {del_err}")
+            print(f"💾 الملف القديم محفوظ للأمان: {old_path}")
         
         # رسالة النجاح
         success_messages = {
