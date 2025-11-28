@@ -2141,15 +2141,9 @@ def share_package(operation_id):
         return redirect(url_for('operations.view_operation', operation_id=operation_id))
     
     finally:
-        # حذف المجلد المؤقت
-        if os.path.exists(temp_dir):
-            try:
-                shutil.rmtree(temp_dir)
-            except:
-                pass
-        
-        # حذف ملف ZIP بعد الإرسال (يتم في background)
-        # سيتم حذفه تلقائياً بعد فترة
+        # 💾 جميع الملفات والمجلدات تبقى محفوظة بشكل دائم في static/.temp/
+        # لا يتم حذف أي شيء - كل المعالجات آمنة
+        pass
 
 
 def get_operation_type_name(operation_type):

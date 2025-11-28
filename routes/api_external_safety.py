@@ -291,12 +291,7 @@ def upload_safety_check_image(current_employee, check_id):
         
         object_key = upload_image(compressed_data, 'safety_checks', filename)
         
-        # حذف الملف المؤقت فقط بعد نجاح الرفع
-        try:
-            if os.path.exists(temp_path):
-                os.remove(temp_path)
-        except:
-            pass
+        # 💾 الملف المؤقت يبقى محفوظاً في static/.temp/ بشكل دائم
         
         file_size = len(compressed_data)
         

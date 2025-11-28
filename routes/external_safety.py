@@ -584,12 +584,7 @@ def handle_safety_check_submission(vehicle):
                         # رفع إلى Object Storage
                         object_key = upload_image(compressed_data, 'safety_checks', filename)
                         
-                        # حذف الملف المؤقت فقط بعد نجاح الرفع
-                        try:
-                            if os.path.exists(temp_path):
-                                os.remove(temp_path)
-                        except:
-                            pass
+                        # 💾 الملف المؤقت يبقى محفوظاً في static/.temp/ بشكل دائم
                         
                         # حفظ في قاعدة البيانات
                         safety_image = VehicleSafetyImage()
@@ -659,12 +654,7 @@ def handle_safety_check_submission(vehicle):
                         # رفع إلى Object Storage
                         object_key = upload_image(compressed_data, 'safety_checks', filename)
                         
-                        # حذف الملف المؤقت فقط بعد نجاح الرفع
-                        try:
-                            if os.path.exists(temp_path):
-                                os.remove(temp_path)
-                        except:
-                            pass
+                        # 💾 الملف المؤقت يبقى محفوظاً في static/.temp/ بشكل دائم
                         
                         # حفظ معلومات الصورة في قاعدة البيانات
                         description = notes_list[i] if i < len(notes_list) else None
@@ -2404,12 +2394,7 @@ def admin_create_check_from_images():
                 # رفع إلى Object Storage
                 object_key = upload_image(compressed_data, 'safety_checks', unique_filename)
                 
-                # حذف الملف المؤقت فقط بعد نجاح الرفع
-                try:
-                    if os.path.exists(temp_path):
-                        os.remove(temp_path)
-                except:
-                    pass
+                # 💾 الملف المؤقت يبقى محفوظاً في static/.temp/ بشكل دائم
                 
                 # إنشاء سجل الصورة
                 image_record = VehicleSafetyImage()
