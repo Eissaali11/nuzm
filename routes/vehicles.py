@@ -389,7 +389,8 @@ def save_file(file, folder='vehicles'):
                 file_size = os.path.getsize(file_path)
                 if file_size == 0:
                         print(f"❌ الملف فارغ: {file_path}")
-                        os.remove(file_path)
+                        # 💾 لا نحذف الملف - نتركه للفحص اليدوي
+                        print(f"💾 الملف الفارغ محفوظ للفحص: {file_path}")
                         return None, None
 
                 # تحديد نوع الملف (صورة أو PDF)
@@ -2800,7 +2801,8 @@ def save_uploaded_file(file, subfolder):
                 file_size = os.path.getsize(file_path)
                 if file_size == 0:
                         print(f"❌ الملف فارغ: {file_path}")
-                        os.remove(file_path)
+                        # 💾 لا نحذف الملف - نتركه للفحص اليدوي
+                        print(f"💾 الملف الفارغ محفوظ للفحص: {file_path}")
                         return None
 
                 relative_path = os.path.join('static', 'uploads', subfolder, unique_filename)
@@ -5705,9 +5707,8 @@ def upload_document(id):
 
         except Exception as e:
             db.session.rollback()
-            # حذف الملف إذا فشل الحفظ في قاعدة البيانات
-            if os.path.exists(file_path):
-                os.remove(file_path)
+            # 💾 لا نحذف الملف حتى لو فشل الحفظ في DB - للفحص اليدوي
+            print(f"💾 الملف محفوظ رغم فشل DB: {file_path}")
             flash(f'خطأ في حفظ الوثيقة: {str(e)}', 'error')
 
     return redirect(url_for('vehicles.view', id=id))

@@ -3059,9 +3059,8 @@ def upload_vehicle_document(vehicle_id):
             
         except Exception as e:
             db.session.rollback()
-            # حذف الملف إذا فشل الحفظ في قاعدة البيانات
-            if os.path.exists(file_path):
-                os.remove(file_path)
+            # 💾 لا نحذف الملف حتى لو فشل الحفظ في DB - للفحص اليدوي
+            print(f"💾 الملف محفوظ رغم فشل DB: {file_path}")
             flash(f'خطأ في حفظ الوثيقة: {str(e)}', 'error')
     else:
         flash('نوع الملف غير مسموح. يرجى رفع صورة أو ملف PDF', 'error')
