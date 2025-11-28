@@ -20,11 +20,16 @@ Preferred communication style: Simple, everyday language.
     - external_safety.py: 3 locations - safety checks uploads from managers and driver camera images
     - api_external_safety.py: API endpoint for mobile app image uploads
     - operations.py: ZIP package creation for sharing operations
+  - **Additional Fix (Employees Module)**: 
+    - Removed file deletion logic from employees.py (8 locations)
+    - Fixed upload_iban, delete_iban_image, delete_housing_image functions
+    - All employee profile images, IBAN certificates, housing documents now permanent
   - **Impact**: 
     - ✅ Zero file loss - all uploaded files are permanent
     - ✅ All temporary files retained for recovery/debugging
     - ✅ Complete audit trail of all file operations
     - ✅ Users can download/access files anytime
+    - ✅ Employee documents never lost (IBAN, housing, passport, national address)
 - **Nov 27, 2025**: GPS Performance & Geofence Cleanup Optimization:
   - **GPS 5-Minute Throttling System**: Implemented smart rate limiting to accept location updates every 5 minutes only, reducing server load by 80%. Single employee (HAMED) reduced from 56 requests to ~12 requests per tracking session.
   - **Smart Caching**: Automatic skip of location data if distance change < 100 meters (100m minimum distance threshold)

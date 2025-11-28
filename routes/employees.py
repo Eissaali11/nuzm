@@ -85,9 +85,8 @@ def save_employee_image(file, employee_id, image_type):
         
         file_size = os.path.getsize(filepath)
         if file_size == 0:
-            print(f"❌ الملف فارغ: {filepath}")
-            os.remove(filepath)
-            return None
+            print(f"⚠️ الملف فارغ: {filepath} - يتم الاحتفاظ به للأمان")
+            # 💾 لا يتم حذف الملفات - الاحتفاظ بجميع الملفات بشكل دائم
         
         relative_path = f"uploads/employees/{unique_filename}"
         print(f"✅ حفظ نجح: {relative_path} ({file_size} bytes)")
@@ -562,48 +561,28 @@ def edit(id):
             # معالجة رفع صورة شهادة الإيبان
             bank_iban_image_file = request.files.get('bank_iban_image')
             if bank_iban_image_file and bank_iban_image_file.filename:
-                # حذف الصورة القديمة إذا كانت موجودة
-                if employee.bank_iban_image:
-                    old_image_path = os.path.join('static', employee.bank_iban_image)
-                    if os.path.exists(old_image_path):
-                        os.remove(old_image_path)
-                
+                # 💾 لا يتم حذف الصورة القديمة - الاحتفاظ بجميع الملفات بشكل دائم
                 # حفظ الصورة الجديدة
                 employee.bank_iban_image = save_employee_image(bank_iban_image_file, id, 'iban')
             
             # معالجة رفع ملف العرض الوظيفي
             job_offer_file = request.files.get('job_offer_file')
             if job_offer_file and job_offer_file.filename:
-                # حذف الملف القديم إذا كان موجوداً
-                if employee.job_offer_file:
-                    old_file_path = os.path.join('static', employee.job_offer_file)
-                    if os.path.exists(old_file_path):
-                        os.remove(old_file_path)
-                
+                # 💾 لا يتم حذف الملف القديم - الاحتفاظ بجميع الملفات بشكل دائم
                 # حفظ الملف الجديد
                 employee.job_offer_file = save_employee_image(job_offer_file, id, 'job_offer')
             
             # معالجة رفع صورة الجواز
             passport_image_file = request.files.get('passport_image_file')
             if passport_image_file and passport_image_file.filename:
-                # حذف الصورة القديمة إذا كانت موجودة
-                if employee.passport_image_file:
-                    old_file_path = os.path.join('static', employee.passport_image_file)
-                    if os.path.exists(old_file_path):
-                        os.remove(old_file_path)
-                
+                # 💾 لا يتم حذف الصورة القديمة - الاحتفاظ بجميع الملفات بشكل دائم
                 # حفظ الصورة الجديدة
                 employee.passport_image_file = save_employee_image(passport_image_file, id, 'passport')
             
             # معالجة رفع شهادة العنوان الوطني
             national_address_file = request.files.get('national_address_file')
             if national_address_file and national_address_file.filename:
-                # حذف الملف القديم إذا كان موجوداً
-                if employee.national_address_file:
-                    old_file_path = os.path.join('static', employee.national_address_file)
-                    if os.path.exists(old_file_path):
-                        os.remove(old_file_path)
-                
+                # 💾 لا يتم حذف الملف القديم - الاحتفاظ بجميع الملفات بشكل دائم
                 # حفظ الملف الجديد
                 employee.national_address_file = save_employee_image(national_address_file, id, 'national_address')
             
@@ -1015,12 +994,7 @@ def upload_iban(id):
         
         # رفع صورة الإيبان إذا تم اختيارها
         if iban_file and iban_file.filename:
-            # حذف الصورة القديمة إذا كانت موجودة
-            if employee.bank_iban_image:
-                old_image_path = os.path.join('static', employee.bank_iban_image)
-                if os.path.exists(old_image_path):
-                    os.remove(old_image_path)
-            
+            # 💾 لا يتم حذف الصورة القديمة - الاحتفاظ بجميع الملفات بشكل دائم
             # حفظ الصورة الجديدة
             image_path = save_employee_image(iban_file, employee.id, 'iban')
             if image_path:
@@ -1048,19 +1022,15 @@ def delete_iban_image(id):
     
     try:
         if employee.bank_iban_image:
-            # حذف الملف من الخادم
-            image_path = os.path.join('static', employee.bank_iban_image)
-            if os.path.exists(image_path):
-                os.remove(image_path)
-            
-            # حذف المسار من قاعدة البيانات
+            # 💾 الملف يبقى محفوظاً - نحذف فقط المرجع من قاعدة البيانات
+            # لكن نحتفظ بالملف الفعلي في النظام للأمان
             employee.bank_iban_image = None
             db.session.commit()
             
             # تسجيل العملية
-            log_activity('delete', 'Employee', employee.id, f'تم حذف صورة الإيبان البنكي للموظف: {employee.name}')
+            log_activity('delete', 'Employee', employee.id, f'تم إزالة مرجع صورة الإيبان البنكي للموظف: {employee.name} (الملف محفوظ)')
             
-            flash('تم حذف صورة الإيبان البنكي بنجاح', 'success')
+            flash('تم إزالة صورة الإيبان البنكي (الملف محفوظ بشكل آمن)', 'success')
         else:
             flash('لا توجد صورة إيبان لحذفها', 'warning')
             
@@ -1100,19 +1070,17 @@ def delete_housing_image(id):
                 # حذف الصورة من القائمة
                 image_list.remove(image_to_remove)
                 
-                # حذف الملف من الخادم
-                full_path = os.path.join('static', clean_image_path)
-                if os.path.exists(full_path):
-                    os.remove(full_path)
+                # 💾 الملف يبقى محفوظاً - نحذف فقط المرجع من قاعدة البيانات
+                # لكن نحتفظ بالملف الفعلي في النظام للأمان
                 
                 # تحديث قاعدة البيانات
                 employee.housing_images = ','.join(image_list) if image_list else None
                 db.session.commit()
                 
                 # تسجيل العملية
-                log_activity('delete', 'Employee', employee.id, f'تم حذف صورة من صور السكن للموظف: {employee.name}')
+                log_activity('delete', 'Employee', employee.id, f'تم إزالة صورة من صور السكن للموظف: {employee.name} (الملف محفوظ)')
                 
-                flash('تم حذف الصورة بنجاح', 'success')
+                flash('تم إزالة الصورة (الملف محفوظ بشكل آمن)', 'success')
             else:
                 flash('لم يتم العثور على الصورة في القائمة', 'warning')
         else:
