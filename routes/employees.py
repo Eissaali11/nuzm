@@ -1826,24 +1826,38 @@ def upload_image(id):
                 old_path = employee.license_image
                 employee.license_image = image_path
             
-            # حذف الصورة القديمة من الملفات
+            # حذف الصورة القديمة من الملفات - بحذر
             if old_path:
-                old_file_path = os.path.join('static', old_path)
-                if os.path.exists(old_file_path):
-                    os.remove(old_file_path)
+                # محاولة بناء المسار الصحيح
+                if old_path.startswith('static/'):
+                    old_file_path = old_path
+                else:
+                    old_file_path = os.path.join('static', old_path)
+                
+                # التحقق والحذف بأمان
+                try:
+                    if os.path.exists(old_file_path):
+                        os.remove(old_file_path)
+                        print(f"✅ تم حذف الملف القديم: {old_file_path}")
+                except Exception as del_err:
+                    print(f"⚠️  تحذير: فشل حذف الملف القديم: {del_err}")
+                    # لا نرفع استثناء - الملف الجديد محفوظ بالفعل
             
+            # حفظ الصورة الجديدة في قاعدة البيانات قبل حذف القديمة
             db.session.commit()
+            print(f"✅ تم حفظ الصورة الجديدة: {image_path}")
             
             # رسائل النجاح حسب نوع الصورة
             success_messages = {
-                'profile': 'تم رفع الصورة الشخصية بنجاح',
-                'national_id': 'تم رفع صورة الهوية بنجاح',
-                'license': 'تم رفع صورة الرخصة بنجاح'
+                'profile': 'تم رفع الصورة الشخصية بنجاح ✅',
+                'national_id': 'تم رفع صورة الهوية بنجاح ✅',
+                'license': 'تم رفع صورة الرخصة بنجاح ✅'
             }
             flash(success_messages[image_type], 'success')
             
         except Exception as e:
             db.session.rollback()
+            print(f"❌ خطأ في حفظ الصورة: {str(e)}")
             flash(f'خطأ في حفظ الصورة: {str(e)}', 'danger')
     else:
         flash('فشل في رفع الصورة. تأكد من أن الملف من النوع المسموح (PNG, JPG, JPEG, GIF)', 'danger')
