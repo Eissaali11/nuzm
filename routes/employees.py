@@ -26,41 +26,71 @@ def allowed_file(filename):
     """التحقق من أن الملف من الأنواع المسموحة"""
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+def verify_employee_image(image_path):
+    """التحقق من وجود الملف وإرجاع المسار الصحيح أو None"""
+    if not image_path:
+        return None
+    
+    # إذا كان المسار يبدأ بـ static/، لا نضيف static/ مرة أخرى
+    if image_path.startswith('static/'):
+        full_path = image_path
+    else:
+        full_path = f'static/{image_path}'
+    
+    # التحقق من وجود الملف
+    if os.path.exists(full_path) and os.path.getsize(full_path) > 0:
+        return image_path
+    else:
+        # الملف غير موجود - حاول البحث عن أحدث ملف للموظف والنوع
+        return None
+
 def save_employee_image(file, employee_id, image_type):
     """حفظ صورة الموظف وإرجاع المسار"""
     if file and file.filename:
-        # التأكد من وجود المجلد
-        os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-        
-        # إنشاء اسم ملف فريد
-        filename = secure_filename(file.filename)
-        name, ext = os.path.splitext(filename)
-        
-        # إذا لم يكن هناك امتداد، نستنتجه من نوع الملف
-        if not ext:
-            # محاولة استخراج الامتداد من content_type
-            content_type = file.content_type
-            if content_type:
-                if 'pdf' in content_type:
-                    ext = '.pdf'
-                elif 'jpeg' in content_type or 'jpg' in content_type:
-                    ext = '.jpg'
-                elif 'png' in content_type:
-                    ext = '.png'
-                elif 'gif' in content_type:
-                    ext = '.gif'
+        try:
+            # التأكد من وجود المجلد
+            os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+            
+            # إنشاء اسم ملف فريد
+            filename = secure_filename(file.filename)
+            name, ext = os.path.splitext(filename)
+            
+            # إذا لم يكن هناك امتداد، نستنتجه من نوع الملف
+            if not ext:
+                # محاولة استخراج الامتداد من content_type
+                content_type = file.content_type
+                if content_type:
+                    if 'pdf' in content_type:
+                        ext = '.pdf'
+                    elif 'jpeg' in content_type or 'jpg' in content_type:
+                        ext = '.jpg'
+                    elif 'png' in content_type:
+                        ext = '.png'
+                    elif 'gif' in content_type:
+                        ext = '.gif'
+                    else:
+                        ext = '.jpg'  # افتراضي
                 else:
                     ext = '.jpg'  # افتراضي
+            
+            unique_filename = f"{employee_id}_{image_type}_{datetime.now().strftime('%Y%m%d_%H%M%S')}{ext}"
+            
+            filepath = os.path.join(UPLOAD_FOLDER, unique_filename)
+            
+            # حفظ الملف والتأكد من النجاح
+            file.save(filepath)
+            
+            # التحقق من وجود الملف بعد الحفظ
+            if os.path.exists(filepath) and os.path.getsize(filepath) > 0:
+                relative_path = f"uploads/employees/{unique_filename}"
+                print(f"✅ تم حفظ الصورة: {relative_path} ({os.path.getsize(filepath)} bytes)")
+                return relative_path
             else:
-                ext = '.jpg'  # افتراضي
-        
-        unique_filename = f"{employee_id}_{image_type}_{datetime.now().strftime('%Y%m%d_%H%M%S')}{ext}"
-        
-        filepath = os.path.join(UPLOAD_FOLDER, unique_filename)
-        file.save(filepath)
-        
-        # إرجاع المسار النسبي للحفظ في قاعدة البيانات (بدون static/ في البداية)
-        return f"uploads/employees/{unique_filename}"
+                print(f"❌ فشل حفظ الصورة: الملف غير موجود أو فارغ {filepath}")
+                return None
+        except Exception as e:
+            print(f"❌ خطأ في حفظ الصورة: {str(e)}")
+            return None
     return None
 
 @employees_bp.route('/')
