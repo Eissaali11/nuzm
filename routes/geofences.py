@@ -319,7 +319,7 @@ def view(geofence_id):
     }
     
     return render_template(
-        'geofences/view_new.html',
+        'geofences/view.html',
         geofence=geofence,
         employees_inside=employees_inside,
         all_employees=all_employees,
