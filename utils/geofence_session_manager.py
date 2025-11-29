@@ -1,47 +1,118 @@
 """
-Geofence Session Manager
-إدارة جلسات دخول/خروج الموظفين من الدوائر الجغرافية
+Geofence Session Manager - نظام ذكي لإدارة جلسات الموظفين
+==========================================================
+النظام يدمج الجلسات القريبة (نفس الساعة) تلقائياً ويتعامل مع الفترات الطويلة.
+
+السياسة:
+- إذا دخل وخرج ودخل وخرج في الساعة = دخول واحد
+- إذا دخل صباحاً ولم يخرج، ثم عاد مساءً وخرج = جلستان (صباحي + مسائي)
 """
 from models import GeofenceSession, GeofenceEvent, db
-from datetime import datetime
+from datetime import datetime, timedelta
 import logging
 
 logger = logging.getLogger(__name__)
 
+# الإعدادات
+MAX_GAP_BETWEEN_SESSIONS = 60  # 60 دقيقة - الفاصل الزمني المقبول لدمج الجلسات
+MINIMUM_BREAK_FOR_NEW_SESSION = 120  # 120 دقيقة - فاصل زمني لاعتبار جلسة جديدة
+
 
 class SessionManager:
-    """مدير الجلسات - يربط أحداث الدخول والخروج في جلسات كاملة"""
+    """مدير الجلسات الذكي - يدمج الجلسات القريبة ويتعامل مع الفترات الطويلة"""
+    
+    @staticmethod
+    def find_mergeable_session(employee_id, geofence_id, current_time):
+        """
+        البحث عن جلسة مغلقة حديثة يمكن دمجها مع الجلسة الحالية
+        الشروط:
+        - جلسة مغلقة (لا نشطة)
+        - من نفس الموظف والدائرة
+        - خروج الجلسة السابقة قريب من الدخول الحالي (أقل من MAX_GAP_BETWEEN_SESSIONS)
+        """
+        last_closed_session = GeofenceSession.query.filter(
+            GeofenceSession.employee_id == employee_id,
+            GeofenceSession.geofence_id == geofence_id,
+            GeofenceSession.is_active == False  # مغلقة
+        ).order_by(GeofenceSession.exit_time.desc()).first()
+        
+        if not last_closed_session or not last_closed_session.exit_time:
+            return None
+        
+        # حساب الفاصل الزمني بين الخروج السابق والدخول الحالي
+        gap = (current_time - last_closed_session.exit_time).total_seconds() / 60
+        
+        if gap <= MAX_GAP_BETWEEN_SESSIONS:
+            logger.info(
+                f"🔀 دمج جلسات: الفاصل الزمني {gap:.1f} دقيقة "
+                f"(أقل من {MAX_GAP_BETWEEN_SESSIONS} دقيقة)"
+            )
+            return last_closed_session
+        else:
+            logger.info(
+                f"🆕 جلسة جديدة: الفاصل الزمني {gap:.1f} دقيقة "
+                f"(أكثر من {MAX_GAP_BETWEEN_SESSIONS} دقيقة)"
+            )
+            return None
     
     @staticmethod
     def process_enter_event(employee_id, geofence_id, event):
         """
-        معالجة حدث دخول - إنشاء جلسة جديدة
+        معالجة حدث دخول - إنشاء أو دمج جلسة
         
-        Args:
-            employee_id: معرف الموظف
-            geofence_id: معرف الدائرة الجغرافية
-            event: كائن GeofenceEvent
+        منطق ذكي:
+        1. البحث عن جلسة مفتوحة نشطة
+           - إذا وجدت: تحديث وقت الدخول (في حالة دخولات متتالية)
+        2. البحث عن جلسة مغلقة حديثة (آخر دقيقة)
+           - إذا وجدت: إعادة فتحها (دمج الجلسات)
+        3. إذا لم توجد: إنشاء جلسة جديدة تماماً
         """
         try:
-            # التحقق من وجود جلسة مفتوحة بالفعل
-            existing_session = GeofenceSession.query.filter_by(
+            # 1️⃣ التحقق من جلسة مفتوحة نشطة بالفعل
+            existing_active_session = GeofenceSession.query.filter_by(
                 employee_id=employee_id,
                 geofence_id=geofence_id,
                 is_active=True
             ).first()
             
-            if existing_session:
-                # موجود جلسة مفتوحة - تحديث بيانات الدخول
+            if existing_active_session:
                 logger.warning(
-                    f"⚠️ جلسة مفتوحة موجودة بالفعل للموظف {employee_id} في الدائرة {geofence_id}. "
-                    "سيتم تحديث وقت الدخول."
+                    f"⚠️ جلسة نشطة موجودة بالفعل للموظف {employee_id}. "
+                    f"سيتم تحديث وقت الدخول من {existing_active_session.entry_time} "
+                    f"إلى {event.recorded_at}"
                 )
-                existing_session.entry_time = event.recorded_at
-                existing_session.entry_event_id = event.id
-                existing_session.updated_at = datetime.utcnow()
-                return existing_session
+                existing_active_session.entry_time = event.recorded_at
+                existing_active_session.entry_event_id = event.id
+                existing_active_session.updated_at = datetime.utcnow()
+                return existing_active_session
             
-            # إنشاء جلسة جديدة
+            # 2️⃣ البحث عن جلسة مغلقة حديثة لدمجها
+            mergeable_session = SessionManager.find_mergeable_session(
+                employee_id, geofence_id, event.recorded_at
+            )
+            
+            if mergeable_session:
+                # إعادة فتح الجلسة السابقة (دمج)
+                logger.info(
+                    f"🔄 إعادة فتح جلسة مدمجة: الموظف {employee_id}، "
+                    f"الدخول السابق: {mergeable_session.entry_time}، "
+                    f"الخروج السابق: {mergeable_session.exit_time}، "
+                    f"الدخول الجديد: {event.recorded_at}"
+                )
+                mergeable_session.is_active = True
+                mergeable_session.exit_time = None  # محو وقت الخروج السابق
+                mergeable_session.duration_minutes = None
+                mergeable_session.exit_event_id = None
+                mergeable_session.entry_event_id = event.id  # تحديث حدث الدخول
+                mergeable_session.updated_at = datetime.utcnow()
+                
+                logger.info(
+                    f"✅ جلسة مدمجة: الموظف {employee_id} - "
+                    f"بقيت من {mergeable_session.entry_time}"
+                )
+                return mergeable_session
+            
+            # 3️⃣ إنشاء جلسة جديدة تماماً
             session = GeofenceSession(
                 geofence_id=geofence_id,
                 employee_id=employee_id,
@@ -52,14 +123,14 @@ class SessionManager:
             db.session.add(session)
             
             logger.info(
-                f"✅ جلسة جديدة للموظف {employee_id} في الدائرة {geofence_id} "
+                f"✅ جلسة جديدة: الموظف {employee_id} في الدائرة {geofence_id} "
                 f"بدأت في {event.recorded_at}"
             )
             
             return session
             
         except Exception as e:
-            logger.error(f"خطأ في معالجة حدث الدخول: {str(e)}")
+            logger.error(f"❌ خطأ في معالجة حدث الدخول: {str(e)}")
             raise
     
     @staticmethod
@@ -83,12 +154,10 @@ class SessionManager:
             if not open_session:
                 # خروج بدون دخول - إنشاء جلسة اصطناعية
                 logger.warning(
-                    f"⚠️ حدث خروج بدون دخول للموظف {employee_id} في الدائرة {geofence_id}. "
-                    "سيتم إنشاء جلسة اصطناعية."
+                    f"⚠️ خروج بدون دخول للموظف {employee_id} في الدائرة {geofence_id}. "
+                    f"سيتم إنشاء جلسة اصطناعية."
                 )
                 
-                # إنشاء جلسة بوقت دخول افتراضي (قبل ساعة من الخروج)
-                from datetime import timedelta
                 synthetic_entry_time = event.recorded_at - timedelta(hours=1)
                 
                 session = GeofenceSession(
@@ -102,38 +171,33 @@ class SessionManager:
                 session.calculate_duration()
                 db.session.add(session)
                 
-                logger.info(f"📝 جلسة اصطناعية تم إنشاؤها للموظف {employee_id}")
+                logger.info(f"📝 جلسة اصطناعية: الموظف {employee_id}")
                 return session
             
             # إغلاق الجلسة المفتوحة
             open_session.exit_event_id = event.id
             open_session.exit_time = event.recorded_at
             open_session.is_active = False
-            open_session.calculate_duration()
+            duration = open_session.calculate_duration()
             open_session.updated_at = datetime.utcnow()
             
             logger.info(
-                f"✅ جلسة مغلقة للموظف {employee_id} في الدائرة {geofence_id}. "
-                f"المدة: {open_session.duration_minutes} دقيقة"
+                f"✅ جلسة مغلقة: الموظف {employee_id} في الدائرة {geofence_id}. "
+                f"الدخول: {open_session.entry_time.strftime('%H:%M')} | "
+                f"الخروج: {event.recorded_at.strftime('%H:%M')} | "
+                f"المدة: {duration} دقيقة"
             )
             
             return open_session
             
         except Exception as e:
-            logger.error(f"خطأ في معالجة حدث الخروج: {str(e)}")
+            logger.error(f"❌ خطأ في معالجة حدث الخروج: {str(e)}")
             raise
     
     @staticmethod
     def get_active_sessions(geofence_id=None, employee_id=None):
         """
         جلب الجلسات النشطة (الموظفون داخل الدائرة الآن)
-        
-        Args:
-            geofence_id: معرف الدائرة (اختياري)
-            employee_id: معرف الموظف (اختياري)
-        
-        Returns:
-            قائمة الجلسات النشطة
         """
         query = GeofenceSession.query.filter_by(is_active=True)
         
@@ -149,20 +213,11 @@ class SessionManager:
     def get_employee_total_time(employee_id, geofence_id, start_date=None, end_date=None):
         """
         حساب إجمالي الوقت الذي قضاه الموظف في الدائرة
-        
-        Args:
-            employee_id: معرف الموظف
-            geofence_id: معرف الدائرة
-            start_date: تاريخ البداية (اختياري)
-            end_date: تاريخ النهاية (اختياري)
-        
-        Returns:
-            إجمالي الوقت بالدقائق
         """
         query = GeofenceSession.query.filter_by(
             employee_id=employee_id,
             geofence_id=geofence_id,
-            is_active=False  # جلسات مغلقة فقط
+            is_active=False
         )
         
         if start_date:
@@ -180,15 +235,6 @@ class SessionManager:
     def get_employee_visit_count(employee_id, geofence_id, start_date=None, end_date=None):
         """
         حساب عدد زيارات الموظف للدائرة
-        
-        Args:
-            employee_id: معرف الموظف
-            geofence_id: معرف الدائرة
-            start_date: تاريخ البداية (اختياري)
-            end_date: تاريخ النهاية (اختياري)
-        
-        Returns:
-            عدد الزيارات
         """
         query = GeofenceSession.query.filter_by(
             employee_id=employee_id,
