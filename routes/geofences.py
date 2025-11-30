@@ -1385,3 +1385,160 @@ def export_attendance(geofence_id):
         as_attachment=True,
         download_name=filename
     )
+
+
+@geofences_bp.route('/<int:geofence_id>/export-sessions', methods=['GET'])
+@login_required
+def export_sessions(geofence_id):
+    """تصدير جلسات الموظفين (وقت الوصول والمغادرة) إلى Excel احترافي"""
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, Alignment, PatternFill, Border, Side, GradientFill
+    from openpyxl.utils import get_column_letter
+    from io import BytesIO
+    
+    try:
+        geofence = Geofence.query.get_or_404(geofence_id)
+        
+        all_sessions = GeofenceSession.query.filter_by(
+            geofence_id=geofence_id
+        ).options(
+            db.joinedload(GeofenceSession.employee)
+        ).order_by(GeofenceSession.entry_time.desc()).limit(500).all()
+        
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "جلسات الموظفين"
+        ws.sheet_view.rightToLeft = True
+        
+        header_fill = PatternFill(start_color="4F46E5", end_color="4F46E5", fill_type="solid")
+        header_font = Font(name='Arial', size=12, bold=True, color="FFFFFF")
+        title_font = Font(name='Arial', size=16, bold=True, color="4F46E5")
+        border = Border(
+            left=Side(style='thin', color='E5E7EB'),
+            right=Side(style='thin', color='E5E7EB'),
+            top=Side(style='thin', color='E5E7EB'),
+            bottom=Side(style='thin', color='E5E7EB')
+        )
+        
+        active_fill = PatternFill(start_color="D1FAE5", end_color="D1FAE5", fill_type="solid")
+        active_font = Font(name='Arial', color="065F46", bold=True)
+        inactive_fill = PatternFill(start_color="F3F4F6", end_color="F3F4F6", fill_type="solid")
+        inactive_font = Font(name='Arial', color="6B7280", bold=True)
+        
+        ws.merge_cells('A1:H1')
+        title_cell = ws.cell(row=1, column=1)
+        title_cell.value = f"📊 جلسات الموظفين - {geofence.name}"
+        title_cell.font = title_font
+        title_cell.alignment = Alignment(horizontal='center', vertical='center')
+        ws.row_dimensions[1].height = 35
+        
+        ws.merge_cells('A2:H2')
+        subtitle_cell = ws.cell(row=2, column=1)
+        sa_now = datetime.utcnow() + timedelta(hours=3)
+        subtitle_cell.value = f"تاريخ التصدير: {sa_now.strftime('%Y-%m-%d %H:%M')} | إجمالي الجلسات: {len(all_sessions)}"
+        subtitle_cell.font = Font(name='Arial', size=10, color="6B7280")
+        subtitle_cell.alignment = Alignment(horizontal='center', vertical='center')
+        ws.row_dimensions[2].height = 25
+        
+        headers = ['#', 'رقم الموظف', 'اسم الموظف', 'تاريخ الجلسة', 'وقت الدخول', 'وقت الخروج', 'المدة', 'الحالة']
+        
+        for col_num, header in enumerate(headers, 1):
+            cell = ws.cell(row=4, column=col_num)
+            cell.value = header
+            cell.fill = header_fill
+            cell.font = header_font
+            cell.alignment = Alignment(horizontal='center', vertical='center')
+            cell.border = border
+        ws.row_dimensions[4].height = 30
+        
+        row_num = 5
+        for idx, session in enumerate(all_sessions, 1):
+            entry_time_sa = session.entry_time + timedelta(hours=3) if session.entry_time else None
+            exit_time_sa = session.exit_time + timedelta(hours=3) if session.exit_time else None
+            
+            session_date = entry_time_sa.strftime('%Y-%m-%d') if entry_time_sa else '-'
+            entry_time_str = entry_time_sa.strftime('%I:%M %p') if entry_time_sa else '-'
+            exit_time_str = exit_time_sa.strftime('%I:%M %p') if exit_time_sa else 'لا يزال بالداخل'
+            
+            if session.duration_minutes:
+                if session.duration_minutes < 60:
+                    duration_str = f"{session.duration_minutes} دقيقة"
+                else:
+                    hours = session.duration_minutes // 60
+                    mins = session.duration_minutes % 60
+                    if mins > 0:
+                        duration_str = f"{hours} ساعة و {mins} دقيقة"
+                    else:
+                        duration_str = f"{hours} ساعة"
+            else:
+                duration_str = 'جاري الحساب...'
+            
+            is_active = session.exit_time is None
+            status_text = '🟢 داخل الدائرة' if is_active else '⚪ غادر'
+            
+            row_data = [
+                idx,
+                session.employee.employee_id if session.employee else '-',
+                session.employee.name if session.employee else '-',
+                session_date,
+                entry_time_str,
+                exit_time_str,
+                duration_str,
+                status_text
+            ]
+            
+            for col_num, value in enumerate(row_data, 1):
+                cell = ws.cell(row=row_num, column=col_num)
+                cell.value = value
+                cell.border = border
+                cell.alignment = Alignment(horizontal='center', vertical='center')
+                cell.font = Font(name='Arial', size=11)
+                
+                if col_num == 8:
+                    if is_active:
+                        cell.fill = active_fill
+                        cell.font = active_font
+                    else:
+                        cell.fill = inactive_fill
+                        cell.font = inactive_font
+                
+                if row_num % 2 == 0 and col_num != 8:
+                    cell.fill = PatternFill(start_color="F9FAFB", end_color="F9FAFB", fill_type="solid")
+            
+            ws.row_dimensions[row_num].height = 28
+            row_num += 1
+        
+        column_widths = [8, 15, 25, 15, 15, 18, 20, 18]
+        for col_num, width in enumerate(column_widths, 1):
+            ws.column_dimensions[get_column_letter(col_num)].width = width
+        
+        stats_row = row_num + 2
+        ws.merge_cells(f'A{stats_row}:H{stats_row}')
+        stats_cell = ws.cell(row=stats_row, column=1)
+        
+        active_count = sum(1 for s in all_sessions if s.exit_time is None)
+        total_duration = sum(s.duration_minutes or 0 for s in all_sessions)
+        avg_duration = total_duration // len(all_sessions) if all_sessions else 0
+        
+        stats_cell.value = f"📈 إحصائيات: داخل الدائرة حالياً: {active_count} | إجمالي المدة: {total_duration // 60} ساعة | متوسط المدة: {avg_duration} دقيقة"
+        stats_cell.font = Font(name='Arial', size=11, bold=True, color="4F46E5")
+        stats_cell.alignment = Alignment(horizontal='center', vertical='center')
+        stats_cell.fill = PatternFill(start_color="EEF2FF", end_color="EEF2FF", fill_type="solid")
+        ws.row_dimensions[stats_row].height = 30
+        
+        output = BytesIO()
+        wb.save(output)
+        output.seek(0)
+        
+        filename = f"جلسات_الموظفين_{geofence.name}_{sa_now.strftime('%Y%m%d_%H%M')}.xlsx"
+        
+        return send_file(
+            output,
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            as_attachment=True,
+            download_name=filename
+        )
+    
+    except Exception as e:
+        flash(f'خطأ في تصدير الجلسات: {str(e)}', 'danger')
+        return redirect(url_for('geofences.view', geofence_id=geofence_id))

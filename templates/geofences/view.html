@@ -1112,12 +1112,16 @@
                 
                 <!-- قسم جديد: جلسات الموظفين -->
                 <div class="employees-card">
-                    <div class="card-header">
-                        <h2>
+                    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                        <h2 style="margin: 0; display: flex; align-items: center; gap: 10px;">
                             <i class="fas fa-history"></i> 
                             جلسات الموظفين (وقت الوصول والمغادرة)
-                            <span class="badge" style="margin-right: auto;">{{ all_sessions|length }}</span>
+                            <span class="badge">{{ all_sessions|length }}</span>
                         </h2>
+                        <a href="/employees/geofences/{{ geofence.id }}/export-sessions" class="btn btn-success btn-sm" style="display: flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 8px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: none; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); transition: all 0.3s ease;">
+                            <i class="fas fa-file-excel"></i>
+                            تصدير Excel
+                        </a>
                     </div>
                     <div class="employees-list" style="max-height: 600px; overflow-y: auto;">
                         {% if all_sessions %}
