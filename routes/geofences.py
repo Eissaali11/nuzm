@@ -199,6 +199,13 @@ def view(geofence_id):
         db.joinedload(GeofenceSession.employee)
     ).order_by(GeofenceSession.entry_time.desc()).limit(100).all()
     
+    # إضافة أوقات محولة إلى توقيت السعودية (+3 ساعات) لكل جلسة
+    for session in all_sessions:
+        if session.entry_time:
+            session.entry_time_sa = session.entry_time + timedelta(hours=3)
+        if session.exit_time:
+            session.exit_time_sa = session.exit_time + timedelta(hours=3)
+    
     # حساب إحصائيات الموظفين
     employee_stats = {}
     for emp in geofence.assigned_employees:

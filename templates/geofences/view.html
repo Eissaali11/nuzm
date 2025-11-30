@@ -1093,13 +1093,13 @@
                                     <div style="display: flex; align-items: center; gap: 8px; font-size: 13px;">
                                         <i class="fas fa-sign-in-alt" style="color: #10b981;"></i>
                                         <span style="color: #c7d2fe;">وقت الدخول:</span>
-                                        <strong style="color: #fff;">{% if session.entry_time %}{{ (session.entry_time.replace(tzinfo=None) + __import__('datetime').timedelta(hours=3)).strftime('%I:%M %p') }}{% else %}-{% endif %}</strong>
+                                        <strong style="color: #fff;">{{ session.entry_time_sa.strftime('%I:%M %p') if session.entry_time_sa else '-' }}</strong>
                                     </div>
                                     
                                     <div style="display: flex; align-items: center; gap: 8px; font-size: 13px;">
                                         <i class="fas fa-sign-out-alt" style="color: #ef4444;"></i>
                                         <span style="color: #c7d2fe;">وقت الخروج:</span>
-                                        <strong style="color: #fff;">{% if session.exit_time %}{{ (session.exit_time.replace(tzinfo=None) + __import__('datetime').timedelta(hours=3)).strftime('%I:%M %p') }}{% else %}لا يزال بالداخل{% endif %}</strong>
+                                        <strong style="color: #fff;">{{ session.exit_time_sa.strftime('%I:%M %p') if session.exit_time_sa else 'لا يزال بالداخل' }}</strong>
                                     </div>
                                     
                                     <div style="display: flex; align-items: center; gap: 8px; font-size: 13px;">
@@ -1121,7 +1121,7 @@
                                     <div style="display: flex; align-items: center; gap: 8px; font-size: 13px;">
                                         <i class="fas fa-calendar" style="color: #a78bfa;"></i>
                                         <span style="color: #c7d2fe;">التاريخ:</span>
-                                        <strong style="color: #fff;">{% if session.entry_time %}{{ (session.entry_time.replace(tzinfo=None) + __import__('datetime').timedelta(hours=3)).strftime('%Y-%m-%d') }}{% else %}-{% endif %}</strong>
+                                        <strong style="color: #fff;">{{ session.entry_time_sa.strftime('%Y-%m-%d') if session.entry_time_sa else '-' }}</strong>
                                     </div>
                                 </div>
                             </div>
