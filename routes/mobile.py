@@ -5594,8 +5594,84 @@ def offline():
 # نقطة نهاية للتحقق من حالة الاتصال - النسخة المحمولة
 @mobile_bp.route('/api/check-connection')
 def check_connection():
-    """نقطة نهاية للتحقق من حالة الاتصال للنسخة المحمولة"""
-    return jsonify({'status': 'online', 'timestamp': datetime.now().isoformat()})
+    """نقطة نهاية للتحقق من حالة الاتصال والتتبع للنسخة المحمولة"""
+    try:
+        # ✅ التحقق من اتصال قاعدة البيانات
+        from sqlalchemy import text
+        db.session.execute(text("SELECT 1"))
+        
+        return jsonify({
+            'status': 'online',
+            'tracking_status': 'active',
+            'database': 'connected',
+            'timestamp': datetime.now().isoformat(),
+            'message': 'تطبيق النُظم جاهز'
+        }), 200
+    except Exception as e:
+        # ❌ في حالة فشل الاتصال
+        current_app.logger.error(f"Connection check failed: {str(e)}")
+        return jsonify({
+            'status': 'offline',
+            'tracking_status': 'stopped',
+            'database': 'disconnected',
+            'timestamp': datetime.now().isoformat()
+        }), 503
+
+
+@mobile_bp.route('/api/tracking-status/<int:employee_id>')
+def tracking_status(employee_id):
+    """الحصول على حالة التتبع والموقع الحالي للموظف"""
+    try:
+        employee = Employee.query.get(employee_id)
+        if not employee:
+            return jsonify({
+                'success': False,
+                'tracking_status': 'unknown',
+                'error': 'الموظف غير موجود'
+            }), 404
+        
+        # جلب آخر موقع
+        latest_location = EmployeeLocation.query.filter_by(
+            employee_id=employee_id
+        ).order_by(EmployeeLocation.recorded_at.desc()).first()
+        
+        # جلب آخر جلسة جيوفنس
+        from models import GeofenceSession
+        latest_session = GeofenceSession.query.filter_by(
+            employee_id=employee_id
+        ).order_by(GeofenceSession.entry_time.desc()).first()
+        
+        tracking_active = latest_location is not None and (
+            datetime.utcnow() - latest_location.recorded_at
+        ).total_seconds() < 3600  # آخر ساعة
+        
+        return jsonify({
+            'success': True,
+            'tracking_status': 'active' if tracking_active else 'inactive',
+            'employee': {
+                'id': employee.id,
+                'name': employee.name,
+                'employee_id': employee.employee_id
+            },
+            'location': {
+                'latitude': float(latest_location.latitude) if latest_location else None,
+                'longitude': float(latest_location.longitude) if latest_location else None,
+                'accuracy': float(latest_location.accuracy_m) if latest_location and latest_location.accuracy_m else None,
+                'recorded_at': latest_location.recorded_at.isoformat() if latest_location else None
+            } if latest_location else None,
+            'session': {
+                'entry_time': latest_session.entry_time.isoformat() if latest_session else None,
+                'exit_time': latest_session.exit_time.isoformat() if latest_session else None
+            } if latest_session else None,
+            'timestamp': datetime.now().isoformat()
+        }), 200
+    except Exception as e:
+        current_app.logger.error(f"Error getting tracking status: {str(e)}")
+        return jsonify({
+            'success': False,
+            'tracking_status': 'error',
+            'error': str(e)
+        }), 500
 
 
 # تم حذف صفحة مصروفات الوقود كما هو مطلوب
