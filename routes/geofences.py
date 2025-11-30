@@ -1276,7 +1276,7 @@ def export_events(geofence_id):
 @geofences_bp.route('/<int:geofence_id>/export-attendance', methods=['GET'])
 @login_required
 def export_attendance(geofence_id):
-    """تصدير سجلات الحضور إلى Excel بصيغة احترافية"""
+    """تصدير سجلات الحضور إلى Excel بنفس تنسيق export_events"""
     geofence = Geofence.query.get_or_404(geofence_id)
     
     export_date_str = request.args.get('date')
@@ -1301,32 +1301,28 @@ def export_attendance(geofence_id):
     ws.title = 'تقرير الحضور'
     ws.sheet_view.rightToLeft = True
     
+    header_fill = PatternFill(start_color='4F46E5', end_color='4F46E5', fill_type='solid')
+    header_font = Font(name='Arial', size=12, bold=True, color='FFFFFF')
     border = Border(
-        left=Side(style='thin', color='000000'),
-        right=Side(style='thin', color='000000'),
-        top=Side(style='thin', color='000000'),
-        bottom=Side(style='thin', color='000000')
+        left=Side(style='thin'),
+        right=Side(style='thin'),
+        top=Side(style='thin'),
+        bottom=Side(style='thin')
     )
     
-    header_fill = PatternFill(start_color='4472C4', end_color='4472C4', fill_type='solid')
-    header_font = Font(bold=True, color='FFFFFF', size=11, name='Simplified Arabic')
+    headers = ['الحالة', 'نوع الحدث', 'وقت الخروج', 'وقت الدخول', 'رقم الموظف', 'اسم الموظف', 'القسم', 'الدائرة']
     
-    headers = ['الفاصلة', 'نوع الحدث', 'وقت الخروج', 'وقت الدخول', 'رقم الموظف', 'اسم الموظف', 'الحالة', 'الدائرة']
-    
-    for col_idx, header in enumerate(headers, 1):
-        cell = ws.cell(row=1, column=col_idx)
+    for col_num, header in enumerate(headers, 1):
+        cell = ws.cell(row=1, column=col_num)
         cell.value = header
-        cell.font = header_font
         cell.fill = header_fill
-        cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+        cell.font = header_font
+        cell.alignment = Alignment(horizontal='center', vertical='center')
         cell.border = border
-    ws.row_dimensions[1].height = 25
     
-    cell_font = Font(size=10, name='Simplified Arabic')
-    row_idx = 2
-    
-    for idx, emp in enumerate(all_employees, 1):
-        rec = attendance_records.get(emp.id)
+    row_num = 2
+    for idx, employee in enumerate(all_employees, 1):
+        rec = attendance_records.get(employee.id)
         
         if rec:
             morning_time = rec.morning_entry_sa.strftime('%H:%M:%S') if rec.morning_entry_sa else '-'
@@ -1350,32 +1346,32 @@ def export_attendance(geofence_id):
             status = 'موظف غائب'
             event_type = 'غائب'
         
-        ws.cell(row=row_idx, column=1, value=idx)
-        ws.cell(row=row_idx, column=2, value=event_type)
-        ws.cell(row=row_idx, column=3, value=evening_time)
-        ws.cell(row=row_idx, column=4, value=morning_time)
-        ws.cell(row=row_idx, column=5, value=emp.employee_id or '-')
-        ws.cell(row=row_idx, column=6, value=emp.name or '-')
-        ws.cell(row=row_idx, column=7, value=status)
-        ws.cell(row=row_idx, column=8, value=geofence.name)
+        ws.cell(row=row_num, column=1, value=status)
+        ws.cell(row=row_num, column=2, value=event_type)
+        ws.cell(row=row_num, column=3, value=evening_time)
+        ws.cell(row=row_num, column=4, value=morning_time)
+        ws.cell(row=row_num, column=5, value=employee.employee_id)
+        ws.cell(row=row_num, column=6, value=employee.name)
+        ws.cell(row=row_num, column=7, value=geofence.department.name if geofence.department else '-')
+        ws.cell(row=row_num, column=8, value=geofence.name)
         
         for col in range(1, 9):
-            cell = ws.cell(row=row_idx, column=col)
-            cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+            cell = ws.cell(row=row_num, column=col)
             cell.border = border
-            cell.font = cell_font
+            cell.alignment = Alignment(horizontal='center', vertical='center')
+            
+            if col == 1:
+                if event_type == 'حاضر':
+                    cell.fill = PatternFill(start_color='D1FAE5', end_color='D1FAE5', fill_type='solid')
+                    cell.font = Font(color='065F46', bold=True)
+                else:
+                    cell.fill = PatternFill(start_color='FEE2E2', end_color='FEE2E2', fill_type='solid')
+                    cell.font = Font(color='991B1B', bold=True)
         
-        ws.row_dimensions[row_idx].height = 20
-        row_idx += 1
+        row_num += 1
     
-    ws.column_dimensions['A'].width = 8
-    ws.column_dimensions['B'].width = 12
-    ws.column_dimensions['C'].width = 12
-    ws.column_dimensions['D'].width = 12
-    ws.column_dimensions['E'].width = 12
-    ws.column_dimensions['F'].width = 28
-    ws.column_dimensions['G'].width = 16
-    ws.column_dimensions['H'].width = 16
+    for col in range(1, 9):
+        ws.column_dimensions[ws.cell(row=1, column=col).column_letter].width = 20
     
     output = BytesIO()
     wb.save(output)
