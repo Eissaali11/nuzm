@@ -1276,130 +1276,221 @@ def export_events(geofence_id):
 @geofences_bp.route('/<int:geofence_id>/export-attendance', methods=['GET'])
 @login_required
 def export_attendance(geofence_id):
-    """تصدير سجلات الحضور إلى Excel"""
+    """تصدير سجلات الحضور إلى Excel احترافي مع Dashboard"""
+    from openpyxl.chart import PieChart, Reference
+    from openpyxl.chart.label import DataLabelList
+    
     geofence = Geofence.query.get_or_404(geofence_id)
     
     export_date_str = request.args.get('date')
     if export_date_str:
         export_date = datetime.strptime(export_date_str, '%Y-%m-%d').date()
     else:
-        export_date = datetime.utcnow().date()
+        sa_now = datetime.utcnow() + timedelta(hours=3)
+        export_date = sa_now.date()
     
+    all_employees = geofence.assigned_employees
+    
+    attendance_records = {}
     records = GeofenceAttendance.query.filter(
         GeofenceAttendance.geofence_id == geofence_id,
         GeofenceAttendance.attendance_date == export_date
-    ).order_by(GeofenceAttendance.employee_id).all()
+    ).all()
+    for rec in records:
+        attendance_records[rec.employee_id] = rec
     
     wb = Workbook()
-    ws = wb.active
-    ws.title = 'Attendance'
     
-    # Header
-    ws['A1'] = 'Attendance Report'
-    ws['A1'].font = Font(bold=True, size=14, color='FFFFFF')
-    ws['A1'].fill = PatternFill(start_color='1F2937', end_color='1F2937', fill_type='solid')
-    ws.row_dimensions[1].height = 25
+    ws_data = wb.active
+    ws_data.title = 'Attendance Data'
+    ws_data.sheet_view.rightToLeft = True
     
-    # Column headers
-    headers = ['#', 'Employee ID', 'Employee Name', 'Morning Entry', 'Evening Entry', 'Status']
-    header_fill = PatternFill(start_color='3B82F6', end_color='3B82F6', fill_type='solid')
-    header_font = Font(bold=True, color='FFFFFF', size=11)
     border = Border(
-        left=Side(style='thin'),
-        right=Side(style='thin'),
-        top=Side(style='thin'),
-        bottom=Side(style='thin')
+        left=Side(style='thin', color='CCCCCC'),
+        right=Side(style='thin', color='CCCCCC'),
+        top=Side(style='thin', color='CCCCCC'),
+        bottom=Side(style='thin', color='CCCCCC')
     )
     
+    title_fill = PatternFill(start_color='1E3A5F', end_color='1E3A5F', fill_type='solid')
+    title_font = Font(bold=True, size=16, color='FFFFFF', name='Arial')
+    
+    ws_data.merge_cells('A1:F1')
+    title_cell = ws_data['A1']
+    title_cell.value = f"Geofence Attendance Report - {geofence.name}"
+    title_cell.font = title_font
+    title_cell.fill = title_fill
+    title_cell.alignment = Alignment(horizontal='center', vertical='center')
+    ws_data.row_dimensions[1].height = 35
+    
+    ws_data.merge_cells('A2:F2')
+    date_cell = ws_data['A2']
+    date_cell.value = f"Date: {export_date.strftime('%Y-%m-%d')} | Generated: {datetime.utcnow().strftime('%Y-%m-%d %H:%M')} UTC"
+    date_cell.font = Font(size=11, color='555555', name='Arial')
+    date_cell.alignment = Alignment(horizontal='center', vertical='center')
+    date_cell.fill = PatternFill(start_color='F3F4F6', end_color='F3F4F6', fill_type='solid')
+    ws_data.row_dimensions[2].height = 25
+    
+    headers = ['#', 'Employee ID', 'Employee Name', 'Morning Entry', 'Evening Entry', 'Status']
+    header_fill = PatternFill(start_color='3B82F6', end_color='3B82F6', fill_type='solid')
+    header_font = Font(bold=True, color='FFFFFF', size=12, name='Arial')
+    
     for col_idx, header in enumerate(headers, 1):
-        cell = ws.cell(row=2, column=col_idx)
+        cell = ws_data.cell(row=4, column=col_idx)
         cell.value = header
         cell.font = header_font
         cell.fill = header_fill
         cell.alignment = Alignment(horizontal='center', vertical='center')
         cell.border = border
+    ws_data.row_dimensions[4].height = 28
     
-    ws.row_dimensions[2].height = 20
+    stats = {'full': 0, 'morning': 0, 'evening': 0, 'absent': 0}
+    row_idx = 5
     
-    # Data
-    stats = {'full': 0, 'morning_only': 0, 'evening_only': 0, 'absent': 0}
-    for row_idx, record in enumerate(records, 3):
-        emp = record.employee
-        morning_time = record.morning_entry_sa.strftime('%H:%M') if record.morning_entry_sa else '-'
-        evening_time = record.evening_entry_sa.strftime('%H:%M') if record.evening_entry_sa else '-'
+    for idx, emp in enumerate(all_employees, 1):
+        rec = attendance_records.get(emp.id)
         
-        if record.morning_entry_sa and record.evening_entry_sa:
-            status = 'Full Day'
-            stats['full'] += 1
-            color = 'D1FAE5'
-        elif record.morning_entry_sa:
-            status = 'Morning Only'
-            stats['morning_only'] += 1
-            color = 'DBEAFE'
-        elif record.evening_entry_sa:
-            status = 'Evening Only'
-            stats['evening_only'] += 1
-            color = 'FEF08A'
+        if rec:
+            morning_time = rec.morning_entry_sa.strftime('%H:%M') if rec.morning_entry_sa else '-'
+            evening_time = rec.evening_entry_sa.strftime('%H:%M') if rec.evening_entry_sa else '-'
+            
+            if rec.morning_entry_sa and rec.evening_entry_sa:
+                status = 'Full Day'
+                stats['full'] += 1
+                row_color = 'D1FAE5'
+            elif rec.morning_entry_sa:
+                status = 'Morning Only'
+                stats['morning'] += 1
+                row_color = 'DBEAFE'
+            elif rec.evening_entry_sa:
+                status = 'Evening Only'
+                stats['evening'] += 1
+                row_color = 'FEF3C4'
+            else:
+                status = 'Absent'
+                stats['absent'] += 1
+                row_color = 'FEE2E2'
         else:
+            morning_time = '-'
+            evening_time = '-'
             status = 'Absent'
             stats['absent'] += 1
-            color = 'FEE2E2'
+            row_color = 'FEE2E2'
         
-        ws.cell(row=row_idx, column=1, value=row_idx - 2)
-        ws.cell(row=row_idx, column=2, value=emp.employee_id)
-        ws.cell(row=row_idx, column=3, value=emp.name)
-        ws.cell(row=row_idx, column=4, value=morning_time)
-        ws.cell(row=row_idx, column=5, value=evening_time)
-        ws.cell(row=row_idx, column=6, value=status)
+        ws_data.cell(row=row_idx, column=1, value=idx)
+        ws_data.cell(row=row_idx, column=2, value=emp.employee_id or '-')
+        ws_data.cell(row=row_idx, column=3, value=emp.name or '-')
+        ws_data.cell(row=row_idx, column=4, value=morning_time)
+        ws_data.cell(row=row_idx, column=5, value=evening_time)
+        ws_data.cell(row=row_idx, column=6, value=status)
         
         for col in range(1, 7):
-            cell = ws.cell(row=row_idx, column=col)
+            cell = ws_data.cell(row=row_idx, column=col)
             cell.alignment = Alignment(horizontal='center', vertical='center')
             cell.border = border
+            cell.fill = PatternFill(start_color=row_color, end_color=row_color, fill_type='solid')
+            cell.font = Font(size=11, name='Arial')
+        
+        ws_data.row_dimensions[row_idx].height = 22
+        row_idx += 1
+    
+    ws_data.column_dimensions['A'].width = 6
+    ws_data.column_dimensions['B'].width = 16
+    ws_data.column_dimensions['C'].width = 28
+    ws_data.column_dimensions['D'].width = 16
+    ws_data.column_dimensions['E'].width = 16
+    ws_data.column_dimensions['F'].width = 16
+    
+    ws_dash = wb.create_sheet('Dashboard')
+    ws_dash.sheet_view.rightToLeft = True
+    
+    ws_dash.merge_cells('A1:D1')
+    dash_title = ws_dash['A1']
+    dash_title.value = 'Attendance Dashboard'
+    dash_title.font = Font(bold=True, size=18, color='FFFFFF', name='Arial')
+    dash_title.fill = PatternFill(start_color='1E3A5F', end_color='1E3A5F', fill_type='solid')
+    dash_title.alignment = Alignment(horizontal='center', vertical='center')
+    ws_dash.row_dimensions[1].height = 40
+    
+    ws_dash.merge_cells('A2:D2')
+    ws_dash['A2'].value = f"Geofence: {geofence.name} | Date: {export_date.strftime('%Y-%m-%d')}"
+    ws_dash['A2'].font = Font(size=12, color='666666', name='Arial')
+    ws_dash['A2'].alignment = Alignment(horizontal='center', vertical='center')
+    ws_dash['A2'].fill = PatternFill(start_color='F8FAFC', end_color='F8FAFC', fill_type='solid')
+    ws_dash.row_dimensions[2].height = 30
+    
+    ws_dash['A4'] = 'Status'
+    ws_dash['B4'] = 'Count'
+    ws_dash['C4'] = 'Percentage'
+    for col in ['A', 'B', 'C']:
+        cell = ws_dash[f'{col}4']
+        cell.font = Font(bold=True, size=12, color='FFFFFF', name='Arial')
+        cell.fill = PatternFill(start_color='475569', end_color='475569', fill_type='solid')
+        cell.alignment = Alignment(horizontal='center', vertical='center')
+        cell.border = border
+    ws_dash.row_dimensions[4].height = 25
+    
+    total = len(all_employees)
+    stat_data = [
+        ('Full Day', stats['full'], 'D1FAE5'),
+        ('Morning Only', stats['morning'], 'DBEAFE'),
+        ('Evening Only', stats['evening'], 'FEF3C4'),
+        ('Absent', stats['absent'], 'FEE2E2'),
+    ]
+    
+    for i, (label, count, color) in enumerate(stat_data, 5):
+        pct = (count / total * 100) if total > 0 else 0
+        ws_dash.cell(row=i, column=1, value=label)
+        ws_dash.cell(row=i, column=2, value=count)
+        ws_dash.cell(row=i, column=3, value=f"{pct:.1f}%")
+        
+        for col in range(1, 4):
+            cell = ws_dash.cell(row=i, column=col)
+            cell.font = Font(size=11, name='Arial')
             cell.fill = PatternFill(start_color=color, end_color=color, fill_type='solid')
-            cell.font = Font(size=10)
+            cell.alignment = Alignment(horizontal='center', vertical='center')
+            cell.border = border
+        ws_dash.row_dimensions[i].height = 22
     
-    # Summary row
-    summary_row = len(records) + 4
-    ws.cell(row=summary_row, column=1, value='Summary')
-    ws.cell(row=summary_row, column=1).font = Font(bold=True, color='FFFFFF')
-    ws.cell(row=summary_row, column=1).fill = PatternFill(start_color='374151', end_color='374151', fill_type='solid')
+    total_row = 9
+    ws_dash.cell(row=total_row, column=1, value='TOTAL')
+    ws_dash.cell(row=total_row, column=2, value=total)
+    ws_dash.cell(row=total_row, column=3, value='100%')
+    for col in range(1, 4):
+        cell = ws_dash.cell(row=total_row, column=col)
+        cell.font = Font(bold=True, size=12, color='FFFFFF', name='Arial')
+        cell.fill = PatternFill(start_color='1E3A5F', end_color='1E3A5F', fill_type='solid')
+        cell.alignment = Alignment(horizontal='center', vertical='center')
+        cell.border = border
+    ws_dash.row_dimensions[total_row].height = 25
     
-    ws.cell(row=summary_row, column=2, value=f"Full: {stats['full']}")
-    ws.cell(row=summary_row, column=2).fill = PatternFill(start_color='D1FAE5', end_color='D1FAE5', fill_type='solid')
-    ws.cell(row=summary_row, column=2).alignment = Alignment(horizontal='center')
-    ws.cell(row=summary_row, column=2).font = Font(bold=True)
+    pie = PieChart()
+    labels = Reference(ws_dash, min_col=1, min_row=5, max_row=8)
+    data = Reference(ws_dash, min_col=2, min_row=4, max_row=8)
+    pie.add_data(data, titles_from_data=True)
+    pie.set_categories(labels)
+    pie.title = "Attendance Distribution"
+    pie.dataLabels = DataLabelList()
+    pie.dataLabels.showPercent = True
+    pie.dataLabels.showVal = True
+    pie.width = 12
+    pie.height = 10
+    ws_dash.add_chart(pie, "A11")
     
-    ws.cell(row=summary_row, column=3, value=f"Morning: {stats['morning_only']}")
-    ws.cell(row=summary_row, column=3).fill = PatternFill(start_color='DBEAFE', end_color='DBEAFE', fill_type='solid')
-    ws.cell(row=summary_row, column=3).alignment = Alignment(horizontal='center')
-    ws.cell(row=summary_row, column=3).font = Font(bold=True)
-    
-    ws.cell(row=summary_row, column=4, value=f"Evening: {stats['evening_only']}")
-    ws.cell(row=summary_row, column=4).fill = PatternFill(start_color='FEF08A', end_color='FEF08A', fill_type='solid')
-    ws.cell(row=summary_row, column=4).alignment = Alignment(horizontal='center')
-    ws.cell(row=summary_row, column=4).font = Font(bold=True)
-    
-    ws.cell(row=summary_row, column=5, value=f"Absent: {stats['absent']}")
-    ws.cell(row=summary_row, column=5).fill = PatternFill(start_color='FEE2E2', end_color='FEE2E2', fill_type='solid')
-    ws.cell(row=summary_row, column=5).alignment = Alignment(horizontal='center')
-    ws.cell(row=summary_row, column=5).font = Font(bold=True)
-    
-    # Column widths
-    ws.column_dimensions['A'].width = 5
-    ws.column_dimensions['B'].width = 14
-    ws.column_dimensions['C'].width = 25
-    ws.column_dimensions['D'].width = 15
-    ws.column_dimensions['E'].width = 15
-    ws.column_dimensions['F'].width = 15
+    ws_dash.column_dimensions['A'].width = 18
+    ws_dash.column_dimensions['B'].width = 12
+    ws_dash.column_dimensions['C'].width = 14
+    ws_dash.column_dimensions['D'].width = 14
     
     output = BytesIO()
     wb.save(output)
     output.seek(0)
     
+    filename = f"Attendance_{geofence.name}_{export_date}.xlsx"
+    
     return send_file(
         output,
         mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         as_attachment=True,
-        download_name=f'Attendance_Report_{export_date}.xlsx'
+        download_name=filename
     )
