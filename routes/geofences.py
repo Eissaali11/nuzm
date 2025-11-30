@@ -344,11 +344,13 @@ def view(geofence_id):
         # تسجيل الحضور الصباحي أو المسائي حسب الساعة
         if entry_time_sa:
             hour = entry_time_sa.hour
-            if 5 <= hour < 12:  # الصباح (من 5 صباحاً إلى 12 ظهراً)
+            # الصباح: من 5 صباحاً إلى 1 ظهراً (تم توسيع النطاق ليشمل 12-13)
+            if 5 <= hour < 13:  
                 if not attendance_record.morning_entry:
                     attendance_record.morning_entry = session.entry_time
                     attendance_record.morning_entry_sa = entry_time_sa
-            elif 12 <= hour < 21:  # المساء (من 12 ظهراً إلى 9 مساءً)
+            # المساء: من 1 ظهراً إلى 11 مساءً
+            elif 13 <= hour < 23:  
                 if not attendance_record.evening_entry:
                     attendance_record.evening_entry = session.entry_time
                     attendance_record.evening_entry_sa = entry_time_sa
@@ -1274,8 +1276,10 @@ def export_events(geofence_id):
 @geofences_bp.route('/<int:geofence_id>/export-attendance', methods=['GET'])
 @login_required
 def export_attendance(geofence_id):
-    """تصدير سجلات الحضور إلى Excel"""
+    """تصدير سجلات الحضور إلى Excel احترافي"""
     from datetime import datetime, timedelta
+    from openpyxl.utils import get_column_letter
+    from openpyxl.styles import PatternFill, Font, Alignment, Border, Side
     
     geofence = Geofence.query.get_or_404(geofence_id)
     
@@ -1289,67 +1293,139 @@ def export_attendance(geofence_id):
     records = GeofenceAttendance.query.filter(
         GeofenceAttendance.geofence_id == geofence_id,
         GeofenceAttendance.attendance_date == export_date
-    ).all()
+    ).order_by(GeofenceAttendance.employee_id).all()
     
-    # إنشاء ملف Excel
+    # إنشاء ملف Excel احترافي
     wb = Workbook()
     ws = wb.active
-    ws.title = 'الحضور'
+    ws.title = 'تقرير الحضور'
+    
+    # Header معلومات الدائرة
+    ws.merge_cells('A1:E1')
+    title_cell = ws['A1']
+    title_cell.value = f"تقرير الحضور - {geofence.name}"
+    title_cell.font = Font(bold=True, size=16, color='FFFFFF')
+    title_cell.fill = PatternFill(start_color='1F2937', end_color='1F2937', fill_type='solid')
+    title_cell.alignment = Alignment(horizontal='center', vertical='center')
+    ws.row_dimensions[1].height = 30
+    
+    # معلومات التاريخ
+    ws.merge_cells('A2:E2')
+    date_cell = ws['A2']
+    date_cell.value = f"التاريخ: {export_date.strftime('%A %d/%m/%Y')}"
+    date_cell.font = Font(size=11, color='555555')
+    date_cell.alignment = Alignment(horizontal='center', vertical='center')
+    ws.row_dimensions[2].height = 20
     
     # رؤوس الجدول
-    headers = ['رقم الموظف', 'اسم الموظف', 'الحضور الصباحي', 'الحضور المسائي', 'الحالة']
-    for col, header in enumerate(headers, 1):
-        cell = ws.cell(row=1, column=col)
+    headers = ['#', 'رقم الموظف', 'اسم الموظف', 'الحضور الصباحي', 'الحضور المسائي', 'الحالة']
+    header_fill = PatternFill(start_color='667EEA', end_color='667EEA', fill_type='solid')
+    header_font = Font(bold=True, color='FFFFFF', size=12)
+    header_alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+    border = Border(
+        left=Side(style='thin', color='000000'),
+        right=Side(style='thin', color='000000'),
+        top=Side(style='thin', color='000000'),
+        bottom=Side(style='thin', color='000000')
+    )
+    
+    for col_idx, header in enumerate(headers, 1):
+        cell = ws.cell(row=4, column=col_idx)
         cell.value = header
-        cell.font = Font(bold=True, color='FFFFFF', size=12)
-        cell.fill = PatternFill(start_color='667EEA', end_color='667EEA', fill_type='solid')
-        cell.alignment = Alignment(horizontal='center', vertical='center')
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = header_alignment
+        cell.border = border
+    
+    ws.row_dimensions[4].height = 25
     
     # البيانات
-    for row_idx, record in enumerate(records, 2):
+    stats = {'morning': 0, 'evening': 0, 'full': 0, 'absent': 0}
+    for row_idx, record in enumerate(records, 5):
         emp = record.employee
         
         morning_time = record.morning_entry_sa.strftime('%H:%M') if record.morning_entry_sa else '-'
         evening_time = record.evening_entry_sa.strftime('%H:%M') if record.evening_entry_sa else '-'
         
         if record.morning_entry_sa and record.evening_entry_sa:
-            status = 'كامل اليوم'
+            status = '✓ كامل اليوم'
+            stats['full'] += 1
+            status_color = 'D1FAE5'
         elif record.morning_entry_sa:
             status = 'صباحي فقط'
+            stats['morning'] += 1
+            status_color = 'DBEAFE'
         elif record.evening_entry_sa:
             status = 'مسائي فقط'
+            stats['evening'] += 1
+            status_color = 'FEF08A'
         else:
-            status = 'لم يحضر'
+            status = '✗ لم يحضر'
+            stats['absent'] += 1
+            status_color = 'FEE2E2'
         
-        ws.cell(row=row_idx, column=1, value=emp.employee_id)
-        ws.cell(row=row_idx, column=2, value=emp.name)
-        ws.cell(row=row_idx, column=3, value=morning_time)
-        ws.cell(row=row_idx, column=4, value=evening_time)
-        ws.cell(row=row_idx, column=5, value=status)
+        # الرقم التسلسلي
+        ws.cell(row=row_idx, column=1, value=row_idx - 4)
+        ws.cell(row=row_idx, column=2, value=emp.employee_id)
+        ws.cell(row=row_idx, column=3, value=emp.name)
+        ws.cell(row=row_idx, column=4, value=morning_time)
+        ws.cell(row=row_idx, column=5, value=evening_time)
+        ws.cell(row=row_idx, column=6, value=status)
         
-        for col in range(1, 6):
+        for col in range(1, 7):
             cell = ws.cell(row=row_idx, column=col)
             cell.alignment = Alignment(horizontal='center', vertical='center')
-            if status == 'كامل اليوم':
-                cell.fill = PatternFill(start_color='D1FAE5', end_color='D1FAE5', fill_type='solid')
-            elif status == 'لم يحضر':
-                cell.fill = PatternFill(start_color='FEE2E2', end_color='FEE2E2', fill_type='solid')
+            cell.border = border
+            cell.fill = PatternFill(start_color=status_color, end_color=status_color, fill_type='solid')
+            if col in [1, 2, 4, 5, 6]:
+                cell.font = Font(size=11, bold=True if col == 6 else False)
+            else:
+                cell.font = Font(size=11)
+    
+    # إضافة صف الملخص
+    summary_row = len(records) + 6
+    ws.merge_cells(f'A{summary_row}:C{summary_row}')
+    summary_label = ws[f'A{summary_row}']
+    summary_label.value = 'ملخص الحضور'
+    summary_label.font = Font(bold=True, size=12, color='FFFFFF')
+    summary_label.fill = PatternFill(start_color='374151', end_color='374151', fill_type='solid')
+    summary_label.alignment = Alignment(horizontal='center', vertical='center')
+    
+    # إحصائيات
+    ws[f'D{summary_row}'].value = f"كامل: {stats['full']}"
+    ws[f'D{summary_row}'].fill = PatternFill(start_color='D1FAE5', end_color='D1FAE5', fill_type='solid')
+    ws[f'D{summary_row}'].alignment = Alignment(horizontal='center', vertical='center')
+    ws[f'D{summary_row}'].font = Font(bold=True)
+    
+    ws[f'E{summary_row}'].value = f"صباحي: {stats['morning']}"
+    ws[f'E{summary_row}'].fill = PatternFill(start_color='DBEAFE', end_color='DBEAFE', fill_type='solid')
+    ws[f'E{summary_row}'].alignment = Alignment(horizontal='center', vertical='center')
+    ws[f'E{summary_row}'].font = Font(bold=True)
+    
+    ws[f'F{summary_row}'].value = f"غائب: {stats['absent']}"
+    ws[f'F{summary_row}'].fill = PatternFill(start_color='FEE2E2', end_color='FEE2E2', fill_type='solid')
+    ws[f'F{summary_row}'].alignment = Alignment(horizontal='center', vertical='center')
+    ws[f'F{summary_row}'].font = Font(bold=True)
     
     # ضبط عرض الأعمدة
-    ws.column_dimensions['A'].width = 15
-    ws.column_dimensions['B'].width = 20
-    ws.column_dimensions['C'].width = 15
-    ws.column_dimensions['D'].width = 15
-    ws.column_dimensions['E'].width = 15
+    ws.column_dimensions['A'].width = 5
+    ws.column_dimensions['B'].width = 15
+    ws.column_dimensions['C'].width = 25
+    ws.column_dimensions['D'].width = 16
+    ws.column_dimensions['E'].width = 16
+    ws.column_dimensions['F'].width = 18
     
     # حفظ الملف
     output = BytesIO()
     wb.save(output)
     output.seek(0)
     
+    from hijri_converter import Hijri, Gregorian
+    hijri = Gregorian(export_date.year, export_date.month, export_date.day).to_hijri()
+    
     return send_file(
         output,
         mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         as_attachment=True,
-        download_name=f'attendance_{export_date}.xlsx'
+        download_name=f'تقرير_الحضور_{geofence.name}_{export_date.isoformat()}.xlsx'
     )
