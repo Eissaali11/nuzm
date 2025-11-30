@@ -1313,7 +1313,7 @@ def export_attendance(geofence_id):
     )
     
     title_fill = PatternFill(start_color='1E3A5F', end_color='1E3A5F', fill_type='solid')
-    title_font = Font(bold=True, size=16, color='FFFFFF', name='Arial')
+    title_font = Font(bold=True, size=16, color='FFFFFF', name='Cairo')
     
     ws_data.merge_cells('A1:F1')
     title_cell = ws_data['A1']
@@ -1326,14 +1326,14 @@ def export_attendance(geofence_id):
     ws_data.merge_cells('A2:F2')
     date_cell = ws_data['A2']
     date_cell.value = f"Date: {export_date.strftime('%Y-%m-%d')} | Generated: {datetime.utcnow().strftime('%Y-%m-%d %H:%M')} UTC"
-    date_cell.font = Font(size=11, color='555555', name='Arial')
+    date_cell.font = Font(size=11, color='555555', name='Cairo')
     date_cell.alignment = Alignment(horizontal='center', vertical='center')
     date_cell.fill = PatternFill(start_color='F3F4F6', end_color='F3F4F6', fill_type='solid')
     ws_data.row_dimensions[2].height = 25
     
     headers = ['#', 'Employee ID', 'Employee Name', 'Morning Entry', 'Evening Entry', 'Status']
     header_fill = PatternFill(start_color='3B82F6', end_color='3B82F6', fill_type='solid')
-    header_font = Font(bold=True, color='FFFFFF', size=12, name='Arial')
+    header_font = Font(bold=True, color='FFFFFF', size=12, name='Cairo')
     
     for col_idx, header in enumerate(headers, 1):
         cell = ws_data.cell(row=4, column=col_idx)
@@ -1389,7 +1389,7 @@ def export_attendance(geofence_id):
             cell.alignment = Alignment(horizontal='center', vertical='center')
             cell.border = border
             cell.fill = PatternFill(start_color=row_color, end_color=row_color, fill_type='solid')
-            cell.font = Font(size=11, name='Arial')
+            cell.font = Font(size=11, name='Cairo')
         
         ws_data.row_dimensions[row_idx].height = 22
         row_idx += 1
@@ -1407,14 +1407,14 @@ def export_attendance(geofence_id):
     ws_dash.merge_cells('A1:D1')
     dash_title = ws_dash['A1']
     dash_title.value = 'Attendance Dashboard'
-    dash_title.font = Font(bold=True, size=18, color='FFFFFF', name='Arial')
+    dash_title.font = Font(bold=True, size=18, color='FFFFFF', name='Cairo')
     dash_title.fill = PatternFill(start_color='1E3A5F', end_color='1E3A5F', fill_type='solid')
     dash_title.alignment = Alignment(horizontal='center', vertical='center')
     ws_dash.row_dimensions[1].height = 40
     
     ws_dash.merge_cells('A2:D2')
     ws_dash['A2'].value = f"Geofence: {geofence.name} | Date: {export_date.strftime('%Y-%m-%d')}"
-    ws_dash['A2'].font = Font(size=12, color='666666', name='Arial')
+    ws_dash['A2'].font = Font(size=12, color='666666', name='Cairo')
     ws_dash['A2'].alignment = Alignment(horizontal='center', vertical='center')
     ws_dash['A2'].fill = PatternFill(start_color='F8FAFC', end_color='F8FAFC', fill_type='solid')
     ws_dash.row_dimensions[2].height = 30
@@ -1424,7 +1424,7 @@ def export_attendance(geofence_id):
     ws_dash['C4'] = 'Percentage'
     for col in ['A', 'B', 'C']:
         cell = ws_dash[f'{col}4']
-        cell.font = Font(bold=True, size=12, color='FFFFFF', name='Arial')
+        cell.font = Font(bold=True, size=12, color='FFFFFF', name='Cairo')
         cell.fill = PatternFill(start_color='475569', end_color='475569', fill_type='solid')
         cell.alignment = Alignment(horizontal='center', vertical='center')
         cell.border = border
@@ -1446,7 +1446,7 @@ def export_attendance(geofence_id):
         
         for col in range(1, 4):
             cell = ws_dash.cell(row=i, column=col)
-            cell.font = Font(size=11, name='Arial')
+            cell.font = Font(size=11, name='Cairo')
             cell.fill = PatternFill(start_color=color, end_color=color, fill_type='solid')
             cell.alignment = Alignment(horizontal='center', vertical='center')
             cell.border = border
@@ -1458,7 +1458,7 @@ def export_attendance(geofence_id):
     ws_dash.cell(row=total_row, column=3, value='100%')
     for col in range(1, 4):
         cell = ws_dash.cell(row=total_row, column=col)
-        cell.font = Font(bold=True, size=12, color='FFFFFF', name='Arial')
+        cell.font = Font(bold=True, size=12, color='FFFFFF', name='Cairo')
         cell.fill = PatternFill(start_color='1E3A5F', end_color='1E3A5F', fill_type='solid')
         cell.alignment = Alignment(horizontal='center', vertical='center')
         cell.border = border
