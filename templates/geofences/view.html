@@ -1752,9 +1752,9 @@
                         الحضور الصباحي والمسائي اليوم
                         <span class="badge" style="margin-right: auto;">{{ geofence_attendance_records|length }}</span>
                     </h2>
-                    <button onclick="exportAttendance()" class="btn btn-sm btn-success" style="margin-right: auto; margin-left: 10px;">
-                        <i class="fas fa-download"></i> تصدير Excel
-                    </button>
+                    <a href="/employees/geofences/{{ geofence.id }}/export-attendance" class="btn btn-sm btn-success" style="margin-right: auto; margin-left: 10px;">
+                        <i class="fas fa-file-excel"></i> تصدير Excel
+                    </a>
                 </div>
                 <div style="overflow-x: auto;">
                     <table style="width: 100%; border-collapse: collapse; text-align: center;">
@@ -1820,31 +1820,6 @@
             if (container) container.appendChild(section);
         }
         
-        function exportAttendance() {
-            const records = {{ attendance_records_json|tojson|safe }};
-            let csvContent = "data:text/csv;charset=utf-8,";
-            csvContent += "رقم الموظف,اسم الموظف,الحضور الصباحي,الحضور المسائي,الحالة\n";
-            
-            records.forEach(r => {
-                const emp = r.employee;
-                const morning = r.morning_entry_sa ? r.morning_entry_sa.split('T')[1].substring(0, 5) : '-';
-                const evening = r.evening_entry_sa ? r.evening_entry_sa.split('T')[1].substring(0, 5) : '-';
-                let status = 'لم يحضر';
-                if (morning && evening) status = 'كامل اليوم';
-                else if (morning) status = 'صباحي فقط';
-                else if (evening) status = 'مسائي فقط';
-                
-                csvContent += `${emp.employee_id},${emp.name},${morning},${evening},${status}\n`;
-            });
-            
-            const encodedUri = encodeURI(csvContent);
-            const link = document.createElement('a');
-            link.setAttribute('href', encodedUri);
-            link.setAttribute('download', `attendance_${new Date().toISOString().split('T')[0]}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
     </script>
 </body>
 </html>
