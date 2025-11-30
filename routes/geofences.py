@@ -1309,7 +1309,7 @@ def export_attendance(geofence_id):
     )
     
     header_fill = PatternFill(start_color='4472C4', end_color='4472C4', fill_type='solid')
-    header_font = Font(bold=True, color='FFFFFF', size=11, name='Cairo')
+    header_font = Font(bold=True, color='FFFFFF', size=11, name='Simplified Arabic')
     
     headers = ['الفاصلة', 'نوع الحدث', 'وقت الخروج', 'وقت الدخول', 'رقم الموظف', 'اسم الموظف', 'الحالة', 'الدائرة']
     
@@ -1322,7 +1322,7 @@ def export_attendance(geofence_id):
         cell.border = border
     ws.row_dimensions[1].height = 25
     
-    cell_font = Font(size=10, name='Cairo')
+    cell_font = Font(size=10, name='Simplified Arabic')
     row_idx = 2
     
     for idx, emp in enumerate(all_employees, 1):
