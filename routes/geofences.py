@@ -1276,10 +1276,7 @@ def export_events(geofence_id):
 @geofences_bp.route('/<int:geofence_id>/export-attendance', methods=['GET'])
 @login_required
 def export_attendance(geofence_id):
-    """تصدير سجلات الحضور إلى Excel احترافي مع Dashboard"""
-    from openpyxl.chart import PieChart, Reference
-    from openpyxl.chart.label import DataLabelList
-    
+    """تصدير سجلات الحضور إلى Excel بصيغة احترافية"""
     geofence = Geofence.query.get_or_404(geofence_id)
     
     export_date_str = request.args.get('date')
@@ -1300,193 +1297,91 @@ def export_attendance(geofence_id):
         attendance_records[rec.employee_id] = rec
     
     wb = Workbook()
-    
-    ws_data = wb.active
-    ws_data.title = 'Attendance Data'
-    ws_data.sheet_view.rightToLeft = True
+    ws = wb.active
+    ws.title = 'تقرير الحضور'
+    ws.sheet_view.rightToLeft = True
     
     border = Border(
-        left=Side(style='thin', color='CCCCCC'),
-        right=Side(style='thin', color='CCCCCC'),
-        top=Side(style='thin', color='CCCCCC'),
-        bottom=Side(style='thin', color='CCCCCC')
+        left=Side(style='thin', color='000000'),
+        right=Side(style='thin', color='000000'),
+        top=Side(style='thin', color='000000'),
+        bottom=Side(style='thin', color='000000')
     )
     
-    title_fill = PatternFill(start_color='1E3A5F', end_color='1E3A5F', fill_type='solid')
-    title_font = Font(bold=True, size=16, color='FFFFFF', name='Cairo')
+    header_fill = PatternFill(start_color='4472C4', end_color='4472C4', fill_type='solid')
+    header_font = Font(bold=True, color='FFFFFF', size=11, name='Cairo')
     
-    ws_data.merge_cells('A1:F1')
-    title_cell = ws_data['A1']
-    title_cell.value = f"Geofence Attendance Report - {geofence.name}"
-    title_cell.font = title_font
-    title_cell.fill = title_fill
-    title_cell.alignment = Alignment(horizontal='center', vertical='center')
-    ws_data.row_dimensions[1].height = 35
-    
-    ws_data.merge_cells('A2:F2')
-    date_cell = ws_data['A2']
-    date_cell.value = f"Date: {export_date.strftime('%Y-%m-%d')} | Generated: {datetime.utcnow().strftime('%Y-%m-%d %H:%M')} UTC"
-    date_cell.font = Font(size=11, color='555555', name='Cairo')
-    date_cell.alignment = Alignment(horizontal='center', vertical='center')
-    date_cell.fill = PatternFill(start_color='F3F4F6', end_color='F3F4F6', fill_type='solid')
-    ws_data.row_dimensions[2].height = 25
-    
-    headers = ['#', 'Employee ID', 'Employee Name', 'Morning Entry', 'Evening Entry', 'Status']
-    header_fill = PatternFill(start_color='3B82F6', end_color='3B82F6', fill_type='solid')
-    header_font = Font(bold=True, color='FFFFFF', size=12, name='Cairo')
+    headers = ['الفاصلة', 'نوع الحدث', 'وقت الخروج', 'وقت الدخول', 'رقم الموظف', 'اسم الموظف', 'الحالة', 'الدائرة']
     
     for col_idx, header in enumerate(headers, 1):
-        cell = ws_data.cell(row=4, column=col_idx)
+        cell = ws.cell(row=1, column=col_idx)
         cell.value = header
         cell.font = header_font
         cell.fill = header_fill
-        cell.alignment = Alignment(horizontal='center', vertical='center')
+        cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
         cell.border = border
-    ws_data.row_dimensions[4].height = 28
+    ws.row_dimensions[1].height = 25
     
-    stats = {'full': 0, 'morning': 0, 'evening': 0, 'absent': 0}
-    row_idx = 5
+    cell_font = Font(size=10, name='Cairo')
+    row_idx = 2
     
     for idx, emp in enumerate(all_employees, 1):
         rec = attendance_records.get(emp.id)
         
         if rec:
-            morning_time = rec.morning_entry_sa.strftime('%H:%M') if rec.morning_entry_sa else '-'
-            evening_time = rec.evening_entry_sa.strftime('%H:%M') if rec.evening_entry_sa else '-'
+            morning_time = rec.morning_entry_sa.strftime('%H:%M:%S') if rec.morning_entry_sa else '-'
+            evening_time = rec.evening_entry_sa.strftime('%H:%M:%S') if rec.evening_entry_sa else '-'
             
             if rec.morning_entry_sa and rec.evening_entry_sa:
-                status = 'Full Day'
-                stats['full'] += 1
-                row_color = 'D1FAE5'
+                status = 'موظف بدوام كامل'
+                event_type = 'حاضر'
             elif rec.morning_entry_sa:
-                status = 'Morning Only'
-                stats['morning'] += 1
-                row_color = 'DBEAFE'
+                status = 'موظف بدوام صباحي'
+                event_type = 'حاضر'
             elif rec.evening_entry_sa:
-                status = 'Evening Only'
-                stats['evening'] += 1
-                row_color = 'FEF3C4'
+                status = 'موظف بدوام مسائي'
+                event_type = 'حاضر'
             else:
-                status = 'Absent'
-                stats['absent'] += 1
-                row_color = 'FEE2E2'
+                status = 'موظف غائب'
+                event_type = 'غائب'
         else:
             morning_time = '-'
             evening_time = '-'
-            status = 'Absent'
-            stats['absent'] += 1
-            row_color = 'FEE2E2'
+            status = 'موظف غائب'
+            event_type = 'غائب'
         
-        ws_data.cell(row=row_idx, column=1, value=idx)
-        ws_data.cell(row=row_idx, column=2, value=emp.employee_id or '-')
-        ws_data.cell(row=row_idx, column=3, value=emp.name or '-')
-        ws_data.cell(row=row_idx, column=4, value=morning_time)
-        ws_data.cell(row=row_idx, column=5, value=evening_time)
-        ws_data.cell(row=row_idx, column=6, value=status)
+        ws.cell(row=row_idx, column=1, value=idx)
+        ws.cell(row=row_idx, column=2, value=event_type)
+        ws.cell(row=row_idx, column=3, value=evening_time)
+        ws.cell(row=row_idx, column=4, value=morning_time)
+        ws.cell(row=row_idx, column=5, value=emp.employee_id or '-')
+        ws.cell(row=row_idx, column=6, value=emp.name or '-')
+        ws.cell(row=row_idx, column=7, value=status)
+        ws.cell(row=row_idx, column=8, value=geofence.name)
         
-        for col in range(1, 7):
-            cell = ws_data.cell(row=row_idx, column=col)
-            cell.alignment = Alignment(horizontal='center', vertical='center')
+        for col in range(1, 9):
+            cell = ws.cell(row=row_idx, column=col)
+            cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
             cell.border = border
-            cell.fill = PatternFill(start_color=row_color, end_color=row_color, fill_type='solid')
-            cell.font = Font(size=11, name='Cairo')
+            cell.font = cell_font
         
-        ws_data.row_dimensions[row_idx].height = 22
+        ws.row_dimensions[row_idx].height = 20
         row_idx += 1
     
-    ws_data.column_dimensions['A'].width = 6
-    ws_data.column_dimensions['B'].width = 16
-    ws_data.column_dimensions['C'].width = 28
-    ws_data.column_dimensions['D'].width = 16
-    ws_data.column_dimensions['E'].width = 16
-    ws_data.column_dimensions['F'].width = 16
-    
-    ws_dash = wb.create_sheet('Dashboard')
-    ws_dash.sheet_view.rightToLeft = True
-    
-    ws_dash.merge_cells('A1:D1')
-    dash_title = ws_dash['A1']
-    dash_title.value = 'Attendance Dashboard'
-    dash_title.font = Font(bold=True, size=18, color='FFFFFF', name='Cairo')
-    dash_title.fill = PatternFill(start_color='1E3A5F', end_color='1E3A5F', fill_type='solid')
-    dash_title.alignment = Alignment(horizontal='center', vertical='center')
-    ws_dash.row_dimensions[1].height = 40
-    
-    ws_dash.merge_cells('A2:D2')
-    ws_dash['A2'].value = f"Geofence: {geofence.name} | Date: {export_date.strftime('%Y-%m-%d')}"
-    ws_dash['A2'].font = Font(size=12, color='666666', name='Cairo')
-    ws_dash['A2'].alignment = Alignment(horizontal='center', vertical='center')
-    ws_dash['A2'].fill = PatternFill(start_color='F8FAFC', end_color='F8FAFC', fill_type='solid')
-    ws_dash.row_dimensions[2].height = 30
-    
-    ws_dash['A4'] = 'Status'
-    ws_dash['B4'] = 'Count'
-    ws_dash['C4'] = 'Percentage'
-    for col in ['A', 'B', 'C']:
-        cell = ws_dash[f'{col}4']
-        cell.font = Font(bold=True, size=12, color='FFFFFF', name='Cairo')
-        cell.fill = PatternFill(start_color='475569', end_color='475569', fill_type='solid')
-        cell.alignment = Alignment(horizontal='center', vertical='center')
-        cell.border = border
-    ws_dash.row_dimensions[4].height = 25
-    
-    total = len(all_employees)
-    stat_data = [
-        ('Full Day', stats['full'], 'D1FAE5'),
-        ('Morning Only', stats['morning'], 'DBEAFE'),
-        ('Evening Only', stats['evening'], 'FEF3C4'),
-        ('Absent', stats['absent'], 'FEE2E2'),
-    ]
-    
-    for i, (label, count, color) in enumerate(stat_data, 5):
-        pct = (count / total * 100) if total > 0 else 0
-        ws_dash.cell(row=i, column=1, value=label)
-        ws_dash.cell(row=i, column=2, value=count)
-        ws_dash.cell(row=i, column=3, value=f"{pct:.1f}%")
-        
-        for col in range(1, 4):
-            cell = ws_dash.cell(row=i, column=col)
-            cell.font = Font(size=11, name='Cairo')
-            cell.fill = PatternFill(start_color=color, end_color=color, fill_type='solid')
-            cell.alignment = Alignment(horizontal='center', vertical='center')
-            cell.border = border
-        ws_dash.row_dimensions[i].height = 22
-    
-    total_row = 9
-    ws_dash.cell(row=total_row, column=1, value='TOTAL')
-    ws_dash.cell(row=total_row, column=2, value=total)
-    ws_dash.cell(row=total_row, column=3, value='100%')
-    for col in range(1, 4):
-        cell = ws_dash.cell(row=total_row, column=col)
-        cell.font = Font(bold=True, size=12, color='FFFFFF', name='Cairo')
-        cell.fill = PatternFill(start_color='1E3A5F', end_color='1E3A5F', fill_type='solid')
-        cell.alignment = Alignment(horizontal='center', vertical='center')
-        cell.border = border
-    ws_dash.row_dimensions[total_row].height = 25
-    
-    pie = PieChart()
-    labels = Reference(ws_dash, min_col=1, min_row=5, max_row=8)
-    data = Reference(ws_dash, min_col=2, min_row=4, max_row=8)
-    pie.add_data(data, titles_from_data=True)
-    pie.set_categories(labels)
-    pie.title = "Attendance Distribution"
-    pie.dataLabels = DataLabelList()
-    pie.dataLabels.showPercent = True
-    pie.dataLabels.showVal = True
-    pie.width = 12
-    pie.height = 10
-    ws_dash.add_chart(pie, "A11")
-    
-    ws_dash.column_dimensions['A'].width = 18
-    ws_dash.column_dimensions['B'].width = 12
-    ws_dash.column_dimensions['C'].width = 14
-    ws_dash.column_dimensions['D'].width = 14
+    ws.column_dimensions['A'].width = 8
+    ws.column_dimensions['B'].width = 12
+    ws.column_dimensions['C'].width = 12
+    ws.column_dimensions['D'].width = 12
+    ws.column_dimensions['E'].width = 12
+    ws.column_dimensions['F'].width = 28
+    ws.column_dimensions['G'].width = 16
+    ws.column_dimensions['H'].width = 16
     
     output = BytesIO()
     wb.save(output)
     output.seek(0)
     
-    filename = f"Attendance_{geofence.name}_{export_date}.xlsx"
+    filename = f"تقرير_الحضور_{geofence.name}_{export_date}.xlsx"
     
     return send_file(
         output,
