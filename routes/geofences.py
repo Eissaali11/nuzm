@@ -355,11 +355,25 @@ def view(geofence_id):
     
     db.session.commit()
     
-    # إعادة جلب السجلات بعد التحديث
+    # إعادة جلب السجلات بعد التحديث وتحويلها إلى قواميس
     geofence_attendance_records = GeofenceAttendance.query.filter(
         GeofenceAttendance.geofence_id == geofence_id,
         GeofenceAttendance.attendance_date == today_date
     ).all()
+    
+    # تحويل السجلات إلى قواامس لتكون قابلة للتحويل إلى JSON
+    attendance_records_json = []
+    for record in geofence_attendance_records:
+        attendance_records_json.append({
+            'id': record.id,
+            'employee': {
+                'id': record.employee.id,
+                'name': record.employee.name,
+                'employee_id': record.employee.employee_id
+            },
+            'morning_entry_sa': record.morning_entry_sa.isoformat() if record.morning_entry_sa else None,
+            'evening_entry_sa': record.evening_entry_sa.isoformat() if record.evening_entry_sa else None
+        })
     
     stats = {
         'total_assigned': total_assigned,
@@ -389,6 +403,7 @@ def view(geofence_id):
         top_attendees=top_attendees_data,
         frequent_late=frequent_late,
         geofence_attendance_records=geofence_attendance_records,
+        attendance_records_json=attendance_records_json,
         geofence_settings={
             'attendance_start_time': geofence.attendance_start_time,
             'attendance_required_minutes': geofence.attendance_required_minutes,

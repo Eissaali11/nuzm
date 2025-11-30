@@ -1821,7 +1821,7 @@
         }
         
         function exportAttendance() {
-            const records = {{ geofence_attendance_records|tojson }};
+            const records = {{ attendance_records_json|tojson|safe }};
             let csvContent = "data:text/csv;charset=utf-8,";
             csvContent += "رقم الموظف,اسم الموظف,الحضور الصباحي,الحضور المسائي,الحالة\n";
             
