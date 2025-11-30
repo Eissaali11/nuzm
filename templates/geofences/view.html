@@ -1738,5 +1738,113 @@
             });
         }
     </script>
+    
+    <!-- قسم الحضور الصباحي والمسائي -->
+    <script>
+        if (document.querySelector('.employees-card')) {
+            const section = document.createElement('div');
+            section.className = 'employees-card';
+            section.style.cssText = 'margin-top: 20px;';
+            section.innerHTML = `
+                <div class="card-header">
+                    <h2>
+                        <i class="fas fa-clock"></i>
+                        الحضور الصباحي والمسائي اليوم
+                        <span class="badge" style="margin-right: auto;">{{ geofence_attendance_records|length }}</span>
+                    </h2>
+                    <button onclick="exportAttendance()" class="btn btn-sm btn-success" style="margin-right: auto; margin-left: 10px;">
+                        <i class="fas fa-download"></i> تصدير Excel
+                    </button>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse; text-align: center;">
+                        <thead>
+                            <tr style="background: rgba(129, 140, 248, 0.1); border-bottom: 2px solid rgba(129, 140, 248, 0.3);">
+                                <th style="padding: 12px; color: #c7d2fe;">رقم الموظف</th>
+                                <th style="padding: 12px; color: #c7d2fe;">اسم الموظف</th>
+                                <th style="padding: 12px; color: #10b981;">الحضور الصباحي</th>
+                                <th style="padding: 12px; color: #f59e0b;">الحضور المسائي</th>
+                                <th style="padding: 12px; color: #c7d2fe;">الحالة</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for record in geofence_attendance_records %}
+                            {% set emp = record.employee %}
+                            <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
+                                <td style="padding: 12px; color: #e5e7eb;">{{ emp.employee_id }}</td>
+                                <td style="padding: 12px; color: #e5e7eb;">{{ emp.name }}</td>
+                                <td style="padding: 12px;">
+                                    {% if record.morning_entry_sa %}
+                                    <span style="background: rgba(16, 185, 129, 0.2); color: #6ee7b7; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 700;">
+                                        ✓ {{ record.morning_entry_sa.strftime('%H:%M') }}
+                                    </span>
+                                    {% else %}
+                                    <span style="color: #999;">-</span>
+                                    {% endif %}
+                                </td>
+                                <td style="padding: 12px;">
+                                    {% if record.evening_entry_sa %}
+                                    <span style="background: rgba(245, 158, 11, 0.2); color: #fcd34d; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 700;">
+                                        ✓ {{ record.evening_entry_sa.strftime('%H:%M') }}
+                                    </span>
+                                    {% else %}
+                                    <span style="color: #999;">-</span>
+                                    {% endif %}
+                                </td>
+                                <td style="padding: 12px;">
+                                    {% if record.morning_entry_sa and record.evening_entry_sa %}
+                                    <span style="background: rgba(34, 197, 94, 0.2); color: #86efac; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 700;">
+                                        كامل اليوم ✓
+                                    </span>
+                                    {% elif record.morning_entry_sa %}
+                                    <span style="background: rgba(129, 140, 248, 0.2); color: #c7d2fe; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 700;">
+                                        صباحي فقط
+                                    </span>
+                                    {% elif record.evening_entry_sa %}
+                                    <span style="background: rgba(129, 140, 248, 0.2); color: #c7d2fe; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 700;">
+                                        مسائي فقط
+                                    </span>
+                                    {% else %}
+                                    <span style="background: rgba(239, 68, 68, 0.2); color: #fca5a5; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 700;">
+                                        لم يحضر
+                                    </span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            const container = document.querySelector('.employees-card').parentElement;
+            if (container) container.appendChild(section);
+        }
+        
+        function exportAttendance() {
+            const records = {{ geofence_attendance_records|tojson }};
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += "رقم الموظف,اسم الموظف,الحضور الصباحي,الحضور المسائي,الحالة\n";
+            
+            records.forEach(r => {
+                const emp = r.employee;
+                const morning = r.morning_entry_sa ? r.morning_entry_sa.split('T')[1].substring(0, 5) : '-';
+                const evening = r.evening_entry_sa ? r.evening_entry_sa.split('T')[1].substring(0, 5) : '-';
+                let status = 'لم يحضر';
+                if (morning && evening) status = 'كامل اليوم';
+                else if (morning) status = 'صباحي فقط';
+                else if (evening) status = 'مسائي فقط';
+                
+                csvContent += `${emp.employee_id},${emp.name},${morning},${evening},${status}\n`;
+            });
+            
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement('a');
+            link.setAttribute('href', encodedUri);
+            link.setAttribute('download', `attendance_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
 </body>
 </html>

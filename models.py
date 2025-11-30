@@ -2437,6 +2437,39 @@ class GeofenceSession(db.Model):
         return f'<GeofenceSession {self.id} - Employee {self.employee_id} - Active: {self.is_active}>'
 
 
+class GeofenceAttendance(db.Model):
+    """سجل الحضور الصباحي والمسائي في الدائرة الجغرافية"""
+    __tablename__ = 'geofence_attendance'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    geofence_id = db.Column(db.Integer, db.ForeignKey('geofences.id', ondelete='CASCADE'), nullable=False, index=True)
+    employee_id = db.Column(db.Integer, db.ForeignKey('employee.id', ondelete='CASCADE'), nullable=False, index=True)
+    attendance_date = db.Column(db.Date, nullable=False, index=True)  # التاريخ
+    
+    morning_entry = db.Column(db.DateTime, nullable=True)  # وقت دخول الصباح
+    morning_entry_sa = db.Column(db.DateTime, nullable=True)  # وقت دخول الصباح بتوقيت السعودية
+    
+    evening_entry = db.Column(db.DateTime, nullable=True)  # وقت دخول المساء
+    evening_entry_sa = db.Column(db.DateTime, nullable=True)  # وقت دخول المساء بتوقيت السعودية
+    
+    notes = db.Column(db.Text, nullable=True)
+    
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # العلاقات
+    geofence = db.relationship('Geofence', backref=db.backref('attendance_records', lazy='dynamic'))
+    employee = db.relationship('Employee', backref=db.backref('geofence_attendance', lazy='dynamic'))
+    
+    __table_args__ = (
+        db.Index('idx_geofence_attendance_date', 'geofence_id', 'attendance_date'),
+        db.Index('idx_employee_attendance_date', 'employee_id', 'attendance_date'),
+    )
+    
+    def __repr__(self):
+        return f'<GeofenceAttendance {self.employee_id} on {self.attendance_date}>'
+
+
 # ============================================================================
 # نظام طلبات الموظفين (Employee Requests System)
 # ============================================================================

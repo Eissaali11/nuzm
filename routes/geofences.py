@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, jsonify, flash, redirect, url_for, send_file
 from flask_login import login_required, current_user
-from models import Geofence, GeofenceEvent, GeofenceSession, Employee, Department, Attendance, EmployeeLocation, db, employee_departments
+from models import Geofence, GeofenceEvent, GeofenceSession, GeofenceAttendance, Employee, Department, Attendance, EmployeeLocation, db, employee_departments
 from datetime import datetime, timedelta
 from utils.geofence_session_manager import SessionManager
 from sqlalchemy import func, desc
@@ -314,6 +314,53 @@ def view(geofence_id):
     
     frequent_late = sorted(late_employees.items(), key=lambda x: x[1], reverse=True)[:5]
     
+    # جلب سجلات الحضور الصباحي والمسائي
+    today_date = datetime.utcnow().date()
+    geofence_attendance_records = GeofenceAttendance.query.filter(
+        GeofenceAttendance.geofence_id == geofence_id,
+        GeofenceAttendance.attendance_date == today_date
+    ).all()
+    
+    # تسجيل الحضور الصباحي والمسائي تلقائياً للموظفين الموجودين
+    for session in active_sessions:
+        emp_id = session.employee_id
+        entry_time_sa = session.entry_time + timedelta(hours=3) if session.entry_time else None
+        
+        # التحقق إذا كان هناك سجل حضور لهذا الموظف اليوم
+        attendance_record = GeofenceAttendance.query.filter(
+            GeofenceAttendance.geofence_id == geofence_id,
+            GeofenceAttendance.employee_id == emp_id,
+            GeofenceAttendance.attendance_date == today_date
+        ).first()
+        
+        if not attendance_record:
+            attendance_record = GeofenceAttendance(
+                geofence_id=geofence_id,
+                employee_id=emp_id,
+                attendance_date=today_date
+            )
+            db.session.add(attendance_record)
+        
+        # تسجيل الحضور الصباحي أو المسائي حسب الساعة
+        if entry_time_sa:
+            hour = entry_time_sa.hour
+            if 5 <= hour < 12:  # الصباح (من 5 صباحاً إلى 12 ظهراً)
+                if not attendance_record.morning_entry:
+                    attendance_record.morning_entry = session.entry_time
+                    attendance_record.morning_entry_sa = entry_time_sa
+            elif 12 <= hour < 21:  # المساء (من 12 ظهراً إلى 9 مساءً)
+                if not attendance_record.evening_entry:
+                    attendance_record.evening_entry = session.entry_time
+                    attendance_record.evening_entry_sa = entry_time_sa
+    
+    db.session.commit()
+    
+    # إعادة جلب السجلات بعد التحديث
+    geofence_attendance_records = GeofenceAttendance.query.filter(
+        GeofenceAttendance.geofence_id == geofence_id,
+        GeofenceAttendance.attendance_date == today_date
+    ).all()
+    
     stats = {
         'total_assigned': total_assigned,
         'present_count': present_count,
@@ -341,6 +388,7 @@ def view(geofence_id):
         active_sessions_data=active_sessions_data,
         top_attendees=top_attendees_data,
         frequent_late=frequent_late,
+        geofence_attendance_records=geofence_attendance_records,
         geofence_settings={
             'attendance_start_time': geofence.attendance_start_time,
             'attendance_required_minutes': geofence.attendance_required_minutes,
@@ -1206,3 +1254,87 @@ def export_events(geofence_id):
     except Exception as e:
         flash(f'خطأ في تصدير البيانات: {str(e)}', 'danger')
         return redirect(url_for('geofences.view', geofence_id=geofence_id))
+
+
+@geofences_bp.route('/<int:geofence_id>/export-attendance', methods=['GET'])
+@login_required
+def export_attendance(geofence_id):
+    """تصدير سجلات الحضور إلى Excel"""
+    from datetime import datetime, timedelta
+    
+    geofence = Geofence.query.get_or_404(geofence_id)
+    
+    # جلب تاريخ التصدير من الـ query parameters أو استخدام اليوم
+    export_date_str = request.args.get('date')
+    if export_date_str:
+        export_date = datetime.strptime(export_date_str, '%Y-%m-%d').date()
+    else:
+        export_date = datetime.utcnow().date()
+    
+    records = GeofenceAttendance.query.filter(
+        GeofenceAttendance.geofence_id == geofence_id,
+        GeofenceAttendance.attendance_date == export_date
+    ).all()
+    
+    # إنشاء ملف Excel
+    wb = Workbook()
+    ws = wb.active
+    ws.title = 'الحضور'
+    
+    # رؤوس الجدول
+    headers = ['رقم الموظف', 'اسم الموظف', 'الحضور الصباحي', 'الحضور المسائي', 'الحالة']
+    for col, header in enumerate(headers, 1):
+        cell = ws.cell(row=1, column=col)
+        cell.value = header
+        cell.font = Font(bold=True, color='FFFFFF', size=12)
+        cell.fill = PatternFill(start_color='667EEA', end_color='667EEA', fill_type='solid')
+        cell.alignment = Alignment(horizontal='center', vertical='center')
+    
+    # البيانات
+    for row_idx, record in enumerate(records, 2):
+        emp = record.employee
+        
+        morning_time = record.morning_entry_sa.strftime('%H:%M') if record.morning_entry_sa else '-'
+        evening_time = record.evening_entry_sa.strftime('%H:%M') if record.evening_entry_sa else '-'
+        
+        if record.morning_entry_sa and record.evening_entry_sa:
+            status = 'كامل اليوم'
+        elif record.morning_entry_sa:
+            status = 'صباحي فقط'
+        elif record.evening_entry_sa:
+            status = 'مسائي فقط'
+        else:
+            status = 'لم يحضر'
+        
+        ws.cell(row=row_idx, column=1, value=emp.employee_id)
+        ws.cell(row=row_idx, column=2, value=emp.name)
+        ws.cell(row=row_idx, column=3, value=morning_time)
+        ws.cell(row=row_idx, column=4, value=evening_time)
+        ws.cell(row=row_idx, column=5, value=status)
+        
+        for col in range(1, 6):
+            cell = ws.cell(row=row_idx, column=col)
+            cell.alignment = Alignment(horizontal='center', vertical='center')
+            if status == 'كامل اليوم':
+                cell.fill = PatternFill(start_color='D1FAE5', end_color='D1FAE5', fill_type='solid')
+            elif status == 'لم يحضر':
+                cell.fill = PatternFill(start_color='FEE2E2', end_color='FEE2E2', fill_type='solid')
+    
+    # ضبط عرض الأعمدة
+    ws.column_dimensions['A'].width = 15
+    ws.column_dimensions['B'].width = 20
+    ws.column_dimensions['C'].width = 15
+    ws.column_dimensions['D'].width = 15
+    ws.column_dimensions['E'].width = 15
+    
+    # حفظ الملف
+    output = BytesIO()
+    wb.save(output)
+    output.seek(0)
+    
+    return send_file(
+        output,
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        as_attachment=True,
+        download_name=f'attendance_{export_date}.xlsx'
+    )
