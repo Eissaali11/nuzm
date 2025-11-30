@@ -1019,37 +1019,52 @@
                             <span class="badge" style="margin-right: auto;">{{ assigned_employees|length }}</span>
                         </h2>
                     </div>
-                    <div class="employees-list">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; padding: 15px;">
                         {% if assigned_employees %}
                             {% for emp in assigned_employees %}
                             {% set is_inside = employees_inside|selectattr('employee.id', 'equalto', emp.id)|list|length > 0 %}
-                            <a href="/employees/{{ emp.id }}/view" class="employee-item" style="text-decoration: none; color: inherit;">
-                                {% if emp.profile_image %}
-                                <img src="{{ emp.profile_image }}" alt="{{ emp.name }}" class="employee-photo">
-                                {% else %}
-                                <div class="employee-photo" style="background: linear-gradient(135deg, {% if is_inside %}#10b981{% else %}#6b7280{% endif %} 0%, {% if is_inside %}#059669{% else %}#4b5563{% endif %} 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 18px;">
-                                    {{ emp.name[0] if emp.name else 'M' }}
+                            <a href="/employees/{{ emp.id }}/view" style="text-decoration: none; color: inherit;">
+                                <div style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px; padding: 15px; text-align: center; transition: all 0.3s ease; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 12px; position: relative; overflow: hidden;">
+                                    <!-- الصورة الكبيرة -->
+                                    {% if emp.profile_image %}
+                                    <img src="{{ emp.profile_image }}" alt="{{ emp.name }}" style="width: 100px; height: 100px; border-radius: 12px; object-fit: cover; border: 2px solid rgba(129, 140, 248, 0.3); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);">
+                                    {% else %}
+                                    <div style="width: 100px; height: 100px; border-radius: 12px; background: linear-gradient(135deg, {% if is_inside %}#10b981{% else %}#6b7280{% endif %} 0%, {% if is_inside %}#059669{% else %}#4b5563{% endif %} 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 36px; border: 2px solid rgba(129, 140, 248, 0.3); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);">
+                                        {{ emp.name[0] if emp.name else 'M' }}
+                                    </div>
+                                    {% endif %}
+                                    
+                                    <!-- الاسم والرقم -->
+                                    <div style="text-align: center;">
+                                        <div style="color: #ffffff; font-weight: 700; font-size: 14px; margin-bottom: 4px; word-break: break-word;">{{ emp.name }}</div>
+                                        <div style="color: #c7d2fe; font-size: 12px;">{{ emp.employee_id }}</div>
+                                    </div>
+                                    
+                                    <!-- الحالة -->
+                                    {% if is_inside %}
+                                    <span style="background: rgba(16, 185, 129, 0.2); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.3); padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; width: 100%;">
+                                        🟢 موجود
+                                    </span>
+                                    {% else %}
+                                    <span style="background: rgba(107, 114, 128, 0.2); color: #d1d5db; border: 1px solid rgba(107, 114, 128, 0.3); padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; width: 100%;">
+                                        ⚪ غائب
+                                    </span>
+                                    {% endif %}
+                                    
+                                    <!-- التأثير عند الهوفر -->
+                                    <style>
+                                        a:hover div {
+                                            background: rgba(255, 255, 255, 0.08) !important;
+                                            border-color: rgba(129, 140, 248, 0.6) !important;
+                                            transform: translateY(-5px);
+                                            box-shadow: 0 8px 24px rgba(129, 140, 248, 0.3) !important;
+                                        }
+                                    </style>
                                 </div>
-                                {% endif %}
-                                
-                                <div class="employee-info">
-                                    <div class="employee-name">{{ emp.name }}</div>
-                                    <div class="employee-id">{{ emp.employee_id }}</div>
-                                </div>
-                                
-                                {% if is_inside %}
-                                <span style="background: rgba(16, 185, 129, 0.2); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.3); padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; margin-right: auto;">
-                                    🟢 موجود
-                                </span>
-                                {% else %}
-                                <span style="background: rgba(107, 114, 128, 0.2); color: #d1d5db; border: 1px solid rgba(107, 114, 128, 0.3); padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; margin-right: auto;">
-                                    ⚪ غائب
-                                </span>
-                                {% endif %}
                             </a>
                             {% endfor %}
                         {% else %}
-                            <div class="empty-state">
+                            <div class="empty-state" style="grid-column: 1 / -1;">
                                 <i class="fas fa-user-slash"></i>
                                 <h3>لا يوجد موظفين مرتبطين</h3>
                                 <p>لم يتم ربط أي موظف بهذه الدائرة بعد</p>
