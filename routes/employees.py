@@ -1838,8 +1838,8 @@ def upload_image(id):
         flash('لم يتم اختيار ملف', 'danger')
         return redirect(url_for('employees.view', id=id))
     
-    # حفظ الصورة - التحقق الصارم
-    image_path = save_employee_image(file, employee.employee_id, image_type)
+    # حفظ الصورة - التحقق الصارم (استخدام معرف الموظف الفعلي وليس رقم الموظف)
+    image_path = save_employee_image(file, employee.id, image_type)
     
     if not image_path:
         flash('❌ فشل في رفع الصورة. تأكد من أن الملف من النوع المسموح', 'danger')
