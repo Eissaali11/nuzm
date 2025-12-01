@@ -51,7 +51,7 @@ def save_employee_image(file, employee_id, image_type):
         return None
     
     try:
-        # التأكد من وجود المجلد
+        # التأكد من وجود المجلد بالمسار الكامل
         os.makedirs(UPLOAD_FOLDER, exist_ok=True)
         
         # إنشاء اسم ملف فريد
@@ -72,22 +72,34 @@ def save_employee_image(file, employee_id, image_type):
             else:
                 ext = '.jpg'
         
-        unique_filename = f"{employee_id}_{image_type}_{datetime.now().strftime('%Y%m%d_%H%M%S')}{ext}"
+        # استخدام معرف الموظف الفعلي + التاريخ الحالي
+        unique_filename = f"{employee_id}_{image_type}_{datetime.now().strftime('%Y%m%d_%H%M%S%f')}{ext}"
         filepath = os.path.join(UPLOAD_FOLDER, unique_filename)
         
-        # حفظ الملف
-        file.save(filepath)
+        # قراءة محتوى الملف أولاً قبل الحفظ
+        file_content = file.read()
+        file.seek(0)  # إعادة المؤشر
         
-        # ✅ تحقق صارم من النجاح
+        # حفظ الملف
+        with open(filepath, 'wb') as f:
+            f.write(file_content)
+        
+        # ✅ تحقق صارم من النجاح (تحقق ثلاثي)
         if not os.path.exists(filepath):
             print(f"❌ الملف غير موجود بعد الحفظ: {filepath}")
             return None
         
         file_size = os.path.getsize(filepath)
         if file_size == 0:
-            print(f"⚠️ الملف فارغ: {filepath} - يتم الاحتفاظ به للأمان")
-            # 💾 لا يتم حذف الملفات - الاحتفاظ بجميع الملفات بشكل دائم
+            print(f"⚠️ الملف فارغ: {filepath}")
+            return None
         
+        # التحقق من أن حجم الملف المحفوظ يطابق حجم الملف الأصلي
+        if file_size != len(file_content):
+            print(f"⚠️ عدم تطابق حجم الملف: {file_size} != {len(file_content)}")
+            return None
+        
+        # إرجاع المسار النسبي (بدون static/)
         relative_path = f"uploads/employees/{unique_filename}"
         print(f"✅ حفظ نجح: {relative_path} ({file_size} bytes)")
         return relative_path
