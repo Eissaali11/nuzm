@@ -2743,7 +2743,6 @@ def export_track_history_excel(employee_id):
     import requests
     from io import BytesIO
     from math import radians, sin, cos, sqrt, atan2
-    import tempfile
     import os
     
     employee = Employee.query.get_or_404(employee_id)
@@ -2900,23 +2899,28 @@ def export_track_history_excel(employee_id):
                 
                 response = requests.get(map_url, timeout=15, headers={'User-Agent': 'Mozilla/5.0'})
                 if response.status_code == 200 and len(response.content) > 1000:
-                    temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.png')
-                    temp_file.write(response.content)
-                    temp_file.close()
+                    # حفظ الصورة بشكل دائم بدلاً من المؤقت
+                    map_upload_folder = os.path.join(UPLOAD_FOLDER, 'maps')
+                    os.makedirs(map_upload_folder, exist_ok=True)
                     
-                    img = XLImage(temp_file.name)
-                    img.width = 450
-                    img.height = 300
+                    map_filename = f"track_map_{employee_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
+                    map_filepath = os.path.join(map_upload_folder, map_filename)
                     
-                    ws.add_image(img, f'F{map_row + 1}')
+                    with open(map_filepath, 'wb') as f:
+                        f.write(response.content)
                     
-                    for i in range(map_row + 1, map_row + 16):
-                        ws.row_dimensions[i].height = 20
-                    
-                    try:
-                        os.unlink(temp_file.name)
-                    except:
-                        pass
+                    # التحقق من أن الملف تم حفظه بنجاح
+                    if os.path.exists(map_filepath) and os.path.getsize(map_filepath) > 0:
+                        img = XLImage(map_filepath)
+                        img.width = 450
+                        img.height = 300
+                        
+                        ws.add_image(img, f'F{map_row + 1}')
+                        
+                        for i in range(map_row + 1, map_row + 16):
+                            ws.row_dimensions[i].height = 20
+                    else:
+                        raise Exception("فشل في حفظ صورة الخريطة")
                 else:
                     raise Exception("فشل تحميل الخريطة")
             except Exception as e:

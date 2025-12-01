@@ -609,10 +609,11 @@ def export_excel():
         # إنشاء DataFrame
         df = pd.DataFrame(data)
         
-        # إنشاء ملف مؤقت
-        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx')
-        temp_filename = temp_file.name
-        temp_file.close()
+        # حفظ في مجلد دائم
+        export_folder = os.path.join(UPLOAD_FOLDER, 'exports', 'sim')
+        os.makedirs(export_folder, exist_ok=True)
+        
+        temp_filename = os.path.join(export_folder, f"sim_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx")
         
         # كتابة البيانات إلى Excel بشكل مبسط وآمن
         try:
@@ -929,10 +930,11 @@ def export_sim_details_excel(sim_id):
         # إنشاء DataFrame
         df = pd.DataFrame(data, columns=['البيان', 'القيمة'])
         
-        # إنشاء ملف مؤقت
-        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx')
-        temp_filename = temp_file.name
-        temp_file.close()
+        # حفظ في مجلد دائم
+        export_folder = os.path.join(UPLOAD_FOLDER, 'exports', 'sim_details')
+        os.makedirs(export_folder, exist_ok=True)
+        
+        temp_filename = os.path.join(export_folder, f"sim_detail_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx")
         
         # كتابة البيانات إلى Excel مع تنسيق محسن
         from openpyxl import Workbook
