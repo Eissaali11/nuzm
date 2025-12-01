@@ -1139,92 +1139,55 @@ def delete(id):
             flash(f'لا يمكن حذف الموظف لديه {pending_requests} طلب(ات) معلقة. يرجى حذف الطلبات أولاً', 'danger')
             return redirect(url_for('employees.view', id=id))
         
-        # حذف جميع البيانات المرتبطة بالموظف بشكل آمن
+        # حذف جميع البيانات المرتبطة بالموظف بشكل آمن وشامل
+        from sqlalchemy import text
+        
+        # قائمة الجداول والأعمدة المرتبطة بـ employee_id
+        tables_to_clean = [
+            ('geofence_attendance', 'employee_id', 'delete'),
+            ('salary', 'employee_id', 'delete'),
+            ('geofence_sessions', 'employee_id', 'delete'),
+            ('document', 'employee_id', 'delete'),
+            ('attendance', 'employee_id', 'delete'),
+            ('government_fee', 'employee_id', 'delete'),
+            ('fee', 'employee_id', 'delete'),
+            ('employee_departments', 'employee_id', 'delete'),
+            ('sim_cards', 'employee_id', 'unlink'),
+            ('imported_phone_numbers', 'employee_id', 'unlink'),
+            ('device_assignments', 'employee_id', 'delete'),
+            ('transactions', 'employee_id', 'delete'),
+            ('voicehub_calls', 'employee_id', 'delete'),
+            ('property_employees', 'employee_id', 'delete'),
+            ('geofence_events', 'employee_id', 'delete'),
+            ('employee_geofences', 'employee_id', 'delete'),
+            ('employee_locations', 'employee_id', 'delete'),
+            ('employee_requests', 'employee_id', 'delete'),
+            ('employee_liabilities', 'employee_id', 'delete'),
+            ('request_notifications', 'employee_id', 'delete'),
+            ('external_authorization', 'employee_id', 'delete'),
+            ('mobile_devices', 'employee_id', 'unlink'),
+            ('safety_inspection', 'employee_id', 'delete'),
+        ]
+        
+        # تنظيف جميع الجداول
+        for table, column, action in tables_to_clean:
+            try:
+                if action == 'delete':
+                    db.session.execute(text(f"DELETE FROM {table} WHERE {column} = :id"), {"id": id})
+                elif action == 'unlink':
+                    db.session.execute(text(f"UPDATE {table} SET {column} = NULL WHERE {column} = :id"), {"id": id})
+                db.session.flush()
+            except Exception as e:
+                print(f"Warning: Could not clean {table}: {str(e)}")
+                db.session.rollback()
+        
+        # فك ربط vehicle_handover (لديه عمودين)
         try:
-            from models import ImportedPhoneNumber
-            ImportedPhoneNumber.query.filter_by(employee_id=id).update({'employee_id': None})
+            db.session.execute(text("UPDATE vehicle_handover SET employee_id = NULL WHERE employee_id = :id"), {"id": id})
+            db.session.execute(text("UPDATE vehicle_handover SET supervisor_employee_id = NULL WHERE supervisor_employee_id = :id"), {"id": id})
             db.session.flush()
         except:
             pass
-        
-        try:
-            from models import GeofenceEvent
-            GeofenceEvent.query.filter_by(employee_id=id).delete()
-            db.session.flush()
-        except:
-            pass
-        
-        try:
-            from models import GeofenceSession
-            GeofenceSession.query.filter_by(employee_id=id).delete()
-            db.session.flush()
-        except:
-            pass
-        
-        try:
-            from models import GeofenceAttendance
-            GeofenceAttendance.query.filter_by(employee_id=id).delete()
-            db.session.flush()
-        except:
-            pass
-        
-        # حذف مواقع الموظف
-        EmployeeLocation.query.filter_by(employee_id=id).delete()
-        db.session.flush()
-        
-        # فك ربط بطاقات SIM
-        try:
-            from models import SimCard
-            SimCard.query.filter_by(employee_id=id).update({'employee_id': None, 'status': 'متاح'})
-            db.session.flush()
-        except:
-            pass
-        
-        # فك ربط تسليمات المركبات
-        VehicleHandover.query.filter_by(employee_id=id).update({'employee_id': None})
-        VehicleHandover.query.filter_by(supervisor_employee_id=id).update({'supervisor_employee_id': None})
-        db.session.flush()
-        
-        # فك ربط سجلات ورشة المركبات
-        try:
-            from models import VehicleWorkshop
-            VehicleWorkshop.query.filter_by(driver_id=id).update({'driver_id': None})
-            VehicleWorkshop.query.filter_by(supervisor_id=id).update({'supervisor_id': None})
-            db.session.flush()
-        except:
-            pass
-        
-        # فك ربط حوادث المركبات
-        try:
-            from models import VehicleAccident
-            VehicleAccident.query.filter_by(reported_by_employee_id=id).update({'reported_by_employee_id': None})
-            db.session.flush()
-        except:
-            pass
-        
-        # فك ربط الأجهزة المحمولة
-        MobileDevice.query.filter_by(employee_id=id).update({'employee_id': None, 'status': 'متاح'})
-        db.session.flush()
-        
-        # حذف الحضور
-        Attendance.query.filter_by(employee_id=id).delete()
-        db.session.flush()
-        
-        # حذف الرواتب
-        Salary.query.filter_by(employee_id=id).delete()
-        db.session.flush()
-        
-        # حذف المستندات
-        Document.query.filter_by(employee_id=id).delete()
-        db.session.flush()
-        
-        # حذف تعيينات الأجهزة
-        DeviceAssignment.query.filter_by(employee_id=id).delete()
-        db.session.flush()
-        
-        # حذف جميع الطلبات
-        EmployeeRequest.query.filter_by(employee_id=id).delete()
-        db.session.flush()
         
         # إزالة من الدوائر الجغرافية المعينة
         try:
@@ -1235,7 +1198,7 @@ def delete(id):
         except:
             pass
         
-        # حذف الموظف
+        # حذف الموظف أخيراً
         db.session.delete(employee)
         db.session.commit()
         
