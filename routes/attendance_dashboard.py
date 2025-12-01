@@ -1012,69 +1012,69 @@ def api_live_stats():
         # تنسيق ورقة الإحصائيات
         dashboard_sheet = writer.sheets['لوحة الإحصائيات']
         for col in dashboard_sheet.columns:
-        max_length = 0
-        column = col[0].column_letter
-        for cell in col:
-        try:
-            if len(str(cell.value)) > max_length:
-            max_length = len(str(cell.value))
-        except:
-            pass
-        adjusted_width = (max_length + 2)
-        dashboard_sheet.column_dimensions[column].width = adjusted_width
-    
-    # إضافة إطار وتلوين للعناوين
-    for col_num, column_title in enumerate(dashboard_df.columns, 1):
-        cell = dashboard_sheet.cell(row=1, column=col_num)
-        cell.font = Font(bold=True)
-        cell.fill = PatternFill(start_color='1F4E78', end_color='1F4E78', fill_type='solid')
-        cell.font = Font(color='FFFFFF', bold=True)
+            max_length = 0
+            column = col[0].column_letter
+            for cell in col:
+                try:
+                    if len(str(cell.value)) > max_length:
+                        max_length = len(str(cell.value))
+                except:
+                    pass
+            adjusted_width = (max_length + 2)
+            dashboard_sheet.column_dimensions[column].width = adjusted_width
         
-    # تلوين الخلايا حسب القيمة (للنسب المئوية)
-    for row_num, row in enumerate(dashboard_df.iterrows(), 2):
-        # الحصول على مؤشر العمود
-        present_col = dashboard_df.columns.get_indexer(['نسبة الحضور %'])[0] + 1
-        absent_col = dashboard_df.columns.get_indexer(['نسبة الغياب %'])[0] + 1
+        # إضافة إطار وتلوين للعناوين
+        for col_num, column_title in enumerate(dashboard_df.columns, 1):
+            cell = dashboard_sheet.cell(row=1, column=col_num)
+            cell.font = Font(bold=True)
+            cell.fill = PatternFill(start_color='1F4E78', end_color='1F4E78', fill_type='solid')
+            cell.font = Font(color='FFFFFF', bold=True)
+            
+        # تلوين الخلايا حسب القيمة (للنسب المئوية)
+        for row_num, row in enumerate(dashboard_df.iterrows(), 2):
+            # الحصول على مؤشر العمود
+            present_col = dashboard_df.columns.get_indexer(['نسبة الحضور %'])[0] + 1
+            absent_col = dashboard_df.columns.get_indexer(['نسبة الغياب %'])[0] + 1
+            
+            present_cell = dashboard_sheet.cell(row=row_num, column=present_col)
+            absent_cell = dashboard_sheet.cell(row=row_num, column=absent_col)
+            
+            present_value = row[1]['نسبة الحضور %']
+            
+            # تلوين نسبة الحضور
+            if present_value >= 90:
+                present_cell.fill = PatternFill(start_color='C6EFCE', end_color='C6EFCE', fill_type='solid')
+            elif present_value >= 70:
+                present_cell.fill = PatternFill(start_color='FFEB9C', end_color='FFEB9C', fill_type='solid')
+            else:
+                present_cell.fill = PatternFill(start_color='FFC7CE', end_color='FFC7CE', fill_type='solid')
         
-        present_cell = dashboard_sheet.cell(row=row_num, column=present_col)
-        absent_cell = dashboard_sheet.cell(row=row_num, column=absent_col)
-        
-        present_value = row[1]['نسبة الحضور %']
-        
-        # تلوين نسبة الحضور
-        if present_value >= 90:
-        present_cell.fill = PatternFill(start_color='C6EFCE', end_color='C6EFCE', fill_type='solid')
-        elif present_value >= 70:
-        present_cell.fill = PatternFill(start_color='FFEB9C', end_color='FFEB9C', fill_type='solid')
-        else:
-        present_cell.fill = PatternFill(start_color='FFC7CE', end_color='FFC7CE', fill_type='solid')
-    
-    # تنسيق ورقة Attendance Overview
-    if not overview_df.empty and 'Attendance Overview' in writer.sheets:
-        overview_sheet = writer.sheets['Attendance Overview']
-        
-        # تنسيق العناوين - لون سماوي مثل الصورة
-        for col_num in range(1, len(overview_df.columns) + 1):
-            cell = overview_sheet.cell(row=1, column=col_num)
-            cell.fill = PatternFill(start_color='17C5BC', end_color='17C5BC', fill_type='solid')
-            cell.font = Font(color='FFFFFF', bold=True, size=11)
-            cell.alignment = Alignment(horizontal='center', vertical='center')
-        
-        # ضبط عرض الأعمدة
-        overview_sheet.column_dimensions['A'].width = 15  # DATE
-        overview_sheet.column_dimensions['B'].width = 15  # PROJECT
-        overview_sheet.column_dimensions['C'].width = 15  # LOCATION
-        overview_sheet.column_dimensions['D'].width = 12  # TOTAL EMP
-        overview_sheet.column_dimensions['E'].width = 12  # ATTEND
-        overview_sheet.column_dimensions['F'].width = 12  # DAY OFF
-        overview_sheet.column_dimensions['G'].width = 12  # ABSENT
-        overview_sheet.column_dimensions['H'].width = 15  # PERCENTAGE
-        
-        # محاذاة البيانات في الوسط
-        for row_num in range(2, len(overview_df) + 2):
+        # تنسيق ورقة Attendance Overview
+        if not overview_df.empty and 'Attendance Overview' in writer.sheets:
+            overview_sheet = writer.sheets['Attendance Overview']
+            
+            # تنسيق العناوين - لون سماوي مثل الصورة
             for col_num in range(1, len(overview_df.columns) + 1):
-            cell = overview_sheet.cell(row=row_num, column=col_num)
-            cell.alignment = Alignment(horizontal='center', vertical='center')
+                cell = overview_sheet.cell(row=1, column=col_num)
+                cell.fill = PatternFill(start_color='17C5BC', end_color='17C5BC', fill_type='solid')
+                cell.font = Font(color='FFFFFF', bold=True, size=11)
+                cell.alignment = Alignment(horizontal='center', vertical='center')
+            
+            # ضبط عرض الأعمدة
+            overview_sheet.column_dimensions['A'].width = 15  # DATE
+            overview_sheet.column_dimensions['B'].width = 15  # PROJECT
+            overview_sheet.column_dimensions['C'].width = 15  # LOCATION
+            overview_sheet.column_dimensions['D'].width = 12  # TOTAL EMP
+            overview_sheet.column_dimensions['E'].width = 12  # ATTEND
+            overview_sheet.column_dimensions['F'].width = 12  # DAY OFF
+            overview_sheet.column_dimensions['G'].width = 12  # ABSENT
+            overview_sheet.column_dimensions['H'].width = 15  # PERCENTAGE
+            
+            # محاذاة البيانات في الوسط
+            for row_num in range(2, len(overview_df) + 2):
+                for col_num in range(1, len(overview_df.columns) + 1):
+                    cell = overview_sheet.cell(row=row_num, column=col_num)
+                    cell.alignment = Alignment(horizontal='center', vertical='center')
         
         # إنشاء مخطط شريطي (Bar Chart)
         chart = BarChart()
@@ -1095,7 +1095,7 @@ def api_live_stats():
         
         # إضافة المخطط إلى الورقة
         chart_sheet.add_chart(chart, "A10")
-        
+    
     # إرسال الملف كملف للتحميل
     return send_file(
         temp_file_path,
