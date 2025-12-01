@@ -1139,12 +1139,68 @@ def delete(id):
             flash(f'لا يمكن حذف الموظف لديه {pending_requests} طلب(ات) معلقة. يرجى حذف الطلبات أولاً', 'danger')
             return redirect(url_for('employees.view', id=id))
         
-        # حذف جميع تعيينات الأجهزة المرتبطة بالموظف
+        # استيراد جميع النماذج المرتبطة
+        from models import (
+            ImportedPhoneNumber, GeofenceEvent, GeofenceSession, GeofenceAttendance,
+            SimCard, VehicleHandover, VehicleWorkshop, VehicleAccident, ManualEntry
+        )
+        
+        # 1. حذف جميع تعيينات الأجهزة المرتبطة بالموظف
         DeviceAssignment.query.filter_by(employee_id=id).delete()
         
-        # حذف جميع الطلبات المرتبطة بالموظف
+        # 2. حذف جميع الطلبات المرتبطة بالموظف
         EmployeeRequest.query.filter_by(employee_id=id).delete()
         
+        # 3. فك ربط أرقام الهاتف المستوردة
+        ImportedPhoneNumber.query.filter_by(employee_id=id).update({'employee_id': None})
+        
+        # 4. حذف أحداث الدوائر الجغرافية
+        GeofenceEvent.query.filter_by(employee_id=id).delete()
+        
+        # 5. حذف جلسات الدوائر الجغرافية
+        GeofenceSession.query.filter_by(employee_id=id).delete()
+        
+        # 6. حذف سجلات الحضور في الدوائر
+        GeofenceAttendance.query.filter_by(employee_id=id).delete()
+        
+        # 7. حذف مواقع الموظف
+        EmployeeLocation.query.filter_by(employee_id=id).delete()
+        
+        # 8. فك ربط بطاقات SIM
+        SimCard.query.filter_by(employee_id=id).update({'employee_id': None, 'status': 'متاح'})
+        
+        # 9. فك ربط تسليمات المركبات
+        VehicleHandover.query.filter_by(employee_id=id).update({'employee_id': None})
+        VehicleHandover.query.filter_by(supervisor_employee_id=id).update({'supervisor_employee_id': None})
+        
+        # 10. فك ربط سجلات ورشة المركبات
+        VehicleWorkshop.query.filter_by(driver_id=id).update({'driver_id': None})
+        VehicleWorkshop.query.filter_by(supervisor_id=id).update({'supervisor_id': None})
+        
+        # 11. فك ربط حوادث المركبات
+        VehicleAccident.query.filter_by(reported_by_employee_id=id).update({'reported_by_employee_id': None})
+        
+        # 12. حذف الإدخالات اليدوية
+        ManualEntry.query.filter_by(employee_id=id).delete()
+        
+        # 13. فك ربط الأجهزة المحمولة
+        MobileDevice.query.filter_by(employee_id=id).update({'employee_id': None, 'status': 'متاح'})
+        
+        # 14. حذف الحضور
+        Attendance.query.filter_by(employee_id=id).delete()
+        
+        # 15. حذف الرواتب
+        Salary.query.filter_by(employee_id=id).delete()
+        
+        # 16. حذف المستندات
+        Document.query.filter_by(employee_id=id).delete()
+        
+        # 17. إزالة من الدوائر الجغرافية المعينة
+        for geofence in Geofence.query.all():
+            if employee in geofence.assigned_employees:
+                geofence.assigned_employees.remove(employee)
+        
+        # حذف الموظف
         db.session.delete(employee)
         db.session.commit()
         
