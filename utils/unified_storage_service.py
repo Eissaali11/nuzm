@@ -172,6 +172,48 @@ class UnifiedStorageService:
         except Exception as e:
             logger.error(f"خطأ: {e}")
             return None
+    
+    def upload_vehicle_operation(
+        self,
+        vehicle_plate: str,
+        operation_type: str,
+        operation_id: int,
+        sync: bool = False
+    ) -> Dict:
+        """رفع ملفات عملية السيارة على Google Drive"""
+        try:
+            if not self.drive_service.is_configured():
+                return {'success': False, 'message': 'Google Drive غير متصل'}
+            
+            # الحصول على مجلد السيارات
+            vehicles_folder = self._get_or_create_vehicles_folder()
+            if not vehicles_folder:
+                return {'success': False, 'message': 'فشل في إنشاء مجلد السيارات'}
+            
+            # إنشاء مجلد للعملية
+            operation_folder_name = f"العملية_{operation_id}_{operation_type}"
+            operation_folder = self.drive_service._get_or_create_folder(
+                operation_folder_name,
+                parent_id=vehicles_folder
+            )
+            
+            if not operation_folder:
+                return {'success': False, 'message': 'فشل في إنشاء مجلد العملية'}
+            
+            logger.info(f"✅ تم رفع عملية السيارة {vehicle_plate} على Google Drive")
+            
+            # الحصول على رابط Shared Drive
+            drive_link = f"https://drive.google.com/drive/folders/{vehicles_folder}"
+            
+            return {
+                'success': True,
+                'message': 'تم الرفع بنجاح',
+                'folder_link': drive_link,
+                'operation_folder_id': operation_folder
+            }
+        except Exception as e:
+            logger.error(f"❌ خطأ في رفع عملية السيارة: {str(e)}")
+            return {'success': False, 'message': f'خطأ: {str(e)[:100]}'}
 
 
 # Instance للاستخدام المباشر
