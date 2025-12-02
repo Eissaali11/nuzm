@@ -79,15 +79,14 @@ class GoogleDriveService:
             return False
     
     def _get_or_create_folder(self, folder_name: str, parent_id: Optional[str] = None) -> Optional[str]:
-        """الحصول على مجلد أو إنشاؤه إذا لم يكن موجوداً"""
+        """الحصول على مجلد أو إنشاؤه إذا لم يكن موجوداً - مع دعم Shared Drive"""
         try:
             from google.oauth2 import service_account
             from googleapiclient.discovery import build
             
-            # إنشاء الـ credentials
+            # إنشاء الـ credentials مع الصلاحيات الكاملة
             SCOPES = [
-                'https://www.googleapis.com/auth/drive.file',
-                'https://www.googleapis.com/auth/drive'
+                'https://www.googleapis.com/auth/drive'  # صلاحيات كاملة
             ]
             credentials = service_account.Credentials.from_service_account_info(
                 self.credentials, scopes=SCOPES
@@ -96,22 +95,25 @@ class GoogleDriveService:
             # إنشاء خدمة Drive
             service = build('drive', 'v3', credentials=credentials)
             
-            # البحث عن المجلد
+            # البحث عن المجلد مع دعم Shared Drive
             query = f"name='{folder_name}' and mimeType='application/vnd.google-apps.folder' and trashed=false"
             if parent_id:
                 query += f" and '{parent_id}' in parents"
             else:
                 query += f" and '{self.shared_drive_id}' in parents"
             
+            # البحث مع دعم كامل للـ Shared Drive
             results = service.files().list(
                 q=query,
                 fields="files(id, name)",
                 supportsAllDrives=True,
-                includeItemsFromAllDrives=True
+                includeItemsFromAllDrives=True,
+                corpora='drive'  # ✅ مهم جداً لـ Shared Drive
             ).execute()
             
             files = results.get('files', [])
             if files:
+                logger.info(f"✅ وجد المجلد الموجود: {folder_name}")
                 return files[0]['id']
             
             # إنشاء المجلد إذا لم يكن موجوداً
@@ -124,14 +126,14 @@ class GoogleDriveService:
             folder = service.files().create(
                 body=file_metadata,
                 fields='id',
-                supportsAllDrives=True
+                supportsAllDrives=True  # ✅ مهم للكتابة على Shared Drive
             ).execute()
             
-            logger.info(f"تم إنشاء المجلد: {folder_name}")
+            logger.info(f"✅ تم إنشاء المجلد: {folder_name} (ID: {folder.get('id')})")
             return folder.get('id')
                 
         except Exception as e:
-            logger.error(f"خطأ في إنشاء/الحصول على المجلد {folder_name}: {e}")
+            logger.error(f"❌ خطأ في إنشاء/الحصول على المجلد {folder_name}: {e}")
             return None
     
     def get_root_folder(self) -> Optional[str]:
@@ -143,7 +145,7 @@ class GoogleDriveService:
         return self.root_folder_id
     
     def upload_file(self, file_path: str, folder_id: str, custom_name: Optional[str] = None) -> Optional[Dict]:
-        """رفع ملف إلى Google Drive (Shared Drive)"""
+        """رفع ملف إلى Google Drive Shared Drive مع الصلاحيات الكاملة"""
         try:
             from google.oauth2 import service_account
             from googleapiclient.discovery import build
@@ -156,22 +158,19 @@ class GoogleDriveService:
                 return None
             
             file_size = os.path.getsize(file_path)
-            logger.info(f"جاري رفع ملف بحجم {file_size} بايت: {file_path}")
+            logger.info(f"⏳ جاري رفع ملف بحجم {file_size} بايت: {file_path}")
             
             if file_size == 0:
-                logger.warning(f"تحذير: الملف فارغ: {file_path}")
+                logger.warning(f"⚠️ تحذير: الملف فارغ: {file_path}")
             
             # قراءة الملف بالكامل في الذاكرة
             with open(file_path, 'rb') as f:
                 file_content = f.read()
             
-            logger.info(f"تم قراءة الملف: {len(file_content)} بايت")
+            logger.info(f"✅ تم قراءة الملف: {len(file_content)} بايت")
             
-            # إنشاء الـ credentials
-            SCOPES = [
-                'https://www.googleapis.com/auth/drive.file',
-                'https://www.googleapis.com/auth/drive'
-            ]
+            # إنشاء الـ credentials مع الصلاحيات الكاملة
+            SCOPES = ['https://www.googleapis.com/auth/drive']  # صلاحيات كاملة
             credentials = service_account.Credentials.from_service_account_info(
                 self.credentials, scopes=SCOPES
             )
@@ -196,7 +195,7 @@ class GoogleDriveService:
                 body=file_metadata,
                 media_body=media,
                 fields='id,name,webViewLink,webContentLink',
-                supportsAllDrives=True
+                supportsAllDrives=True  # ✅ مهم للـ Shared Drive
             )
             
             # إكمال الرفع مع تتبع التقدم
@@ -208,16 +207,17 @@ class GoogleDriveService:
                 try:
                     status, response = request.next_chunk()
                     if status:
-                        logger.info(f"تم رفع {int(status.progress() * 100)}% من {file_name}")
+                        progress_pct = int(status.progress() * 100)
+                        logger.info(f"⏳ تم رفع {progress_pct}% من {file_name}")
                     retry_count = 0  # إعادة تعيين العداد عند النجاح
                 except Exception as e:
                     retry_count += 1
                     if retry_count >= max_retries:
-                        logger.error(f"فشل الرفع بعد {max_retries} محاولات: {e}")
+                        logger.error(f"❌ فشل الرفع بعد {max_retries} محاولات: {str(e)[:100]}")
                         return None
-                    logger.warning(f"خطأ في الرفع، المحاولة {retry_count}: {e}")
+                    logger.warning(f"⚠️ خطأ في الرفع، إعادة محاولة {retry_count}: {str(e)[:100]}")
             
-            logger.info(f"تم رفع الملف بنجاح: {file_name} (ID: {response.get('id')}, الحجم: {len(file_content)})")
+            logger.info(f"✅ تم رفع الملف بنجاح: {file_name} (ID: {response.get('id')})")
             return {
                 'file_id': response.get('id'),
                 'file_name': response.get('name'),
@@ -226,7 +226,7 @@ class GoogleDriveService:
             }
                 
         except Exception as e:
-            logger.error(f"خطأ في رفع الملف {file_path}: {e}", exc_info=True)
+            logger.error(f"❌ خطأ في رفع الملف {file_path}: {str(e)[:200]}", exc_info=False)
             return None
     
     def upload_vehicle_operation(
