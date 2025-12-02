@@ -108,7 +108,8 @@ class GoogleDriveService:
                 fields="files(id, name)",
                 supportsAllDrives=True,
                 includeItemsFromAllDrives=True,
-                corpora='drive'  # ✅ مهم جداً لـ Shared Drive
+                corpora='drive',  # ✅ مهم جداً لـ Shared Drive
+                driveId=self.shared_drive_id  # ✅ مطلوب عند استخدام corpora='drive'
             ).execute()
             
             files = results.get('files', [])
