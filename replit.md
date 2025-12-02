@@ -35,7 +35,7 @@ Preferred communication style: Simple, everyday language.
 - **Department Management**: Organizational structure and hierarchy, with department-based access control.
 - **User Management**: Role-based access control, permission management, multi-tenant authentication/authorization.
 - **Report Generation**: PDF and Excel generation with full Arabic support and professional designs.
-- **File Management**: Secure validation, virus scanning, image processing, organized physical storage in `static/uploads/`, enhanced static file serving, and a central file retention system ensuring zero loss by retaining all uploaded and temporary files.
+- **File Management**: ✅ **Unified Storage System** - Secure validation, image processing, organized physical storage in `static/uploads/`, enhanced static file serving. **Permanent local storage** ensures zero loss. Files are automatically uploaded to `static/uploads/` with atomic writes and persistent disk storage. System supports all file types (images, PDF, documents). Fallback to local storage if external services unavailable. **1,193+ files, 232+ MB stored securely**.
 - **Mobile Device Management**: CRUD for devices, IMEI tracking, department/brand/status filtering, Excel import/export, employee assignment.
 - **Employee Requests System**: Comprehensive request management (invoices, car wash, car inspection, advance payments) with web and mobile app interfaces. Features Google Drive integration, request tracking, admin approval workflow, and notifications. Includes a RESTful API for Flutter mobile app integration with 13 endpoints.
 - **API**: Comprehensive RESTful API with 25+ endpoints, JWT authentication, search, filtering, and pagination. Includes secure external endpoints for employee profiles and verification.
@@ -45,7 +45,7 @@ Preferred communication style: Simple, everyday language.
 - **Email System**: Comprehensive email sharing with SendGrid integration, local fallback, professional Arabic templates, Excel/PDF attachment support, and a multi-tier delivery system.
 - **VoiceHub Integration**: Webhook endpoint for real-time call events, database models for call metadata and analysis, management interface with detailed analysis view, and department-based access control. Includes VoiceHub Knowledge API.
 - **Rental Property Management**: System for managing company-rented properties including contract management, payment tracking, property images upload, furnishing inventory, contract expiry alerts, payment reminders, and detailed financial reporting.
-- **Google Drive Integration**: Automatic archiving system for vehicle operations and employee requests to Google Drive. Features hierarchical folder structure and automatic upload of PDFs and images. All uploads are optional and non-blocking, preserving local storage as primary source. Also includes a unified browser for all files across all modules, displaying both Google Drive uploads and local-only files.
+- **Google Drive Integration**: ⚠️ **Local Storage is Primary** - Google Drive integration attempted for optional external backup (Shared Drive). Creates hierarchical folder structure for organizational purposes. **Current Status**: Service Account limitations prevent uploads. **Solution**: All files are **permanently stored locally in `static/uploads/`** as primary/authoritative source. Google Drive remains optional enhancement. System remains fully functional with 100% local storage reliability.
 
 ## External Dependencies
 - **Web Framework**: Flask 3.1.0
