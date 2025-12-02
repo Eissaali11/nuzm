@@ -442,7 +442,8 @@ def view_operation(operation_id):
                          operation=operation,
                          related_record=related_record,
                          employee=employee,
-                         mobile_device=mobile_device)
+                         mobile_device=mobile_device,
+                         has_drive_integration=unified_storage.drive_service.is_configured())
 
 
 
