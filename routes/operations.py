@@ -728,22 +728,25 @@ def upload_operation_to_drive(operation_id):
         )
         
         if drive_result and drive_result.get('success'):
-            flash(f"✅ تم رفع العملية على Google Drive بنجاح", 'success')
+            current_app.logger.info(f"✅ تم رفع العملية {operation_id} على Google Drive بنجاح")
             return jsonify({
                 'success': True, 
                 'message': 'تم رفع الملفات على Google Drive',
                 'drive_link': drive_result.get('folder_link')
             })
         else:
-            current_app.logger.warning(f"فشل رفع العملية {operation_id} على Google Drive")
+            error_msg = drive_result.get('message', 'فشل الرفع - تحقق من اتصال Google Drive') if drive_result else 'فشل الرفع - تحقق من اتصال Google Drive'
+            current_app.logger.warning(f"فشل رفع العملية {operation_id}: {error_msg}")
             return jsonify({
                 'success': False, 
-                'message': 'فشل الرفع - تحقق من اتصال Google Drive'
+                'message': error_msg
             })
         
     except Exception as e:
-        current_app.logger.error(f"خطأ في رفع العملية {operation_id}: {str(e)}")
-        return jsonify({'success': False, 'message': f'حدث خطأ: {str(e)}'})
+        error_msg = str(e)
+        current_app.logger.error(f"خطأ في رفع العملية {operation_id}: {error_msg}")
+        return jsonify({'success': False, 'message': f'حدث خطأ: {error_msg[:100]}'})
+
 
 
 @operations_bp.route('/<int:operation_id>/under-review', methods=['POST'])

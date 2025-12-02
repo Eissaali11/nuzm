@@ -63,7 +63,13 @@ class UnifiedStorageService:
             )
             return self.vehicles_folder_id
         except Exception as e:
-            logger.error(f"خطأ في الحصول على مجلد السيارات: {e}")
+            error_msg = str(e)
+            logger.error(f"❌ خطأ في الحصول على مجلد السيارات: {error_msg}")
+            
+            # إذا كان الخطأ عن Shared Drive غير موجود، فالمشكلة هي الصلاحيات
+            if 'Shared drive not found' in error_msg or '404' in error_msg:
+                logger.error(f"❌ Service Account لم تُضَف إلى Shared Drive. البريد المطلوب: nuzum-721@nuzum-477618.iam.gserviceaccount.com")
+            
             return None
     
     def upload_employee_file_async(
