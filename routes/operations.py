@@ -42,6 +42,7 @@ from utils.vehicles_export import export_vehicle_pdf, export_workshop_records_pd
 from utils.simple_pdf_generator import create_vehicle_handover_pdf as generate_complete_vehicle_report
 from utils.vehicle_excel_report import generate_complete_vehicle_excel_report
 from services.email_service import EmailService
+from utils.unified_storage_service import unified_storage
 # from utils.workshop_report import generate_workshop_report_pdf
 # from utils.html_to_pdf import generate_pdf_from_template
 # from utils.fpdf_arabic_report import generate_workshop_report_pdf_fpdf
@@ -409,7 +410,8 @@ def view_operation(operation_id):
                              related_record=related_record,
                              workshop_images=workshop_images,
                              driver_employee=driver_employee,
-                             current_driver_info=current_driver_info)
+                             current_driver_info=current_driver_info,
+                             has_drive_integration=unified_storage.drive_service.is_configured())
     
     # جلب بيانات الموظف إذا كانت متاحة
     employee = None
@@ -703,6 +705,44 @@ def reject_operation(operation_id):
 
 
 
+
+
+@operations_bp.route('/<int:operation_id>/upload-to-drive', methods=['POST'])
+@login_required  
+def upload_operation_to_drive(operation_id):
+    """رفع ملفات العملية إلى Google Drive"""
+    
+    if current_user.role != UserRole.ADMIN:
+        return jsonify({'success': False, 'message': 'غير مسموح'})
+    
+    operation = OperationRequest.query.get_or_404(operation_id)
+    
+    try:
+        # رفع الملفات على Google Drive
+        drive_result = unified_storage.upload_vehicle_operation(
+            vehicle_plate=operation.vehicle.plate_number,
+            operation_type=operation.operation_type,
+            operation_id=operation.id,
+            sync=True
+        )
+        
+        if drive_result and drive_result.get('success'):
+            flash(f"✅ تم رفع العملية على Google Drive بنجاح", 'success')
+            return jsonify({
+                'success': True, 
+                'message': 'تم رفع الملفات على Google Drive',
+                'drive_link': drive_result.get('folder_link')
+            })
+        else:
+            current_app.logger.warning(f"فشل رفع العملية {operation_id} على Google Drive")
+            return jsonify({
+                'success': False, 
+                'message': 'فشل الرفع - تحقق من اتصال Google Drive'
+            })
+        
+    except Exception as e:
+        current_app.logger.error(f"خطأ في رفع العملية {operation_id}: {str(e)}")
+        return jsonify({'success': False, 'message': f'حدث خطأ: {str(e)}'})
 
 
 @operations_bp.route('/<int:operation_id>/under-review', methods=['POST'])
