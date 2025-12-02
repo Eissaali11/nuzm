@@ -240,6 +240,12 @@ body {
                         <i class="fas fa-file-excel me-2"></i>تصدير Excel
                     </a>
                     
+                    {% if has_drive_integration %}
+                    <button type="button" class="action-btn bg-warning text-dark" onclick="uploadToDrive({{ operation.id }})">
+                        <i class="fab fa-google me-2"></i>رفع على Drive
+                    </button>
+                    {% endif %}
+                    
                     {% if operation.status == 'pending' %}
                         <span class="status-badge bg-warning text-dark">
                             <i class="fas fa-clock me-2"></i>معلقة
@@ -1482,6 +1488,41 @@ function showEmployeePhoto(imageSrc, employeeName) {
 </div>
 
 <script>
+function uploadToDrive(operationId) {
+    if (confirm('هل تريد رفع ملفات هذه العملية على Google Drive؟')) {
+        const btn = event.target.closest('button');
+        btn.disabled = true;
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>جاري الرفع...';
+        
+        fetch(`/operations/${operationId}/upload-to-drive`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('✅ تم رفع الملفات على Google Drive بنجاح!');
+                if (data.drive_link) {
+                    window.open(data.drive_link, '_blank');
+                }
+                location.reload();
+            } else {
+                alert('❌ فشل الرفع: ' + data.message);
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        })
+        .catch(err => {
+            alert('❌ خطأ: ' + err.message);
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        });
+    }
+}
+
 // تحسين تجربة المستخدم مع الصورة
 document.addEventListener('DOMContentLoaded', function() {
     // إضافة تأثير loading للصورة
