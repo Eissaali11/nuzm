@@ -228,10 +228,21 @@
                             <li class="nav-item mb-1">
                                 <a
                                     href="{{ url_for('reports.index') }}"
-                                    class="nav-link nav-link-custom {% if '/reports' in request.path %}active{% endif %}"
+                                    class="nav-link nav-link-custom {% if '/reports' in request.path and '/powerbi' not in request.path %}active{% endif %}"
                                 >
                                     <i class="fas fa-chart-pie me-2"></i>
                                     <span>التقارير</span>
+                                </a>
+                            </li>
+                            <li class="nav-item mb-1">
+                                <a
+                                    href="{{ url_for('powerbi.dashboard') }}"
+                                    class="nav-link nav-link-custom {% if '/powerbi' in request.path %}active{% endif %}"
+                                    style="background: linear-gradient(135deg, rgba(242, 200, 17, 0.1) 0%, rgba(102, 126, 234, 0.1) 100%); border-right: 3px solid #F2C811;"
+                                >
+                                    <i class="fas fa-chart-line me-2" style="color: #F2C811;"></i>
+                                    <span>لوحة التحليلات</span>
+                                    <span class="badge bg-warning text-dark ms-2" style="font-size: 0.65rem;">BI</span>
                                 </a>
                             </li>
                             {% endif %} {# التحقق من صلاحيات الموظفين #} {% if

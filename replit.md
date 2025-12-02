@@ -46,7 +46,13 @@ Preferred communication style: Simple, everyday language.
 - **VoiceHub Integration**: Webhook endpoint for real-time call events, database models for call metadata and analysis, management interface with detailed analysis view, and department-based access control. Includes VoiceHub Knowledge API.
 - **Rental Property Management**: System for managing company-rented properties including contract management, payment tracking, property images upload, furnishing inventory, contract expiry alerts, payment reminders, and detailed financial reporting.
 - **File Storage**: ✅ **Local Storage Only** - All files are permanently stored locally in `static/uploads/` with atomic writes and persistent disk storage. System supports all file types (images, PDF, documents). **1,193+ files, 232+ MB stored securely**. Google Drive integration was removed due to Service Account limitations with personal Google accounts (no storage quota for non-Workspace accounts).
-- **Power BI Dashboard**: ✅ **Embedded Interactive Dashboard** - Integrated Power BI-style dashboard with real-time charts (Chart.js) showing attendance summaries, department-based attendance rates, document completion status, vehicle status, and operations overview. Features include date filtering, department filtering, interactive data visualization, and CSV export functionality for external BI tools. Access at `/powerbi/`
+- **Power BI Dashboard**: ✅ **Embedded Professional Analytics Dashboard** - Integrated Power BI-style dashboard with real-time charts (Chart.js) showing attendance summaries, department-based attendance rates, document completion status, vehicle status, and operations overview. Features include:
+  - **Professional Excel Export**: Multi-sheet Excel reports with formatted headers, conditional coloring (green/yellow/red for status), Arabic RTL support, and professional styling matching the dashboard design
+  - **Smart Insights**: AI-powered recommendations and alerts based on data analysis
+  - **KPI Cards**: Real-time key performance indicators with trend indicators
+  - **Sidebar Integration**: Quick access link under Reports section with BI badge
+  - **Date/Department Filtering**: Interactive filters for customized analysis
+  - Access at `/powerbi/`
 
 ## External Dependencies
 - **Web Framework**: Flask 3.1.0

@@ -1,8 +1,9 @@
 """
 لوحة معلومات Power BI احترافية - نُظم
 تحليلات متقدمة للحضور والوثائق والسيارات
+تصدير Excel بتصميم احترافي
 """
-from flask import Blueprint, render_template, request, jsonify, Response
+from flask import Blueprint, render_template, request, jsonify, Response, send_file
 from flask_login import login_required, current_user
 from datetime import datetime, timedelta
 from app import db
@@ -11,7 +12,7 @@ from sqlalchemy import func, or_, and_, case
 from utils.user_helpers import require_module_access
 from models import Module, Permission
 import csv
-from io import StringIO
+from io import StringIO, BytesIO
 import json
 
 powerbi_bp = Blueprint('powerbi', __name__, url_prefix='/powerbi')
@@ -408,82 +409,347 @@ def vehicle_operations_summary():
 @powerbi_bp.route('/api/export-data')
 @login_required
 def export_data():
-    """تصدير البيانات بصيغة CSV للاستخدام في Power BI"""
-    data_type = request.args.get('type', 'attendance')
+    """تصدير البيانات بصيغة Excel احترافية"""
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, Fill, PatternFill, Border, Side, Alignment
+    from openpyxl.utils import get_column_letter
+    from openpyxl.chart import BarChart, PieChart, Reference
+    
+    data_type = request.args.get('type', 'all')
     date_from = request.args.get('date_from')
     date_to = request.args.get('date_to')
     
     try:
-        output = StringIO()
-        output.write('\ufeff')
+        wb = Workbook()
         
-        if data_type == 'attendance' or data_type == 'all':
-            writer = csv.writer(output)
-            writer.writerow(['التاريخ', 'اسم الموظف', 'رقم الموظف', 'القسم', 'الحالة', 'وقت الحضور', 'وقت الانصراف'])
+        header_fill = PatternFill(start_color="1a1a2e", end_color="1a1a2e", fill_type="solid")
+        header_font = Font(bold=True, color="F2C811", size=12)
+        title_font = Font(bold=True, color="1a1a2e", size=16)
+        subtitle_font = Font(bold=True, color="667eea", size=11)
+        
+        thin_border = Border(
+            left=Side(style='thin', color='CCCCCC'),
+            right=Side(style='thin', color='CCCCCC'),
+            top=Side(style='thin', color='CCCCCC'),
+            bottom=Side(style='thin', color='CCCCCC')
+        )
+        
+        success_fill = PatternFill(start_color="D4EDDA", end_color="D4EDDA", fill_type="solid")
+        warning_fill = PatternFill(start_color="FFF3CD", end_color="FFF3CD", fill_type="solid")
+        danger_fill = PatternFill(start_color="F8D7DA", end_color="F8D7DA", fill_type="solid")
+        info_fill = PatternFill(start_color="D1ECF1", end_color="D1ECF1", fill_type="solid")
+        alt_row_fill = PatternFill(start_color="F8F9FA", end_color="F8F9FA", fill_type="solid")
+        
+        ws_summary = wb.active
+        ws_summary.title = "ملخص تنفيذي"
+        ws_summary.sheet_view.rightToLeft = True
+        
+        ws_summary.merge_cells('A1:F1')
+        ws_summary['A1'] = "📊 تقرير لوحة التحليلات - نُظم"
+        ws_summary['A1'].font = title_font
+        ws_summary['A1'].alignment = Alignment(horizontal='center', vertical='center')
+        ws_summary.row_dimensions[1].height = 35
+        
+        ws_summary['A3'] = "تاريخ التقرير:"
+        ws_summary['B3'] = datetime.now().strftime('%Y-%m-%d %H:%M')
+        ws_summary['A4'] = "الفترة من:"
+        ws_summary['B4'] = date_from or "آخر 30 يوم"
+        ws_summary['A5'] = "الفترة إلى:"
+        ws_summary['B5'] = date_to or datetime.now().strftime('%Y-%m-%d')
+        
+        total_employees = Employee.query.count()
+        total_vehicles = Vehicle.query.count()
+        working_vehicles = Vehicle.query.filter_by(status='working').count()
+        
+        ws_summary['A7'] = "📈 الإحصائيات الرئيسية"
+        ws_summary['A7'].font = subtitle_font
+        ws_summary.merge_cells('A7:C7')
+        
+        stats = [
+            ("إجمالي الموظفين", total_employees),
+            ("إجمالي السيارات", total_vehicles),
+            ("السيارات النشطة", working_vehicles),
+            ("نسبة تشغيل الأسطول", f"{round((working_vehicles/total_vehicles)*100, 1) if total_vehicles > 0 else 0}%")
+        ]
+        
+        for idx, (label, value) in enumerate(stats, start=8):
+            ws_summary[f'A{idx}'] = label
+            ws_summary[f'B{idx}'] = value
+            ws_summary[f'A{idx}'].border = thin_border
+            ws_summary[f'B{idx}'].border = thin_border
+            if idx % 2 == 0:
+                ws_summary[f'A{idx}'].fill = alt_row_fill
+                ws_summary[f'B{idx}'].fill = alt_row_fill
+        
+        for col in ['A', 'B', 'C', 'D', 'E', 'F']:
+            ws_summary.column_dimensions[col].width = 20
+        
+        if data_type in ['attendance', 'all']:
+            ws_att = wb.create_sheet("تقرير الحضور")
+            ws_att.sheet_view.rightToLeft = True
             
-            query = Attendance.query
+            ws_att.merge_cells('A1:G1')
+            ws_att['A1'] = "📋 تقرير الحضور التفصيلي"
+            ws_att['A1'].font = title_font
+            ws_att['A1'].alignment = Alignment(horizontal='center', vertical='center')
+            ws_att.row_dimensions[1].height = 30
+            
+            headers = ['التاريخ', 'اسم الموظف', 'الرقم الوظيفي', 'القسم', 'الحالة', 'وقت الحضور', 'وقت الانصراف']
+            for col, header in enumerate(headers, start=1):
+                cell = ws_att.cell(row=3, column=col)
+                cell.value = header
+                cell.font = header_font
+                cell.fill = header_fill
+                cell.border = thin_border
+                cell.alignment = Alignment(horizontal='center', vertical='center')
+            ws_att.row_dimensions[3].height = 25
+            
+            query = Attendance.query.order_by(Attendance.date.desc())
             if date_from and date_to:
                 d_from = datetime.strptime(date_from, '%Y-%m-%d').date()
                 d_to = datetime.strptime(date_to, '%Y-%m-%d').date()
-                query = query.filter(
-                    Attendance.date >= d_from,
-                    Attendance.date <= d_to
-                )
+                query = query.filter(Attendance.date >= d_from, Attendance.date <= d_to)
             
-            for record in query.all():
+            status_translations = {
+                'present': 'حاضر',
+                'absent': 'غائب',
+                'late': 'متأخر',
+                'excused': 'معذور'
+            }
+            
+            for row_idx, record in enumerate(query.limit(500).all(), start=4):
                 emp = Employee.query.get(record.employee_id)
-                writer.writerow([
+                status = record.status or 'unknown'
+                
+                data_row = [
                     record.date.strftime('%Y-%m-%d') if record.date else '',
                     emp.name if emp else 'غير معروف',
                     emp.employee_id if emp else '',
                     emp.department.name if emp and emp.department else '',
-                    record.status,
+                    status_translations.get(status, status),
                     record.time.strftime('%H:%M') if hasattr(record, 'time') and record.time else '',
                     record.checkout_time.strftime('%H:%M') if hasattr(record, 'checkout_time') and record.checkout_time else ''
-                ])
+                ]
+                
+                for col, value in enumerate(data_row, start=1):
+                    cell = ws_att.cell(row=row_idx, column=col)
+                    cell.value = value
+                    cell.border = thin_border
+                    cell.alignment = Alignment(horizontal='center')
+                    
+                    if col == 5:
+                        if status == 'present':
+                            cell.fill = success_fill
+                        elif status == 'absent':
+                            cell.fill = danger_fill
+                        elif status == 'late':
+                            cell.fill = warning_fill
+                        elif status == 'excused':
+                            cell.fill = info_fill
+                    elif row_idx % 2 == 0:
+                        cell.fill = alt_row_fill
+            
+            for col in range(1, 8):
+                ws_att.column_dimensions[get_column_letter(col)].width = 18
         
-        elif data_type == 'employees':
-            writer = csv.writer(output)
-            writer.writerow(['الرقم', 'اسم الموظف', 'رقم الموظف', 'القسم', 'عدد الوثائق', 'حالة الوثائق'])
+        if data_type in ['employees', 'all']:
+            ws_emp = wb.create_sheet("تقرير الموظفين")
+            ws_emp.sheet_view.rightToLeft = True
+            
+            ws_emp.merge_cells('A1:F1')
+            ws_emp['A1'] = "👥 تقرير الموظفين والوثائق"
+            ws_emp['A1'].font = title_font
+            ws_emp['A1'].alignment = Alignment(horizontal='center', vertical='center')
+            ws_emp.row_dimensions[1].height = 30
+            
+            headers = ['الرقم', 'اسم الموظف', 'الرقم الوظيفي', 'القسم', 'عدد الوثائق', 'حالة الوثائق']
+            for col, header in enumerate(headers, start=1):
+                cell = ws_emp.cell(row=3, column=col)
+                cell.value = header
+                cell.font = header_font
+                cell.fill = header_fill
+                cell.border = thin_border
+                cell.alignment = Alignment(horizontal='center', vertical='center')
+            ws_emp.row_dimensions[3].height = 25
             
             employees = Employee.query.all()
-            for emp in employees:
+            for row_idx, emp in enumerate(employees, start=4):
                 docs_count = Document.query.filter_by(employee_id=emp.id).count()
-                writer.writerow([
+                status = 'مكتمل ✅' if docs_count >= 4 else 'ناقص ⚠️'
+                
+                data_row = [
                     emp.id,
                     emp.name,
-                    emp.employee_id or '',
-                    emp.department.name if emp.department else '',
+                    emp.employee_id or '-',
+                    emp.department.name if emp.department else 'بدون قسم',
                     docs_count,
-                    'مكتمل' if docs_count >= 4 else 'ناقص'
-                ])
+                    status
+                ]
+                
+                for col, value in enumerate(data_row, start=1):
+                    cell = ws_emp.cell(row=row_idx, column=col)
+                    cell.value = value
+                    cell.border = thin_border
+                    cell.alignment = Alignment(horizontal='center')
+                    
+                    if col == 6:
+                        cell.fill = success_fill if docs_count >= 4 else warning_fill
+                    elif row_idx % 2 == 0:
+                        cell.fill = alt_row_fill
+            
+            for col in range(1, 7):
+                ws_emp.column_dimensions[get_column_letter(col)].width = 18
         
-        elif data_type == 'vehicles':
-            writer = csv.writer(output)
-            writer.writerow(['رقم اللوحة', 'الماركة', 'الموديل', 'السنة', 'الحالة', 'حالة التسليم'])
+        if data_type in ['vehicles', 'all']:
+            ws_veh = wb.create_sheet("تقرير السيارات")
+            ws_veh.sheet_view.rightToLeft = True
+            
+            ws_veh.merge_cells('A1:F1')
+            ws_veh['A1'] = "🚗 تقرير أسطول السيارات"
+            ws_veh['A1'].font = title_font
+            ws_veh['A1'].alignment = Alignment(horizontal='center', vertical='center')
+            ws_veh.row_dimensions[1].height = 30
+            
+            headers = ['رقم اللوحة', 'الماركة', 'الموديل', 'السنة', 'الحالة', 'حالة التسليم']
+            for col, header in enumerate(headers, start=1):
+                cell = ws_veh.cell(row=3, column=col)
+                cell.value = header
+                cell.font = header_font
+                cell.fill = header_fill
+                cell.border = thin_border
+                cell.alignment = Alignment(horizontal='center', vertical='center')
+            ws_veh.row_dimensions[3].height = 25
+            
+            status_translations = {
+                'working': 'نشط',
+                'maintenance': 'صيانة',
+                'inactive': 'غير نشط'
+            }
             
             vehicles = Vehicle.query.all()
-            for v in vehicles:
-                writer.writerow([
+            for row_idx, v in enumerate(vehicles, start=4):
+                status = v.status or 'unknown'
+                
+                data_row = [
                     v.plate_number if hasattr(v, 'plate_number') else '',
                     v.brand if hasattr(v, 'brand') else '',
                     v.model if hasattr(v, 'model') else '',
                     v.year if hasattr(v, 'year') else '',
-                    v.status,
-                    'مستلمة' if v.handover_status else 'غير مستلمة'
-                ])
+                    status_translations.get(status, status),
+                    'مستلمة ✅' if v.handover_status else 'غير مستلمة'
+                ]
+                
+                for col, value in enumerate(data_row, start=1):
+                    cell = ws_veh.cell(row=row_idx, column=col)
+                    cell.value = value
+                    cell.border = thin_border
+                    cell.alignment = Alignment(horizontal='center')
+                    
+                    if col == 5:
+                        if status == 'working':
+                            cell.fill = success_fill
+                        elif status == 'maintenance':
+                            cell.fill = warning_fill
+                        elif status == 'inactive':
+                            cell.fill = danger_fill
+                    elif row_idx % 2 == 0:
+                        cell.fill = alt_row_fill
+            
+            for col in range(1, 7):
+                ws_veh.column_dimensions[get_column_letter(col)].width = 16
         
-        response_text = output.getvalue()
-        filename = f"powerbi_export_{data_type}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+        if data_type == 'all':
+            ws_dept = wb.create_sheet("تحليل الأقسام")
+            ws_dept.sheet_view.rightToLeft = True
+            
+            ws_dept.merge_cells('A1:G1')
+            ws_dept['A1'] = "🏢 تحليل الحضور حسب الأقسام"
+            ws_dept['A1'].font = title_font
+            ws_dept['A1'].alignment = Alignment(horizontal='center', vertical='center')
+            ws_dept.row_dimensions[1].height = 30
+            
+            headers = ['القسم', 'عدد الموظفين', 'حاضر', 'غائب', 'متأخر', 'نسبة الحضور', 'التقييم']
+            for col, header in enumerate(headers, start=1):
+                cell = ws_dept.cell(row=3, column=col)
+                cell.value = header
+                cell.font = header_font
+                cell.fill = header_fill
+                cell.border = thin_border
+                cell.alignment = Alignment(horizontal='center', vertical='center')
+            ws_dept.row_dimensions[3].height = 25
+            
+            if date_from:
+                d_from = datetime.strptime(date_from, '%Y-%m-%d').date()
+            else:
+                d_from = datetime.now().date() - timedelta(days=30)
+            
+            if date_to:
+                d_to = datetime.strptime(date_to, '%Y-%m-%d').date()
+            else:
+                d_to = datetime.now().date()
+            
+            departments = Department.query.all()
+            for row_idx, dept in enumerate(departments, start=4):
+                employees = Employee.query.filter_by(department_id=dept.id).all()
+                employee_ids = [e.id for e in employees]
+                
+                if not employee_ids:
+                    continue
+                
+                records = Attendance.query.filter(
+                    Attendance.date >= d_from,
+                    Attendance.date <= d_to,
+                    Attendance.employee_id.in_(employee_ids)
+                ).all()
+                
+                present = sum(1 for a in records if a.status == 'present')
+                absent = sum(1 for a in records if a.status == 'absent')
+                late = sum(1 for a in records if a.status == 'late')
+                total = len(records)
+                rate = round((present / total) * 100, 1) if total > 0 else 0
+                
+                if rate >= 90:
+                    performance = 'ممتاز ⭐'
+                    perf_fill = success_fill
+                elif rate >= 75:
+                    performance = 'جيد 👍'
+                    perf_fill = info_fill
+                elif rate >= 60:
+                    performance = 'متوسط ⚡'
+                    perf_fill = warning_fill
+                else:
+                    performance = 'يحتاج تحسين ⚠️'
+                    perf_fill = danger_fill
+                
+                data_row = [dept.name, len(employees), present, absent, late, f'{rate}%', performance]
+                
+                for col, value in enumerate(data_row, start=1):
+                    cell = ws_dept.cell(row=row_idx, column=col)
+                    cell.value = value
+                    cell.border = thin_border
+                    cell.alignment = Alignment(horizontal='center')
+                    
+                    if col == 7:
+                        cell.fill = perf_fill
+                    elif row_idx % 2 == 0:
+                        cell.fill = alt_row_fill
+            
+            for col in range(1, 8):
+                ws_dept.column_dimensions[get_column_letter(col)].width = 16
         
-        return Response(
-            response_text,
-            mimetype='text/csv',
-            headers={
-                'Content-Disposition': f'attachment; filename="{filename}"',
-                'Content-Type': 'text/csv; charset=utf-8-sig'
-            }
+        output = BytesIO()
+        wb.save(output)
+        output.seek(0)
+        
+        filename = f"powerbi_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+        
+        return send_file(
+            output,
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            as_attachment=True,
+            download_name=filename
         )
+        
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 400
 
