@@ -103,18 +103,6 @@ def save_employee_image(file, employee_id, image_type):
         relative_path = f"uploads/employees/{unique_filename}"
         print(f"✅ حفظ نجح: {relative_path} ({file_size} bytes)")
         
-        # ✅ رفع تلقائي إلى Google Drive (غير متزامن)
-        try:
-            from utils.unified_storage_service import unified_storage
-            unified_storage.upload_employee_file_async(
-                local_path=filepath,
-                employee_id=employee_id,
-                file_type=image_type,
-                sync=False
-            )
-        except Exception as e:
-            print(f"⚠️ تعذر الرفع إلى Google Drive (الملف محفوظ محلياً): {e}")
-        
         return relative_path
         
     except Exception as e:
