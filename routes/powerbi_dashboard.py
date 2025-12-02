@@ -380,7 +380,7 @@ def vehicle_operations_summary():
     try:
         vehicles = Vehicle.query.all()
         
-        handovers = sum(1 for v in vehicles if v.handover_status)
+        handovers = sum(1 for v in vehicles if v.handover_records)
         maintenance = sum(1 for v in vehicles if v.status == 'maintenance')
         active = sum(1 for v in vehicles if v.status == 'working')
         inactive = sum(1 for v in vehicles if v.status == 'inactive')
@@ -636,7 +636,7 @@ def export_data():
                     v.model if hasattr(v, 'model') else '',
                     v.year if hasattr(v, 'year') else '',
                     status_translations.get(status, status),
-                    'مستلمة ✅' if v.handover_status else 'غير مستلمة'
+                    'مستلمة ✅' if v.handover_records else 'غير مستلمة'
                 ]
                 
                 for col, value in enumerate(data_row, start=1):
