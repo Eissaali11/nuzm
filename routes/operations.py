@@ -411,7 +411,7 @@ def view_operation(operation_id):
                              workshop_images=workshop_images,
                              driver_employee=driver_employee,
                              current_driver_info=current_driver_info,
-                             has_drive_integration=unified_storage.drive_service.is_configured())
+)
     
     # جلب بيانات الموظف إذا كانت متاحة
     employee = None
@@ -443,7 +443,7 @@ def view_operation(operation_id):
                          related_record=related_record,
                          employee=employee,
                          mobile_device=mobile_device,
-                         has_drive_integration=unified_storage.drive_service.is_configured())
+)
 
 
 
@@ -705,47 +705,6 @@ def reject_operation(operation_id):
 
 
 
-
-
-
-@operations_bp.route('/<int:operation_id>/upload-to-drive', methods=['POST'])
-@login_required  
-def upload_operation_to_drive(operation_id):
-    """رفع ملفات العملية إلى Google Drive"""
-    
-    if current_user.role != UserRole.ADMIN:
-        return jsonify({'success': False, 'message': 'غير مسموح'})
-    
-    operation = OperationRequest.query.get_or_404(operation_id)
-    
-    try:
-        # رفع الملفات على Google Drive
-        drive_result = unified_storage.upload_vehicle_operation(
-            vehicle_plate=operation.vehicle.plate_number,
-            operation_type=operation.operation_type,
-            operation_id=operation.id,
-            sync=True
-        )
-        
-        if drive_result and drive_result.get('success'):
-            current_app.logger.info(f"✅ تم رفع العملية {operation_id} على Google Drive بنجاح")
-            return jsonify({
-                'success': True, 
-                'message': 'تم رفع الملفات على Google Drive',
-                'drive_link': drive_result.get('folder_link')
-            })
-        else:
-            error_msg = drive_result.get('message', 'فشل الرفع - تحقق من اتصال Google Drive') if drive_result else 'فشل الرفع - تحقق من اتصال Google Drive'
-            current_app.logger.warning(f"فشل رفع العملية {operation_id}: {error_msg}")
-            return jsonify({
-                'success': False, 
-                'message': error_msg
-            })
-        
-    except Exception as e:
-        error_msg = str(e)
-        current_app.logger.error(f"خطأ في رفع العملية {operation_id}: {error_msg}")
-        return jsonify({'success': False, 'message': f'حدث خطأ: {error_msg[:100]}'})
 
 
 

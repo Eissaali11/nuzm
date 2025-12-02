@@ -240,11 +240,6 @@ body {
                         <i class="fas fa-file-excel me-2"></i>تصدير Excel
                     </a>
                     
-                    {% if has_drive_integration %}
-                    <button type="button" class="action-btn bg-danger text-white" onclick="showDriveSetupGuide()" title="يتطلب إعداد Shared Drive">
-                        <i class="fas fa-info-circle me-2"></i>رفع على Drive (غير مُعد)
-                    </button>
-                    {% endif %}
                     
                     {% if operation.status == 'pending' %}
                         <span class="status-badge bg-warning text-dark">
@@ -1488,35 +1483,6 @@ function showEmployeePhoto(imageSrc, employeeName) {
 </div>
 
 <script>
-function showDriveSetupGuide() {
-    const guide = `
-⚠️ **رفع على Google Drive غير مُعد حالياً**
-
-لتفعيل هذه الميزة، يجب إضافة Service Account إلى Shared Drive:
-
-📧 البريد الإلكتروني:
-nuzum-721@nuzum-477618.iam.gserviceaccount.com
-
-🔗 رابط Shared Drive:
-https://drive.google.com/drive/folders/1AvaKUW2VKb9t4O4Dwo_KXTntBfDQ1IYe
-
-📝 الخطوات:
-1. افتح الرابط أعلاه (تحتاج صلاحيات المالك)
-2. اضغط على زر "مشاركة" في الأعلى اليمين
-3. أضف البريد الإلكتروني بصلاحيات "محرر"
-4. انتظر التأكيد (قد يستغرق دقيقة)
-5. عد وحاول الرفع مجدداً
-
-بعد اكتمال الإعداد، ستتمكن من رفع جميع ملفات العمليات تلقائياً على Google Drive.
-    `;
-    
-    alert(guide);
-}
-
-function uploadToDrive(operationId) {
-    showDriveSetupGuide();
-}
-
 // تحسين تجربة المستخدم مع الصورة
 document.addEventListener('DOMContentLoaded', function() {
     // إضافة تأثير loading للصورة
