@@ -125,9 +125,9 @@
                             تحديث وثائق السيارة
                         </a>
                         {% if has_drive_integration %}
-                        <button type="button" class="btn btn-warning btn-lg" onclick="uploadToDrive({{ operation.id }})">
-                            <i class="fab fa-google me-2"></i>
-                            رفع على Google Drive
+                        <button type="button" class="btn btn-danger btn-lg" onclick="showDriveSetupGuide()" title="يتطلب إعداد Shared Drive">
+                            <i class="fas fa-info-circle me-2"></i>
+                            رفع على Drive (غير مُعد)
                         </button>
                         {% endif %}
                         <a href="{{ url_for('mobile.vehicle_details', vehicle_id=operation.vehicle_id) }}" class="btn btn-info btn-lg">
@@ -793,38 +793,29 @@ function rejectOperation(operationId) {
     }
 }
 
-function uploadToDrive(operationId) {
-    if (confirm('هل تريد رفع ملفات هذه العملية على Google Drive؟')) {
-        const btn = event.target.closest('button');
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>جاري الرفع...';
-        
-        fetch(`/operations/${operationId}/upload-to-drive`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert('✅ تم رفع الملفات على Google Drive بنجاح!');
-                if (data.drive_link) {
-                    window.open(data.drive_link, '_blank');
-                }
-                location.reload();
-            } else {
-                alert('❌ فشل الرفع: ' + data.message);
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fab fa-google me-2"></i>رفع على Google Drive';
-            }
-        })
-        .catch(err => {
-            alert('❌ خطأ: ' + err.message);
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fab fa-google me-2"></i>رفع على Google Drive';
-        });
-    }
+function showDriveSetupGuide() {
+    const guide = `
+⚠️ **رفع على Google Drive غير مُعد حالياً**
+
+لتفعيل هذه الميزة، يجب إضافة Service Account إلى Shared Drive:
+
+📧 البريد الإلكتروني:
+nuzum-721@nuzum-477618.iam.gserviceaccount.com
+
+🔗 رابط Shared Drive:
+https://drive.google.com/drive/folders/1AvaKUW2VKb9t4O4Dwo_KXTntBfDQ1IYe
+
+📝 الخطوات:
+1. افتح الرابط أعلاه (تحتاج صلاحيات المالك)
+2. اضغط على زر "مشاركة" في الأعلى اليمين
+3. أضف البريد الإلكتروني بصلاحيات "محرر"
+4. انتظر التأكيد (قد يستغرق دقيقة)
+5. عد وحاول الرفع مجدداً
+
+بعد اكتمال الإعداد، ستتمكن من رفع جميع ملفات العمليات تلقائياً على Google Drive.
+    `;
+    
+    alert(guide);
 }
 </script>
 {% endblock %}
