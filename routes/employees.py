@@ -15,6 +15,7 @@ from utils.user_helpers import require_module_access
 from utils.employee_comprehensive_report_updated import generate_employee_comprehensive_pdf, generate_employee_comprehensive_excel
 from utils.employee_basic_report import generate_employee_basic_pdf
 from utils.audit_logger import log_activity
+from utils.unified_storage_service import unified_storage
 
 employees_bp = Blueprint('employees', __name__)
 
@@ -102,6 +103,15 @@ def save_employee_image(file, employee_id, image_type):
         # إرجاع المسار النسبي (بدون static/)
         relative_path = f"uploads/employees/{unique_filename}"
         print(f"✅ حفظ نجح: {relative_path} ({file_size} bytes)")
+        
+        # ✅ رفع تلقائي إلى Google Drive (غير متزامن)
+        unified_storage.upload_employee_file_async(
+            local_path=filepath,
+            employee_id=employee_id,
+            file_type=image_type,
+            sync=False
+        )
+        
         return relative_path
         
     except Exception as e:
