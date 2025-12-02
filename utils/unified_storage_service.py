@@ -75,6 +75,7 @@ class UnifiedStorageService:
     ) -> Optional[Dict]:
         """
         رفع ملف موظف إلى Google Drive (غير متزامن بشكل افتراضي)
+        الملف محفوظ محلياً بالفعل - هذا محاولة إضافية للرفع الخارجي
         
         Args:
             local_path: المسار المحلي للملف
@@ -92,11 +93,13 @@ class UnifiedStorageService:
         def _do_upload():
             try:
                 if not self.drive_service.is_configured():
-                    logger.warning("Google Drive غير مكوّن - تم تخطي الرفع")
+                    logger.debug("Google Drive غير مكوّن - الملف محفوظ محلياً فقط")
                     return None
                 
+                # محاولة الرفع (اختياري - الحفظ المحلي هو الأساسي)
                 employees_folder = self._get_or_create_employees_folder()
                 if not employees_folder:
+                    logger.debug(f"لم نتمكن من الوصول إلى مجلد Shared Drive - الملف محفوظ محلياً")
                     return None
                 
                 # إنشاء مجلد الموظف
@@ -122,7 +125,7 @@ class UnifiedStorageService:
                 return None
                 
             except Exception as e:
-                logger.error(f"خطأ في رفع ملف الموظف: {e}")
+                logger.debug(f"تعذر رفع الملف إلى Drive (الملف محفوظ محلياً): {e}")
                 return None
         
         if sync:
