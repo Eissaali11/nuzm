@@ -1,0 +1,615 @@
+{% extends 'layout.html' %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --primary-gradient: linear-gradient(135deg, #667eea 0%, #05122D 100%);
+        --success-gradient: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        --danger-gradient: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        --warning-gradient: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    }
+
+    .powerbi-container {
+        padding: 2rem;
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        min-height: 100vh;
+    }
+
+    .dashboard-header {
+        background: var(--primary-gradient);
+        color: white;
+        padding: 2rem;
+        border-radius: 16px;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    }
+
+    .dashboard-header h1 {
+        margin: 0;
+        font-size: 2.5rem;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    .filter-section {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 12px;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    .filter-row {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        align-items: flex-end;
+    }
+
+    .filter-group {
+        flex: 1;
+        min-width: 200px;
+    }
+
+    .filter-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        color: #333;
+    }
+
+    .filter-group input,
+    .filter-group select {
+        width: 100%;
+        padding: 0.75rem;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        font-size: 1rem;
+        transition: border-color 0.3s;
+    }
+
+    .filter-group input:focus,
+    .filter-group select:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .btn-filter {
+        background: var(--primary-gradient);
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.3s;
+    }
+
+    .btn-filter:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(102, 126, 234, 0.3);
+    }
+
+    .charts-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+        gap: 2rem;
+        margin-top: 2rem;
+    }
+
+    .chart-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        transition: all 0.3s;
+    }
+
+    .chart-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    }
+
+    .chart-card h3 {
+        margin: 0 0 1rem 0;
+        color: #333;
+        font-size: 1.25rem;
+        border-bottom: 2px solid var(--primary-gradient);
+        padding-bottom: 0.5rem;
+    }
+
+    .chart-container {
+        position: relative;
+        height: 300px;
+        width: 100%;
+    }
+
+    .stat-box {
+        background: var(--primary-gradient);
+        color: white;
+        padding: 1.5rem;
+        border-radius: 12px;
+        text-align: center;
+        margin-bottom: 1rem;
+    }
+
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin: 0.5rem 0;
+    }
+
+    .stat-label {
+        font-size: 0.9rem;
+        opacity: 0.9;
+    }
+
+    .stats-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .table-responsive {
+        overflow-x: auto;
+    }
+
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .data-table thead {
+        background: linear-gradient(135deg, #3c57d2ff 0%, #05122D 100%);
+        color: white;
+    }
+
+    .data-table th,
+    .data-table td {
+        padding: 0.75rem;
+        text-align: right;
+        border-bottom: 1px solid #e0e0e0;
+    }
+
+    .data-table tbody tr:hover {
+        background: rgba(102, 126, 234, 0.05);
+    }
+
+    .badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+
+    .badge-success {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .badge-warning {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .badge-danger {
+        background: #f8d7da;
+        color: #721c24;
+    }
+
+    .loading {
+        text-align: center;
+        padding: 2rem;
+        color: #666;
+    }
+
+    .export-btn {
+        background: var(--success-gradient);
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+        margin-left: 0.5rem;
+        transition: all 0.3s;
+    }
+
+    .export-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(17, 153, 142, 0.3);
+    }
+
+    @media (max-width: 768px) {
+        .charts-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .filter-row {
+            flex-direction: column;
+        }
+
+        .filter-group {
+            width: 100%;
+        }
+
+        .dashboard-header h1 {
+            font-size: 1.75rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="powerbi-container">
+    <!-- Header -->
+    <div class="dashboard-header">
+        <h1>📊 لوحة معلومات Power BI</h1>
+        <p>تقارير تفاعلية للحضور والهويات والسيارات</p>
+    </div>
+
+    <!-- Filters -->
+    <div class="filter-section">
+        <div class="filter-row">
+            <div class="filter-group">
+                <label for="dateFrom">من التاريخ:</label>
+                <input type="date" id="dateFrom">
+            </div>
+            <div class="filter-group">
+                <label for="dateTo">إلى التاريخ:</label>
+                <input type="date" id="dateTo">
+            </div>
+            <div class="filter-group">
+                <label for="departmentFilter">القسم:</label>
+                <select id="departmentFilter">
+                    <option value="">جميع الأقسام</option>
+                    {% for dept in departments %}
+                    <option value="{{ dept.id }}">{{ dept.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button class="btn-filter" onclick="applyFilters()">تطبيق الفلاتر</button>
+            <button class="export-btn" onclick="exportData()">📥 تصدير CSV</button>
+        </div>
+    </div>
+
+    <!-- Charts Grid -->
+    <div class="charts-grid">
+        <!-- Attendance Section -->
+        <div class="chart-card">
+            <h3>📋 ملخص الحضور</h3>
+            <div id="attendanceSummary">
+                <div class="loading">جاري التحميل...</div>
+            </div>
+        </div>
+
+        <!-- Attendance by Department -->
+        <div class="chart-card">
+            <h3>🏢 الحضور حسب القسم</h3>
+            <div class="chart-container">
+                <canvas id="departmentChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Documents Status -->
+        <div class="chart-card">
+            <h3>📄 حالة الوثائق المطلوبة</h3>
+            <div class="chart-container">
+                <canvas id="documentsChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Vehicles Summary -->
+        <div class="chart-card">
+            <h3>🚗 حالة السيارات</h3>
+            <div class="chart-container">
+                <canvas id="vehiclesChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Vehicle Operations -->
+        <div class="chart-card">
+            <h3>⚙️ عمليات السيارات</h3>
+            <div class="chart-container">
+                <canvas id="operationsChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Documents Completion -->
+        <div class="chart-card">
+            <h3>✅ إكمال الوثائق حسب الموظف</h3>
+            <div class="table-responsive" id="documentsTable">
+                <div class="loading">جاري التحميل...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Set default dates
+function setDefaultDates() {
+    const today = new Date();
+    const thirtyDaysAgo = new Date(today.getTime() - (30 * 24 * 60 * 60 * 1000));
+    
+    document.getElementById('dateFrom').value = thirtyDaysAgo.toISOString().split('T')[0];
+    document.getElementById('dateTo').value = today.toISOString().split('T')[0];
+}
+
+// Apply filters
+function applyFilters() {
+    loadAttendanceSummary();
+    loadAttendanceByDepartment();
+    loadDocumentsStatus();
+    loadVehiclesSummary();
+    loadVehicleOperations();
+    loadEmployeeDocuments();
+}
+
+// Load attendance summary
+async function loadAttendanceSummary() {
+    const dateFrom = document.getElementById('dateFrom').value;
+    const dateTo = document.getElementById('dateTo').value;
+    const departmentId = document.getElementById('departmentFilter').value;
+    
+    try {
+        const response = await fetch(`/powerbi/api/attendance-summary?date_from=${dateFrom}&date_to=${dateTo}&department_id=${departmentId}`);
+        const result = await response.json();
+        
+        if (result.success) {
+            const data = result.data;
+            document.getElementById('attendanceSummary').innerHTML = `
+                <div class="stats-row">
+                    <div class="stat-box" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
+                        <div class="stat-label">الحاضرون</div>
+                        <div class="stat-number">${data.present}</div>
+                    </div>
+                    <div class="stat-box" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+                        <div class="stat-label">المتأخرون</div>
+                        <div class="stat-number">${data.late}</div>
+                    </div>
+                    <div class="stat-box" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);">
+                        <div class="stat-label">الغائبون</div>
+                        <div class="stat-number">${data.absent}</div>
+                    </div>
+                    <div class="stat-box" style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);">
+                        <div class="stat-label">معذورون</div>
+                        <div class="stat-number">${data.excused}</div>
+                    </div>
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('Error loading attendance summary:', error);
+    }
+}
+
+// Load attendance by department
+async function loadAttendanceByDepartment() {
+    const dateFrom = document.getElementById('dateFrom').value;
+    const dateTo = document.getElementById('dateTo').value;
+    
+    try {
+        const response = await fetch(`/powerbi/api/attendance-by-department?date_from=${dateFrom}&date_to=${dateTo}`);
+        const result = await response.json();
+        
+        if (result.success && result.data.length > 0) {
+            const labels = result.data.map(d => d.department);
+            const attendance_rates = result.data.map(d => d.attendance_rate);
+            
+            const ctx = document.getElementById('departmentChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'نسبة الحضور %',
+                        data: attendance_rates,
+                        backgroundColor: 'rgba(102, 126, 234, 0.8)',
+                        borderColor: 'rgba(102, 126, 234, 1)',
+                        borderWidth: 2,
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100
+                        }
+                    }
+                }
+            });
+        }
+    } catch (error) {
+        console.error('Error loading department attendance:', error);
+    }
+}
+
+// Load documents status
+async function loadDocumentsStatus() {
+    try {
+        const response = await fetch('/powerbi/api/documents-status');
+        const result = await response.json();
+        
+        if (result.success) {
+            const labels = result.data.map(d => d.type);
+            const completion = result.data.map(d => d.completion_rate);
+            
+            const ctx = document.getElementById('documentsChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: completion,
+                        backgroundColor: [
+                            'rgba(17, 153, 142, 0.8)',
+                            'rgba(59, 130, 246, 0.8)',
+                            'rgba(245, 158, 11, 0.8)',
+                            'rgba(239, 68, 68, 0.8)'
+                        ],
+                        borderColor: '#fff',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                padding: 20
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    } catch (error) {
+        console.error('Error loading documents status:', error);
+    }
+}
+
+// Load vehicles summary
+async function loadVehiclesSummary() {
+    try {
+        const response = await fetch('/powerbi/api/vehicles-summary');
+        const result = await response.json();
+        
+        if (result.success) {
+            const data = result.data.by_status;
+            if (data.length > 0) {
+                const labels = data.map(d => d.status);
+                const counts = data.map(d => d.count);
+                
+                const ctx = document.getElementById('vehiclesChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'pie',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: counts,
+                            backgroundColor: [
+                                'rgba(17, 153, 142, 0.8)',
+                                'rgba(245, 158, 11, 0.8)',
+                                'rgba(239, 68, 68, 0.8)'
+                            ],
+                            borderColor: '#fff',
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'right'
+                            }
+                        }
+                    }
+                });
+            }
+        }
+    } catch (error) {
+        console.error('Error loading vehicles summary:', error);
+    }
+}
+
+// Load vehicle operations
+async function loadVehicleOperations() {
+    const dateFrom = document.getElementById('dateFrom').value;
+    const dateTo = document.getElementById('dateTo').value;
+    
+    try {
+        const response = await fetch(`/powerbi/api/vehicle-operations-summary?date_from=${dateFrom}&date_to=${dateTo}`);
+        const result = await response.json();
+        
+        if (result.success) {
+            const data = result.data.by_type;
+            if (data.length > 0) {
+                const labels = data.map(d => d.type);
+                const counts = data.map(d => d.count);
+                
+                const ctx = document.getElementById('operationsChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'عدد العمليات',
+                            data: counts,
+                            backgroundColor: 'rgba(59, 130, 246, 0.8)',
+                            borderColor: 'rgba(59, 130, 246, 1)',
+                            borderWidth: 2,
+                            borderRadius: 8
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        }
+                    }
+                });
+            }
+        }
+    } catch (error) {
+        console.error('Error loading vehicle operations:', error);
+    }
+}
+
+// Load employee documents
+async function loadEmployeeDocuments() {
+    const departmentId = document.getElementById('departmentFilter').value;
+    
+    try {
+        const response = await fetch(`/powerbi/api/employee-documents?department_id=${departmentId}`);
+        const result = await response.json();
+        
+        if (result.success) {
+            let html = '<table class="data-table"><thead><tr><th>اسم الموظف</th><th>رقم الموظف</th><th>الوثائق الكاملة</th><th>الوثائق الناقصة</th></tr></thead><tbody>';
+            
+            result.data.forEach(emp => {
+                const status = emp.documents_complete ? '<span class="badge badge-success">✅ كامل</span>' : '<span class="badge badge-warning">⚠️ ناقص</span>';
+                const missing = emp.missing_docs.length > 0 ? emp.missing_docs.join(', ') : 'لا توجد';
+                html += `<tr><td>${emp.name}</td><td>${emp.employee_id}</td><td>${status}</td><td>${missing}</td></tr>`;
+            });
+            
+            html += '</tbody></table>';
+            document.getElementById('documentsTable').innerHTML = html;
+        }
+    } catch (error) {
+        console.error('Error loading employee documents:', error);
+    }
+}
+
+// Export data
+function exportData() {
+    const dataType = 'attendance';
+    const dateFrom = document.getElementById('dateFrom').value;
+    const dateTo = document.getElementById('dateTo').value;
+    
+    window.location.href = `/powerbi/api/export-data?type=${dataType}&date_from=${dateFrom}&date_to=${dateTo}`;
+}
+
+// Initialize on page load
+window.addEventListener('load', () => {
+    setDefaultDates();
+    applyFilters();
+});
+</script>
+{% endblock %}

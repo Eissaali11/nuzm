@@ -472,6 +472,10 @@ with app.app_context():
     # استيراد وتسجيل نظام الإشعارات
     from routes.notifications import notifications_bp
     app.register_blueprint(notifications_bp)
+    
+    # Power BI Dashboard
+    from routes.powerbi_dashboard import powerbi_bp
+    app.register_blueprint(powerbi_bp)
 
     @app.route('/uploads/<path:filename>')
     def uploaded_file(filename):
