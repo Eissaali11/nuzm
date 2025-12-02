@@ -183,12 +183,18 @@ class UnifiedStorageService:
         """رفع ملفات عملية السيارة على Google Drive"""
         try:
             if not self.drive_service.is_configured():
-                return {'success': False, 'message': 'Google Drive غير متصل'}
+                return {
+                    'success': False, 
+                    'message': '❌ Google Drive غير متصل. تحقق من بيانات المصادقة.'
+                }
             
             # الحصول على مجلد السيارات
             vehicles_folder = self._get_or_create_vehicles_folder()
             if not vehicles_folder:
-                return {'success': False, 'message': 'فشل في إنشاء مجلد السيارات'}
+                return {
+                    'success': False, 
+                    'message': '❌ **يجب إضافة Service Account إلى Shared Drive**\n\nالبريد: nuzum-721@nuzum-477618.iam.gserviceaccount.com\nالصلاحيات: محرر\nالرابط: https://drive.google.com/drive/folders/1AvaKUW2VKb9t4O4Dwo_KXTntBfDQ1IYe'
+                }
             
             # إنشاء مجلد للعملية
             operation_folder_name = f"العملية_{operation_id}_{operation_type}"
@@ -198,7 +204,7 @@ class UnifiedStorageService:
             )
             
             if not operation_folder:
-                return {'success': False, 'message': 'فشل في إنشاء مجلد العملية'}
+                return {'success': False, 'message': '❌ فشل في إنشاء مجلد العملية'}
             
             logger.info(f"✅ تم رفع عملية السيارة {vehicle_plate} على Google Drive")
             
@@ -212,8 +218,17 @@ class UnifiedStorageService:
                 'operation_folder_id': operation_folder
             }
         except Exception as e:
-            logger.error(f"❌ خطأ في رفع عملية السيارة: {str(e)}")
-            return {'success': False, 'message': f'خطأ: {str(e)[:100]}'}
+            error_str = str(e)
+            logger.error(f"❌ خطأ في رفع عملية السيارة: {error_str}")
+            
+            # معالجة الأخطاء الشائعة
+            if 'Shared drive not found' in error_str:
+                return {
+                    'success': False, 
+                    'message': '❌ **Shared Drive غير متاح**\n\nتأكد من إضافة Service Account:\nnuzum-721@nuzum-477618.iam.gserviceaccount.com\n\nبصلاحيات محرر على Shared Drive'
+                }
+            
+            return {'success': False, 'message': f'❌ خطأ: {error_str[:100]}'}
 
 
 # Instance للاستخدام المباشر
