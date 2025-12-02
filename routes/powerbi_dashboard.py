@@ -325,8 +325,8 @@ def vehicles_summary():
             status = vehicle.status or 'unknown'
             statuses[status] = statuses.get(status, 0) + 1
             
-            if hasattr(vehicle, 'brand') and vehicle.brand:
-                brands[vehicle.brand] = brands.get(vehicle.brand, 0) + 1
+            if hasattr(vehicle, 'make') and vehicle.make:
+                brands[vehicle.make] = brands.get(vehicle.make, 0) + 1
             
             if hasattr(vehicle, 'year') and vehicle.year:
                 years[str(vehicle.year)] = years.get(str(vehicle.year), 0) + 1
@@ -632,7 +632,7 @@ def export_data():
                 
                 data_row = [
                     v.plate_number if hasattr(v, 'plate_number') else '',
-                    v.brand if hasattr(v, 'brand') else '',
+                    v.make if hasattr(v, 'make') else '',
                     v.model if hasattr(v, 'model') else '',
                     v.year if hasattr(v, 'year') else '',
                     status_translations.get(status, status),
