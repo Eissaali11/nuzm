@@ -937,7 +937,8 @@ function applyFilters() {
         loadDocumentsChart(),
         loadVehiclesChart(),
         loadEmployeesTable(),
-        loadAlerts()
+        loadAlerts(),
+        loadAIInsights()
     ]).then(() => {
         generateSmartInsights();
         hideLoading();
@@ -1187,59 +1188,93 @@ async function loadDepartmentChart() {
 
             console.log('Department labels:', labels, 'rates:', rates);
 
-            charts.department = new Chart(canvasEl.getContext('2d'), {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'نسبة الحضور %',
-                        data: rates,
-                        backgroundColor: rates.map(r => r >= 80 ? chartColors.success : r >= 60 ? chartColors.warning : chartColors.danger),
-                        borderRadius: 8,
-                        borderSkipped: false
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    indexAxis: 'y',
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            callbacks: {
-                                afterLabel: function(context) {
-                                    return `الموظفين: ${employeeCounts[context.dataIndex]}`;
-                                }
-                            }
-                        },
-                        datalabels: {
-                            anchor: 'end',
-                            align: 'start',
-                            offset: 10,
-                            color: '#FFFFFF',
-                            font: { weight: 'bold' },
-                            formatter: value => Math.round(value) + '%'
-                        }
+            try {
+                const ctx = canvasEl.getContext('2d');
+                if (!ctx) {
+                    console.error('Cannot get 2d context');
+                    return;
+                }
+                
+                charts.department = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'نسبة الحضور %',
+                            data: rates.map(r => Number(r) || 0),
+                            backgroundColor: rates.map(r => {
+                                const val = Number(r) || 0;
+                                return val >= 80 ? chartColors.success : val >= 60 ? chartColors.warning : chartColors.danger;
+                            }),
+                            borderRadius: 8,
+                            borderSkipped: false
+                        }]
                     },
-                    scales: {
-                        x: {
-                            max: 100,
-                            grid: { color: 'rgba(255,255,255,0.05)' },
-                            ticks: { color: '#9CA3AF' }
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        indexAxis: 'y',
+                        plugins: {
+                            legend: { display: false }
                         },
-                        y: {
-                            grid: { display: false },
-                            ticks: { color: '#FFFFFF', font: { size: 11 } }
+                        scales: {
+                            x: {
+                                max: 100,
+                                grid: { color: 'rgba(255,255,255,0.05)' },
+                                ticks: { color: '#9CA3AF' }
+                            },
+                            y: {
+                                grid: { display: false },
+                                ticks: { color: '#FFFFFF', font: { size: 11 } }
+                            }
                         }
                     }
-                }
-            });
+                });
+                console.log('Department chart created successfully');
+            } catch (chartError) {
+                console.error('Chart creation error:', chartError);
+            }
         } else {
             console.warn('No department data available');
         }
     } catch (error) {
         console.error('Error loading department chart:', error);
     }
+}
+
+async function loadAIInsights() {
+    const dateFrom = document.getElementById('dateFrom').value;
+    const dateTo = document.getElementById('dateTo').value;
+    
+    try {
+        const response = await fetch(`/powerbi/api/ai-analysis?date_from=${dateFrom}&date_to=${dateTo}`);
+        const result = await response.json();
+        
+        if (result.success) {
+            const insightDiv = document.getElementById('aiInsightCard') || createAICard();
+            insightDiv.innerHTML = result.data.analysis;
+        }
+    } catch (error) {
+        console.error('Error loading AI insights:', error);
+    }
+}
+
+function createAICard() {
+    const card = document.createElement('div');
+    card.id = 'aiInsightCard';
+    card.className = 'insight-card';
+    card.style.cssText = `
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(139, 92, 246, 0.15));
+        border: 1px solid rgba(59, 130, 246, 0.3);
+        border-radius: 12px;
+        padding: 20px;
+        margin-top: 20px;
+        color: #fff;
+        font-size: 14px;
+        line-height: 1.6;
+    `;
+    document.querySelector('.dashboard-container')?.appendChild(card);
+    return card;
 }
 
 async function loadDocumentsChart() {
