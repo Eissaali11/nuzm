@@ -1012,18 +1012,24 @@ async function loadAttendanceChart() {
         const response = await fetch(`/powerbi/api/attendance-by-department?date_from=${dateFrom}&date_to=${dateTo}`);
         const result = await response.json();
 
-        if (result.success && result.data.length > 0) {
-            const ctx = document.getElementById('attendanceChart').getContext('2d');
+        console.log('Attendance chart data:', result);
+
+        if (result.success && result.data && result.data.length > 0) {
+            const canvasEl = document.getElementById('attendanceChart');
+            if (!canvasEl) {
+                console.error('Canvas element attendanceChart not found');
+                return;
+            }
 
             if (charts.attendance) charts.attendance.destroy();
 
             const labels = result.data.map(d => d.department);
-            const presentData = result.data.map(d => d.present);
-            const absentData = result.data.map(d => d.absent);
+            const presentData = result.data.map(d => d.present || 0);
+            const absentData = result.data.map(d => d.absent || 0);
             const leaveData = result.data.map(d => d.leave || 0);
             const sickData = result.data.map(d => d.sick || 0);
 
-            charts.attendance = new Chart(ctx, {
+            charts.attendance = new Chart(canvasEl.getContext('2d'), {
                 type: 'bar',
                 data: {
                     labels: labels,
@@ -1088,6 +1094,8 @@ async function loadAttendanceChart() {
                     }
                 }
             });
+        } else {
+            console.warn('No attendance data:', result);
         }
     } catch (error) {
         console.error('Error loading attendance chart:', error);
@@ -1162,15 +1170,24 @@ async function loadDepartmentChart() {
         const response = await fetch(`/powerbi/api/attendance-by-department?date_from=${dateFrom}&date_to=${dateTo}`);
         const result = await response.json();
 
-        if (result.success && result.data.length > 0) {
-            const ctx = document.getElementById('departmentChart').getContext('2d');
+        console.log('Department chart data:', result);
+
+        if (result.success && result.data && result.data.length > 0) {
+            const canvasEl = document.getElementById('departmentChart');
+            if (!canvasEl) {
+                console.error('Canvas element departmentChart not found');
+                return;
+            }
 
             if (charts.department) charts.department.destroy();
 
             const labels = result.data.map(d => d.department);
-            const rates = result.data.map(d => d.attendance_rate);
+            const rates = result.data.map(d => d.attendance_rate || 0);
+            const employeeCounts = result.data.map(d => d.employee_count || 0);
 
-            charts.department = new Chart(ctx, {
+            console.log('Department labels:', labels, 'rates:', rates);
+
+            charts.department = new Chart(canvasEl.getContext('2d'), {
                 type: 'bar',
                 data: {
                     labels: labels,
@@ -1188,13 +1205,20 @@ async function loadDepartmentChart() {
                     indexAxis: 'y',
                     plugins: {
                         legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                afterLabel: function(context) {
+                                    return `الموظفين: ${employeeCounts[context.dataIndex]}`;
+                                }
+                            }
+                        },
                         datalabels: {
                             anchor: 'end',
                             align: 'start',
                             offset: 10,
                             color: '#FFFFFF',
                             font: { weight: 'bold' },
-                            formatter: value => value + '%'
+                            formatter: value => Math.round(value) + '%'
                         }
                     },
                     scales: {
@@ -1210,6 +1234,8 @@ async function loadDepartmentChart() {
                     }
                 }
             });
+        } else {
+            console.warn('No department data available');
         }
     } catch (error) {
         console.error('Error loading department chart:', error);
