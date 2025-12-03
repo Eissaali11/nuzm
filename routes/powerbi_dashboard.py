@@ -56,9 +56,9 @@ def attendance_summary():
         attendance_records = query.all()
         
         present = sum(1 for a in attendance_records if a.status == 'present')
-        absent = sum(1 for a in attendance_records if a.status == 'absent')
-        late = sum(1 for a in attendance_records if a.status == 'late')
-        excused = sum(1 for a in attendance_records if a.status == 'excused')
+        absent = sum(1 for a in attendance_records if a.status in ['absent', 'غائب'])
+        leave = sum(1 for a in attendance_records if a.status == 'leave')
+        sick = sum(1 for a in attendance_records if a.status == 'sick')
         total = len(attendance_records)
         
         attendance_rate = round((present / total) * 100, 1) if total > 0 else 0
@@ -85,8 +85,8 @@ def attendance_summary():
             'data': {
                 'present': present,
                 'absent': absent,
-                'late': late,
-                'excused': excused,
+                'leave': leave,
+                'sick': sick,
                 'total': total,
                 'attendance_rate': attendance_rate,
                 'absence_rate': absence_rate,
@@ -140,9 +140,9 @@ def attendance_by_department():
             ).all()
             
             present = sum(1 for a in attendance_records if a.status == 'present')
-            absent = sum(1 for a in attendance_records if a.status == 'absent')
-            late = sum(1 for a in attendance_records if a.status == 'late')
-            excused = sum(1 for a in attendance_records if a.status == 'excused')
+            absent = sum(1 for a in attendance_records if a.status in ['absent', 'غائب'])
+            leave = sum(1 for a in attendance_records if a.status == 'leave')
+            sick = sum(1 for a in attendance_records if a.status == 'sick')
             total = len(attendance_records)
             
             attendance_rate = round((present / total) * 100, 1) if total > 0 else 0
@@ -155,8 +155,8 @@ def attendance_by_department():
                 'employee_count': len(employees),
                 'present': present,
                 'absent': absent,
-                'late': late,
-                'excused': excused,
+                'leave': leave,
+                'sick': sick,
                 'total': total,
                 'attendance_rate': attendance_rate,
                 'performance': performance
@@ -333,9 +333,10 @@ def vehicles_summary():
         
         vehicles_by_status = []
         status_labels = {
-            'working': 'نشط',
-            'maintenance': 'صيانة',
-            'inactive': 'غير نشط',
+            'in_project': 'في المشروع',
+            'in_workshop': 'في الورشة',
+            'out_of_service': 'خارج الخدمة',
+            'accident': 'حادث',
             'unknown': 'غير محدد'
         }
         
@@ -350,11 +351,12 @@ def vehicles_summary():
         vehicles_by_brand = [{'brand': b, 'count': c} for b, c in sorted(brands.items(), key=lambda x: x[1], reverse=True)]
         
         total = len(vehicles)
-        working = statuses.get('working', 0)
-        maintenance = statuses.get('maintenance', 0)
-        inactive = statuses.get('inactive', 0)
+        in_project = statuses.get('in_project', 0)
+        in_workshop = statuses.get('in_workshop', 0)
+        out_of_service = statuses.get('out_of_service', 0)
+        accident = statuses.get('accident', 0)
         
-        fleet_health = 'excellent' if working >= total * 0.8 else 'good' if working >= total * 0.6 else 'average' if working >= total * 0.4 else 'poor'
+        fleet_health = 'excellent' if in_project >= total * 0.8 else 'good' if in_project >= total * 0.6 else 'average' if in_project >= total * 0.4 else 'poor'
         
         return jsonify({
             'success': True,
@@ -362,10 +364,11 @@ def vehicles_summary():
                 'by_status': vehicles_by_status,
                 'by_brand': vehicles_by_brand[:5],
                 'total_vehicles': total,
-                'working': working,
-                'maintenance': maintenance,
-                'inactive': inactive,
-                'utilization_rate': round((working / total) * 100, 1) if total > 0 else 0,
+                'in_project': in_project,
+                'in_workshop': in_workshop,
+                'out_of_service': out_of_service,
+                'accident': accident,
+                'utilization_rate': round((in_project / total) * 100, 1) if total > 0 else 0,
                 'fleet_health': fleet_health
             }
         })
@@ -381,15 +384,17 @@ def vehicle_operations_summary():
         vehicles = Vehicle.query.all()
         
         handovers = sum(1 for v in vehicles if v.handover_records)
-        maintenance = sum(1 for v in vehicles if v.status == 'maintenance')
-        active = sum(1 for v in vehicles if v.status == 'working')
-        inactive = sum(1 for v in vehicles if v.status == 'inactive')
+        in_workshop = sum(1 for v in vehicles if v.status == 'in_workshop')
+        in_project = sum(1 for v in vehicles if v.status == 'in_project')
+        out_of_service = sum(1 for v in vehicles if v.status == 'out_of_service')
+        accident = sum(1 for v in vehicles if v.status == 'accident')
         
         operations_data = [
-            {'type': 'نشط', 'count': active, 'color': '#38ef7d'},
+            {'type': 'في المشروع', 'count': in_project, 'color': '#38ef7d'},
             {'type': 'مستلمة', 'count': handovers, 'color': '#667eea'},
-            {'type': 'صيانة', 'count': maintenance, 'color': '#fbbf24'},
-            {'type': 'غير نشط', 'count': inactive, 'color': '#ef4444'}
+            {'type': 'في الورشة', 'count': in_workshop, 'color': '#fbbf24'},
+            {'type': 'خارج الخدمة', 'count': out_of_service, 'color': '#ef4444'},
+            {'type': 'حادث', 'count': accident, 'color': '#ff6b6b'}
         ]
         
         return jsonify({
@@ -398,7 +403,7 @@ def vehicle_operations_summary():
                 'by_type': operations_data,
                 'total_vehicles': len(vehicles),
                 'summary': {
-                    'active_percentage': round((active / len(vehicles)) * 100, 1) if vehicles else 0,
+                    'active_percentage': round((in_project / len(vehicles)) * 100, 1) if vehicles else 0,
                     'handover_percentage': round((handovers / len(vehicles)) * 100, 1) if vehicles else 0
                 }
             }
@@ -464,9 +469,10 @@ def export_data():
         
         total_employees = Employee.query.count()
         total_vehicles = Vehicle.query.count()
-        working_vehicles = Vehicle.query.filter_by(status='working').count()
-        maintenance_vehicles = Vehicle.query.filter_by(status='maintenance').count()
-        inactive_vehicles = Vehicle.query.filter_by(status='inactive').count()
+        in_project_vehicles = Vehicle.query.filter_by(status='in_project').count()
+        in_workshop_vehicles = Vehicle.query.filter_by(status='in_workshop').count()
+        out_of_service_vehicles = Vehicle.query.filter_by(status='out_of_service').count()
+        accident_vehicles = Vehicle.query.filter_by(status='accident').count()
         total_documents = Document.query.count()
         total_departments = Department.query.count()
         
@@ -481,10 +487,16 @@ def export_data():
             Attendance.date <= d_to
         ).group_by(Attendance.status).all()
         
-        att_data = {'present': 0, 'absent': 0, 'late': 0, 'excused': 0}
+        att_data = {'present': 0, 'absent': 0, 'leave': 0, 'sick': 0}
         for status, count in attendance_stats:
-            if status in att_data:
-                att_data[status] = count
+            if status == 'present':
+                att_data['present'] = count
+            elif status in ['absent', 'غائب']:
+                att_data['absent'] += count
+            elif status == 'leave':
+                att_data['leave'] = count
+            elif status == 'sick':
+                att_data['sick'] = count
         total_attendance = sum(att_data.values())
         
         ws = wb.active
@@ -514,7 +526,7 @@ def export_data():
         kpi_data = [
             ("إجمالي الموظفين", total_employees, "👥", "A"),
             ("إجمالي السيارات", total_vehicles, "🚗", "E"),
-            ("السيارات النشطة", working_vehicles, "✅", "I"),
+            ("في المشاريع", in_project_vehicles, "✅", "I"),
             ("إجمالي الأقسام", total_departments, "🏢", "M"),
         ]
         
@@ -558,8 +570,8 @@ def export_data():
         att_rows = [
             ('حاضر ✅', att_data['present'], green_fill),
             ('غائب ❌', att_data['absent'], red_fill),
-            ('متأخر ⏰', att_data['late'], orange_fill),
-            ('معذور 📋', att_data['excused'], blue_fill)
+            ('إجازة 📋', att_data['leave'], blue_fill),
+            ('مريض 🏥', att_data['sick'], orange_fill)
         ]
         
         for idx, (label, count, fill) in enumerate(att_rows, start=9):
@@ -619,9 +631,10 @@ def export_data():
             cell.border = thin_border
         
         veh_rows = [
-            ('نشط 🟢', working_vehicles, green_fill),
-            ('صيانة 🟡', maintenance_vehicles, orange_fill),
-            ('غير نشط 🔴', inactive_vehicles, red_fill)
+            ('في المشروع 🟢', in_project_vehicles, green_fill),
+            ('في الورشة 🟡', in_workshop_vehicles, orange_fill),
+            ('خارج الخدمة 🔴', out_of_service_vehicles, red_fill),
+            ('حادث ⚠️', accident_vehicles, blue_fill)
         ]
         
         for idx, (label, count, fill) in enumerate(veh_rows, start=17):
@@ -653,8 +666,8 @@ def export_data():
         
         doughnut1 = DoughnutChart()
         doughnut1.title = "حالة الأسطول"
-        labels2 = Reference(ws, min_col=1, min_row=17, max_row=19)
-        data2 = Reference(ws, min_col=2, min_row=16, max_row=19)
+        labels2 = Reference(ws, min_col=1, min_row=17, max_row=20)
+        data2 = Reference(ws, min_col=2, min_row=16, max_row=20)
         doughnut1.add_data(data2, titles_from_data=True)
         doughnut1.set_categories(labels2)
         doughnut1.width = 10
@@ -672,23 +685,23 @@ def export_data():
                     dept_emp_map[e.department_id] = []
                 dept_emp_map[e.department_id].append(e.id)
         
-        ws.merge_cells('A22:H22')
-        ws['A22'] = "🏢 نسبة الحضور حسب القسم"
-        ws['A22'].font = gold_font
-        ws['A22'].fill = dark_header
-        ws['A22'].alignment = Alignment(horizontal='center', vertical='center')
-        ws.row_dimensions[22].height = 30
+        ws.merge_cells('A23:H23')
+        ws['A23'] = "🏢 نسبة الحضور حسب القسم"
+        ws['A23'].font = gold_font
+        ws['A23'].fill = dark_header
+        ws['A23'].alignment = Alignment(horizontal='center', vertical='center')
+        ws.row_dimensions[23].height = 30
         
         dept_headers = ['القسم', 'الموظفين', 'الحضور', 'النسبة', 'التقييم']
         for i, h in enumerate(dept_headers):
-            cell = ws.cell(row=23, column=i+1)
+            cell = ws.cell(row=24, column=i+1)
             cell.value = h
             cell.font = gold_font
             cell.fill = dark_header
             cell.alignment = Alignment(horizontal='center', vertical='center')
             cell.border = thin_border
         
-        dept_row = 24
+        dept_row = 25
         for dept in departments[:10]:
             emp_ids = dept_emp_map.get(dept.id, [])
             if not emp_ids:
@@ -748,22 +761,22 @@ def export_data():
             
             dept_row += 1
         
-        if dept_row > 24:
+        if dept_row > 25:
             bar1 = BarChart()
             bar1.type = "col"
             bar1.style = 12
             bar1.title = "نسبة الحضور بالأقسام"
             bar1.y_axis.title = "النسبة %"
             
-            data_bar = Reference(ws, min_col=4, min_row=23, max_row=dept_row-1)
-            cats_bar = Reference(ws, min_col=1, min_row=24, max_row=dept_row-1)
+            data_bar = Reference(ws, min_col=4, min_row=24, max_row=dept_row-1)
+            cats_bar = Reference(ws, min_col=1, min_row=25, max_row=dept_row-1)
             bar1.add_data(data_bar, titles_from_data=True)
             bar1.set_categories(cats_bar)
             bar1.width = 14
             bar1.height = 10
             bar1.dataLabels = DataLabelList()
             bar1.dataLabels.showVal = True
-            ws.add_chart(bar1, "G22")
+            ws.add_chart(bar1, "G23")
         
         doc_counts = db.session.query(
             Document.employee_id,

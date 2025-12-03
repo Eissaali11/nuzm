@@ -968,7 +968,7 @@ async function loadKPIs() {
 
         if (attendance.success) {
             const data = attendance.data;
-            const total = data.present + data.absent + data.late + data.excused;
+            const total = data.present + data.absent + (data.leave || 0) + (data.sick || 0);
             const rate = total > 0 ? Math.round((data.present / total) * 100) : 0;
 
             document.getElementById('kpiAttendanceRate').innerHTML = `${rate}%`;
@@ -996,7 +996,7 @@ async function loadKPIs() {
 
         if (vehicles.success) {
             document.getElementById('kpiVehicles').textContent = vehicles.data.total_vehicles;
-            document.getElementById('kpiVehiclesActive').textContent = `${vehicles.data.working || 0} نشط`;
+            document.getElementById('kpiVehiclesActive').textContent = `${vehicles.data.in_project || 0} في المشروع`;
             dashboardData.vehicles = vehicles.data;
         }
     } catch (error) {
@@ -1020,7 +1020,8 @@ async function loadAttendanceChart() {
             const labels = result.data.map(d => d.department);
             const presentData = result.data.map(d => d.present);
             const absentData = result.data.map(d => d.absent);
-            const lateData = result.data.map(d => d.late);
+            const leaveData = result.data.map(d => d.leave || 0);
+            const sickData = result.data.map(d => d.sick || 0);
 
             charts.attendance = new Chart(ctx, {
                 type: 'bar',
@@ -1042,8 +1043,15 @@ async function loadAttendanceChart() {
                             borderSkipped: false
                         },
                         {
-                            label: 'متأخر',
-                            data: lateData,
+                            label: 'إجازة',
+                            data: leaveData,
+                            backgroundColor: chartColors.info,
+                            borderRadius: 6,
+                            borderSkipped: false
+                        },
+                        {
+                            label: 'مريض',
+                            data: sickData,
                             backgroundColor: chartColors.warning,
                             borderRadius: 6,
                             borderSkipped: false
