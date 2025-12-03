@@ -348,39 +348,19 @@ table {
 
 /* Custom sidebar styling */
 /* Custom sidebar styling */
-.container-fluid {
-    display: flex;
-}
-.container-fluid .row {
-    width: 100%;
-    display: flex;
-}
 .sidebar {
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-}
-.content-wrapper {
-    flex: 1;
-    min-height: 100vh;
+    background: linear-gradient(to bottom, #1a4369, #2a5885);
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 5px 0 10px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s;
 }
 
-
-.sidebar-content::-webkit-scrollbar {
-    width: 5px;
-}
-
-.sidebar-content::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-.sidebar-content::-webkit-scrollbar-thumb {
-    background-color: rgba(255, 255, 255, 0.3);
-    border-radius: 10px;
-}
-
-.sidebar-content::-webkit-scrollbar-thumb:hover {
-    background-color: rgba(255, 255, 255, 0.5);
+/* إضافة خاصية التمرير للقائمة الجانبية */
+.sidebar-content {
+    max-height: calc(100vh - 100px);
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
 }
 
 /* تنسيق العناصر في القائمة الجانبية للتمرير */
