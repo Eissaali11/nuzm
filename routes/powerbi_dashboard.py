@@ -411,9 +411,13 @@ def vehicle_operations_summary():
 def export_data():
     """تصدير البيانات بصيغة Excel احترافية"""
     from openpyxl import Workbook
-    from openpyxl.styles import Font, Fill, PatternFill, Border, Side, Alignment
+    from openpyxl.styles import Font, PatternFill, Border, Side, Alignment
     from openpyxl.utils import get_column_letter
-    from openpyxl.chart import BarChart, PieChart, Reference
+    from openpyxl.chart import BarChart, PieChart, DoughnutChart, Reference
+    from openpyxl.chart.series import DataPoint
+    from openpyxl.chart.label import DataLabelList
+    from sqlalchemy.orm import joinedload
+    from sqlalchemy import func
     
     data_type = request.args.get('type', 'all')
     date_from = request.args.get('date_from')
@@ -426,6 +430,8 @@ def export_data():
         header_font = Font(bold=True, color="F2C811", size=12)
         title_font = Font(bold=True, color="1a1a2e", size=16)
         subtitle_font = Font(bold=True, color="667eea", size=11)
+        chart_title_font = Font(bold=True, size=14)
+        gold_fill = PatternFill(start_color="F2C811", end_color="F2C811", fill_type="solid")
         
         thin_border = Border(
             left=Side(style='thin', color='CCCCCC'),
@@ -440,12 +446,198 @@ def export_data():
         info_fill = PatternFill(start_color="D1ECF1", end_color="D1ECF1", fill_type="solid")
         alt_row_fill = PatternFill(start_color="F8F9FA", end_color="F8F9FA", fill_type="solid")
         
-        ws_summary = wb.active
-        ws_summary.title = "ملخص تنفيذي"
+        chart_colors = ['38EF7D', 'EF4444', 'FFA500', '667EEA', 'F2C811']
+        
+        ws_charts = wb.active
+        ws_charts.title = "لوحة الرسوم البيانية"
+        ws_charts.sheet_view.rightToLeft = True
+        
+        ws_charts.merge_cells('A1:N1')
+        ws_charts['A1'] = "📊 لوحة التحليلات الاحترافية - نُظم"
+        ws_charts['A1'].font = Font(bold=True, color="1a1a2e", size=18)
+        ws_charts['A1'].alignment = Alignment(horizontal='center', vertical='center')
+        ws_charts.row_dimensions[1].height = 40
+        
+        ws_charts['A2'] = f"تاريخ التقرير: {datetime.now().strftime('%Y-%m-%d %H:%M')}"
+        ws_charts['A2'].font = Font(italic=True, size=10)
+        
+        total_employees = Employee.query.count()
+        total_vehicles = Vehicle.query.count()
+        working_vehicles = Vehicle.query.filter_by(status='working').count()
+        maintenance_vehicles = Vehicle.query.filter_by(status='maintenance').count()
+        inactive_vehicles = Vehicle.query.filter_by(status='inactive').count()
+        total_documents = Document.query.count()
+        total_departments = Department.query.count()
+        
+        d_from = datetime.strptime(date_from, '%Y-%m-%d').date() if date_from else (datetime.now().date() - timedelta(days=30))
+        d_to = datetime.strptime(date_to, '%Y-%m-%d').date() if date_to else datetime.now().date()
+        
+        attendance_stats = db.session.query(
+            Attendance.status,
+            func.count(Attendance.id)
+        ).filter(
+            Attendance.date >= d_from,
+            Attendance.date <= d_to
+        ).group_by(Attendance.status).all()
+        
+        att_data = {'present': 0, 'absent': 0, 'late': 0, 'excused': 0}
+        for status, count in attendance_stats:
+            if status in att_data:
+                att_data[status] = count
+        
+        ws_charts['A4'] = "حالة الحضور"
+        ws_charts['B4'] = "العدد"
+        ws_charts['A4'].font = header_font
+        ws_charts['A4'].fill = header_fill
+        ws_charts['B4'].font = header_font
+        ws_charts['B4'].fill = header_fill
+        
+        att_labels = [('حاضر', att_data['present']), ('غائب', att_data['absent']), 
+                      ('متأخر', att_data['late']), ('معذور', att_data['excused'])]
+        for i, (label, value) in enumerate(att_labels, start=5):
+            ws_charts[f'A{i}'] = label
+            ws_charts[f'B{i}'] = value
+            ws_charts[f'A{i}'].border = thin_border
+            ws_charts[f'B{i}'].border = thin_border
+        
+        pie1 = PieChart()
+        pie1.title = "توزيع حالات الحضور"
+        labels1 = Reference(ws_charts, min_col=1, min_row=5, max_row=8)
+        data1 = Reference(ws_charts, min_col=2, min_row=4, max_row=8)
+        pie1.add_data(data1, titles_from_data=True)
+        pie1.set_categories(labels1)
+        pie1.width = 12
+        pie1.height = 10
+        pie1.dataLabels = DataLabelList()
+        pie1.dataLabels.showPercent = True
+        pie1.dataLabels.showVal = True
+        ws_charts.add_chart(pie1, "D4")
+        
+        ws_charts['A11'] = "حالة السيارات"
+        ws_charts['B11'] = "العدد"
+        ws_charts['A11'].font = header_font
+        ws_charts['A11'].fill = header_fill
+        ws_charts['B11'].font = header_font
+        ws_charts['B11'].fill = header_fill
+        
+        veh_data = [('نشط', working_vehicles), ('صيانة', maintenance_vehicles), ('غير نشط', inactive_vehicles)]
+        for i, (label, value) in enumerate(veh_data, start=12):
+            ws_charts[f'A{i}'] = label
+            ws_charts[f'B{i}'] = value
+            ws_charts[f'A{i}'].border = thin_border
+            ws_charts[f'B{i}'].border = thin_border
+        
+        pie2 = DoughnutChart()
+        pie2.title = "حالة أسطول السيارات"
+        labels2 = Reference(ws_charts, min_col=1, min_row=12, max_row=14)
+        data2 = Reference(ws_charts, min_col=2, min_row=11, max_row=14)
+        pie2.add_data(data2, titles_from_data=True)
+        pie2.set_categories(labels2)
+        pie2.width = 12
+        pie2.height = 10
+        pie2.dataLabels = DataLabelList()
+        pie2.dataLabels.showPercent = True
+        pie2.dataLabels.showVal = True
+        ws_charts.add_chart(pie2, "D11")
+        
+        departments = Department.query.all()
+        all_employees = Employee.query.all()
+        dept_emp_map = {}
+        for e in all_employees:
+            if e.department_id:
+                if e.department_id not in dept_emp_map:
+                    dept_emp_map[e.department_id] = []
+                dept_emp_map[e.department_id].append(e.id)
+        
+        ws_charts['A17'] = "القسم"
+        ws_charts['B17'] = "عدد الموظفين"
+        ws_charts['C17'] = "نسبة الحضور"
+        for col in ['A', 'B', 'C']:
+            ws_charts[f'{col}17'].font = header_font
+            ws_charts[f'{col}17'].fill = header_fill
+        
+        dept_row = 18
+        for dept in departments[:8]:
+            emp_ids = dept_emp_map.get(dept.id, [])
+            if not emp_ids:
+                continue
+            
+            dept_attendance = Attendance.query.filter(
+                Attendance.date >= d_from,
+                Attendance.date <= d_to,
+                Attendance.employee_id.in_(emp_ids)
+            ).all()
+            
+            present = sum(1 for a in dept_attendance if a.status == 'present')
+            total = len(dept_attendance)
+            rate = round((present / total) * 100) if total > 0 else 0
+            
+            ws_charts[f'A{dept_row}'] = dept.name
+            ws_charts[f'B{dept_row}'] = len(emp_ids)
+            ws_charts[f'C{dept_row}'] = rate
+            for col in ['A', 'B', 'C']:
+                ws_charts[f'{col}{dept_row}'].border = thin_border
+            dept_row += 1
+        
+        if dept_row > 18:
+            bar1 = BarChart()
+            bar1.type = "col"
+            bar1.title = "نسبة الحضور حسب القسم"
+            bar1.y_axis.title = "النسبة %"
+            bar1.x_axis.title = "القسم"
+            
+            data_bar = Reference(ws_charts, min_col=3, min_row=17, max_row=dept_row-1)
+            cats_bar = Reference(ws_charts, min_col=1, min_row=18, max_row=dept_row-1)
+            bar1.add_data(data_bar, titles_from_data=True)
+            bar1.set_categories(cats_bar)
+            bar1.shape = 4
+            bar1.width = 14
+            bar1.height = 10
+            bar1.dataLabels = DataLabelList()
+            bar1.dataLabels.showVal = True
+            ws_charts.add_chart(bar1, "E17")
+        
+        doc_counts = db.session.query(
+            Document.employee_id,
+            func.count(Document.id)
+        ).group_by(Document.employee_id).all()
+        
+        complete_docs = sum(1 for _, cnt in doc_counts if cnt >= 4)
+        incomplete_docs = total_employees - complete_docs
+        
+        ws_charts[f'A{dept_row + 2}'] = "حالة الوثائق"
+        ws_charts[f'B{dept_row + 2}'] = "العدد"
+        ws_charts[f'A{dept_row + 2}'].font = header_font
+        ws_charts[f'A{dept_row + 2}'].fill = header_fill
+        ws_charts[f'B{dept_row + 2}'].font = header_font
+        ws_charts[f'B{dept_row + 2}'].fill = header_fill
+        
+        ws_charts[f'A{dept_row + 3}'] = "مكتمل"
+        ws_charts[f'B{dept_row + 3}'] = complete_docs
+        ws_charts[f'A{dept_row + 4}'] = "ناقص"
+        ws_charts[f'B{dept_row + 4}'] = incomplete_docs
+        
+        pie3 = PieChart()
+        pie3.title = "حالة اكتمال الوثائق"
+        labels3 = Reference(ws_charts, min_col=1, min_row=dept_row+3, max_row=dept_row+4)
+        data3 = Reference(ws_charts, min_col=2, min_row=dept_row+2, max_row=dept_row+4)
+        pie3.add_data(data3, titles_from_data=True)
+        pie3.set_categories(labels3)
+        pie3.width = 12
+        pie3.height = 10
+        pie3.dataLabels = DataLabelList()
+        pie3.dataLabels.showPercent = True
+        pie3.dataLabels.showVal = True
+        ws_charts.add_chart(pie3, f"D{dept_row + 2}")
+        
+        for col in ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N']:
+            ws_charts.column_dimensions[col].width = 15
+        
+        ws_summary = wb.create_sheet("ملخص تنفيذي")
         ws_summary.sheet_view.rightToLeft = True
         
         ws_summary.merge_cells('A1:F1')
-        ws_summary['A1'] = "📊 تقرير لوحة التحليلات - نُظم"
+        ws_summary['A1'] = "📊 الملخص التنفيذي - نُظم"
         ws_summary['A1'].font = title_font
         ws_summary['A1'].alignment = Alignment(horizontal='center', vertical='center')
         ws_summary.row_dimensions[1].height = 35
@@ -457,10 +649,6 @@ def export_data():
         ws_summary['A5'] = "الفترة إلى:"
         ws_summary['B5'] = date_to or datetime.now().strftime('%Y-%m-%d')
         
-        total_employees = Employee.query.count()
-        total_vehicles = Vehicle.query.count()
-        working_vehicles = Vehicle.query.filter_by(status='working').count()
-        
         ws_summary['A7'] = "📈 الإحصائيات الرئيسية"
         ws_summary['A7'].font = subtitle_font
         ws_summary.merge_cells('A7:C7')
@@ -469,6 +657,8 @@ def export_data():
             ("إجمالي الموظفين", total_employees),
             ("إجمالي السيارات", total_vehicles),
             ("السيارات النشطة", working_vehicles),
+            ("إجمالي الوثائق", total_documents),
+            ("إجمالي الأقسام", total_departments),
             ("نسبة تشغيل الأسطول", f"{round((working_vehicles/total_vehicles)*100, 1) if total_vehicles > 0 else 0}%")
         ]
         
@@ -504,7 +694,9 @@ def export_data():
                 cell.alignment = Alignment(horizontal='center', vertical='center')
             ws_att.row_dimensions[3].height = 25
             
-            query = Attendance.query.order_by(Attendance.date.desc())
+            query = Attendance.query.options(
+                joinedload(Attendance.employee).joinedload(Employee.department)
+            ).order_by(Attendance.date.desc())
             if date_from and date_to:
                 d_from = datetime.strptime(date_from, '%Y-%m-%d').date()
                 d_to = datetime.strptime(date_to, '%Y-%m-%d').date()
@@ -517,8 +709,9 @@ def export_data():
                 'excused': 'معذور'
             }
             
-            for row_idx, record in enumerate(query.limit(500).all(), start=4):
-                emp = Employee.query.get(record.employee_id)
+            attendance_records = query.limit(500).all()
+            for row_idx, record in enumerate(attendance_records, start=4):
+                emp = record.employee
                 status = record.status or 'unknown'
                 
                 data_row = [
@@ -572,9 +765,16 @@ def export_data():
                 cell.alignment = Alignment(horizontal='center', vertical='center')
             ws_emp.row_dimensions[3].height = 25
             
-            employees = Employee.query.all()
+            employees = Employee.query.options(joinedload(Employee.department)).all()
+            
+            doc_counts = db.session.query(
+                Document.employee_id,
+                func.count(Document.id).label('count')
+            ).group_by(Document.employee_id).all()
+            doc_count_map = {e_id: cnt for e_id, cnt in doc_counts}
+            
             for row_idx, emp in enumerate(employees, start=4):
-                docs_count = Document.query.filter_by(employee_id=emp.id).count()
+                docs_count = doc_count_map.get(emp.id, 0)
                 status = 'مكتمل ✅' if docs_count >= 4 else 'ناقص ⚠️'
                 
                 data_row = [
@@ -689,23 +889,46 @@ def export_data():
                 d_to = datetime.now().date()
             
             departments = Department.query.all()
-            for row_idx, dept in enumerate(departments, start=4):
-                employees = Employee.query.filter_by(department_id=dept.id).all()
-                employee_ids = [e.id for e in employees]
-                
-                if not employee_ids:
+            
+            all_employees = Employee.query.all()
+            dept_employees = {}
+            for e in all_employees:
+                if e.department_id:
+                    if e.department_id not in dept_employees:
+                        dept_employees[e.department_id] = []
+                    dept_employees[e.department_id].append(e.id)
+            
+            all_attendance = Attendance.query.filter(
+                Attendance.date >= d_from,
+                Attendance.date <= d_to
+            ).all()
+            
+            dept_attendance = {}
+            for a in all_attendance:
+                for d_id, emp_ids in dept_employees.items():
+                    if a.employee_id in emp_ids:
+                        if d_id not in dept_attendance:
+                            dept_attendance[d_id] = {'present': 0, 'absent': 0, 'late': 0, 'total': 0}
+                        dept_attendance[d_id]['total'] += 1
+                        if a.status == 'present':
+                            dept_attendance[d_id]['present'] += 1
+                        elif a.status == 'absent':
+                            dept_attendance[d_id]['absent'] += 1
+                        elif a.status == 'late':
+                            dept_attendance[d_id]['late'] += 1
+                        break
+            
+            actual_row = 4
+            for dept in departments:
+                emp_count = len(dept_employees.get(dept.id, []))
+                if emp_count == 0:
                     continue
                 
-                records = Attendance.query.filter(
-                    Attendance.date >= d_from,
-                    Attendance.date <= d_to,
-                    Attendance.employee_id.in_(employee_ids)
-                ).all()
-                
-                present = sum(1 for a in records if a.status == 'present')
-                absent = sum(1 for a in records if a.status == 'absent')
-                late = sum(1 for a in records if a.status == 'late')
-                total = len(records)
+                stats = dept_attendance.get(dept.id, {'present': 0, 'absent': 0, 'late': 0, 'total': 0})
+                present = stats['present']
+                absent = stats['absent']
+                late = stats['late']
+                total = stats['total']
                 rate = round((present / total) * 100, 1) if total > 0 else 0
                 
                 if rate >= 90:
