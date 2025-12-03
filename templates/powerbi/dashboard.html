@@ -937,8 +937,7 @@ function applyFilters() {
         loadDocumentsChart(),
         loadVehiclesChart(),
         loadEmployeesTable(),
-        loadAlerts(),
-        loadAIInsights()
+        loadAlerts()
     ]).then(() => {
         generateSmartInsights();
         hideLoading();
@@ -1013,24 +1012,18 @@ async function loadAttendanceChart() {
         const response = await fetch(`/powerbi/api/attendance-by-department?date_from=${dateFrom}&date_to=${dateTo}`);
         const result = await response.json();
 
-        console.log('Attendance chart data:', result);
-
-        if (result.success && result.data && result.data.length > 0) {
-            const canvasEl = document.getElementById('attendanceChart');
-            if (!canvasEl) {
-                console.error('Canvas element attendanceChart not found');
-                return;
-            }
+        if (result.success && result.data.length > 0) {
+            const ctx = document.getElementById('attendanceChart').getContext('2d');
 
             if (charts.attendance) charts.attendance.destroy();
 
             const labels = result.data.map(d => d.department);
-            const presentData = result.data.map(d => d.present || 0);
-            const absentData = result.data.map(d => d.absent || 0);
+            const presentData = result.data.map(d => d.present);
+            const absentData = result.data.map(d => d.absent);
             const leaveData = result.data.map(d => d.leave || 0);
             const sickData = result.data.map(d => d.sick || 0);
 
-            charts.attendance = new Chart(canvasEl.getContext('2d'), {
+            charts.attendance = new Chart(ctx, {
                 type: 'bar',
                 data: {
                     labels: labels,
@@ -1095,8 +1088,6 @@ async function loadAttendanceChart() {
                     }
                 }
             });
-        } else {
-            console.warn('No attendance data:', result);
         }
     } catch (error) {
         console.error('Error loading attendance chart:', error);
@@ -1171,110 +1162,58 @@ async function loadDepartmentChart() {
         const response = await fetch(`/powerbi/api/attendance-by-department?date_from=${dateFrom}&date_to=${dateTo}`);
         const result = await response.json();
 
-        console.log('Department chart data:', result);
-
-        if (result.success && result.data && result.data.length > 0) {
-            const canvasEl = document.getElementById('departmentChart');
-            if (!canvasEl) {
-                console.error('Canvas element departmentChart not found');
-                return;
-            }
+        if (result.success && result.data.length > 0) {
+            const ctx = document.getElementById('departmentChart').getContext('2d');
 
             if (charts.department) charts.department.destroy();
 
             const labels = result.data.map(d => d.department);
-            const rates = result.data.map(d => d.attendance_rate || 0);
-            const employeeCounts = result.data.map(d => d.employee_count || 0);
+            const rates = result.data.map(d => d.attendance_rate);
 
-            console.log('Department labels:', labels, 'rates:', rates);
-
-            try {
-                const ctx = canvasEl.getContext('2d');
-                if (!ctx) {
-                    console.error('Cannot get 2d context');
-                    return;
-                }
-                
-                charts.department = new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: labels,
-                        datasets: [{
-                            label: 'نسبة الحضور %',
-                            data: rates.map(r => Number(r) || 0),
-                            backgroundColor: rates.map(r => {
-                                const val = Number(r) || 0;
-                                return val >= 80 ? chartColors.success : val >= 60 ? chartColors.warning : chartColors.danger;
-                            }),
-                            borderRadius: 8,
-                            borderSkipped: false
-                        }]
+            charts.department = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'نسبة الحضور %',
+                        data: rates,
+                        backgroundColor: rates.map(r => r >= 80 ? chartColors.success : r >= 60 ? chartColors.warning : chartColors.danger),
+                        borderRadius: 8,
+                        borderSkipped: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    plugins: {
+                        legend: { display: false },
+                        datalabels: {
+                            anchor: 'end',
+                            align: 'start',
+                            offset: 10,
+                            color: '#FFFFFF',
+                            font: { weight: 'bold' },
+                            formatter: value => value + '%'
+                        }
                     },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        indexAxis: 'y',
-                        plugins: {
-                            legend: { display: false }
+                    scales: {
+                        x: {
+                            max: 100,
+                            grid: { color: 'rgba(255,255,255,0.05)' },
+                            ticks: { color: '#9CA3AF' }
                         },
-                        scales: {
-                            x: {
-                                max: 100,
-                                grid: { color: 'rgba(255,255,255,0.05)' },
-                                ticks: { color: '#9CA3AF' }
-                            },
-                            y: {
-                                grid: { display: false },
-                                ticks: { color: '#FFFFFF', font: { size: 11 } }
-                            }
+                        y: {
+                            grid: { display: false },
+                            ticks: { color: '#FFFFFF', font: { size: 11 } }
                         }
                     }
-                });
-                console.log('Department chart created successfully');
-            } catch (chartError) {
-                console.error('Chart creation error:', chartError);
-            }
-        } else {
-            console.warn('No department data available');
+                }
+            });
         }
     } catch (error) {
         console.error('Error loading department chart:', error);
     }
-}
-
-async function loadAIInsights() {
-    const dateFrom = document.getElementById('dateFrom').value;
-    const dateTo = document.getElementById('dateTo').value;
-    
-    try {
-        const response = await fetch(`/powerbi/api/ai-analysis?date_from=${dateFrom}&date_to=${dateTo}`);
-        const result = await response.json();
-        
-        if (result.success) {
-            const insightDiv = document.getElementById('aiInsightCard') || createAICard();
-            insightDiv.innerHTML = result.data.analysis;
-        }
-    } catch (error) {
-        console.error('Error loading AI insights:', error);
-    }
-}
-
-function createAICard() {
-    const card = document.createElement('div');
-    card.id = 'aiInsightCard';
-    card.className = 'insight-card';
-    card.style.cssText = `
-        background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(139, 92, 246, 0.15));
-        border: 1px solid rgba(59, 130, 246, 0.3);
-        border-radius: 12px;
-        padding: 20px;
-        margin-top: 20px;
-        color: #fff;
-        font-size: 14px;
-        line-height: 1.6;
-    `;
-    document.querySelector('.dashboard-container')?.appendChild(card);
-    return card;
 }
 
 async function loadDocumentsChart() {
@@ -1353,7 +1292,7 @@ async function loadVehiclesChart() {
 
             const data = result.data.by_status;
             if (data && data.length > 0) {
-                const labels = data.map(d => d.status);
+                const labels = data.map(d => d.status === 'working' ? 'نشط' : d.status === 'maintenance' ? 'صيانة' : d.status);
                 const values = data.map(d => d.count);
 
                 charts.vehicles = new Chart(ctx, {
@@ -1385,21 +1324,21 @@ async function loadVehiclesChart() {
                     }
                 });
 
-                const inProject = result.data.in_project || 0;
+                const working = result.data.working || 0;
                 const total = result.data.total_vehicles || 0;
-                const inWorkshop = result.data.in_workshop || 0;
+                const maintenance = result.data.maintenance || 0;
 
                 if (total > 0) {
                     document.getElementById('vehicleInsight').style.display = 'block';
-                    const projectRate = Math.round((inProject / total) * 100);
+                    const workingRate = Math.round((working / total) * 100);
                     let insightText = '';
 
-                    if (projectRate >= 80) {
-                        insightText = `أداء ممتاز! ${projectRate}% من الأسطول في المشاريع ويعمل بكفاءة.`;
-                    } else if (projectRate >= 60) {
-                        insightText = `${inWorkshop} سيارة في الورشة. يُنصح بمراجعة جدول الصيانة لتحسين معدل التوفر.`;
+                    if (workingRate >= 80) {
+                        insightText = `أداء ممتاز! ${workingRate}% من الأسطول نشط ويعمل بكفاءة.`;
+                    } else if (workingRate >= 60) {
+                        insightText = `${maintenance} سيارة في الصيانة. يُنصح بمراجعة جدول الصيانة لتحسين نسبة التشغيل.`;
                     } else {
-                        insightText = `تحذير: نسبة التوفر منخفضة (${projectRate}%). يلزم مراجعة عاجلة لأسطول السيارات.`;
+                        insightText = `تحذير: نسبة التشغيل منخفضة (${workingRate}%). يلزم مراجعة عاجلة لأسطول السيارات.`;
                     }
 
                     document.getElementById('vehicleInsightText').textContent = insightText;

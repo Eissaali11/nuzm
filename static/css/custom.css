@@ -71,7 +71,7 @@ p {
     right: 0;
     left: auto;
     text-align: right;
-    z-index: 100;       /* raised above most things */
+    z-index: 1000;       /* raised above most things */
     background-color: #0056b3;
     /* optional extras */
     box-shadow: 0 2px 6px rgba(0,0,0,0.3);
@@ -347,24 +347,26 @@ table {
 }
 
 /* Custom sidebar styling */
-/* Custom sidebar styling */
-.container-fluid {
-    display: flex;
-}
-.container-fluid .row {
-    width: 100%;
-    display: flex;
-}
 .sidebar {
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-}
-.content-wrapper {
-    flex: 1;
-    min-height: 100vh;
+    height: 100vh;
+    position: fixed;
+    right: 0;
+    width: 16.66667%; /* col-lg-2 */
+    top: 0;
+    background: linear-gradient(to bottom, #1a4369, #2a5885);
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 5px 0 10px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    transition: all 0.3s;
 }
 
+/* إضافة خاصية التمرير للقائمة الجانبية */
+.sidebar-content {
+    height: 100vh;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+}
 
 .sidebar-content::-webkit-scrollbar {
     width: 5px;
@@ -804,7 +806,7 @@ table {
 }
 
 .table-fixed-header thead th {
-    position: relative;
+    position: fixed;
     right: 0;
     width: 16.66667%; /* col-lg-2 */
     top: 0;

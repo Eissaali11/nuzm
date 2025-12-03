@@ -88,4 +88,3 @@ fpdf2
 lxml
 python-dateutil
 qrcode
-openai
