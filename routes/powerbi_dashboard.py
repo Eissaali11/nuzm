@@ -153,7 +153,12 @@ def attendance_by_department():
             sick = sum(1 for a in attendance_records if a.status == 'sick')
             total = len(attendance_records)
             
-            attendance_rate = round((present / total) * 100, 1) if total > 0 else 0
+            # Calculate expected days (employees × days in period)
+            num_days = (date_to - date_from).days + 1
+            expected_days = len(employees) * num_days
+            
+            # Correct attendance rate: present / expected
+            attendance_rate = round((present / expected_days) * 100, 1) if expected_days > 0 else 0
             
             performance = 'excellent' if attendance_rate >= 90 else 'good' if attendance_rate >= 75 else 'average' if attendance_rate >= 60 else 'poor'
             
@@ -166,6 +171,7 @@ def attendance_by_department():
                 'leave': leave,
                 'sick': sick,
                 'total': total,
+                'expected_days': expected_days,
                 'attendance_rate': attendance_rate,
                 'performance': performance
             })
