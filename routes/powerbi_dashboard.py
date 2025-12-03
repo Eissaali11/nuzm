@@ -677,22 +677,21 @@ def export_data():
         ws.add_chart(doughnut1, "E15")
         
         departments = Department.query.all()
-        all_employees_list = Employee.query.all()
+        all_employees_list = Employee.query.filter(Employee.department_id.isnot(None)).all()
         dept_emp_map = {}
         for e in all_employees_list:
-            if e.department_id:
-                if e.department_id not in dept_emp_map:
-                    dept_emp_map[e.department_id] = []
-                dept_emp_map[e.department_id].append(e.id)
+            if e.department_id not in dept_emp_map:
+                dept_emp_map[e.department_id] = []
+            dept_emp_map[e.department_id].append(e.id)
         
-        ws.merge_cells('A23:H23')
-        ws['A23'] = "🏢 نسبة الحضور حسب القسم"
+        ws.merge_cells('A23:I23')
+        ws['A23'] = "🏢 تحليل الحضور التفصيلي حسب القسم"
         ws['A23'].font = gold_font
         ws['A23'].fill = dark_header
         ws['A23'].alignment = Alignment(horizontal='center', vertical='center')
         ws.row_dimensions[23].height = 30
         
-        dept_headers = ['القسم', 'الموظفين', 'الحضور', 'النسبة', 'التقييم']
+        dept_headers = ['القسم', 'الموظفين', 'أيام الفترة', 'المتوقع', 'الحاضرون', 'النسبة', 'التقييم', 'الملاحظات']
         for i, h in enumerate(dept_headers):
             cell = ws.cell(row=24, column=i+1)
             cell.value = h
@@ -702,6 +701,8 @@ def export_data():
             cell.border = thin_border
         
         dept_row = 25
+        days_in_period = (d_to - d_from).days + 1
+        
         for dept in departments[:10]:
             emp_ids = dept_emp_map.get(dept.id, [])
             if not emp_ids:
@@ -714,50 +715,63 @@ def export_data():
             ).all()
             
             present = sum(1 for a in dept_attendance if a.status == 'present')
-            total = len(dept_attendance)
-            rate = round((present / total) * 100) if total > 0 else 0
+            expected = len(emp_ids) * days_in_period
+            rate = round((present / expected) * 100) if expected > 0 else 0
             
             if rate >= 90:
                 rating = "ممتاز ⭐"
                 rating_fill = green_fill
+                note = f"أداء عالي جداً"
             elif rate >= 75:
                 rating = "جيد 👍"
                 rating_fill = blue_fill
+                note = f"أداء مرضي"
             elif rate >= 60:
                 rating = "متوسط ⚡"
                 rating_fill = orange_fill
+                note = f"يحتاج متابعة"
             else:
                 rating = "يحتاج تحسين ⚠️"
                 rating_fill = red_fill
+                note = f"غياب مرتفع"
             
             ws.cell(row=dept_row, column=1).value = dept.name
             ws.cell(row=dept_row, column=1).font = white_font
             ws.cell(row=dept_row, column=1).fill = card_fill
-            ws.cell(row=dept_row, column=1).border = thin_border
             
             ws.cell(row=dept_row, column=2).value = len(emp_ids)
             ws.cell(row=dept_row, column=2).font = white_font
             ws.cell(row=dept_row, column=2).fill = card_fill
             ws.cell(row=dept_row, column=2).alignment = Alignment(horizontal='center')
-            ws.cell(row=dept_row, column=2).border = thin_border
             
-            ws.cell(row=dept_row, column=3).value = present
+            ws.cell(row=dept_row, column=3).value = days_in_period
             ws.cell(row=dept_row, column=3).font = white_font
             ws.cell(row=dept_row, column=3).fill = card_fill
             ws.cell(row=dept_row, column=3).alignment = Alignment(horizontal='center')
-            ws.cell(row=dept_row, column=3).border = thin_border
             
-            ws.cell(row=dept_row, column=4).value = f"{rate}%"
+            ws.cell(row=dept_row, column=4).value = expected
             ws.cell(row=dept_row, column=4).font = white_font
             ws.cell(row=dept_row, column=4).fill = card_fill
             ws.cell(row=dept_row, column=4).alignment = Alignment(horizontal='center')
-            ws.cell(row=dept_row, column=4).border = thin_border
             
-            ws.cell(row=dept_row, column=5).value = rating
-            ws.cell(row=dept_row, column=5).font = Font(bold=True, color="FFFFFF", size=10)
-            ws.cell(row=dept_row, column=5).fill = rating_fill
+            ws.cell(row=dept_row, column=5).value = present
+            ws.cell(row=dept_row, column=5).font = white_font
+            ws.cell(row=dept_row, column=5).fill = card_fill
             ws.cell(row=dept_row, column=5).alignment = Alignment(horizontal='center')
-            ws.cell(row=dept_row, column=5).border = thin_border
+            
+            ws.cell(row=dept_row, column=6).value = f"{rate}%"
+            ws.cell(row=dept_row, column=6).font = white_font
+            ws.cell(row=dept_row, column=6).fill = card_fill
+            ws.cell(row=dept_row, column=6).alignment = Alignment(horizontal='center')
+            
+            ws.cell(row=dept_row, column=7).value = rating
+            ws.cell(row=dept_row, column=7).font = Font(bold=True, color="FFFFFF", size=10)
+            ws.cell(row=dept_row, column=7).fill = rating_fill
+            ws.cell(row=dept_row, column=7).alignment = Alignment(horizontal='center')
+            
+            ws.cell(row=dept_row, column=8).value = note
+            ws.cell(row=dept_row, column=8).font = white_font
+            ws.cell(row=dept_row, column=8).fill = card_fill
             
             dept_row += 1
         
@@ -768,7 +782,7 @@ def export_data():
             bar1.title = "نسبة الحضور بالأقسام"
             bar1.y_axis.title = "النسبة %"
             
-            data_bar = Reference(ws, min_col=4, min_row=24, max_row=dept_row-1)
+            data_bar = Reference(ws, min_col=6, min_row=24, max_row=dept_row-1)
             cats_bar = Reference(ws, min_col=1, min_row=25, max_row=dept_row-1)
             bar1.add_data(data_bar, titles_from_data=True)
             bar1.set_categories(cats_bar)
@@ -776,7 +790,7 @@ def export_data():
             bar1.height = 10
             bar1.dataLabels = DataLabelList()
             bar1.dataLabels.showVal = True
-            ws.add_chart(bar1, "G23")
+            ws.add_chart(bar1, "J23")
         
         doc_counts = db.session.query(
             Document.employee_id,

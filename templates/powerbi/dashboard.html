@@ -1292,7 +1292,7 @@ async function loadVehiclesChart() {
 
             const data = result.data.by_status;
             if (data && data.length > 0) {
-                const labels = data.map(d => d.status === 'working' ? 'نشط' : d.status === 'maintenance' ? 'صيانة' : d.status);
+                const labels = data.map(d => d.status);
                 const values = data.map(d => d.count);
 
                 charts.vehicles = new Chart(ctx, {
@@ -1324,21 +1324,21 @@ async function loadVehiclesChart() {
                     }
                 });
 
-                const working = result.data.working || 0;
+                const inProject = result.data.in_project || 0;
                 const total = result.data.total_vehicles || 0;
-                const maintenance = result.data.maintenance || 0;
+                const inWorkshop = result.data.in_workshop || 0;
 
                 if (total > 0) {
                     document.getElementById('vehicleInsight').style.display = 'block';
-                    const workingRate = Math.round((working / total) * 100);
+                    const projectRate = Math.round((inProject / total) * 100);
                     let insightText = '';
 
-                    if (workingRate >= 80) {
-                        insightText = `أداء ممتاز! ${workingRate}% من الأسطول نشط ويعمل بكفاءة.`;
-                    } else if (workingRate >= 60) {
-                        insightText = `${maintenance} سيارة في الصيانة. يُنصح بمراجعة جدول الصيانة لتحسين نسبة التشغيل.`;
+                    if (projectRate >= 80) {
+                        insightText = `أداء ممتاز! ${projectRate}% من الأسطول في المشاريع ويعمل بكفاءة.`;
+                    } else if (projectRate >= 60) {
+                        insightText = `${inWorkshop} سيارة في الورشة. يُنصح بمراجعة جدول الصيانة لتحسين معدل التوفر.`;
                     } else {
-                        insightText = `تحذير: نسبة التشغيل منخفضة (${workingRate}%). يلزم مراجعة عاجلة لأسطول السيارات.`;
+                        insightText = `تحذير: نسبة التوفر منخفضة (${projectRate}%). يلزم مراجعة عاجلة لأسطول السيارات.`;
                     }
 
                     document.getElementById('vehicleInsightText').textContent = insightText;
