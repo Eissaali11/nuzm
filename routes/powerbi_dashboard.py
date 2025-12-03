@@ -414,9 +414,7 @@ def export_data():
     from openpyxl.styles import Font, PatternFill, Border, Side, Alignment
     from openpyxl.utils import get_column_letter
     from openpyxl.chart import BarChart, PieChart, DoughnutChart, Reference
-    from openpyxl.chart.series import DataPoint
     from openpyxl.chart.label import DataLabelList
-    from sqlalchemy.orm import joinedload
     from sqlalchemy import func
     
     data_type = request.args.get('type', 'all')
@@ -694,9 +692,7 @@ def export_data():
                 cell.alignment = Alignment(horizontal='center', vertical='center')
             ws_att.row_dimensions[3].height = 25
             
-            query = Attendance.query.options(
-                joinedload(Attendance.employee).joinedload(Employee.department)
-            ).order_by(Attendance.date.desc())
+            query = Attendance.query.order_by(Attendance.date.desc())
             if date_from and date_to:
                 d_from = datetime.strptime(date_from, '%Y-%m-%d').date()
                 d_to = datetime.strptime(date_to, '%Y-%m-%d').date()
@@ -711,7 +707,7 @@ def export_data():
             
             attendance_records = query.limit(500).all()
             for row_idx, record in enumerate(attendance_records, start=4):
-                emp = record.employee
+                emp = Employee.query.get(record.employee_id) if record.employee_id else None
                 status = record.status or 'unknown'
                 
                 data_row = [
@@ -765,7 +761,7 @@ def export_data():
                 cell.alignment = Alignment(horizontal='center', vertical='center')
             ws_emp.row_dimensions[3].height = 25
             
-            employees = Employee.query.options(joinedload(Employee.department)).all()
+            employees = Employee.query.all()
             
             doc_counts = db.session.query(
                 Document.employee_id,
