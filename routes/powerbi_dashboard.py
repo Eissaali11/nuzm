@@ -1388,3 +1388,337 @@ def dashboard_stats():
         })
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 400
+
+
+@powerbi_bp.route('/export-pdf')
+@login_required
+def export_pdf():
+    """تصدير لوحة المعلومات كـ PDF احترافي"""
+    try:
+        from weasyprint import HTML, CSS
+        from flask import url_for, render_template_string
+        import tempfile
+        
+        # جلب البيانات
+        departments = Department.query.all()
+        total_vehicles = Vehicle.query.count()
+        total_documents = Document.query.count()
+        
+        date_from_str = request.args.get('date_from')
+        date_to_str = request.args.get('date_to')
+        department_id = request.args.get('department_id')
+        
+        if date_from_str:
+            try:
+                date_from = datetime.strptime(date_from_str, '%Y-%m-%d').date()
+            except:
+                date_from = datetime.now().date() - timedelta(days=30)
+        else:
+            date_from = datetime.now().date() - timedelta(days=30)
+        
+        if date_to_str:
+            try:
+                date_to = datetime.strptime(date_to_str, '%Y-%m-%d').date()
+            except:
+                date_to = datetime.now().date()
+        else:
+            date_to = datetime.now().date()
+        
+        if date_from > date_to:
+            date_from, date_to = date_to, date_from
+        
+        active_employee_ids_with_attendance = db.session.query(Attendance.employee_id).filter(
+            Attendance.date >= date_from,
+            Attendance.date <= date_to
+        ).distinct().all()
+        active_employee_ids_with_attendance = [e[0] for e in active_employee_ids_with_attendance]
+        
+        active_employees_count = Employee.query.filter(
+            Employee.status == 'active',
+            Employee.id.in_(active_employee_ids_with_attendance)
+        ).count()
+        
+        total_employees = active_employees_count
+        
+        active_emp_ids = [e.id for e in Employee.query.filter(Employee.status == 'active').all()]
+        
+        attendance_records = Attendance.query.filter(
+            Attendance.date >= date_from,
+            Attendance.date <= date_to,
+            Attendance.employee_id.in_(active_emp_ids)
+        ).all()
+        
+        attendance_stats = {
+            'present': sum(1 for a in attendance_records if a.status == 'present'),
+            'absent': sum(1 for a in attendance_records if a.status in ['absent', 'غائب']),
+            'leave': sum(1 for a in attendance_records if a.status == 'leave'),
+            'sick': sum(1 for a in attendance_records if a.status == 'sick'),
+            'total': len(attendance_records)
+        }
+        attendance_stats['rate'] = round((attendance_stats['present'] / attendance_stats['total']) * 100, 1) if attendance_stats['total'] > 0 else 0
+        
+        dept_attendance = []
+        for dept in departments:
+            emp_ids = db.session.query(Employee.id).join(
+                Employee.departments
+            ).filter(
+                Department.id == dept.id,
+                Employee.status == 'active'
+            ).all()
+            emp_ids = [e[0] for e in emp_ids]
+            
+            if not emp_ids:
+                continue
+            
+            emp_ids_with_attendance = db.session.query(Attendance.employee_id).filter(
+                Attendance.date >= date_from,
+                Attendance.date <= date_to,
+                Attendance.employee_id.in_(emp_ids)
+            ).distinct().all()
+            emp_ids_with_attendance = [e[0] for e in emp_ids_with_attendance]
+            
+            if not emp_ids_with_attendance:
+                continue
+            
+            dept_records = Attendance.query.filter(
+                Attendance.date >= date_from,
+                Attendance.date <= date_to,
+                Attendance.employee_id.in_(emp_ids_with_attendance)
+            ).all()
+            
+            present_count = sum(1 for a in dept_records if a.status == 'present')
+            total_count = len(dept_records)
+            rate = round((present_count / total_count) * 100, 1) if total_count > 0 else 0
+            
+            dept_attendance.append({
+                'name': dept.name,
+                'employee_count': len(emp_ids_with_attendance),
+                'present': present_count,
+                'absent': sum(1 for a in dept_records if a.status in ['absent', 'غائب']),
+                'rate': rate
+            })
+        
+        html_content = f'''
+        <!DOCTYPE html>
+        <html dir="rtl" lang="ar">
+        <head>
+            <meta charset="UTF-8">
+            <style>
+                @page {{
+                    size: A4 landscape;
+                    margin: 1cm;
+                }}
+                
+                * {{
+                    box-sizing: border-box;
+                    font-family: 'Noto Sans Arabic', 'Tahoma', 'Arial', sans-serif;
+                }}
+                
+                body {{
+                    direction: rtl;
+                    background: linear-gradient(180deg, #0a0e17 0%, #0d1321 100%);
+                    color: #e8eaed;
+                    margin: 0;
+                    padding: 20px;
+                }}
+                
+                .header {{
+                    background: linear-gradient(135deg, #131b2e 0%, rgba(0, 212, 255, 0.05) 100%);
+                    border: 2px solid rgba(0, 212, 255, 0.3);
+                    border-radius: 15px;
+                    padding: 20px;
+                    margin-bottom: 20px;
+                    text-align: center;
+                }}
+                
+                .header h1 {{
+                    color: #00d4ff;
+                    margin: 0 0 10px 0;
+                    font-size: 28px;
+                }}
+                
+                .header p {{
+                    color: #8892a0;
+                    margin: 5px 0;
+                    font-size: 14px;
+                }}
+                
+                .kpi-grid {{
+                    display: grid;
+                    grid-template-columns: repeat(5, 1fr);
+                    gap: 15px;
+                    margin-bottom: 25px;
+                }}
+                
+                .kpi-card {{
+                    background: #131b2e;
+                    border: 1px solid rgba(0, 212, 255, 0.2);
+                    border-radius: 12px;
+                    padding: 15px;
+                    text-align: center;
+                }}
+                
+                .kpi-value {{
+                    font-size: 32px;
+                    font-weight: bold;
+                    color: #00d4ff;
+                    margin-bottom: 5px;
+                }}
+                
+                .kpi-label {{
+                    color: #8892a0;
+                    font-size: 12px;
+                }}
+                
+                .section {{
+                    background: #131b2e;
+                    border: 1px solid rgba(0, 212, 255, 0.2);
+                    border-radius: 12px;
+                    padding: 20px;
+                    margin-bottom: 20px;
+                }}
+                
+                .section-title {{
+                    color: #00d4ff;
+                    font-size: 18px;
+                    margin: 0 0 15px 0;
+                    border-bottom: 1px solid rgba(0, 212, 255, 0.2);
+                    padding-bottom: 10px;
+                }}
+                
+                table {{
+                    width: 100%;
+                    border-collapse: collapse;
+                    font-size: 11px;
+                }}
+                
+                th {{
+                    background: rgba(0, 212, 255, 0.1);
+                    color: #00d4ff;
+                    padding: 10px;
+                    text-align: center;
+                    border: 1px solid rgba(0, 212, 255, 0.2);
+                }}
+                
+                td {{
+                    padding: 8px;
+                    text-align: center;
+                    border: 1px solid rgba(0, 212, 255, 0.1);
+                    color: #e8eaed;
+                }}
+                
+                tr:nth-child(even) {{
+                    background: rgba(0, 212, 255, 0.03);
+                }}
+                
+                .rate-good {{ color: #00ff88; }}
+                .rate-medium {{ color: #ffd700; }}
+                .rate-low {{ color: #ff4757; }}
+                
+                .footer {{
+                    text-align: center;
+                    color: #8892a0;
+                    font-size: 10px;
+                    margin-top: 20px;
+                    padding-top: 10px;
+                    border-top: 1px solid rgba(0, 212, 255, 0.2);
+                }}
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <h1>📊 لوحة التحليلات الاحترافية - نُظم</h1>
+                <p>تقرير شامل للفترة من {date_from.strftime('%Y-%m-%d')} إلى {date_to.strftime('%Y-%m-%d')}</p>
+                <p>تاريخ الإنشاء: {datetime.now().strftime('%Y-%m-%d %H:%M')}</p>
+            </div>
+            
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="kpi-value">{total_employees}</div>
+                    <div class="kpi-label">إجمالي الموظفين</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-value">{len(departments)}</div>
+                    <div class="kpi-label">الأقسام</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-value">{total_vehicles}</div>
+                    <div class="kpi-label">السيارات</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-value">{total_documents}</div>
+                    <div class="kpi-label">الوثائق</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-value">{attendance_stats['rate']}%</div>
+                    <div class="kpi-label">نسبة الحضور</div>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2 class="section-title">📈 إحصائيات الحضور</h2>
+                <table>
+                    <tr>
+                        <th>الحضور</th>
+                        <th>الغياب</th>
+                        <th>الإجازات</th>
+                        <th>المرضى</th>
+                        <th>الإجمالي</th>
+                    </tr>
+                    <tr>
+                        <td class="rate-good">{attendance_stats['present']}</td>
+                        <td class="rate-low">{attendance_stats['absent']}</td>
+                        <td>{attendance_stats['leave']}</td>
+                        <td>{attendance_stats['sick']}</td>
+                        <td>{attendance_stats['total']}</td>
+                    </tr>
+                </table>
+            </div>
+            
+            <div class="section">
+                <h2 class="section-title">🏢 الحضور حسب القسم</h2>
+                <table>
+                    <tr>
+                        <th>القسم</th>
+                        <th>عدد الموظفين</th>
+                        <th>الحضور</th>
+                        <th>الغياب</th>
+                        <th>نسبة الحضور</th>
+                    </tr>
+                    {''.join(f"""
+                    <tr>
+                        <td><strong>{dept['name']}</strong></td>
+                        <td>{dept['employee_count']}</td>
+                        <td class="rate-good">{dept['present']}</td>
+                        <td class="rate-low">{dept['absent']}</td>
+                        <td class="{'rate-good' if dept['rate'] >= 80 else 'rate-medium' if dept['rate'] >= 60 else 'rate-low'}">{dept['rate']}%</td>
+                    </tr>
+                    """ for dept in dept_attendance)}
+                </table>
+            </div>
+            
+            <div class="footer">
+                نُظم - نظام إدارة الموظفين المتكامل | تم إنشاء هذا التقرير تلقائياً
+            </div>
+        </body>
+        </html>
+        '''
+        
+        pdf = HTML(string=html_content).write_pdf()
+        
+        output = BytesIO(pdf)
+        output.seek(0)
+        
+        filename = f"powerbi_dashboard_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+        
+        return send_file(
+            output,
+            mimetype='application/pdf',
+            as_attachment=True,
+            download_name=filename
+        )
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 400
