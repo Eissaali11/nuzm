@@ -913,7 +913,31 @@
                     </td>
                 </tr>
                 {% endfor %}
-                {% if not dept_attendance %}
+                {% if dept_attendance %}
+                <tr class="total-row">
+                    <td><strong><i class="fas fa-calculator"></i> الإجمالي</strong></td>
+                    <td><strong>{{ dept_attendance|sum(attribute='employee_count') }}</strong></td>
+                    <td style="color: var(--green);"><strong>{{ dept_attendance|sum(attribute='present') }}</strong></td>
+                    <td><strong>{{ dept_attendance|sum(attribute='total') }}</strong></td>
+                    <td>
+                        {% set total_present = dept_attendance|sum(attribute='present') %}
+                        {% set total_records = dept_attendance|sum(attribute='total') %}
+                        {% set overall_rate = ((total_present / total_records) * 100)|round(1) if total_records > 0 else 0 %}
+                        <span style="color: var(--cyan); font-weight: bold;">{{ overall_rate }}%</span>
+                    </td>
+                    <td>
+                        {% if overall_rate >= 90 %}
+                        <span class="rate-badge excellent"><i class="fas fa-trophy"></i> ممتاز</span>
+                        {% elif overall_rate >= 75 %}
+                        <span class="rate-badge good"><i class="fas fa-star"></i> جيد</span>
+                        {% elif overall_rate >= 60 %}
+                        <span class="rate-badge average"><i class="fas fa-minus"></i> متوسط</span>
+                        {% else %}
+                        <span class="rate-badge poor"><i class="fas fa-arrow-down"></i> ضعيف</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
                 <tr>
                     <td colspan="6">
                         <div class="empty-state">
