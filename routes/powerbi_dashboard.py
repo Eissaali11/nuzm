@@ -172,6 +172,12 @@ def dashboard():
     # ترتيب حسب نسبة الحضور
     dept_attendance.sort(key=lambda x: x['rate'], reverse=True)
     
+    # طباعة للتصحيح
+    import logging
+    logging.info(f"[POWERBI] dept_attendance count: {len(dept_attendance)}")
+    for da in dept_attendance[:3]:
+        logging.info(f"[POWERBI] dept: {da['name']}, emp: {da['employee_count']}, rate: {da['rate']}")
+    
     # توزيع الموظفين حسب القسم (للرسم البياني) - الموظفين النشطين الذين لهم حضور فقط
     dept_distribution = []
     for dept in departments:
