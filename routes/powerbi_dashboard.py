@@ -20,9 +20,109 @@ powerbi_bp = Blueprint('powerbi', __name__, url_prefix='/powerbi')
 @powerbi_bp.route('/')
 @login_required
 def dashboard():
-    """الصفحة الرئيسية للوحة معلومات Power BI الاحترافية"""
+    """الصفحة الرئيسية للوحة معلومات Power BI الاحترافية - بيانات حقيقية"""
+    from datetime import datetime, timedelta
+    
+    # البيانات الأساسية
     departments = Department.query.all()
-    return render_template('powerbi/dashboard.html', departments=departments)
+    total_employees = Employee.query.count()
+    total_vehicles = Vehicle.query.count()
+    total_documents = Document.query.count()
+    
+    # إحصائيات الحضور (آخر 30 يوم)
+    date_from = datetime.now().date() - timedelta(days=30)
+    date_to = datetime.now().date()
+    
+    attendance_records = Attendance.query.filter(
+        Attendance.date >= date_from,
+        Attendance.date <= date_to
+    ).all()
+    
+    attendance_stats = {
+        'present': sum(1 for a in attendance_records if a.status == 'present'),
+        'absent': sum(1 for a in attendance_records if a.status in ['absent', 'غائب']),
+        'leave': sum(1 for a in attendance_records if a.status == 'leave'),
+        'sick': sum(1 for a in attendance_records if a.status == 'sick'),
+        'total': len(attendance_records)
+    }
+    attendance_stats['rate'] = round((attendance_stats['present'] / attendance_stats['total']) * 100, 1) if attendance_stats['total'] > 0 else 0
+    
+    # إحصائيات السيارات
+    vehicles = Vehicle.query.all()
+    vehicle_stats = {}
+    for v in vehicles:
+        status = v.status or 'unknown'
+        vehicle_stats[status] = vehicle_stats.get(status, 0) + 1
+    
+    # الحضور حسب القسم
+    dept_attendance = []
+    for dept in departments:
+        # جلب موظفي القسم
+        emp_ids = db.session.query(Employee.id).join(
+            Employee.departments
+        ).filter(Department.id == dept.id).all()
+        emp_ids = [e[0] for e in emp_ids]
+        
+        if not emp_ids:
+            continue
+            
+        # حساب الحضور
+        dept_records = Attendance.query.filter(
+            Attendance.date >= date_from,
+            Attendance.date <= date_to,
+            Attendance.employee_id.in_(emp_ids)
+        ).all()
+        
+        present = sum(1 for a in dept_records if a.status == 'present')
+        total = len(dept_records)
+        rate = round((present / total) * 100, 1) if total > 0 else 0
+        
+        dept_attendance.append({
+            'name': dept.name,
+            'employee_count': len(emp_ids),
+            'present': present,
+            'total': total,
+            'rate': rate
+        })
+    
+    # ترتيب حسب نسبة الحضور
+    dept_attendance.sort(key=lambda x: x['rate'], reverse=True)
+    
+    # إحصائيات الوثائق
+    today = datetime.now().date()
+    thirty_days = today + timedelta(days=30)
+    
+    docs = Document.query.all()
+    doc_stats = {
+        'valid': 0,
+        'expiring': 0,
+        'expired': 0,
+        'total': len(docs)
+    }
+    
+    for doc in docs:
+        if hasattr(doc, 'expiry_date') and doc.expiry_date:
+            if doc.expiry_date < today:
+                doc_stats['expired'] += 1
+            elif doc.expiry_date <= thirty_days:
+                doc_stats['expiring'] += 1
+            else:
+                doc_stats['valid'] += 1
+        else:
+            doc_stats['valid'] += 1
+    
+    return render_template('powerbi/dashboard.html',
+        departments=departments,
+        total_employees=total_employees,
+        total_vehicles=total_vehicles,
+        total_documents=total_documents,
+        attendance_stats=attendance_stats,
+        vehicle_stats=vehicle_stats,
+        dept_attendance=dept_attendance,
+        doc_stats=doc_stats,
+        date_from=date_from,
+        date_to=date_to
+    )
 
 @powerbi_bp.route('/api/attendance-summary')
 @login_required
