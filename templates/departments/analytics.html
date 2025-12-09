@@ -1,0 +1,360 @@
+{% extends 'layout.html' %}
+
+{% block title %}تحليلات الأقسام والوظائف - نُظم{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --dark-bg: #1E1E2E;
+        --card-bg: #2d2d44;
+        --border-color: #3d3d5c;
+        --gold-accent: #F2C811;
+        --success: #38EF7D;
+        --info: #667EEA;
+        --warning: #FFA500;
+        --danger: #EF4444;
+    }
+
+    body {
+        background: linear-gradient(135deg, var(--dark-bg) 0%, #0f0f23 100%);
+    }
+
+    .container-fluid { padding: 2rem; }
+
+    .analytics-header {
+        background: linear-gradient(135deg, #0d6efd 0%, #05122D 100%);
+        border-radius: 20px;
+        padding: 3rem 2rem;
+        margin-bottom: 3rem;
+        color: white;
+    }
+
+    .analytics-header h1 { font-size: 2.5rem; font-weight: 700; }
+
+    .analytics-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 3rem;
+    }
+
+    .metric-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        padding: 2rem;
+        transition: all 0.3s ease;
+    }
+
+    .metric-card:hover {
+        transform: translateY(-5px);
+        border-color: var(--gold-accent);
+        box-shadow: 0 15px 40px rgba(242, 200, 17, 0.15);
+    }
+
+    .metric-value { font-size: 2.5rem; font-weight: 700; color: var(--gold-accent); }
+    .metric-label { font-size: 1rem; color: #a8aac5; margin-top: 0.5rem; }
+
+    .section-title {
+        color: var(--gold-accent);
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin-bottom: 2rem;
+        margin-top: 3rem;
+    }
+
+    .table-container {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        overflow-x: auto;
+    }
+
+    table {
+        width: 100%;
+        direction: rtl;
+        border-collapse: collapse;
+    }
+
+    th {
+        background: rgba(13, 110, 253, 0.2);
+        color: var(--gold-accent);
+        padding: 1rem;
+        text-align: right;
+        font-weight: 600;
+        border-bottom: 2px solid var(--border-color);
+    }
+
+    td {
+        padding: 1rem;
+        border-bottom: 1px solid var(--border-color);
+        color: #e0e0e0;
+    }
+
+    tr:hover {
+        background: rgba(13, 110, 253, 0.1);
+    }
+
+    .badge {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+
+    .badge-success { background: rgba(56, 239, 125, 0.2); color: var(--success); }
+    .badge-warning { background: rgba(255, 165, 0, 0.2); color: var(--warning); }
+    .badge-danger { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
+    .badge-info { background: rgba(102, 126, 234, 0.2); color: var(--info); }
+
+    .chart-container {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        position: relative;
+        min-height: 350px;
+    }
+
+    .chart-title {
+        color: #e0e0e0;
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+        text-align: center;
+    }
+
+    .highlight { color: var(--gold-accent); font-weight: 700; }
+
+    @media (max-width: 768px) {
+        .table-container { overflow-x: scroll; }
+        .analytics-grid { grid-template-columns: 1fr; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="analytics-header">
+        <h1>📊 تحليلات الأقسام والوظائف</h1>
+        <p>رؤى شاملة عن توزيع الموظفين والوظائف عبر الأقسام</p>
+    </div>
+
+    <!-- Key Metrics -->
+    <div class="analytics-grid">
+        <div class="metric-card">
+            <div class="metric-value">{{ departments|length }}</div>
+            <div class="metric-label">إجمالي الأقسام</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-value">{{ total_employees }}</div>
+            <div class="metric-label">إجمالي الموظفين</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-value">{{ unique_positions }}</div>
+            <div class="metric-label">عدد الوظائف المختلفة</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-value">{{ avg_employees_per_dept|int }}</div>
+            <div class="metric-label">متوسط الموظفين بالقسم</div>
+        </div>
+    </div>
+
+    <!-- Department Analytics -->
+    <h2 class="section-title">🏢 إحصائيات الأقسام</h2>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>اسم القسم</th>
+                    <th>عدد الموظفين</th>
+                    <th>مدير القسم</th>
+                    <th>أعلى وظيفة</th>
+                    <th>النسبة المئوية</th>
+                    <th>الحالة</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for dept in departments %}
+                <tr>
+                    <td><strong>{{ dept.name }}</strong></td>
+                    <td><span class="highlight">{{ dept.employee_count }}</span></td>
+                    <td>{{ dept.manager.name if dept.manager else '—' }}</td>
+                    <td>{{ dept.top_position or '—' }}</td>
+                    <td>{{ "%.1f" | format((dept.employee_count / total_employees * 100) if total_employees > 0 else 0) }}%</td>
+                    <td>
+                        {% if dept.employee_count > 0 %}
+                            <span class="badge badge-success">نشط</span>
+                        {% else %}
+                            <span class="badge badge-warning">بدون موظفين</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Position Analytics -->
+    <h2 class="section-title">💼 تحليل الوظائف</h2>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>الوظيفة</th>
+                    <th>عدد الموظفين</th>
+                    <th>الأقسام</th>
+                    <th>النسبة المئوية</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for position in positions %}
+                <tr>
+                    <td><strong>{{ position.job_title }}</strong></td>
+                    <td><span class="highlight">{{ position.count }}</span></td>
+                    <td>{{ position.departments }}</td>
+                    <td>{{ "%.1f" | format((position.count / total_employees * 100) if total_employees > 0 else 0) }}%</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Charts -->
+    <h2 class="section-title">📈 الرسوم البيانية</h2>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 2rem;">
+        <div class="chart-container">
+            <div class="chart-title">توزيع الموظفين حسب القسم</div>
+            <canvas id="departmentChart"></canvas>
+        </div>
+        <div class="chart-container">
+            <div class="chart-title">أكثر الوظائف انتشاراً</div>
+            <canvas id="positionChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Employee Status Analytics -->
+    <h2 class="section-title">👥 حالة الموظفين</h2>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>الحالة</th>
+                    <th>عدد الموظفين</th>
+                    <th>النسبة</th>
+                    <th>المؤشر</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>نشطين</strong></td>
+                    <td><span class="highlight">{{ active_count }}</span></td>
+                    <td>{{ "%.1f" | format((active_count / total_employees * 100) if total_employees > 0 else 0) }}%</td>
+                    <td><span class="badge badge-success">✓</span></td>
+                </tr>
+                <tr>
+                    <td><strong>في الإجازة</strong></td>
+                    <td><span class="highlight">{{ on_leave_count }}</span></td>
+                    <td>{{ "%.1f" | format((on_leave_count / total_employees * 100) if total_employees > 0 else 0) }}%</td>
+                    <td><span class="badge badge-warning">⏸</span></td>
+                </tr>
+                <tr>
+                    <td><strong>غير نشطين</strong></td>
+                    <td><span class="highlight">{{ inactive_count }}</span></td>
+                    <td>{{ "%.1f" | format((inactive_count / total_employees * 100) if total_employees > 0 else 0) }}%</td>
+                    <td><span class="badge badge-danger">✗</span></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Department Chart Data
+    const deptNames = [
+        {% for dept in departments %}'{{ dept.name }}'{% if not loop.last %},{% endif %}{% endfor %}
+    ];
+    const deptCounts = [
+        {% for dept in departments %}{{ dept.employee_count }}{% if not loop.last %},{% endif %}{% endfor %}
+    ];
+
+    // Position Chart Data
+    const posNames = [
+        {% for pos in positions[:8] %}'{{ pos.job_title }}'{% if not loop.last %},{% endif %}{% endfor %}
+    ];
+    const posCounts = [
+        {% for pos in positions[:8] %}{{ pos.count }}{% if not loop.last %},{% endif %}{% endfor %}
+    ];
+
+    // Department Distribution Chart
+    new Chart(document.getElementById('departmentChart'), {
+        type: 'bar',
+        data: {
+            labels: deptNames,
+            datasets: [{
+                label: 'عدد الموظفين',
+                data: deptCounts,
+                backgroundColor: [
+                    '#38EF7D', '#667EEA', '#FFA500', '#F2C811',
+                    '#0d6efd', '#11998e', '#EF4444', '#1d4ed8'
+                ],
+                borderColor: 'rgba(242, 200, 17, 0.5)',
+                borderWidth: 2,
+                borderRadius: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: { color: '#a8aac5' }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { color: '#a8aac5' },
+                    grid: { color: 'rgba(13, 110, 253, 0.1)' }
+                },
+                x: {
+                    ticks: { color: '#a8aac5' },
+                    grid: { color: 'rgba(13, 110, 253, 0.1)' }
+                }
+            }
+        }
+    });
+
+    // Position Distribution Chart
+    new Chart(document.getElementById('positionChart'), {
+        type: 'doughnut',
+        data: {
+            labels: posNames,
+            datasets: [{
+                data: posCounts,
+                backgroundColor: [
+                    '#38EF7D', '#667EEA', '#FFA500', '#F2C811',
+                    '#0d6efd', '#11998e', '#EF4444', '#1d4ed8'
+                ],
+                borderColor: '#1E1E2E',
+                borderWidth: 3
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: { color: '#a8aac5' }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

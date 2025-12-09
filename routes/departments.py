@@ -74,36 +74,51 @@ departments_bp = Blueprint('departments', __name__)
 @require_module_access(Module.DEPARTMENTS, Permission.VIEW)
 def index():
     """
-    يعرض قائمة بكل الأقسام مع عدد الموظفين المحسوب بشكل صحيح وفعال.
+    يعرض لوحة تحكم شاملة لجميع الأقسام مع إحصائيات كاملة من قاعدة البيانات
     """
     try:
-        # 1. الاستعلام المباشر والمبسط
-        # سيقوم بجلب كل قسم، وبجانبه عدد الموظفين المرتبطين به.
+        # 1. جلب الأقسام مع عدد الموظفين
         departments_with_counts = db.session.query(
             Department, 
             func.count(employee_departments.c.employee_id).label('employee_count')
         ).outerjoin(
-            employee_departments, # اربط جدول الأقسام مع جدول الربط
+            employee_departments,
             Department.id == employee_departments.c.department_id
         ).group_by(
-            Department.id # قم بالتجميع حسب معرف القسم
+            Department.id
         ).order_by(
             Department.name
         ).all()
 
-        # 2. تجهيز البيانات للعرض في القالب
+        # 2. تجهيز بيانات الأقسام
         departments_list = []
+        total_employees = 0
         for department, count in departments_with_counts:
-            # نضيف خاصية جديدة مؤقتة لكائن القسم في الذاكرة
-            department.employee_count = count
+            department.employee_count = count or 0
             departments_list.append(department)
+            total_employees += (count or 0)
+
+        # 3. حساب الموظفين حسب الحالة
+        all_employees = Employee.query.all()
+        active_employees = sum(1 for e in all_employees if e.status == 'active')
+        on_leave_employees = sum(1 for e in all_employees if e.status == 'on_leave')
+        inactive_employees = sum(1 for e in all_employees if e.status == 'inactive')
             
     except Exception as e:
         flash('حدث خطأ أثناء جلب بيانات الأقسام.', 'danger')
         print(f"Error fetching departments list: {e}")
         departments_list = []
+        total_employees = 0
+        active_employees = 0
+        on_leave_employees = 0
+        inactive_employees = 0
 
-    return render_template('departments/index.html', departments=departments_list)
+    return render_template('departments/dashboard.html', 
+                         departments=departments_list,
+                         total_employees=total_employees,
+                         active_employees=active_employees,
+                         on_leave_employees=on_leave_employees,
+                         inactive_employees=inactive_employees)
 
 
 
@@ -366,6 +381,100 @@ def delete_confirm(id):
     
     return redirect(url_for('departments.index'))
 
+
+@departments_bp.route('/analytics')
+@login_required
+@require_module_access(Module.DEPARTMENTS, Permission.VIEW)
+def analytics():
+    """
+    صفحة تحليلات شاملة للأقسام والوظائف
+    """
+    try:
+        # Get departments with employee counts
+        departments_with_counts = db.session.query(
+            Department,
+            func.count(employee_departments.c.employee_id).label('employee_count')
+        ).outerjoin(
+            employee_departments,
+            Department.id == employee_departments.c.department_id
+        ).group_by(
+            Department.id
+        ).order_by(
+            func.count(employee_departments.c.employee_id).desc()
+        ).all()
+
+        # Prepare departments list
+        departments_list = []
+        total_employees = 0
+        for department, count in departments_with_counts:
+            department.employee_count = count or 0
+            
+            # Get top position in this department
+            top_position = db.session.query(
+                Employee.job_title,
+                func.count(Employee.id).label('cnt')
+            ).filter(
+                Employee.id.in_(db.session.query(employee_departments.c.employee_id).filter(
+                    employee_departments.c.department_id == department.id
+                ))
+            ).group_by(Employee.job_title).order_by(
+                func.count(Employee.id).desc()
+            ).first()
+            
+            department.top_position = top_position[0] if top_position else None
+            departments_list.append(department)
+            total_employees += (count or 0)
+
+        # Get position statistics
+        positions = db.session.query(
+            Employee.job_title,
+            func.count(Employee.id).label('count')
+        ).filter(Employee.job_title.isnot(None)).group_by(
+            Employee.job_title
+        ).order_by(
+            func.count(Employee.id).desc()
+        ).all()
+
+        # Get positions with departments
+        positions_list = []
+        for job_title, count in positions:
+            # Get unique departments for this position
+            depts = db.session.query(Department.name).join(
+                employee_departments, Department.id == employee_departments.c.department_id
+            ).join(
+                Employee, employee_departments.c.employee_id == Employee.id
+            ).filter(Employee.job_title == job_title).distinct().all()
+            
+            dept_names = ', '.join([d[0] for d in depts])
+            positions_list.append({
+                'job_title': job_title,
+                'count': count,
+                'departments': dept_names
+            })
+
+        # Get employee status counts
+        all_employees = Employee.query.all()
+        active_count = sum(1 for e in all_employees if e.status == 'active')
+        on_leave_count = sum(1 for e in all_employees if e.status == 'on_leave')
+        inactive_count = sum(1 for e in all_employees if e.status == 'inactive')
+
+        unique_positions = len(positions_list)
+        avg_employees = round(total_employees / len(departments_list), 1) if departments_list else 0
+
+        return render_template('departments/analytics.html',
+                             departments=departments_list,
+                             positions=positions_list,
+                             total_employees=total_employees,
+                             unique_positions=unique_positions,
+                             avg_employees_per_dept=avg_employees,
+                             active_count=active_count,
+                             on_leave_count=on_leave_count,
+                             inactive_count=inactive_count)
+
+    except Exception as e:
+        flash('حدث خطأ في تحميل التحليلات', 'danger')
+        print(f"Error loading analytics: {e}")
+        return redirect(url_for('departments.index'))
 
 @departments_bp.route('/<int:id>/export_employees')
 @login_required

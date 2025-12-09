@@ -1,0 +1,611 @@
+{% extends 'layout.html' %}
+
+{% block title %}لوحة الأقسام والعمل - نُظم{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --primary-color: #0d6efd;
+        --success-color: #38EF7D;
+        --warning-color: #FFA500;
+        --danger-color: #EF4444;
+        --info-color: #667EEA;
+        --dark-bg: #1E1E2E;
+        --card-bg: #2d2d44;
+        --border-color: #3d3d5c;
+        --gold-accent: #F2C811;
+    }
+
+    body {
+        background: linear-gradient(135deg, var(--dark-bg) 0%, #0f0f23 100%);
+        direction: rtl;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .page-container {
+        padding: 2rem;
+    }
+
+    /* Header Section */
+    .header-section {
+        background: linear-gradient(135deg, #0d6efd 0%, #05122D 100%);
+        border-radius: 20px;
+        padding: 3rem 2rem;
+        margin-bottom: 3rem;
+        color: white;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 10px 40px rgba(13, 110, 253, 0.2);
+    }
+
+    .header-section::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+        border-radius: 50%;
+    }
+
+    .header-content {
+        position: relative;
+        z-index: 1;
+    }
+
+    .header-content h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+
+    .header-content p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        margin-bottom: 0;
+    }
+
+    /* Stats Cards */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 3rem;
+    }
+
+    .stat-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        padding: 2rem;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+        border-color: var(--primary-color);
+        box-shadow: 0 15px 40px rgba(13, 110, 253, 0.2);
+    }
+
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 100px;
+        height: 100px;
+        background: radial-gradient(circle, rgba(13, 110, 253, 0.1) 0%, transparent 70%);
+        border-radius: 50%;
+    }
+
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--gold-accent);
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-label {
+        font-size: 1rem;
+        color: #a8aac5;
+        margin-bottom: 1rem;
+    }
+
+    .stat-icon {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+    }
+
+    /* Department Cards */
+    .departments-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 2rem;
+        margin-bottom: 3rem;
+    }
+
+    .department-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .department-card:hover {
+        transform: translateY(-8px);
+        border-color: var(--gold-accent);
+        box-shadow: 0 20px 50px rgba(242, 200, 17, 0.15);
+    }
+
+    .dept-header {
+        background: linear-gradient(135deg, #0d6efd 0%, #1d4ed8 100%);
+        padding: 2rem;
+        color: white;
+        position: relative;
+        min-height: 100px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    .dept-header h3 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin: 0;
+        word-break: break-word;
+    }
+
+    .dept-header .dept-code {
+        font-size: 0.85rem;
+        opacity: 0.8;
+        margin-top: 0.5rem;
+    }
+
+    .dept-body {
+        padding: 2rem;
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .dept-stat {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        gap: 1rem;
+    }
+
+    .dept-stat-icon {
+        font-size: 1.8rem;
+        min-width: 40px;
+        text-align: center;
+    }
+
+    .dept-stat-content {
+        flex-grow: 1;
+    }
+
+    .dept-stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--gold-accent);
+    }
+
+    .dept-stat-label {
+        font-size: 0.9rem;
+        color: #a8aac5;
+    }
+
+    .dept-footer {
+        padding: 0 2rem 2rem;
+        border-top: 1px solid var(--border-color);
+        margin-top: auto;
+        padding-top: 1.5rem;
+    }
+
+    .dept-actions {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .btn-action {
+        flex: 1;
+        min-width: 100px;
+        padding: 0.6rem 1rem;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        font-size: 0.9rem;
+    }
+
+    .btn-view {
+        background: linear-gradient(135deg, var(--info-color) 0%, #0d6efd 100%);
+        color: white;
+    }
+
+    .btn-view:hover {
+        transform: scale(1.05);
+        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        color: white;
+        text-decoration: none;
+    }
+
+    .btn-edit {
+        background: linear-gradient(135deg, var(--warning-color) 0%, #ff9500 100%);
+        color: white;
+    }
+
+    .btn-edit:hover {
+        transform: scale(1.05);
+        box-shadow: 0 8px 20px rgba(255, 165, 0, 0.4);
+        color: white;
+        text-decoration: none;
+    }
+
+    /* Manager Badge */
+    .manager-badge {
+        display: inline-block;
+        background: linear-gradient(135deg, var(--success-color) 0%, #11998e 100%);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        margin-top: 0.5rem;
+        font-weight: 600;
+    }
+
+    /* Charts Section */
+    .charts-section {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 3rem;
+    }
+
+    .charts-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        gap: 2rem;
+        margin-top: 2rem;
+    }
+
+    .chart-container {
+        position: relative;
+        min-height: 300px;
+        background: rgba(13, 110, 253, 0.05);
+        border-radius: 12px;
+        padding: 1.5rem;
+    }
+
+    /* Search and Filter */
+    .filter-section {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .search-input {
+        background: rgba(13, 110, 253, 0.1);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        color: white;
+        font-size: 1rem;
+    }
+
+    .search-input::placeholder {
+        color: #a8aac5;
+    }
+
+    .search-input:focus {
+        outline: none;
+        border-color: var(--gold-accent);
+        background: rgba(13, 110, 253, 0.15);
+        box-shadow: 0 0 10px rgba(242, 200, 17, 0.2);
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: #a8aac5;
+    }
+
+    .empty-state-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .header-section {
+            padding: 2rem 1rem;
+        }
+
+        .header-section h1 {
+            font-size: 2rem;
+        }
+
+        .departments-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .charts-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* Animations */
+    @keyframes slideInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .department-card {
+        animation: slideInUp 0.6s ease-out;
+    }
+
+    .stat-card {
+        animation: slideInUp 0.6s ease-out;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <!-- Header -->
+    <div class="header-section">
+        <div class="header-content">
+            <h1>🏢 الأقسام والعمل</h1>
+            <p>إدارة شاملة لجميع أقسام الشركة والموظفين</p>
+        </div>
+    </div>
+
+    <!-- Statistics -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon">📊</div>
+            <div class="stat-value" id="totalDepts">{{ departments|length }}</div>
+            <div class="stat-label">إجمالي الأقسام</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon">👥</div>
+            <div class="stat-value" id="totalEmps">{{ total_employees }}</div>
+            <div class="stat-label">إجمالي الموظفين</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon">👨‍💼</div>
+            <div class="stat-value" id="avgEmps">{{ (total_employees / (departments|length) if departments|length > 0 else 0)|int }}</div>
+            <div class="stat-label">متوسط الموظفين لكل قسم</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon">✅</div>
+            <div class="stat-value" id="activeEmps">{{ active_employees }}</div>
+            <div class="stat-label">موظفين نشطين</div>
+        </div>
+    </div>
+
+    <!-- Department Cards -->
+    <div class="departments-grid">
+        {% for department in departments %}
+        <div class="department-card">
+            <div class="dept-header">
+                <h3>{{ department.name }}</h3>
+                <div class="dept-code">القسم #{{ department.id }}</div>
+            </div>
+
+            <div class="dept-body">
+                <!-- Employees Count -->
+                <div class="dept-stat">
+                    <div class="dept-stat-icon">👥</div>
+                    <div class="dept-stat-content">
+                        <div class="dept-stat-value">{{ department.employee_count or 0 }}</div>
+                        <div class="dept-stat-label">عدد الموظفين</div>
+                    </div>
+                </div>
+
+                <!-- Manager -->
+                {% if department.manager %}
+                <div class="dept-stat">
+                    <div class="dept-stat-icon">👨‍💼</div>
+                    <div class="dept-stat-content">
+                        <div class="dept-stat-value" style="font-size: 1.1rem;">{{ department.manager.name }}</div>
+                        <div class="dept-stat-label">مدير القسم</div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="dept-stat">
+                    <div class="dept-stat-icon">❌</div>
+                    <div class="dept-stat-content">
+                        <div class="dept-stat-label">لا يوجد مدير معين</div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Description -->
+                {% if department.description %}
+                <div class="dept-stat">
+                    <div class="dept-stat-icon">📝</div>
+                    <div class="dept-stat-content">
+                        <div class="dept-stat-value" style="font-size: 0.95rem;">{{ department.description }}</div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="dept-footer">
+                <div class="dept-actions">
+                    <a href="{{ url_for('departments.view', id=department.id) }}" class="btn-action btn-view">
+                        👁️ عرض التفاصيل
+                    </a>
+                    <a href="{{ url_for('departments.edit', id=department.id) }}" class="btn-action btn-edit">
+                        ✏️ تعديل
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Empty State -->
+    {% if not departments %}
+    <div class="empty-state">
+        <div class="empty-state-icon">📭</div>
+        <h3>لا توجد أقسام</h3>
+        <p>ابدأ بإنشاء قسم جديد لإدارة أقسام الشركة</p>
+        <a href="{{ url_for('departments.create') }}" class="btn btn-primary mt-3">
+            ➕ إنشاء قسم جديد
+        </a>
+    </div>
+    {% endif %}
+
+    <!-- Charts Section -->
+    {% if departments %}
+    <div class="charts-section">
+        <h2 style="margin-bottom: 1.5rem; color: var(--gold-accent);">📈 تحليلات الأقسام</h2>
+        <div class="charts-grid">
+            <!-- Department Distribution Chart -->
+            <div class="chart-container">
+                <h4 style="text-align: center; margin-bottom: 1.5rem; color: #e0e0e0;">توزيع الموظفين حسب القسم</h4>
+                <canvas id="departmentChart"></canvas>
+            </div>
+
+            <!-- Department Status Chart -->
+            <div class="chart-container">
+                <h4 style="text-align: center; margin-bottom: 1.5rem; color: #e0e0e0;">حالات الموظفين</h4>
+                <canvas id="statusChart"></canvas>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Prepare chart data
+    const departmentNames = [
+        {% for dept in departments %}'{{ dept.name }}'{% if not loop.last %},{% endif %}{% endfor %}
+    ];
+    
+    const employeeCounts = [
+        {% for dept in departments %}{{ dept.employee_count or 0 }}{% if not loop.last %},{% endif %}{% endfor %}
+    ];
+
+    // Initialize Department Distribution Chart
+    if (departmentNames.length > 0) {
+        const ctx1 = document.getElementById('departmentChart');
+        if (ctx1) {
+            new Chart(ctx1, {
+                type: 'bar',
+                data: {
+                    labels: departmentNames,
+                    datasets: [{
+                        label: 'عدد الموظفين',
+                        data: employeeCounts,
+                        backgroundColor: [
+                            '#38EF7D',
+                            '#667EEA',
+                            '#FFA500',
+                            '#F2C811',
+                            '#0d6efd',
+                            '#11998e',
+                            '#EF4444',
+                            '#1d4ed8'
+                        ],
+                        borderColor: 'rgba(242, 200, 17, 0.5)',
+                        borderWidth: 2,
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            labels: {
+                                color: '#a8aac5',
+                                font: { size: 12 }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { color: '#a8aac5' },
+                            grid: { color: 'rgba(13, 110, 253, 0.1)' }
+                        },
+                        x: {
+                            ticks: { color: '#a8aac5' },
+                            grid: { color: 'rgba(13, 110, 253, 0.1)' }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Initialize Status Distribution Chart
+        const ctx2 = document.getElementById('statusChart');
+        if (ctx2) {
+            new Chart(ctx2, {
+                type: 'doughnut',
+                data: {
+                    labels: ['نشطين', 'في الإجازة', 'غير نشطين'],
+                    datasets: [{
+                        data: [{{ active_employees }}, {{ on_leave_employees }}, {{ inactive_employees }}],
+                        backgroundColor: [
+                            '#38EF7D',
+                            '#FFA500',
+                            '#EF4444'
+                        ],
+                        borderColor: '#1E1E2E',
+                        borderWidth: 3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            labels: {
+                                color: '#a8aac5',
+                                font: { size: 12 },
+                                padding: 20
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    }
+</script>
+{% endblock %}
