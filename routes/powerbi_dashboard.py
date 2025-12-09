@@ -127,13 +127,19 @@ def dashboard():
         ).all()
         
         present = sum(1 for a in dept_records if a.status == 'present')
+        absent = sum(1 for a in dept_records if a.status in ['absent', 'غائب'])
         total = len(dept_records)
         rate = round((present / total) * 100, 1) if total > 0 else 0
+        
+        # حساب عدد أيام الحضور الفريدة
+        present_days = len(set(a.date for a in dept_records if a.status == 'present'))
         
         dept_attendance.append({
             'name': dept.name,
             'employee_count': len(emp_ids_with_attendance),
             'present': present,
+            'absent': absent,
+            'present_days': present_days,
             'total': total,
             'rate': rate
         })

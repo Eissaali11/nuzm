@@ -892,8 +892,10 @@
                 <tr>
                     <th><i class="fas fa-building"></i> القسم</th>
                     <th><i class="fas fa-users"></i> الموظفين</th>
-                    <th><i class="fas fa-check"></i> الحضور</th>
-                    <th><i class="fas fa-list"></i> السجلات</th>
+                    <th><i class="fas fa-calendar-check"></i> أيام الحضور</th>
+                    <th><i class="fas fa-check"></i> سجلات الحضور</th>
+                    <th><i class="fas fa-times"></i> الغياب</th>
+                    <th><i class="fas fa-list"></i> الإجمالي</th>
                     <th><i class="fas fa-percentage"></i> النسبة</th>
                     <th><i class="fas fa-star"></i> الأداء</th>
                 </tr>
@@ -903,7 +905,9 @@
                 <tr>
                     <td><strong>{{ dept.name }}</strong></td>
                     <td>{{ dept.employee_count }}</td>
+                    <td style="color: var(--purple);">{{ dept.present_days }}</td>
                     <td style="color: var(--green);">{{ dept.present }}</td>
+                    <td style="color: var(--red);">{{ dept.absent }}</td>
                     <td>{{ dept.total }}</td>
                     <td>
                         <div class="progress-bar-mini">
@@ -928,7 +932,9 @@
                 <tr class="total-row">
                     <td><strong><i class="fas fa-calculator"></i> الإجمالي</strong></td>
                     <td><strong>{{ dept_attendance|sum(attribute='employee_count') }}</strong></td>
+                    <td style="color: var(--purple);"><strong>{{ dept_attendance|sum(attribute='present_days') }}</strong></td>
                     <td style="color: var(--green);"><strong>{{ dept_attendance|sum(attribute='present') }}</strong></td>
+                    <td style="color: var(--red);"><strong>{{ dept_attendance|sum(attribute='absent') }}</strong></td>
                     <td><strong>{{ dept_attendance|sum(attribute='total') }}</strong></td>
                     <td>
                         {% set total_present = dept_attendance|sum(attribute='present') %}
@@ -950,7 +956,7 @@
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="6">
+                    <td colspan="8">
                         <div class="empty-state">
                             <i class="fas fa-inbox"></i>
                             <p>لا توجد بيانات حضور للأقسام في الفترة المحددة</p>
