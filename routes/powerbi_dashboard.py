@@ -25,7 +25,6 @@ def dashboard():
     
     # البيانات الأساسية
     departments = Department.query.all()
-    total_employees = Employee.query.count()
     total_vehicles = Vehicle.query.count()
     total_documents = Document.query.count()
     
@@ -50,9 +49,28 @@ def dashboard():
     else:
         date_to = datetime.now().date()
     
-    attendance_records = Attendance.query.filter(
+    # جلب الموظفين النشطين فقط الذين لهم حضور في الفترة المحددة
+    active_employee_ids_with_attendance = db.session.query(Attendance.employee_id).filter(
         Attendance.date >= date_from,
         Attendance.date <= date_to
+    ).distinct().all()
+    active_employee_ids_with_attendance = [e[0] for e in active_employee_ids_with_attendance]
+    
+    # عدد الموظفين النشطين الذين لهم حضور
+    active_employees_count = Employee.query.filter(
+        Employee.status == 'active',
+        Employee.id.in_(active_employee_ids_with_attendance)
+    ).count()
+    
+    total_employees = active_employees_count
+    
+    # سجلات الحضور للموظفين النشطين فقط
+    active_emp_ids = [e.id for e in Employee.query.filter(Employee.status == 'active').all()]
+    
+    attendance_records = Attendance.query.filter(
+        Attendance.date >= date_from,
+        Attendance.date <= date_to,
+        Attendance.employee_id.in_(active_emp_ids)
     ).all()
     
     attendance_stats = {
@@ -71,23 +89,37 @@ def dashboard():
         status = v.status or 'unknown'
         vehicle_stats[status] = vehicle_stats.get(status, 0) + 1
     
-    # الحضور حسب القسم
+    # الحضور حسب القسم - الموظفين النشطين فقط الذين لهم حضور
     dept_attendance = []
     for dept in departments:
-        # جلب موظفي القسم
+        # جلب موظفي القسم النشطين فقط
         emp_ids = db.session.query(Employee.id).join(
             Employee.departments
-        ).filter(Department.id == dept.id).all()
+        ).filter(
+            Department.id == dept.id,
+            Employee.status == 'active'
+        ).all()
         emp_ids = [e[0] for e in emp_ids]
         
         if not emp_ids:
+            continue
+        
+        # الموظفين الذين لهم حضور فعلي في الفترة
+        emp_ids_with_attendance = db.session.query(Attendance.employee_id).filter(
+            Attendance.date >= date_from,
+            Attendance.date <= date_to,
+            Attendance.employee_id.in_(emp_ids)
+        ).distinct().all()
+        emp_ids_with_attendance = [e[0] for e in emp_ids_with_attendance]
+        
+        if not emp_ids_with_attendance:
             continue
             
         # حساب الحضور
         dept_records = Attendance.query.filter(
             Attendance.date >= date_from,
             Attendance.date <= date_to,
-            Attendance.employee_id.in_(emp_ids)
+            Attendance.employee_id.in_(emp_ids_with_attendance)
         ).all()
         
         present = sum(1 for a in dept_records if a.status == 'present')
@@ -96,7 +128,7 @@ def dashboard():
         
         dept_attendance.append({
             'name': dept.name,
-            'employee_count': len(emp_ids),
+            'employee_count': len(emp_ids_with_attendance),
             'present': present,
             'total': total,
             'rate': rate
