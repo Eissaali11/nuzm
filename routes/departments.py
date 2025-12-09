@@ -74,51 +74,27 @@ departments_bp = Blueprint('departments', __name__)
 @require_module_access(Module.DEPARTMENTS, Permission.VIEW)
 def index():
     """
-    يعرض لوحة تحكم شاملة لجميع الأقسام مع إحصائيات كاملة من قاعدة البيانات
+    يعرض قائمة بكل الأقسام مع عدد الموظفين المحسوب بشكل صحيح وفعال.
     """
     try:
-        # 1. جلب الأقسام مع عدد الموظفين
-        departments_with_counts = db.session.query(
-            Department, 
-            func.count(employee_departments.c.employee_id).label('employee_count')
-        ).outerjoin(
-            employee_departments,
-            Department.id == employee_departments.c.department_id
-        ).group_by(
-            Department.id
-        ).order_by(
-            Department.name
-        ).all()
-
-        # 2. تجهيز بيانات الأقسام
-        departments_list = []
-        total_employees = 0
-        for department, count in departments_with_counts:
-            department.employee_count = count or 0
-            departments_list.append(department)
-            total_employees += (count or 0)
-
-        # 3. حساب الموظفين حسب الحالة
-        all_employees = Employee.query.all()
-        active_employees = sum(1 for e in all_employees if e.status == 'active')
-        on_leave_employees = sum(1 for e in all_employees if e.status == 'on_leave')
-        inactive_employees = sum(1 for e in all_employees if e.status == 'inactive')
+        # جلب جميع الأقسام مع معلومات المدير
+        departments = Department.query.options(
+            db.joinedload(Department.manager)
+        ).order_by(Department.name).all()
+        
+        # حساب عدد الموظفين لكل قسم
+        for department in departments:
+            count = db.session.query(func.count(employee_departments.c.employee_id)).filter(
+                employee_departments.c.department_id == department.id
+            ).scalar() or 0
+            department.employee_count = count
             
     except Exception as e:
         flash('حدث خطأ أثناء جلب بيانات الأقسام.', 'danger')
         print(f"Error fetching departments list: {e}")
-        departments_list = []
-        total_employees = 0
-        active_employees = 0
-        on_leave_employees = 0
-        inactive_employees = 0
+        departments = []
 
-    return render_template('departments/dashboard.html', 
-                         departments=departments_list,
-                         total_employees=total_employees,
-                         active_employees=active_employees,
-                         on_leave_employees=on_leave_employees,
-                         inactive_employees=inactive_employees)
+    return render_template('departments/index.html', departments=departments)
 
 
 

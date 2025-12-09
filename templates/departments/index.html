@@ -474,16 +474,18 @@
     <!-- Enhanced Search Card -->
     <div class="card search-card">
         <div class="card-body">
-            <div class="search-input-group input-group">
-                <span class="input-group-text">
-                    <i class="fas fa-search"></i>
-                </span>
-                <input type="text" id="departmentSearchInput" class="form-control" 
-                       placeholder="ابحث باسم القسم..." autofocus>
-                <button class="btn" type="button" id="clearSearchBtn" title="مسح البحث">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
+            <form onsubmit="return false;">
+                <div class="search-input-group input-group">
+                    <span class="input-group-text">
+                        <i class="fas fa-search"></i>
+                    </span>
+                    <input type="text" id="departmentSearchInput" class="form-control" 
+                           placeholder="ابحث باسم القسم..." autofocus autocomplete="off">
+                    <button class="btn" type="button" id="clearSearchBtn" title="مسح البحث">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 
