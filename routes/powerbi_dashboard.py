@@ -632,42 +632,58 @@ def export_data():
     try:
         wb = Workbook()
         
-        # ألوان التصميم الجديد - cyan/teal theme
-        dark_bg = PatternFill(start_color="0D1117", end_color="0D1117", fill_type="solid")
-        card_fill = PatternFill(start_color="161B22", end_color="161B22", fill_type="solid")
-        header_fill = PatternFill(start_color="1F2937", end_color="1F2937", fill_type="solid")
+        # ألوان التصميم المميز - Professional Dark Theme
+        dark_bg = PatternFill(start_color="0A0E17", end_color="0A0E17", fill_type="solid")
+        card_fill = PatternFill(start_color="131B2E", end_color="131B2E", fill_type="solid")
+        card_fill_alt = PatternFill(start_color="1A2540", end_color="1A2540", fill_type="solid")
+        header_fill = PatternFill(start_color="0D1321", end_color="0D1321", fill_type="solid")
+        title_bg = PatternFill(start_color="00D4AA", end_color="00D4AA", fill_type="solid")
         
-        # ألوان cyan/teal
-        cyan_fill = PatternFill(start_color="00D4AA", end_color="00D4AA", fill_type="solid")
-        teal_fill = PatternFill(start_color="0ABAB5", end_color="0ABAB5", fill_type="solid")
+        # ألوان cyan/teal gradient effect
+        cyan_fill = PatternFill(start_color="00D4FF", end_color="00D4FF", fill_type="solid")
+        teal_fill = PatternFill(start_color="00F5D4", end_color="00F5D4", fill_type="solid")
+        cyan_dark = PatternFill(start_color="0891B2", end_color="0891B2", fill_type="solid")
         
-        # ألوان الحالات
-        green_fill = PatternFill(start_color="10B981", end_color="10B981", fill_type="solid")
-        red_fill = PatternFill(start_color="EF4444", end_color="EF4444", fill_type="solid")
-        orange_fill = PatternFill(start_color="F59E0B", end_color="F59E0B", fill_type="solid")
+        # ألوان الحالات - Professional
+        green_fill = PatternFill(start_color="00FF88", end_color="00FF88", fill_type="solid")
+        green_dark = PatternFill(start_color="10B981", end_color="10B981", fill_type="solid")
+        red_fill = PatternFill(start_color="FF4757", end_color="FF4757", fill_type="solid")
+        orange_fill = PatternFill(start_color="FFD700", end_color="FFD700", fill_type="solid")
         blue_fill = PatternFill(start_color="3B82F6", end_color="3B82F6", fill_type="solid")
-        purple_fill = PatternFill(start_color="8B5CF6", end_color="8B5CF6", fill_type="solid")
+        purple_fill = PatternFill(start_color="7B68EE", end_color="7B68EE", fill_type="solid")
         
-        # خطوط
-        cyan_font = Font(bold=True, color="00D4AA", size=12)
-        white_font = Font(bold=True, color="FFFFFF", size=11)
-        title_font = Font(bold=True, color="00D4AA", size=24)
-        subtitle_font = Font(color="9CA3AF", size=10)
-        kpi_value_font = Font(bold=True, color="00D4AA", size=28)
-        kpi_label_font = Font(color="9CA3AF", size=10)
+        # خطوط احترافية
+        title_font = Font(bold=True, color="00D4FF", size=28, name='Arial')
+        subtitle_font = Font(color="8892A0", size=11, name='Arial')
+        section_font = Font(bold=True, color="00D4FF", size=16, name='Arial')
+        cyan_font = Font(bold=True, color="00D4FF", size=13, name='Arial')
+        white_font = Font(bold=True, color="FFFFFF", size=12, name='Arial')
+        dark_font = Font(bold=True, color="0A0E17", size=12, name='Arial')
+        kpi_value_font = Font(bold=True, color="00D4FF", size=32, name='Arial')
+        kpi_label_font = Font(bold=True, color="8892A0", size=11, name='Arial')
+        data_font = Font(color="E8EAED", size=11, name='Arial')
         
-        # حدود
+        # حدود احترافية
         cyan_border = Border(
-            left=Side(style='medium', color='00D4AA'),
-            right=Side(style='medium', color='00D4AA'),
-            top=Side(style='medium', color='00D4AA'),
-            bottom=Side(style='medium', color='00D4AA')
+            left=Side(style='medium', color='00D4FF'),
+            right=Side(style='medium', color='00D4FF'),
+            top=Side(style='medium', color='00D4FF'),
+            bottom=Side(style='medium', color='00D4FF')
+        )
+        cyan_border_thin = Border(
+            left=Side(style='thin', color='00D4FF'),
+            right=Side(style='thin', color='00D4FF'),
+            top=Side(style='thin', color='00D4FF'),
+            bottom=Side(style='thin', color='00D4FF')
         )
         thin_border = Border(
-            left=Side(style='thin', color='374151'),
-            right=Side(style='thin', color='374151'),
-            top=Side(style='thin', color='374151'),
-            bottom=Side(style='thin', color='374151')
+            left=Side(style='thin', color='2D3748'),
+            right=Side(style='thin', color='2D3748'),
+            top=Side(style='thin', color='2D3748'),
+            bottom=Side(style='thin', color='2D3748')
+        )
+        accent_border = Border(
+            bottom=Side(style='medium', color='00D4FF')
         )
         
         # معالجة التواريخ
@@ -717,205 +733,246 @@ def export_data():
         ws.title = "Power BI Dashboard"
         ws.sheet_view.rightToLeft = True
         
-        for row in range(1, 60):
-            for col in range(1, 20):
+        # تعبئة الخلفية الداكنة لكل الصفحة
+        for row in range(1, 70):
+            for col in range(1, 22):
                 ws.cell(row=row, column=col).fill = dark_bg
         
-        for col in range(1, 20):
-            ws.column_dimensions[get_column_letter(col)].width = 14
+        # عرض الأعمدة المتناسق
+        column_widths = [18, 16, 14, 14, 16, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14]
+        for i, width in enumerate(column_widths, 1):
+            ws.column_dimensions[get_column_letter(i)].width = width
         
-        ws.merge_cells('A1:S1')
-        ws['A1'] = "نُـظـم | لوحة التحليلات الاحترافية"
+        # === الترويسة الرئيسية ===
+        ws.merge_cells('A1:U1')
+        ws['A1'] = "لوحة التحليلات الاحترافية | Power BI Dashboard"
         ws['A1'].font = title_font
-        ws['A1'].fill = dark_bg
+        ws['A1'].fill = header_fill
         ws['A1'].alignment = Alignment(horizontal='center', vertical='center')
-        ws.row_dimensions[1].height = 50
+        ws['A1'].border = accent_border
+        ws.row_dimensions[1].height = 55
         
-        ws.merge_cells('A2:S2')
-        ws['A2'] = f"تاريخ التقرير: {datetime.now().strftime('%Y-%m-%d %H:%M')} | الفترة: {d_from} إلى {d_to}"
-        ws['A2'].font = subtitle_font
-        ws['A2'].fill = dark_bg
-        ws['A2'].alignment = Alignment(horizontal='center', vertical='center')
+        # خط فاصل cyan
+        for col in range(1, 22):
+            ws.cell(row=2, column=col).fill = cyan_fill
+            ws.cell(row=2, column=col).border = Border()
+        ws.row_dimensions[2].height = 4
         
-        ws.merge_cells('A3:S3')
-        ws['A3'] = f"الموظفين النشطين في الفترة المحددة | Active Employees in Selected Period"
-        ws['A3'].font = Font(color="9CA3AF", size=9)
-        ws['A3'].fill = dark_bg
+        # معلومات التقرير
+        ws.merge_cells('A3:U3')
+        ws['A3'] = f"تاريخ التقرير: {datetime.now().strftime('%Y-%m-%d %H:%M')}   |   الفترة: {d_from} إلى {d_to}   |   نُـظـم - نظام إدارة الموظفين"
+        ws['A3'].font = subtitle_font
+        ws['A3'].fill = card_fill
         ws['A3'].alignment = Alignment(horizontal='center', vertical='center')
+        ws.row_dimensions[3].height = 30
         
+        # وصف البيانات
+        ws.merge_cells('A4:U4')
+        ws['A4'] = "البيانات تعكس الموظفين النشطين فقط الذين لديهم سجلات حضور في الفترة المحددة"
+        ws['A4'].font = Font(color="00F5D4", size=10, italic=True, name='Arial')
+        ws['A4'].fill = dark_bg
+        ws['A4'].alignment = Alignment(horizontal='center', vertical='center')
+        ws.row_dimensions[4].height = 22
+        
+        # === بطاقات KPI ===
         kpi_data = [
-            ("الموظفين النشطين", total_employees, "👥", "A"),
-            ("السيارات", total_vehicles, "🚗", "E"),
-            ("في المشاريع", in_project_vehicles, "✅", "I"),
-            ("الأقسام", total_departments, "🏢", "M"),
+            ("الموظفين النشطين", total_employees, "👥", "A", cyan_fill),
+            ("إجمالي السيارات", total_vehicles, "🚗", "E", teal_fill),
+            ("في المشاريع", in_project_vehicles, "✅", "I", green_fill),
+            ("الأقسام", total_departments, "🏢", "M", purple_fill),
+            ("الوثائق", total_documents, "📄", "Q", orange_fill),
         ]
         
-        for label, value, icon, start_col in kpi_data:
+        ws.row_dimensions[5].height = 8
+        ws.row_dimensions[6].height = 30
+        ws.row_dimensions[7].height = 45
+        ws.row_dimensions[8].height = 8
+        
+        for label, value, icon, start_col, accent_fill in kpi_data:
             col_idx = ord(start_col) - ord('A') + 1
-            end_col = get_column_letter(col_idx + 2)
+            end_col = get_column_letter(col_idx + 3)
             
-            ws.merge_cells(f'{start_col}5:{end_col}5')
-            ws[f'{start_col}5'] = f"{icon} {label}"
-            ws[f'{start_col}5'].font = kpi_label_font
-            ws[f'{start_col}5'].fill = card_fill
-            ws[f'{start_col}5'].alignment = Alignment(horizontal='center', vertical='center')
-            ws[f'{start_col}5'].border = cyan_border
+            # خط علوي ملون
+            for c in range(col_idx, col_idx + 4):
+                ws.cell(row=5, column=c).fill = accent_fill
             
+            # التسمية
             ws.merge_cells(f'{start_col}6:{end_col}6')
-            ws[f'{start_col}6'] = value
-            ws[f'{start_col}6'].font = kpi_value_font
+            ws[f'{start_col}6'] = f"{icon}  {label}"
+            ws[f'{start_col}6'].font = kpi_label_font
             ws[f'{start_col}6'].fill = card_fill
             ws[f'{start_col}6'].alignment = Alignment(horizontal='center', vertical='center')
-            ws[f'{start_col}6'].border = cyan_border
+            ws[f'{start_col}6'].border = cyan_border_thin
             
-            ws.row_dimensions[5].height = 25
-            ws.row_dimensions[6].height = 40
+            # القيمة
+            ws.merge_cells(f'{start_col}7:{end_col}7')
+            ws[f'{start_col}7'] = value
+            ws[f'{start_col}7'].font = kpi_value_font
+            ws[f'{start_col}7'].fill = card_fill
+            ws[f'{start_col}7'].alignment = Alignment(horizontal='center', vertical='center')
+            ws[f'{start_col}7'].border = cyan_border_thin
+            
+            # خط سفلي
+            for c in range(col_idx, col_idx + 4):
+                ws.cell(row=8, column=c).fill = card_fill_alt
         
-        ws.merge_cells('A8:H8')
-        ws['A8'] = "📊 توزيع حالات الحضور - الموظفين النشطين"
-        ws['A8'].font = cyan_font
-        ws['A8'].fill = header_fill
-        ws['A8'].alignment = Alignment(horizontal='center', vertical='center')
-        ws.row_dimensions[8].height = 30
+        # === قسم الحضور ===
+        ws.merge_cells('A10:I10')
+        ws['A10'] = "📊 توزيع حالات الحضور - الموظفين النشطين"
+        ws['A10'].font = section_font
+        ws['A10'].fill = header_fill
+        ws['A10'].alignment = Alignment(horizontal='center', vertical='center')
+        ws['A10'].border = accent_border
+        ws.row_dimensions[10].height = 35
         
-        att_headers = ['الحالة', 'العدد', 'النسبة', 'الرسم']
+        att_headers = ['الحالة', 'العدد', 'النسبة', 'الرسم البياني']
         for i, h in enumerate(att_headers):
-            cell = ws.cell(row=9, column=i+1)
+            cell = ws.cell(row=11, column=i+1)
             cell.value = h
             cell.font = cyan_font
-            cell.fill = header_fill
+            cell.fill = card_fill_alt
             cell.alignment = Alignment(horizontal='center', vertical='center')
-            cell.border = thin_border
+            cell.border = cyan_border_thin
+        ws.row_dimensions[11].height = 28
         
         att_rows = [
-            ('حاضر ✅', att_data['present'], green_fill),
-            ('غائب ❌', att_data['absent'], red_fill),
-            ('إجازة 📋', att_data['leave'], blue_fill),
-            ('مريض 🏥', att_data['sick'], orange_fill)
+            ('حاضر ✅', att_data['present'], green_fill, "10B981"),
+            ('غائب ❌', att_data['absent'], red_fill, "FF4757"),
+            ('إجازة 📋', att_data['leave'], blue_fill, "3B82F6"),
+            ('مريض 🏥', att_data['sick'], orange_fill, "FFD700")
         ]
         
-        for idx, (label, count, fill) in enumerate(att_rows, start=10):
+        for idx, (label, count, fill, bar_color) in enumerate(att_rows, start=12):
             pct = round((count / total_attendance * 100), 1) if total_attendance > 0 else 0
             
             ws.cell(row=idx, column=1).value = label
             ws.cell(row=idx, column=1).font = white_font
             ws.cell(row=idx, column=1).fill = card_fill
-            ws.cell(row=idx, column=1).alignment = Alignment(horizontal='center')
+            ws.cell(row=idx, column=1).alignment = Alignment(horizontal='center', vertical='center')
             ws.cell(row=idx, column=1).border = thin_border
             
             ws.cell(row=idx, column=2).value = count
-            ws.cell(row=idx, column=2).font = white_font
+            ws.cell(row=idx, column=2).font = Font(bold=True, color="00D4FF", size=14, name='Arial')
             ws.cell(row=idx, column=2).fill = card_fill
-            ws.cell(row=idx, column=2).alignment = Alignment(horizontal='center')
+            ws.cell(row=idx, column=2).alignment = Alignment(horizontal='center', vertical='center')
             ws.cell(row=idx, column=2).border = thin_border
             
             ws.cell(row=idx, column=3).value = f"{pct}%"
-            ws.cell(row=idx, column=3).font = white_font
+            ws.cell(row=idx, column=3).font = Font(bold=True, color="00F5D4", size=12, name='Arial')
             ws.cell(row=idx, column=3).fill = card_fill
-            ws.cell(row=idx, column=3).alignment = Alignment(horizontal='center')
+            ws.cell(row=idx, column=3).alignment = Alignment(horizontal='center', vertical='center')
             ws.cell(row=idx, column=3).border = thin_border
             
-            bar_width = int(pct / 5) if pct > 0 else 1
+            bar_width = int(pct / 4) if pct > 0 else 1
             ws.cell(row=idx, column=4).value = "█" * bar_width
-            ws.cell(row=idx, column=4).font = Font(color=fill.fgColor.rgb[2:] if fill.fgColor else "FFFFFF", size=10)
+            ws.cell(row=idx, column=4).font = Font(color=bar_color, size=12, name='Arial')
             ws.cell(row=idx, column=4).fill = card_fill
             ws.cell(row=idx, column=4).border = thin_border
+            
+            ws.row_dimensions[idx].height = 26
         
         pie1 = PieChart()
         pie1.title = "توزيع الحضور"
-        labels1 = Reference(ws, min_col=1, min_row=10, max_row=13)
-        data1 = Reference(ws, min_col=2, min_row=9, max_row=13)
+        labels1 = Reference(ws, min_col=1, min_row=12, max_row=15)
+        data1 = Reference(ws, min_col=2, min_row=11, max_row=15)
         pie1.add_data(data1, titles_from_data=True)
         pie1.set_categories(labels1)
-        pie1.width = 10
-        pie1.height = 8
+        pie1.width = 12
+        pie1.height = 9
         pie1.dataLabels = DataLabelList()
         pie1.dataLabels.showPercent = True
         pie1.dataLabels.showCatName = True
-        ws.add_chart(pie1, "E9")
+        ws.add_chart(pie1, "F11")
         
-        ws.merge_cells('A16:H16')
-        ws['A16'] = "🚗 حالة أسطول السيارات"
-        ws['A16'].font = cyan_font
-        ws['A16'].fill = header_fill
-        ws['A16'].alignment = Alignment(horizontal='center', vertical='center')
-        ws.row_dimensions[16].height = 30
+        # === قسم السيارات ===
+        ws.merge_cells('A17:I17')
+        ws['A17'] = "🚗 حالة أسطول السيارات"
+        ws['A17'].font = section_font
+        ws['A17'].fill = header_fill
+        ws['A17'].alignment = Alignment(horizontal='center', vertical='center')
+        ws['A17'].border = accent_border
+        ws.row_dimensions[17].height = 35
         
-        veh_headers = ['الحالة', 'العدد', 'النسبة', 'الرسم']
+        veh_headers = ['الحالة', 'العدد', 'النسبة', 'الرسم البياني']
         for i, h in enumerate(veh_headers):
-            cell = ws.cell(row=17, column=i+1)
+            cell = ws.cell(row=18, column=i+1)
             cell.value = h
             cell.font = cyan_font
-            cell.fill = header_fill
+            cell.fill = card_fill_alt
             cell.alignment = Alignment(horizontal='center', vertical='center')
-            cell.border = thin_border
+            cell.border = cyan_border_thin
+        ws.row_dimensions[18].height = 28
         
         veh_rows = [
-            ('في المشروع 🟢', in_project_vehicles, green_fill),
-            ('في الورشة 🟡', in_workshop_vehicles, orange_fill),
-            ('خارج الخدمة 🔴', out_of_service_vehicles, red_fill),
-            ('حادث ⚠️', accident_vehicles, purple_fill)
+            ('في المشروع 🟢', in_project_vehicles, "10B981"),
+            ('في الورشة 🟡', in_workshop_vehicles, "FFD700"),
+            ('خارج الخدمة 🔴', out_of_service_vehicles, "FF4757"),
+            ('حادث ⚠️', accident_vehicles, "7B68EE")
         ]
         
-        for idx, (label, count, fill) in enumerate(veh_rows, start=18):
+        for idx, (label, count, bar_color) in enumerate(veh_rows, start=19):
             pct = round((count / total_vehicles * 100), 1) if total_vehicles > 0 else 0
             
             ws.cell(row=idx, column=1).value = label
             ws.cell(row=idx, column=1).font = white_font
             ws.cell(row=idx, column=1).fill = card_fill
-            ws.cell(row=idx, column=1).alignment = Alignment(horizontal='center')
+            ws.cell(row=idx, column=1).alignment = Alignment(horizontal='center', vertical='center')
             ws.cell(row=idx, column=1).border = thin_border
             
             ws.cell(row=idx, column=2).value = count
-            ws.cell(row=idx, column=2).font = white_font
+            ws.cell(row=idx, column=2).font = Font(bold=True, color="00D4FF", size=14, name='Arial')
             ws.cell(row=idx, column=2).fill = card_fill
-            ws.cell(row=idx, column=2).alignment = Alignment(horizontal='center')
+            ws.cell(row=idx, column=2).alignment = Alignment(horizontal='center', vertical='center')
             ws.cell(row=idx, column=2).border = thin_border
             
             ws.cell(row=idx, column=3).value = f"{pct}%"
-            ws.cell(row=idx, column=3).font = white_font
+            ws.cell(row=idx, column=3).font = Font(bold=True, color="00F5D4", size=12, name='Arial')
             ws.cell(row=idx, column=3).fill = card_fill
-            ws.cell(row=idx, column=3).alignment = Alignment(horizontal='center')
+            ws.cell(row=idx, column=3).alignment = Alignment(horizontal='center', vertical='center')
             ws.cell(row=idx, column=3).border = thin_border
             
-            bar_width = int(pct / 5) if pct > 0 else 1
+            bar_width = int(pct / 4) if pct > 0 else 1
             ws.cell(row=idx, column=4).value = "█" * bar_width
-            ws.cell(row=idx, column=4).font = Font(color=fill.fgColor.rgb[2:] if fill.fgColor else "FFFFFF", size=10)
+            ws.cell(row=idx, column=4).font = Font(color=bar_color, size=12, name='Arial')
             ws.cell(row=idx, column=4).fill = card_fill
             ws.cell(row=idx, column=4).border = thin_border
+            
+            ws.row_dimensions[idx].height = 26
         
         doughnut1 = DoughnutChart()
         doughnut1.title = "حالة الأسطول"
-        labels2 = Reference(ws, min_col=1, min_row=18, max_row=21)
-        data2 = Reference(ws, min_col=2, min_row=17, max_row=21)
+        labels2 = Reference(ws, min_col=1, min_row=19, max_row=22)
+        data2 = Reference(ws, min_col=2, min_row=18, max_row=22)
         doughnut1.add_data(data2, titles_from_data=True)
         doughnut1.set_categories(labels2)
-        doughnut1.width = 10
-        doughnut1.height = 8
+        doughnut1.width = 12
+        doughnut1.height = 9
         doughnut1.dataLabels = DataLabelList()
         doughnut1.dataLabels.showPercent = True
-        ws.add_chart(doughnut1, "E16")
+        ws.add_chart(doughnut1, "F18")
         
-        # جلب الأقسام مع الموظفين النشطين فقط الذين لهم حضور
+        # === قسم الأقسام ===
         departments = Department.query.all()
         
-        ws.merge_cells('A24:H24')
-        ws['A24'] = "🏢 نسبة الحضور حسب القسم - الموظفين النشطين"
-        ws['A24'].font = cyan_font
-        ws['A24'].fill = header_fill
-        ws['A24'].alignment = Alignment(horizontal='center', vertical='center')
-        ws.row_dimensions[24].height = 30
+        ws.merge_cells('A25:I25')
+        ws['A25'] = "🏢 نسبة الحضور حسب القسم - الموظفين النشطين"
+        ws['A25'].font = section_font
+        ws['A25'].fill = header_fill
+        ws['A25'].alignment = Alignment(horizontal='center', vertical='center')
+        ws['A25'].border = accent_border
+        ws.row_dimensions[25].height = 35
         
-        dept_headers = ['القسم', 'الموظفين النشطين', 'الحضور', 'النسبة', 'التقييم']
+        dept_headers = ['القسم', 'الموظفين', 'الحضور', 'النسبة', 'التقييم']
         for i, h in enumerate(dept_headers):
-            cell = ws.cell(row=25, column=i+1)
+            cell = ws.cell(row=26, column=i+1)
             cell.value = h
             cell.font = cyan_font
-            cell.fill = header_fill
+            cell.fill = card_fill_alt
             cell.alignment = Alignment(horizontal='center', vertical='center')
-            cell.border = thin_border
+            cell.border = cyan_border_thin
+        ws.row_dimensions[26].height = 28
         
-        dept_row = 26
+        dept_row = 27
         for dept in departments[:10]:
             # جلب موظفي القسم النشطين فقط
             emp_ids = db.session.query(Employee.id).join(
@@ -964,53 +1021,56 @@ def export_data():
                 rating_fill = red_fill
             
             ws.cell(row=dept_row, column=1).value = dept.name
-            ws.cell(row=dept_row, column=1).font = white_font
+            ws.cell(row=dept_row, column=1).font = data_font
             ws.cell(row=dept_row, column=1).fill = card_fill
+            ws.cell(row=dept_row, column=1).alignment = Alignment(horizontal='center', vertical='center')
             ws.cell(row=dept_row, column=1).border = thin_border
             
             ws.cell(row=dept_row, column=2).value = len(emp_ids_with_attendance)
-            ws.cell(row=dept_row, column=2).font = white_font
+            ws.cell(row=dept_row, column=2).font = Font(bold=True, color="00D4FF", size=12, name='Arial')
             ws.cell(row=dept_row, column=2).fill = card_fill
-            ws.cell(row=dept_row, column=2).alignment = Alignment(horizontal='center')
+            ws.cell(row=dept_row, column=2).alignment = Alignment(horizontal='center', vertical='center')
             ws.cell(row=dept_row, column=2).border = thin_border
             
             ws.cell(row=dept_row, column=3).value = present
-            ws.cell(row=dept_row, column=3).font = white_font
+            ws.cell(row=dept_row, column=3).font = Font(bold=True, color="00F5D4", size=12, name='Arial')
             ws.cell(row=dept_row, column=3).fill = card_fill
-            ws.cell(row=dept_row, column=3).alignment = Alignment(horizontal='center')
+            ws.cell(row=dept_row, column=3).alignment = Alignment(horizontal='center', vertical='center')
             ws.cell(row=dept_row, column=3).border = thin_border
             
             ws.cell(row=dept_row, column=4).value = f"{rate}%"
-            ws.cell(row=dept_row, column=4).font = white_font
+            ws.cell(row=dept_row, column=4).font = Font(bold=True, color="FFFFFF", size=12, name='Arial')
             ws.cell(row=dept_row, column=4).fill = card_fill
-            ws.cell(row=dept_row, column=4).alignment = Alignment(horizontal='center')
+            ws.cell(row=dept_row, column=4).alignment = Alignment(horizontal='center', vertical='center')
             ws.cell(row=dept_row, column=4).border = thin_border
             
             ws.cell(row=dept_row, column=5).value = rating
-            ws.cell(row=dept_row, column=5).font = Font(bold=True, color="FFFFFF", size=10)
+            ws.cell(row=dept_row, column=5).font = dark_font
             ws.cell(row=dept_row, column=5).fill = rating_fill
-            ws.cell(row=dept_row, column=5).alignment = Alignment(horizontal='center')
+            ws.cell(row=dept_row, column=5).alignment = Alignment(horizontal='center', vertical='center')
             ws.cell(row=dept_row, column=5).border = thin_border
             
+            ws.row_dimensions[dept_row].height = 26
             dept_row += 1
         
-        if dept_row > 26:
+        if dept_row > 27:
             bar1 = BarChart()
             bar1.type = "col"
             bar1.style = 12
-            bar1.title = "نسبة الحضور بالأقسام - الموظفين النشطين"
+            bar1.title = "نسبة الحضور بالأقسام"
             bar1.y_axis.title = "النسبة %"
             
-            data_bar = Reference(ws, min_col=4, min_row=25, max_row=dept_row-1)
-            cats_bar = Reference(ws, min_col=1, min_row=26, max_row=dept_row-1)
+            data_bar = Reference(ws, min_col=4, min_row=26, max_row=dept_row-1)
+            cats_bar = Reference(ws, min_col=1, min_row=27, max_row=dept_row-1)
             bar1.add_data(data_bar, titles_from_data=True)
             bar1.set_categories(cats_bar)
             bar1.width = 14
             bar1.height = 10
             bar1.dataLabels = DataLabelList()
             bar1.dataLabels.showVal = True
-            ws.add_chart(bar1, "G24")
+            ws.add_chart(bar1, "G26")
         
+        # === قسم الوثائق ===
         doc_counts = db.session.query(
             Document.employee_id,
             func.count(Document.id)
@@ -1020,19 +1080,22 @@ def export_data():
         incomplete_docs = max(0, total_employees - complete_docs)
         
         doc_start = dept_row + 2
-        ws.merge_cells(f'A{doc_start}:H{doc_start}')
+        ws.merge_cells(f'A{doc_start}:I{doc_start}')
         ws[f'A{doc_start}'] = "📄 حالة اكتمال الوثائق - الموظفين النشطين"
-        ws[f'A{doc_start}'].font = cyan_font
+        ws[f'A{doc_start}'].font = section_font
         ws[f'A{doc_start}'].fill = header_fill
         ws[f'A{doc_start}'].alignment = Alignment(horizontal='center', vertical='center')
+        ws[f'A{doc_start}'].border = accent_border
+        ws.row_dimensions[doc_start].height = 35
         
-        ws.cell(row=doc_start+1, column=1).value = "الحالة"
-        ws.cell(row=doc_start+1, column=2).value = "العدد"
-        ws.cell(row=doc_start+1, column=3).value = "النسبة"
-        for i in range(1, 4):
+        doc_headers = ['الحالة', 'العدد', 'النسبة', 'الرسم البياني']
+        for i, h in enumerate(doc_headers, 1):
+            ws.cell(row=doc_start+1, column=i).value = h
             ws.cell(row=doc_start+1, column=i).font = cyan_font
-            ws.cell(row=doc_start+1, column=i).fill = header_fill
-            ws.cell(row=doc_start+1, column=i).border = thin_border
+            ws.cell(row=doc_start+1, column=i).fill = card_fill_alt
+            ws.cell(row=doc_start+1, column=i).alignment = Alignment(horizontal='center', vertical='center')
+            ws.cell(row=doc_start+1, column=i).border = cyan_border_thin
+        ws.row_dimensions[doc_start+1].height = 28
         
         complete_pct = round((complete_docs / total_employees * 100), 1) if total_employees > 0 else 0
         incomplete_pct = round((incomplete_docs / total_employees * 100), 1) if total_employees > 0 else 0
@@ -1040,18 +1103,32 @@ def export_data():
         ws.cell(row=doc_start+2, column=1).value = "مكتمل ✅"
         ws.cell(row=doc_start+2, column=2).value = complete_docs
         ws.cell(row=doc_start+2, column=3).value = f"{complete_pct}%"
-        for i in range(1, 4):
-            ws.cell(row=doc_start+2, column=i).font = white_font
+        bar_width = int(complete_pct / 4) if complete_pct > 0 else 1
+        ws.cell(row=doc_start+2, column=4).value = "█" * bar_width
+        ws.cell(row=doc_start+2, column=1).font = white_font
+        ws.cell(row=doc_start+2, column=2).font = Font(bold=True, color="00D4FF", size=14, name='Arial')
+        ws.cell(row=doc_start+2, column=3).font = Font(bold=True, color="00F5D4", size=12, name='Arial')
+        ws.cell(row=doc_start+2, column=4).font = Font(color="10B981", size=12, name='Arial')
+        for i in range(1, 5):
             ws.cell(row=doc_start+2, column=i).fill = card_fill
             ws.cell(row=doc_start+2, column=i).border = thin_border
+            ws.cell(row=doc_start+2, column=i).alignment = Alignment(horizontal='center', vertical='center')
+        ws.row_dimensions[doc_start+2].height = 26
         
         ws.cell(row=doc_start+3, column=1).value = "ناقص ⚠️"
         ws.cell(row=doc_start+3, column=2).value = incomplete_docs
         ws.cell(row=doc_start+3, column=3).value = f"{incomplete_pct}%"
-        for i in range(1, 4):
-            ws.cell(row=doc_start+3, column=i).font = white_font
+        bar_width = int(incomplete_pct / 4) if incomplete_pct > 0 else 1
+        ws.cell(row=doc_start+3, column=4).value = "█" * bar_width
+        ws.cell(row=doc_start+3, column=1).font = white_font
+        ws.cell(row=doc_start+3, column=2).font = Font(bold=True, color="00D4FF", size=14, name='Arial')
+        ws.cell(row=doc_start+3, column=3).font = Font(bold=True, color="FFD700", size=12, name='Arial')
+        ws.cell(row=doc_start+3, column=4).font = Font(color="FF4757", size=12, name='Arial')
+        for i in range(1, 5):
             ws.cell(row=doc_start+3, column=i).fill = card_fill
             ws.cell(row=doc_start+3, column=i).border = thin_border
+            ws.cell(row=doc_start+3, column=i).alignment = Alignment(horizontal='center', vertical='center')
+        ws.row_dimensions[doc_start+3].height = 26
         
         pie3 = PieChart()
         pie3.title = "اكتمال الوثائق"
@@ -1059,11 +1136,11 @@ def export_data():
         data3 = Reference(ws, min_col=2, min_row=doc_start+1, max_row=doc_start+3)
         pie3.add_data(data3, titles_from_data=True)
         pie3.set_categories(labels3)
-        pie3.width = 10
-        pie3.height = 8
+        pie3.width = 12
+        pie3.height = 9
         pie3.dataLabels = DataLabelList()
         pie3.dataLabels.showPercent = True
-        ws.add_chart(pie3, f"E{doc_start}")
+        ws.add_chart(pie3, f"F{doc_start}")
         
         # ألوان للتقارير التفصيلية
         detail_header_fill = PatternFill(start_color="1F2937", end_color="1F2937", fill_type="solid")
