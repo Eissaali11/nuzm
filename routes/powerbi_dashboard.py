@@ -49,6 +49,10 @@ def dashboard():
     else:
         date_to = datetime.now().date()
     
+    # تصحيح التواريخ إذا كانت معكوسة
+    if date_from > date_to:
+        date_from, date_to = date_to, date_from
+    
     # جلب الموظفين النشطين فقط الذين لهم حضور في الفترة المحددة
     active_employee_ids_with_attendance = db.session.query(Attendance.employee_id).filter(
         Attendance.date >= date_from,
@@ -137,6 +141,23 @@ def dashboard():
     # ترتيب حسب نسبة الحضور
     dept_attendance.sort(key=lambda x: x['rate'], reverse=True)
     
+    # توزيع الموظفين حسب القسم (للرسم البياني) - الموظفين النشطين الذين لهم حضور فقط
+    dept_distribution = []
+    for dept in departments:
+        emp_count = 0
+        for da in dept_attendance:
+            if da['name'] == dept.name:
+                emp_count = da['employee_count']
+                break
+        if emp_count > 0:
+            dept_distribution.append({
+                'name': dept.name,
+                'count': emp_count
+            })
+    
+    # ترتيب حسب العدد
+    dept_distribution.sort(key=lambda x: x['count'], reverse=True)
+    
     # إحصائيات الوثائق
     today = datetime.now().date()
     thirty_days = today + timedelta(days=30)
@@ -168,6 +189,7 @@ def dashboard():
         attendance_stats=attendance_stats,
         vehicle_stats=vehicle_stats,
         dept_attendance=dept_attendance,
+        dept_distribution=dept_distribution,
         doc_stats=doc_stats,
         date_from=date_from,
         date_to=date_to
@@ -1111,7 +1133,7 @@ def export_data():
             for col, header in enumerate(headers, start=1):
                 cell = ws_emp.cell(row=3, column=col)
                 cell.value = header
-                cell.font = header_font
+                cell.font = detail_header_font
                 cell.fill = header_fill
                 cell.border = thin_border
                 cell.alignment = Alignment(horizontal='center', vertical='center')
@@ -1166,7 +1188,7 @@ def export_data():
             for col, header in enumerate(headers, start=1):
                 cell = ws_veh.cell(row=3, column=col)
                 cell.value = header
-                cell.font = header_font
+                cell.font = detail_header_font
                 cell.fill = header_fill
                 cell.border = thin_border
                 cell.alignment = Alignment(horizontal='center', vertical='center')
@@ -1224,7 +1246,7 @@ def export_data():
             for col, header in enumerate(headers, start=1):
                 cell = ws_dept.cell(row=3, column=col)
                 cell.value = header
-                cell.font = header_font
+                cell.font = detail_header_font
                 cell.fill = header_fill
                 cell.border = thin_border
                 cell.alignment = Alignment(horizontal='center', vertical='center')
