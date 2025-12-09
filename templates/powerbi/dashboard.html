@@ -1,367 +1,773 @@
 {% extends 'layout.html' %}
 
-{% block title %}لوحة Power BI - نُظم{% endblock %}
+{% block title %}لوحة التحليلات الاحترافية - نُظم{% endblock %}
 
 {% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
     :root {
-        --dark-bg: #0f0f23;
-        --card-bg: #1a1a2e;
-        --border: #2d2d44;
-        --gold: #F2C811;
-        --green: #38EF7D;
-        --red: #EF4444;
-        --blue: #667EEA;
-        --orange: #FFA500;
-        --text: #e0e0e0;
-        --text-muted: #a0a0a0;
+        --bg-primary: #0a0e17;
+        --bg-secondary: #0d1321;
+        --bg-card: #131b2e;
+        --bg-card-hover: #1a2540;
+        --cyan: #00d4ff;
+        --cyan-glow: rgba(0, 212, 255, 0.3);
+        --teal: #00f5d4;
+        --purple: #7b68ee;
+        --gold: #ffd700;
+        --green: #00ff88;
+        --red: #ff4757;
+        --orange: #ff8c00;
+        --text: #e8eaed;
+        --text-muted: #8892a0;
+        --border: rgba(0, 212, 255, 0.15);
+        --border-glow: rgba(0, 212, 255, 0.4);
     }
+
+    * { box-sizing: border-box; }
 
     body {
-        background: var(--dark-bg);
+        background: var(--bg-primary);
+        min-height: 100vh;
+    }
+
+    .pbi-dashboard {
+        padding: 1rem 1.5rem;
         direction: rtl;
+        background: linear-gradient(180deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+        min-height: 100vh;
     }
 
-    .dashboard-container {
-        padding: 1.5rem;
-        max-width: 1600px;
-        margin: 0 auto;
-    }
-
-    .dashboard-header {
-        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-        border-radius: 16px;
-        padding: 2rem;
-        margin-bottom: 1.5rem;
+    .pbi-header {
+        background: linear-gradient(135deg, var(--bg-card) 0%, rgba(0, 212, 255, 0.05) 100%);
         border: 1px solid var(--border);
-        border-top: 4px solid var(--gold);
+        border-radius: 20px;
+        padding: 1.5rem 2rem;
+        margin-bottom: 1.5rem;
+        position: relative;
+        overflow: hidden;
     }
 
-    .dashboard-header h1 {
-        color: var(--gold);
-        font-size: 2rem;
+    .pbi-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        left: 0;
+        height: 3px;
+        background: linear-gradient(90deg, var(--cyan), var(--teal), var(--purple));
+    }
+
+    .pbi-header::after {
+        content: '';
+        position: absolute;
+        top: 3px;
+        right: 0;
+        left: 0;
+        height: 20px;
+        background: linear-gradient(180deg, rgba(0, 212, 255, 0.1), transparent);
+    }
+
+    .header-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    .header-title {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .logo-icon {
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, var(--cyan) 0%, var(--teal) 100%);
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+        color: var(--bg-primary);
+        box-shadow: 0 0 30px var(--cyan-glow);
+    }
+
+    .title-text h1 {
+        color: var(--text);
+        font-size: 1.8rem;
         font-weight: 700;
         margin: 0;
+        background: linear-gradient(90deg, var(--cyan), var(--teal));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
     }
 
-    .dashboard-header p {
+    .title-text p {
         color: var(--text-muted);
-        margin: 0.5rem 0 0;
+        margin: 0.25rem 0 0;
+        font-size: 0.9rem;
+    }
+
+    .filter-panel {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 1.25rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        align-items: flex-end;
+    }
+
+    .filter-group {
+        flex: 1;
+        min-width: 160px;
+    }
+
+    .filter-label {
+        display: block;
+        color: var(--cyan);
+        font-size: 0.8rem;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+    }
+
+    .filter-input {
+        width: 100%;
+        padding: 0.7rem 1rem;
+        background: rgba(0, 212, 255, 0.05);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        color: var(--text);
+        font-size: 0.95rem;
+        transition: all 0.3s;
+    }
+
+    .filter-input:focus {
+        outline: none;
+        border-color: var(--cyan);
+        box-shadow: 0 0 15px var(--cyan-glow);
+    }
+
+    .filter-btn {
+        padding: 0.7rem 1.5rem;
+        background: linear-gradient(135deg, var(--cyan) 0%, var(--teal) 100%);
+        border: none;
+        border-radius: 10px;
+        color: var(--bg-primary);
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .filter-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 25px var(--cyan-glow);
+    }
+
+    .export-btn {
+        padding: 0.7rem 1.5rem;
+        background: linear-gradient(135deg, var(--green) 0%, var(--teal) 100%);
+        border: none;
+        border-radius: 10px;
+        color: var(--bg-primary);
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .export-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 25px rgba(0, 255, 136, 0.3);
+        color: var(--bg-primary);
     }
 
     .kpi-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        grid-template-columns: repeat(5, 1fr);
         gap: 1rem;
         margin-bottom: 1.5rem;
     }
 
+    @media (max-width: 1200px) {
+        .kpi-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+
+    @media (max-width: 768px) {
+        .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
     .kpi-card {
-        background: var(--card-bg);
+        background: var(--bg-card);
         border: 1px solid var(--border);
-        border-radius: 12px;
+        border-radius: 16px;
         padding: 1.5rem;
-        text-align: center;
+        position: relative;
+        overflow: hidden;
         transition: all 0.3s;
     }
 
-    .kpi-card:hover {
-        transform: translateY(-3px);
-        border-color: var(--gold);
+    .kpi-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 100%;
+        height: 3px;
+        background: var(--kpi-color, var(--cyan));
     }
 
-    .kpi-icon {
-        font-size: 2rem;
-        margin-bottom: 0.5rem;
+    .kpi-card:hover {
+        transform: translateY(-5px);
+        border-color: var(--border-glow);
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3), 0 0 20px var(--cyan-glow);
+    }
+
+    .kpi-icon-wrapper {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1rem;
+        font-size: 1.5rem;
+        background: var(--kpi-bg, rgba(0, 212, 255, 0.1));
+        color: var(--kpi-color, var(--cyan));
+        box-shadow: 0 0 20px var(--kpi-glow, var(--cyan-glow));
     }
 
     .kpi-value {
-        font-size: 2.5rem;
+        font-size: 2.2rem;
         font-weight: 700;
-        color: var(--gold);
+        color: var(--text);
+        margin-bottom: 0.25rem;
+        line-height: 1;
     }
 
     .kpi-label {
         color: var(--text-muted);
-        font-size: 0.9rem;
-        margin-top: 0.5rem;
+        font-size: 0.85rem;
     }
 
-    .section-title {
-        color: var(--gold);
-        font-size: 1.3rem;
+    .kpi-trend {
+        position: absolute;
+        top: 1rem;
+        left: 1rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 6px;
+        font-size: 0.75rem;
         font-weight: 600;
-        margin: 2rem 0 1rem;
-        padding-bottom: 0.5rem;
-        border-bottom: 2px solid var(--border);
     }
 
-    .data-grid {
+    .kpi-trend.up {
+        background: rgba(0, 255, 136, 0.15);
+        color: var(--green);
+    }
+
+    .kpi-trend.down {
+        background: rgba(255, 71, 87, 0.15);
+        color: var(--red);
+    }
+
+    .charts-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        grid-template-columns: repeat(3, 1fr);
         gap: 1.5rem;
         margin-bottom: 1.5rem;
     }
 
-    .data-card {
-        background: var(--card-bg);
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        padding: 1.5rem;
+    @media (max-width: 1200px) {
+        .charts-grid { grid-template-columns: repeat(2, 1fr); }
     }
 
-    .data-card h3 {
-        color: var(--text);
-        font-size: 1.1rem;
-        margin: 0 0 1rem;
-        padding-bottom: 0.5rem;
+    @media (max-width: 768px) {
+        .charts-grid { grid-template-columns: 1fr; }
+    }
+
+    .chart-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 1.5rem;
+        position: relative;
+    }
+
+    .chart-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        left: 0;
+        height: 2px;
+        background: linear-gradient(90deg, var(--cyan), transparent);
+    }
+
+    .chart-title {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1.25rem;
+        padding-bottom: 0.75rem;
         border-bottom: 1px solid var(--border);
     }
 
-    .stat-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 0.75rem 0;
-        border-bottom: 1px solid rgba(255,255,255,0.05);
+    .chart-title i {
+        color: var(--cyan);
+        font-size: 1.1rem;
     }
 
-    .stat-row:last-child {
-        border-bottom: none;
+    .chart-title span {
+        color: var(--text);
+        font-size: 1rem;
+        font-weight: 600;
     }
 
-    .stat-label {
+    .chart-container {
+        position: relative;
+        height: 200px;
+    }
+
+    .chart-container.large {
+        height: 280px;
+    }
+
+    .progress-circle {
+        position: relative;
+        width: 120px;
+        height: 120px;
+        margin: 0 auto;
+    }
+
+    .progress-circle svg {
+        transform: rotate(-90deg);
+    }
+
+    .progress-circle circle {
+        fill: none;
+        stroke-width: 8;
+    }
+
+    .progress-circle .bg {
+        stroke: rgba(0, 212, 255, 0.1);
+    }
+
+    .progress-circle .progress {
+        stroke: var(--cyan);
+        stroke-linecap: round;
+        transition: stroke-dashoffset 0.5s ease;
+        filter: drop-shadow(0 0 6px var(--cyan));
+    }
+
+    .progress-value {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+    }
+
+    .progress-value .value {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: var(--cyan);
+    }
+
+    .progress-value .label {
+        font-size: 0.7rem;
         color: var(--text-muted);
     }
 
-    .stat-value {
+    .stats-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .stat-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 1rem;
+        background: rgba(0, 212, 255, 0.03);
+        border-radius: 10px;
+        border: 1px solid transparent;
+        transition: all 0.3s;
+    }
+
+    .stat-item:hover {
+        border-color: var(--border);
+        background: rgba(0, 212, 255, 0.06);
+    }
+
+    .stat-item .label {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--text-muted);
+        font-size: 0.9rem;
+    }
+
+    .stat-item .label i {
+        font-size: 0.8rem;
+    }
+
+    .stat-item .value {
         font-weight: 600;
+        font-size: 1.1rem;
+    }
+
+    .stat-item .value.green { color: var(--green); }
+    .stat-item .value.red { color: var(--red); }
+    .stat-item .value.orange { color: var(--orange); }
+    .stat-item .value.cyan { color: var(--cyan); }
+    .stat-item .value.teal { color: var(--teal); }
+    .stat-item .value.purple { color: var(--purple); }
+
+    .section-title {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
         color: var(--text);
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin: 2rem 0 1rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 2px solid var(--border);
     }
 
-    .stat-value.green { color: var(--green); }
-    .stat-value.red { color: var(--red); }
-    .stat-value.orange { color: var(--orange); }
-    .stat-value.blue { color: var(--blue); }
-    .stat-value.gold { color: var(--gold); }
+    .section-title i {
+        color: var(--cyan);
+    }
 
-    .progress-bar {
-        background: rgba(255,255,255,0.1);
-        border-radius: 10px;
-        height: 8px;
+    .section-title::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: linear-gradient(90deg, var(--border), transparent);
+    }
+
+    .dept-table-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 16px;
         overflow: hidden;
-        margin-top: 0.5rem;
     }
-
-    .progress-fill {
-        height: 100%;
-        border-radius: 10px;
-        transition: width 0.5s ease;
-    }
-
-    .progress-fill.green { background: var(--green); }
-    .progress-fill.red { background: var(--red); }
-    .progress-fill.blue { background: var(--blue); }
-    .progress-fill.gold { background: var(--gold); }
 
     .dept-table {
         width: 100%;
         border-collapse: collapse;
     }
 
+    .dept-table thead {
+        background: linear-gradient(135deg, rgba(0, 212, 255, 0.1) 0%, rgba(0, 245, 212, 0.05) 100%);
+    }
+
     .dept-table th {
-        background: rgba(242, 200, 17, 0.1);
-        color: var(--gold);
-        padding: 1rem;
+        padding: 1rem 1.25rem;
         text-align: right;
+        color: var(--cyan);
         font-weight: 600;
+        font-size: 0.9rem;
+        border-bottom: 1px solid var(--border);
     }
 
     .dept-table td {
-        padding: 1rem;
-        border-bottom: 1px solid var(--border);
+        padding: 1rem 1.25rem;
         color: var(--text);
+        border-bottom: 1px solid var(--border);
+        font-size: 0.95rem;
     }
 
-    .dept-table tr:hover {
-        background: rgba(255,255,255,0.03);
-    }
-
-    .rate-badge {
-        padding: 0.25rem 0.75rem;
-        border-radius: 20px;
-        font-size: 0.85rem;
-        font-weight: 600;
-    }
-
-    .rate-badge.excellent { background: rgba(56, 239, 125, 0.2); color: var(--green); }
-    .rate-badge.good { background: rgba(102, 126, 234, 0.2); color: var(--blue); }
-    .rate-badge.average { background: rgba(255, 165, 0, 0.2); color: var(--orange); }
-    .rate-badge.poor { background: rgba(239, 68, 68, 0.2); color: var(--red); }
-
-    .chart-container {
-        position: relative;
-        height: 250px;
-    }
-
-    .export-btn {
-        background: var(--gold);
-        color: #000;
-        border: none;
-        padding: 0.75rem 1.5rem;
-        border-radius: 8px;
-        font-weight: 600;
-        cursor: pointer;
+    .dept-table tbody tr {
         transition: all 0.3s;
     }
 
-    .export-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 5px 20px rgba(242, 200, 17, 0.3);
+    .dept-table tbody tr:hover {
+        background: rgba(0, 212, 255, 0.05);
     }
 
-    @media (max-width: 768px) {
-        .data-grid {
-            grid-template-columns: 1fr;
-        }
-        .kpi-grid {
-            grid-template-columns: repeat(2, 1fr);
-        }
+    .dept-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .rate-badge {
+        padding: 0.35rem 0.85rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        display: inline-block;
+    }
+
+    .rate-badge.excellent {
+        background: rgba(0, 255, 136, 0.15);
+        color: var(--green);
+        box-shadow: 0 0 10px rgba(0, 255, 136, 0.2);
+    }
+
+    .rate-badge.good {
+        background: rgba(0, 212, 255, 0.15);
+        color: var(--cyan);
+        box-shadow: 0 0 10px rgba(0, 212, 255, 0.2);
+    }
+
+    .rate-badge.average {
+        background: rgba(255, 140, 0, 0.15);
+        color: var(--orange);
+        box-shadow: 0 0 10px rgba(255, 140, 0, 0.2);
+    }
+
+    .rate-badge.poor {
+        background: rgba(255, 71, 87, 0.15);
+        color: var(--red);
+        box-shadow: 0 0 10px rgba(255, 71, 87, 0.2);
+    }
+
+    .progress-bar-mini {
+        width: 100px;
+        height: 6px;
+        background: rgba(0, 212, 255, 0.1);
+        border-radius: 10px;
+        overflow: hidden;
+        display: inline-block;
+        vertical-align: middle;
+        margin-right: 0.5rem;
+    }
+
+    .progress-bar-mini .fill {
+        height: 100%;
+        border-radius: 10px;
+        transition: width 0.5s ease;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: var(--text-muted);
+    }
+
+    .empty-state i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="dashboard-container">
-    <div class="dashboard-header">
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-            <div>
-                <h1>لوحة التحليلات الاحترافية</h1>
-                <p>الفترة: {{ date_from }} إلى {{ date_to }}</p>
+<div class="pbi-dashboard">
+    <div class="pbi-header">
+        <div class="header-content">
+            <div class="header-title">
+                <div class="logo-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="title-text">
+                    <h1>لوحة التحليلات الاحترافية</h1>
+                    <p>تحليلات شاملة للموظفين والحضور والسيارات</p>
+                </div>
             </div>
             <a href="{{ url_for('powerbi.export_data') }}" class="export-btn">
+                <i class="fas fa-file-excel"></i>
                 تصدير Excel
             </a>
         </div>
     </div>
 
+    <form class="filter-panel" method="GET" action="{{ url_for('powerbi.dashboard') }}">
+        <div class="filter-group">
+            <label class="filter-label"><i class="fas fa-calendar-alt"></i> من تاريخ</label>
+            <input type="date" name="date_from" class="filter-input" value="{{ request.args.get('date_from', date_from) }}">
+        </div>
+        <div class="filter-group">
+            <label class="filter-label"><i class="fas fa-calendar-alt"></i> إلى تاريخ</label>
+            <input type="date" name="date_to" class="filter-input" value="{{ request.args.get('date_to', date_to) }}">
+        </div>
+        <div class="filter-group">
+            <label class="filter-label"><i class="fas fa-building"></i> القسم</label>
+            <select name="department_id" class="filter-input">
+                <option value="">جميع الأقسام</option>
+                {% for dept in departments %}
+                <option value="{{ dept.id }}" {% if request.args.get('department_id')|string == dept.id|string %}selected{% endif %}>{{ dept.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="filter-btn">
+            <i class="fas fa-filter"></i>
+            تطبيق الفلتر
+        </button>
+    </form>
+
     <div class="kpi-grid">
-        <div class="kpi-card">
-            <div class="kpi-icon">👥</div>
+        <div class="kpi-card" style="--kpi-color: var(--cyan); --kpi-bg: rgba(0, 212, 255, 0.1); --kpi-glow: rgba(0, 212, 255, 0.2);">
+            <div class="kpi-icon-wrapper"><i class="fas fa-users"></i></div>
             <div class="kpi-value">{{ total_employees }}</div>
             <div class="kpi-label">إجمالي الموظفين</div>
         </div>
-        <div class="kpi-card">
-            <div class="kpi-icon">🏢</div>
+        <div class="kpi-card" style="--kpi-color: var(--teal); --kpi-bg: rgba(0, 245, 212, 0.1); --kpi-glow: rgba(0, 245, 212, 0.2);">
+            <div class="kpi-icon-wrapper"><i class="fas fa-building"></i></div>
             <div class="kpi-value">{{ departments|length }}</div>
             <div class="kpi-label">الأقسام</div>
         </div>
-        <div class="kpi-card">
-            <div class="kpi-icon">🚗</div>
+        <div class="kpi-card" style="--kpi-color: var(--purple); --kpi-bg: rgba(123, 104, 238, 0.1); --kpi-glow: rgba(123, 104, 238, 0.2);">
+            <div class="kpi-icon-wrapper"><i class="fas fa-car"></i></div>
             <div class="kpi-value">{{ total_vehicles }}</div>
             <div class="kpi-label">السيارات</div>
         </div>
-        <div class="kpi-card">
-            <div class="kpi-icon">📄</div>
+        <div class="kpi-card" style="--kpi-color: var(--gold); --kpi-bg: rgba(255, 215, 0, 0.1); --kpi-glow: rgba(255, 215, 0, 0.2);">
+            <div class="kpi-icon-wrapper"><i class="fas fa-file-alt"></i></div>
             <div class="kpi-value">{{ total_documents }}</div>
             <div class="kpi-label">الوثائق</div>
         </div>
-        <div class="kpi-card">
-            <div class="kpi-icon">✅</div>
-            <div class="kpi-value" style="color: var(--green);">{{ attendance_stats.rate }}%</div>
+        <div class="kpi-card" style="--kpi-color: var(--green); --kpi-bg: rgba(0, 255, 136, 0.1); --kpi-glow: rgba(0, 255, 136, 0.2);">
+            <div class="kpi-icon-wrapper"><i class="fas fa-chart-pie"></i></div>
+            <div class="kpi-value">{{ attendance_stats.rate }}%</div>
             <div class="kpi-label">نسبة الحضور</div>
+            <span class="kpi-trend up"><i class="fas fa-arrow-up"></i> ممتاز</span>
         </div>
     </div>
 
-    <div class="data-grid">
-        <div class="data-card">
-            <h3>ملخص الحضور (آخر 30 يوم)</h3>
-            <div class="stat-row">
-                <span class="stat-label">حاضرين</span>
-                <span class="stat-value green">{{ attendance_stats.present }}</span>
+    <div class="charts-grid">
+        <div class="chart-card">
+            <div class="chart-title">
+                <i class="fas fa-chart-pie"></i>
+                <span>نسبة الحضور الإجمالية</span>
             </div>
-            <div class="stat-row">
-                <span class="stat-label">غائبين</span>
-                <span class="stat-value red">{{ attendance_stats.absent }}</span>
-            </div>
-            <div class="stat-row">
-                <span class="stat-label">إجازة</span>
-                <span class="stat-value orange">{{ attendance_stats.leave }}</span>
-            </div>
-            <div class="stat-row">
-                <span class="stat-label">مرضى</span>
-                <span class="stat-value blue">{{ attendance_stats.sick }}</span>
-            </div>
-            <div class="stat-row">
-                <span class="stat-label">إجمالي السجلات</span>
-                <span class="stat-value gold">{{ attendance_stats.total }}</span>
-            </div>
-            <div class="progress-bar">
-                <div class="progress-fill green" style="width: {{ attendance_stats.rate }}%;"></div>
+            <div style="display: flex; justify-content: center; align-items: center; height: 200px;">
+                <div class="progress-circle">
+                    <svg width="120" height="120">
+                        <circle class="bg" cx="60" cy="60" r="52"></circle>
+                        <circle class="progress" cx="60" cy="60" r="52" 
+                                stroke-dasharray="326.73" 
+                                stroke-dashoffset="{{ 326.73 - (326.73 * attendance_stats.rate / 100) }}"></circle>
+                    </svg>
+                    <div class="progress-value">
+                        <div class="value">{{ attendance_stats.rate }}%</div>
+                        <div class="label">نسبة الحضور</div>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div class="data-card">
-            <h3>حالة السيارات</h3>
-            {% for status, count in vehicle_stats.items() %}
-            <div class="stat-row">
-                <span class="stat-label">
-                    {% if status == 'available' %}متاحة
-                    {% elif status == 'in_project' %}في المشروع
-                    {% elif status == 'in_workshop' %}في الورشة
-                    {% elif status == 'out_of_service' %}خارج الخدمة
-                    {% elif status == 'accident' %}حادث
-                    {% else %}{{ status }}
-                    {% endif %}
-                </span>
-                <span class="stat-value {% if status == 'available' or status == 'in_project' %}green{% elif status == 'accident' %}red{% else %}orange{% endif %}">{{ count }}</span>
+        <div class="chart-card">
+            <div class="chart-title">
+                <i class="fas fa-clipboard-check"></i>
+                <span>تفاصيل الحضور</span>
             </div>
-            {% endfor %}
-            {% if not vehicle_stats %}
-            <p style="color: var(--text-muted); text-align: center;">لا توجد سيارات</p>
-            {% endif %}
-        </div>
-
-        <div class="data-card">
-            <h3>حالة الوثائق</h3>
-            <div class="stat-row">
-                <span class="stat-label">سارية</span>
-                <span class="stat-value green">{{ doc_stats.valid }}</span>
-            </div>
-            <div class="stat-row">
-                <span class="stat-label">تنتهي قريباً (30 يوم)</span>
-                <span class="stat-value orange">{{ doc_stats.expiring }}</span>
-            </div>
-            <div class="stat-row">
-                <span class="stat-label">منتهية</span>
-                <span class="stat-value red">{{ doc_stats.expired }}</span>
-            </div>
-            <div class="stat-row">
-                <span class="stat-label">إجمالي الوثائق</span>
-                <span class="stat-value gold">{{ doc_stats.total }}</span>
+            <div class="stats-list">
+                <div class="stat-item">
+                    <span class="label"><i class="fas fa-check-circle"></i> حاضرين</span>
+                    <span class="value green">{{ attendance_stats.present }}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="label"><i class="fas fa-times-circle"></i> غائبين</span>
+                    <span class="value red">{{ attendance_stats.absent }}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="label"><i class="fas fa-plane"></i> إجازة</span>
+                    <span class="value orange">{{ attendance_stats.leave }}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="label"><i class="fas fa-hospital"></i> مرضى</span>
+                    <span class="value purple">{{ attendance_stats.sick }}</span>
+                </div>
             </div>
         </div>
 
-        <div class="data-card">
-            <h3>توزيع الموظفين حسب القسم</h3>
-            <div class="chart-container">
+        <div class="chart-card">
+            <div class="chart-title">
+                <i class="fas fa-car-side"></i>
+                <span>حالة السيارات</span>
+            </div>
+            <div class="stats-list">
+                {% for status, count in vehicle_stats.items() %}
+                <div class="stat-item">
+                    <span class="label">
+                        {% if status == 'available' %}<i class="fas fa-check"></i> متاحة
+                        {% elif status == 'in_project' %}<i class="fas fa-briefcase"></i> في المشروع
+                        {% elif status == 'in_workshop' %}<i class="fas fa-wrench"></i> في الورشة
+                        {% elif status == 'out_of_service' %}<i class="fas fa-ban"></i> خارج الخدمة
+                        {% elif status == 'accident' %}<i class="fas fa-car-crash"></i> حادث
+                        {% else %}<i class="fas fa-question"></i> {{ status }}
+                        {% endif %}
+                    </span>
+                    <span class="value {% if status == 'available' or status == 'in_project' %}green{% elif status == 'accident' %}red{% elif status == 'in_workshop' %}orange{% else %}cyan{% endif %}">{{ count }}</span>
+                </div>
+                {% endfor %}
+                {% if not vehicle_stats %}
+                <div class="empty-state">
+                    <i class="fas fa-car"></i>
+                    <p>لا توجد بيانات سيارات</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="chart-card">
+            <div class="chart-title">
+                <i class="fas fa-file-contract"></i>
+                <span>حالة الوثائق</span>
+            </div>
+            <div class="stats-list">
+                <div class="stat-item">
+                    <span class="label"><i class="fas fa-check-double"></i> سارية</span>
+                    <span class="value green">{{ doc_stats.valid }}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="label"><i class="fas fa-clock"></i> تنتهي قريباً</span>
+                    <span class="value orange">{{ doc_stats.expiring }}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="label"><i class="fas fa-exclamation-triangle"></i> منتهية</span>
+                    <span class="value red">{{ doc_stats.expired }}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="label"><i class="fas fa-folder"></i> الإجمالي</span>
+                    <span class="value cyan">{{ doc_stats.total }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="chart-card" style="grid-column: span 2;">
+            <div class="chart-title">
+                <i class="fas fa-chart-bar"></i>
+                <span>توزيع الموظفين حسب القسم</span>
+            </div>
+            <div class="chart-container large">
                 <canvas id="deptChart"></canvas>
             </div>
         </div>
     </div>
 
-    <h2 class="section-title">الحضور حسب القسم</h2>
-    
-    <div class="data-card">
+    <h2 class="section-title">
+        <i class="fas fa-building"></i>
+        الحضور حسب القسم
+    </h2>
+
+    <div class="dept-table-card">
         <table class="dept-table">
             <thead>
                 <tr>
-                    <th>القسم</th>
-                    <th>عدد الموظفين</th>
-                    <th>الحضور</th>
-                    <th>إجمالي السجلات</th>
-                    <th>النسبة</th>
-                    <th>الأداء</th>
+                    <th><i class="fas fa-building"></i> القسم</th>
+                    <th><i class="fas fa-users"></i> الموظفين</th>
+                    <th><i class="fas fa-check"></i> الحضور</th>
+                    <th><i class="fas fa-list"></i> السجلات</th>
+                    <th><i class="fas fa-percentage"></i> النسبة</th>
+                    <th><i class="fas fa-star"></i> الأداء</th>
                 </tr>
             </thead>
             <tbody>
@@ -371,39 +777,37 @@
                     <td>{{ dept.employee_count }}</td>
                     <td style="color: var(--green);">{{ dept.present }}</td>
                     <td>{{ dept.total }}</td>
-                    <td style="color: var(--gold);">{{ dept.rate }}%</td>
+                    <td>
+                        <div class="progress-bar-mini">
+                            <div class="fill {% if dept.rate >= 90 %}style="background: var(--green);"{% elif dept.rate >= 75 %}style="background: var(--cyan);"{% elif dept.rate >= 60 %}style="background: var(--orange);"{% else %}style="background: var(--red);"{% endif %}" style="width: {{ dept.rate }}%; background: {% if dept.rate >= 90 %}var(--green){% elif dept.rate >= 75 %}var(--cyan){% elif dept.rate >= 60 %}var(--orange){% else %}var(--red){% endif %};"></div>
+                        </div>
+                        <span style="color: var(--cyan);">{{ dept.rate }}%</span>
+                    </td>
                     <td>
                         {% if dept.rate >= 90 %}
-                        <span class="rate-badge excellent">ممتاز</span>
+                        <span class="rate-badge excellent"><i class="fas fa-star"></i> ممتاز</span>
                         {% elif dept.rate >= 75 %}
-                        <span class="rate-badge good">جيد</span>
+                        <span class="rate-badge good"><i class="fas fa-thumbs-up"></i> جيد</span>
                         {% elif dept.rate >= 60 %}
-                        <span class="rate-badge average">متوسط</span>
+                        <span class="rate-badge average"><i class="fas fa-minus"></i> متوسط</span>
                         {% else %}
-                        <span class="rate-badge poor">ضعيف</span>
+                        <span class="rate-badge poor"><i class="fas fa-arrow-down"></i> ضعيف</span>
                         {% endif %}
                     </td>
                 </tr>
                 {% endfor %}
                 {% if not dept_attendance %}
                 <tr>
-                    <td colspan="6" style="text-align: center; color: var(--text-muted);">لا توجد بيانات حضور للأقسام</td>
+                    <td colspan="6">
+                        <div class="empty-state">
+                            <i class="fas fa-inbox"></i>
+                            <p>لا توجد بيانات حضور للأقسام في الفترة المحددة</p>
+                        </div>
+                    </td>
                 </tr>
                 {% endif %}
             </tbody>
         </table>
-    </div>
-
-    <h2 class="section-title">قائمة الأقسام</h2>
-    
-    <div class="kpi-grid">
-        {% for dept in departments %}
-        <div class="kpi-card">
-            <div class="kpi-icon">🏢</div>
-            <div class="kpi-value" style="font-size: 1.2rem;">{{ dept.name }}</div>
-            <div class="kpi-label">قسم</div>
-        </div>
-        {% endfor %}
     </div>
 </div>
 
@@ -424,9 +828,26 @@ document.addEventListener('DOMContentLoaded', function() {
                         label: 'عدد الموظفين',
                         data: deptCounts,
                         backgroundColor: [
-                            '#38EF7D', '#667EEA', '#FFA500', '#F2C811',
-                            '#0d6efd', '#11998e', '#EF4444', '#1d4ed8'
+                            'rgba(0, 212, 255, 0.7)',
+                            'rgba(0, 245, 212, 0.7)',
+                            'rgba(123, 104, 238, 0.7)',
+                            'rgba(255, 215, 0, 0.7)',
+                            'rgba(0, 255, 136, 0.7)',
+                            'rgba(255, 140, 0, 0.7)',
+                            'rgba(255, 71, 87, 0.7)',
+                            'rgba(138, 43, 226, 0.7)'
                         ],
+                        borderColor: [
+                            'rgba(0, 212, 255, 1)',
+                            'rgba(0, 245, 212, 1)',
+                            'rgba(123, 104, 238, 1)',
+                            'rgba(255, 215, 0, 1)',
+                            'rgba(0, 255, 136, 1)',
+                            'rgba(255, 140, 0, 1)',
+                            'rgba(255, 71, 87, 1)',
+                            'rgba(138, 43, 226, 1)'
+                        ],
+                        borderWidth: 2,
                         borderRadius: 8
                     }]
                 },
@@ -439,11 +860,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     scales: {
                         y: {
                             beginAtZero: true,
-                            ticks: { color: '#a0a0a0' },
-                            grid: { color: 'rgba(255,255,255,0.05)' }
+                            ticks: { color: '#8892a0', font: { size: 11 } },
+                            grid: { color: 'rgba(0, 212, 255, 0.05)' }
                         },
                         x: {
-                            ticks: { color: '#a0a0a0' },
+                            ticks: { color: '#8892a0', font: { size: 10 } },
                             grid: { display: false }
                         }
                     }

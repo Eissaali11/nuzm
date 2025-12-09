@@ -29,9 +29,26 @@ def dashboard():
     total_vehicles = Vehicle.query.count()
     total_documents = Document.query.count()
     
-    # إحصائيات الحضور (آخر 30 يوم)
-    date_from = datetime.now().date() - timedelta(days=30)
-    date_to = datetime.now().date()
+    # فلاتر التاريخ
+    date_from_str = request.args.get('date_from')
+    date_to_str = request.args.get('date_to')
+    department_id = request.args.get('department_id')
+    
+    if date_from_str:
+        try:
+            date_from = datetime.strptime(date_from_str, '%Y-%m-%d').date()
+        except:
+            date_from = datetime.now().date() - timedelta(days=30)
+    else:
+        date_from = datetime.now().date() - timedelta(days=30)
+    
+    if date_to_str:
+        try:
+            date_to = datetime.strptime(date_to_str, '%Y-%m-%d').date()
+        except:
+            date_to = datetime.now().date()
+    else:
+        date_to = datetime.now().date()
     
     attendance_records = Attendance.query.filter(
         Attendance.date >= date_from,
