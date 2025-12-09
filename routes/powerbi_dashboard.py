@@ -53,10 +53,37 @@ def dashboard():
     if date_from > date_to:
         date_from, date_to = date_to, date_from
     
+    # تحديد الأقسام المستهدفة حسب الفلتر
+    if department_id:
+        try:
+            dept_id = int(department_id)
+            target_departments = [d for d in departments if d.id == dept_id]
+        except:
+            target_departments = departments
+    else:
+        target_departments = departments
+    
+    # جلب موظفي الأقسام المستهدفة النشطين
+    if department_id:
+        try:
+            dept_id = int(department_id)
+            active_emp_query = db.session.query(Employee.id).join(
+                Employee.departments
+            ).filter(
+                Department.id == dept_id,
+                Employee.status == 'active'
+            )
+            active_emp_ids = [e[0] for e in active_emp_query.all()]
+        except:
+            active_emp_ids = [e.id for e in Employee.query.filter(Employee.status == 'active').all()]
+    else:
+        active_emp_ids = [e.id for e in Employee.query.filter(Employee.status == 'active').all()]
+    
     # جلب الموظفين النشطين فقط الذين لهم حضور في الفترة المحددة
     active_employee_ids_with_attendance = db.session.query(Attendance.employee_id).filter(
         Attendance.date >= date_from,
-        Attendance.date <= date_to
+        Attendance.date <= date_to,
+        Attendance.employee_id.in_(active_emp_ids) if active_emp_ids else Attendance.employee_id.isnot(None)
     ).distinct().all()
     active_employee_ids_with_attendance = [e[0] for e in active_employee_ids_with_attendance]
     
@@ -69,12 +96,10 @@ def dashboard():
     total_employees = active_employees_count
     
     # سجلات الحضور للموظفين النشطين فقط
-    active_emp_ids = [e.id for e in Employee.query.filter(Employee.status == 'active').all()]
-    
     attendance_records = Attendance.query.filter(
         Attendance.date >= date_from,
         Attendance.date <= date_to,
-        Attendance.employee_id.in_(active_emp_ids)
+        Attendance.employee_id.in_(active_emp_ids) if active_emp_ids else Attendance.employee_id.isnot(None)
     ).all()
     
     attendance_stats = {
@@ -95,7 +120,7 @@ def dashboard():
     
     # الحضور حسب القسم - الموظفين النشطين فقط الذين لهم حضور
     dept_attendance = []
-    for dept in departments:
+    for dept in target_departments:
         # جلب موظفي القسم النشطين فقط
         emp_ids = db.session.query(Employee.id).join(
             Employee.departments
