@@ -883,31 +883,32 @@ def export_data():
         data1 = Reference(ws, min_col=2, min_row=11, max_row=15)
         pie1.add_data(data1, titles_from_data=True)
         pie1.set_categories(labels1)
-        pie1.width = 12
-        pie1.height = 9
+        pie1.width = 10
+        pie1.height = 7
         pie1.dataLabels = DataLabelList()
         pie1.dataLabels.showPercent = True
         pie1.dataLabels.showCatName = True
         ws.add_chart(pie1, "F11")
         
-        # === قسم السيارات ===
-        ws.merge_cells('A17:I17')
-        ws['A17'] = "🚗 حالة أسطول السيارات"
-        ws['A17'].font = section_font
-        ws['A17'].fill = header_fill
-        ws['A17'].alignment = Alignment(horizontal='center', vertical='center')
-        ws['A17'].border = accent_border
-        ws.row_dimensions[17].height = 35
+        # === قسم السيارات === (يبدأ من صف 24 لإعطاء مسافة للرسم البياني)
+        veh_start_row = 24
+        ws.merge_cells(f'A{veh_start_row}:E{veh_start_row}')
+        ws[f'A{veh_start_row}'] = "🚗 حالة أسطول السيارات"
+        ws[f'A{veh_start_row}'].font = section_font
+        ws[f'A{veh_start_row}'].fill = header_fill
+        ws[f'A{veh_start_row}'].alignment = Alignment(horizontal='center', vertical='center')
+        ws[f'A{veh_start_row}'].border = accent_border
+        ws.row_dimensions[veh_start_row].height = 35
         
-        veh_headers = ['الحالة', 'العدد', 'النسبة', 'الرسم البياني']
+        veh_headers = ['الحالة', 'العدد', 'النسبة', 'الرسم']
         for i, h in enumerate(veh_headers):
-            cell = ws.cell(row=18, column=i+1)
+            cell = ws.cell(row=veh_start_row+1, column=i+1)
             cell.value = h
             cell.font = cyan_font
             cell.fill = card_fill_alt
             cell.alignment = Alignment(horizontal='center', vertical='center')
             cell.border = cyan_border_thin
-        ws.row_dimensions[18].height = 28
+        ws.row_dimensions[veh_start_row+1].height = 28
         
         veh_rows = [
             ('في المشروع 🟢', in_project_vehicles, "10B981"),
@@ -916,7 +917,7 @@ def export_data():
             ('حادث ⚠️', accident_vehicles, "7B68EE")
         ]
         
-        for idx, (label, count, bar_color) in enumerate(veh_rows, start=19):
+        for idx, (label, count, bar_color) in enumerate(veh_rows, start=veh_start_row+2):
             pct = round((count / total_vehicles * 100), 1) if total_vehicles > 0 else 0
             
             ws.cell(row=idx, column=1).value = label
@@ -945,40 +946,43 @@ def export_data():
             
             ws.row_dimensions[idx].height = 26
         
+        veh_end_row = veh_start_row + 5
+        
         doughnut1 = DoughnutChart()
         doughnut1.title = "حالة الأسطول"
-        labels2 = Reference(ws, min_col=1, min_row=19, max_row=22)
-        data2 = Reference(ws, min_col=2, min_row=18, max_row=22)
+        labels2 = Reference(ws, min_col=1, min_row=veh_start_row+2, max_row=veh_end_row)
+        data2 = Reference(ws, min_col=2, min_row=veh_start_row+1, max_row=veh_end_row)
         doughnut1.add_data(data2, titles_from_data=True)
         doughnut1.set_categories(labels2)
-        doughnut1.width = 12
-        doughnut1.height = 9
+        doughnut1.width = 10
+        doughnut1.height = 7
         doughnut1.dataLabels = DataLabelList()
         doughnut1.dataLabels.showPercent = True
-        ws.add_chart(doughnut1, "F18")
+        ws.add_chart(doughnut1, f"F{veh_start_row}")
         
-        # === قسم الأقسام ===
+        # === قسم الأقسام === (يبدأ بعد قسم السيارات مع مسافة)
         departments = Department.query.all()
         
-        ws.merge_cells('A25:I25')
-        ws['A25'] = "🏢 نسبة الحضور حسب القسم - الموظفين النشطين"
-        ws['A25'].font = section_font
-        ws['A25'].fill = header_fill
-        ws['A25'].alignment = Alignment(horizontal='center', vertical='center')
-        ws['A25'].border = accent_border
-        ws.row_dimensions[25].height = 35
+        dept_start_row = veh_end_row + 10
+        ws.merge_cells(f'A{dept_start_row}:E{dept_start_row}')
+        ws[f'A{dept_start_row}'] = "🏢 نسبة الحضور حسب القسم - الموظفين النشطين"
+        ws[f'A{dept_start_row}'].font = section_font
+        ws[f'A{dept_start_row}'].fill = header_fill
+        ws[f'A{dept_start_row}'].alignment = Alignment(horizontal='center', vertical='center')
+        ws[f'A{dept_start_row}'].border = accent_border
+        ws.row_dimensions[dept_start_row].height = 35
         
         dept_headers = ['القسم', 'الموظفين', 'الحضور', 'النسبة', 'التقييم']
         for i, h in enumerate(dept_headers):
-            cell = ws.cell(row=26, column=i+1)
+            cell = ws.cell(row=dept_start_row+1, column=i+1)
             cell.value = h
             cell.font = cyan_font
             cell.fill = card_fill_alt
             cell.alignment = Alignment(horizontal='center', vertical='center')
             cell.border = cyan_border_thin
-        ws.row_dimensions[26].height = 28
+        ws.row_dimensions[dept_start_row+1].height = 28
         
-        dept_row = 27
+        dept_row = dept_start_row + 2
         for dept in departments[:10]:
             # جلب موظفي القسم النشطين فقط
             emp_ids = db.session.query(Employee.id).join(
@@ -1059,24 +1063,24 @@ def export_data():
             ws.row_dimensions[dept_row].height = 26
             dept_row += 1
         
-        if dept_row > 27:
+        if dept_row > dept_start_row + 2:
             bar1 = BarChart()
             bar1.type = "col"
             bar1.style = 12
             bar1.title = "نسبة الحضور بالأقسام"
             bar1.y_axis.title = "النسبة %"
             
-            data_bar = Reference(ws, min_col=4, min_row=26, max_row=dept_row-1)
-            cats_bar = Reference(ws, min_col=1, min_row=27, max_row=dept_row-1)
+            data_bar = Reference(ws, min_col=4, min_row=dept_start_row+1, max_row=dept_row-1)
+            cats_bar = Reference(ws, min_col=1, min_row=dept_start_row+2, max_row=dept_row-1)
             bar1.add_data(data_bar, titles_from_data=True)
             bar1.set_categories(cats_bar)
-            bar1.width = 14
-            bar1.height = 10
+            bar1.width = 10
+            bar1.height = 7
             bar1.dataLabels = DataLabelList()
             bar1.dataLabels.showVal = True
-            ws.add_chart(bar1, "G26")
+            ws.add_chart(bar1, f"G{dept_start_row}")
         
-        # === قسم الوثائق ===
+        # === قسم الوثائق === (يبدأ بعد الأقسام مع مسافة كافية للرسم)
         doc_counts = db.session.query(
             Document.employee_id,
             func.count(Document.id)
@@ -1085,8 +1089,8 @@ def export_data():
         complete_docs = sum(1 for _, cnt in doc_counts if cnt >= 4)
         incomplete_docs = max(0, total_employees - complete_docs)
         
-        doc_start = dept_row + 2
-        ws.merge_cells(f'A{doc_start}:I{doc_start}')
+        doc_start = dept_row + 10
+        ws.merge_cells(f'A{doc_start}:E{doc_start}')
         ws[f'A{doc_start}'] = "📄 حالة اكتمال الوثائق - الموظفين النشطين"
         ws[f'A{doc_start}'].font = section_font
         ws[f'A{doc_start}'].fill = header_fill
@@ -1142,11 +1146,11 @@ def export_data():
         data3 = Reference(ws, min_col=2, min_row=doc_start+1, max_row=doc_start+3)
         pie3.add_data(data3, titles_from_data=True)
         pie3.set_categories(labels3)
-        pie3.width = 12
-        pie3.height = 9
+        pie3.width = 10
+        pie3.height = 7
         pie3.dataLabels = DataLabelList()
         pie3.dataLabels.showPercent = True
-        ws.add_chart(pie3, f"F{doc_start}")
+        ws.add_chart(pie3, f"G{doc_start}")
         
         # ألوان للتقارير التفصيلية
         detail_header_fill = PatternFill(start_color="1F2937", end_color="1F2937", fill_type="solid")
