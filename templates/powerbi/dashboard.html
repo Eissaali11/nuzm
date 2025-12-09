@@ -219,87 +219,235 @@
     }
 
     @media print {
-        body {
-            background: white !important;
+        * {
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
+            color-adjust: exact !important;
         }
 
-        .pbi-dashboard {
-            background: white !important;
+        @page {
+            size: A4 landscape;
+            margin: 0.5cm;
+        }
+
+        body {
+            background: #0a0e17 !important;
+            margin: 0 !important;
             padding: 0 !important;
         }
 
-        .header-actions, .filter-panel, .filter-btn, .sidebar, nav, footer {
+        .pbi-dashboard {
+            background: linear-gradient(180deg, #0a0e17 0%, #0d1321 100%) !important;
+            padding: 0.5rem !important;
+            min-height: auto !important;
+        }
+
+        .header-actions, .filter-panel, .filter-btn, .sidebar, nav, footer, 
+        .main-content > nav, .main-content > .sidebar, .navbar, .nav-sidebar {
             display: none !important;
         }
 
         .pbi-header {
-            background: linear-gradient(135deg, #0d1321 0%, #1a2540 100%) !important;
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-            margin-bottom: 1rem !important;
+            background: linear-gradient(135deg, #131b2e 0%, rgba(0, 212, 255, 0.05) 100%) !important;
+            border: 1px solid rgba(0, 212, 255, 0.15) !important;
+            border-radius: 12px !important;
+            padding: 0.75rem 1rem !important;
+            margin-bottom: 0.75rem !important;
             page-break-after: avoid !important;
         }
 
-        .pbi-header::before, .pbi-header::after {
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
+        .pbi-header::before {
+            content: '' !important;
+            position: absolute !important;
+            top: 0 !important;
+            right: 0 !important;
+            left: 0 !important;
+            height: 3px !important;
+            background: linear-gradient(90deg, #00d4ff, #00f5d4, #7b68ee) !important;
+        }
+
+        .pbi-header::after {
+            content: '' !important;
+            position: absolute !important;
+            top: 3px !important;
+            right: 0 !important;
+            left: 0 !important;
+            height: 15px !important;
+            background: linear-gradient(180deg, rgba(0, 212, 255, 0.1), transparent) !important;
+        }
+
+        .logo-icon {
+            background: linear-gradient(135deg, #00d4ff 0%, #00f5d4 100%) !important;
+            width: 40px !important;
+            height: 40px !important;
+            border-radius: 10px !important;
+        }
+
+        .logo-icon i {
+            color: #0a0e17 !important;
+            font-size: 1.2rem !important;
+        }
+
+        .title-text h1 {
+            color: #00d4ff !important;
+            font-size: 1.3rem !important;
+            margin: 0 !important;
+        }
+
+        .title-text p {
+            color: #8892a0 !important;
+            font-size: 0.75rem !important;
+            margin: 0 !important;
         }
 
         .kpi-grid {
             display: grid !important;
             grid-template-columns: repeat(5, 1fr) !important;
             gap: 0.5rem !important;
+            margin-bottom: 0.75rem !important;
             page-break-inside: avoid !important;
         }
 
         .kpi-card {
-            background: #131b2e !important;
-            border: 1px solid #00d4ff !important;
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-            padding: 0.75rem !important;
+            background: linear-gradient(145deg, #131b2e 0%, #1a2540 100%) !important;
+            border: 1px solid rgba(0, 212, 255, 0.2) !important;
+            border-radius: 10px !important;
+            padding: 0.6rem !important;
             page-break-inside: avoid !important;
+        }
+
+        .kpi-icon {
+            width: 32px !important;
+            height: 32px !important;
+            border-radius: 8px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+
+        .kpi-icon i {
+            font-size: 0.9rem !important;
         }
 
         .kpi-value {
             color: #00d4ff !important;
-            -webkit-print-color-adjust: exact !important;
+            font-size: 1.3rem !important;
+            font-weight: 700 !important;
         }
 
         .kpi-label {
             color: #8892a0 !important;
+            font-size: 0.7rem !important;
         }
 
-        .charts-grid, .data-section {
+        .kpi-change {
+            font-size: 0.65rem !important;
+        }
+
+        .charts-grid {
+            display: grid !important;
+            grid-template-columns: repeat(3, 1fr) !important;
+            gap: 0.5rem !important;
+            margin-bottom: 0.75rem !important;
             page-break-inside: avoid !important;
         }
 
         .chart-card {
-            background: #131b2e !important;
-            border: 1px solid rgba(0, 212, 255, 0.3) !important;
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
+            background: linear-gradient(145deg, #131b2e 0%, #1a2540 100%) !important;
+            border: 1px solid rgba(0, 212, 255, 0.15) !important;
+            border-radius: 12px !important;
+            padding: 0.75rem !important;
             page-break-inside: avoid !important;
+        }
+
+        .chart-header h3 {
+            color: #e8eaed !important;
+            font-size: 0.85rem !important;
+        }
+
+        .data-section {
+            page-break-inside: avoid !important;
+            margin-bottom: 0.5rem !important;
+        }
+
+        .section-header h2 {
+            color: #e8eaed !important;
+            font-size: 1rem !important;
+        }
+
+        .table-card {
+            background: linear-gradient(145deg, #131b2e 0%, #1a2540 100%) !important;
+            border: 1px solid rgba(0, 212, 255, 0.15) !important;
+            border-radius: 12px !important;
+            padding: 0.75rem !important;
         }
 
         .table-responsive {
             overflow: visible !important;
         }
 
-        table {
-            font-size: 10px !important;
+        .pbi-table {
+            font-size: 0.7rem !important;
+            background: transparent !important;
         }
 
-        .logo-icon {
-            background: linear-gradient(135deg, #00d4ff 0%, #00f5d4 100%) !important;
-            -webkit-print-color-adjust: exact !important;
-        }
-
-        .title-text h1 {
+        .pbi-table thead th {
+            background: rgba(0, 212, 255, 0.1) !important;
             color: #00d4ff !important;
-            -webkit-text-fill-color: #00d4ff !important;
+            font-size: 0.7rem !important;
+            padding: 0.4rem !important;
+            border-bottom: 1px solid rgba(0, 212, 255, 0.2) !important;
+        }
+
+        .pbi-table tbody td {
+            background: transparent !important;
+            color: #e8eaed !important;
+            padding: 0.35rem !important;
+            border-bottom: 1px solid rgba(0, 212, 255, 0.1) !important;
+        }
+
+        .pbi-table tbody tr:hover {
+            background: rgba(0, 212, 255, 0.05) !important;
+        }
+
+        .pbi-table .total-row td {
+            background: rgba(0, 212, 255, 0.15) !important;
+            font-weight: 700 !important;
+            color: #00d4ff !important;
+        }
+
+        .badge {
+            font-size: 0.6rem !important;
+            padding: 0.2rem 0.4rem !important;
+            border-radius: 4px !important;
+        }
+
+        .badge-excellent {
+            background: rgba(0, 255, 136, 0.2) !important;
+            color: #00ff88 !important;
+        }
+
+        .badge-good {
+            background: rgba(0, 212, 255, 0.2) !important;
+            color: #00d4ff !important;
+        }
+
+        .badge-average {
+            background: rgba(255, 215, 0, 0.2) !important;
+            color: #ffd700 !important;
+        }
+
+        .badge-poor {
+            background: rgba(255, 71, 87, 0.2) !important;
+            color: #ff4757 !important;
+        }
+
+        canvas {
+            max-height: 150px !important;
+        }
+
+        .insights-panel {
+            display: none !important;
         }
     }
 
