@@ -621,7 +621,7 @@
                                 </td>
                                 <td class="table-actions">
                                     <div class="btn-group">
-                                        <a href="{{ url_for('vehicles.view', id=vehicle.id) }}" class="btn btn-info btn-sm" title="عرض التفاصيل">
+                                        <a href="{{ url_for('vehicles.view_encoded', encoded_id=vehicle.id|encode_vehicle_id) }}" class="btn btn-info btn-sm" title="عرض التفاصيل">
                                             <i class="fas fa-eye"></i>
                                         </a>
                                         <a href="{{ url_for('vehicles.edit', id=vehicle.id) }}" class="btn btn-warning btn-sm" title="تعديل">

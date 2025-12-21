@@ -1,20 +1,24 @@
 """
 أداة تشفير وفك تشفير المعرفات للروابط
 تستخدم لإخفاء المعرفات الرقمية المتسلسلة في الروابط
+يتطلب وجود متغير البيئة SESSION_SECRET للعمل بشكل آمن
 """
 import hashlib
+import hmac
 import os
 from functools import lru_cache
 
-# مفتاح سري للتشفير - يستخدم من متغيرات البيئة أو قيمة افتراضية
-SECRET_KEY = os.environ.get('SESSION_SECRET', 'nuzum-secure-key-2024')
+# مفتاح سري للتشفير - مطلوب من متغيرات البيئة
+SECRET_KEY = os.environ.get('SESSION_SECRET')
+if not SECRET_KEY:
+    raise RuntimeError("SESSION_SECRET environment variable is required for ID encoding security")
 
 # الأحرف المستخدمة في التشفير (Base62)
 ALPHABET = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
 BASE = len(ALPHABET)
 
-# Salt للتشفير
-SALT = hashlib.sha256(SECRET_KEY.encode()).hexdigest()[:8]
+# Salt للتشفير باستخدام HMAC للمزيد من الأمان
+SALT = hmac.new(SECRET_KEY.encode(), b'id_encoder_salt', hashlib.sha256).hexdigest()[:16]
 
 def encode_id(id_value: int, prefix: str = '') -> str:
     """
@@ -43,7 +47,7 @@ def encode_id(id_value: int, prefix: str = '') -> str:
             result = ALPHABET[encoded_value % BASE] + result
             encoded_value //= BASE
     
-    # إضافة checksum بسيط
+    # إضافة checksum باستخدام HMAC (6 أحرف بدلاً من 2)
     checksum = _calculate_checksum(id_value, prefix)
     
     # دمج النتيجة مع checksum
@@ -65,12 +69,12 @@ def decode_id(encoded_str: str, prefix: str = '') -> int:
     Raises:
         ValueError: إذا كانت السلسلة غير صالحة
     """
-    if not encoded_str or len(encoded_str) < 3:
+    if not encoded_str or len(encoded_str) < 7:
         raise ValueError("سلسلة التشفير غير صالحة")
     
-    # فصل checksum عن الرقم المشفر
-    checksum = encoded_str[:2]
-    encoded_number = encoded_str[2:]
+    # فصل checksum عن الرقم المشفر (6 أحرف للـ checksum)
+    checksum = encoded_str[:6]
+    encoded_number = encoded_str[6:]
     
     # تحويل من Base62 إلى رقم
     decoded_value = 0
@@ -94,10 +98,10 @@ def decode_id(encoded_str: str, prefix: str = '') -> int:
     return original_id
 
 def _calculate_checksum(id_value: int, prefix: str) -> str:
-    """حساب checksum بسيط للتحقق من صحة المعرف"""
-    data = f"{SALT}{prefix}{id_value}"
-    hash_result = hashlib.md5(data.encode()).hexdigest()
-    return hash_result[:2]
+    """حساب checksum باستخدام HMAC للتحقق من صحة المعرف"""
+    data = f"{prefix}{id_value}".encode()
+    hash_result = hmac.new(SECRET_KEY.encode(), data, hashlib.sha256).hexdigest()
+    return hash_result[:6]  # 6 أحرف = 2^24 احتمال (~16 مليون)
 
 @lru_cache(maxsize=10000)
 def encode_id_cached(id_value: int, prefix: str = '') -> str:

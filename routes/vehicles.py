@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, current_app, send_file, make_response
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, current_app, send_file, make_response, abort
 from flask_login import login_required, current_user
 from flask_wtf import FlaskForm
 from werkzeug.utils import secure_filename
@@ -16,6 +16,7 @@ import base64
 import uuid
 
 from app import db
+from utils.id_encoder import encode_vehicle_id, decode_vehicle_id
 from models import (
         Vehicle, VehicleRental, VehicleWorkshop, VehicleWorkshopImage, 
         VehicleProject, VehicleHandover, VehicleHandoverImage, SystemAudit,
@@ -1179,6 +1180,18 @@ def create():
 
 # في vehicles_bp.py
 
+
+# مسار بمعرف مشفر (الطريقة الآمنة) - يستخدم في الروابط الخارجية
+@vehicles_bp.route('/v/<string:encoded_id>')
+@login_required
+def view_encoded(encoded_id):
+    """عرض تفاصيل سيارة باستخدام معرف مشفر"""
+    try:
+        vehicle_id = decode_vehicle_id(encoded_id)
+        return view(vehicle_id)
+    except ValueError:
+        flash('رابط غير صالح', 'error')
+        return redirect(url_for('vehicles.index'))
 @vehicles_bp.route('/<int:id>')
 @login_required
 def view(id):
