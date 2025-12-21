@@ -3036,6 +3036,10 @@ def create_handover(id):
 
             # جلب كائنات الموظفين
             driver = Employee.query.get(employee_id_str) if employee_id_str and employee_id_str.isdigit() else None
+            # إذا لم يتم اختيار موظف من القائمة، ابحث عنه بالاسم
+            if not driver and person_name_from_form:
+                driver = Employee.query.filter(Employee.name.ilike(f"%{person_name_from_form.strip()}%")).first()
+            
             supervisor = Employee.query.get(supervisor_employee_id_str) if supervisor_employee_id_str and supervisor_employee_id_str.isdigit() else None
 
             # 2. إنشاء كائن VehicleHandover وتعبئته بالبيانات
