@@ -561,6 +561,10 @@ with app.app_context():
 
     # إضافة دوال مساعدة لقوالب Jinja
     from utils.user_helpers import get_role_display_name, get_module_display_name, format_permissions, check_module_access
+    
+    # تسجيل فلاتر تشفير المعرفات للروابط الآمنة
+    from utils.id_encoder import register_template_filters
+    register_template_filters(app)
 
     # إضافة مرشح bitwise_and لاستخدامه في قوالب Jinja2
     @app.template_filter('bitwise_and')
