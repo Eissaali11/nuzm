@@ -2221,6 +2221,74 @@ def export_safety_check_pdf_english(check_id):
         flash('حدث خطأ في تصدير التقرير', 'error')
         return redirect(url_for('external_safety.admin_view_safety_check', check_id=check_id))
 
+@external_safety_bp.route('/admin/external-safety-check/<int:check_id>/upload-file', methods=['POST'])
+def upload_safety_check_file(check_id):
+    """رفع ملف PDF أو إضافة رابط خارجي لفحص السلامة"""
+    if not current_user.is_authenticated:
+        flash('يرجى تسجيل الدخول أولاً', 'error')
+        return redirect('/login')
+    
+    try:
+        from werkzeug.utils import secure_filename
+        import uuid
+        
+        safety_check = VehicleExternalSafetyCheck.query.get_or_404(check_id)
+        
+        # معالجة ملف PDF المرفوع
+        pdf_file = request.files.get('pdf_file')
+        if pdf_file and pdf_file.filename:
+            # التحقق من نوع الملف
+            if not pdf_file.filename.lower().endswith('.pdf'):
+                flash('يجب أن يكون الملف من نوع PDF', 'error')
+                return redirect(url_for('external_safety.admin_view_safety_check', check_id=check_id))
+            
+            # إنشاء اسم فريد للملف
+            original_filename = secure_filename(pdf_file.filename)
+            unique_filename = f"safety_check_{check_id}_{uuid.uuid4().hex[:8]}_{original_filename}"
+            
+            # حفظ الملف
+            upload_folder = os.path.join(current_app.root_path, 'static', 'uploads', 'safety_check_pdfs')
+            os.makedirs(upload_folder, exist_ok=True)
+            
+            file_path = os.path.join(upload_folder, unique_filename)
+            pdf_file.save(file_path)
+            
+            # تحديث مسار الملف في قاعدة البيانات
+            safety_check.pdf_file_path = f"safety_check_pdfs/{unique_filename}"
+            current_app.logger.info(f"تم رفع ملف PDF: {unique_filename}")
+        
+        # معالجة الرابط الخارجي
+        external_link = request.form.get('external_link', '').strip()
+        if external_link:
+            # التحقق من صحة الرابط
+            if not external_link.startswith(('http://', 'https://')):
+                flash('الرابط يجب أن يبدأ بـ http:// أو https://', 'error')
+                return redirect(url_for('external_safety.admin_view_safety_check', check_id=check_id))
+            
+            safety_check.drive_pdf_link = external_link
+            current_app.logger.info(f"تم إضافة رابط خارجي: {external_link[:50]}...")
+        
+        # حفظ التغييرات
+        db.session.commit()
+        
+        # تسجيل العملية
+        log_audit(
+            user_id=current_user.id,
+            action='upload_file',
+            entity_type='VehicleExternalSafetyCheck',
+            entity_id=safety_check.id,
+            details=f'تم تحديث ملف/رابط فحص السلامة للسيارة {safety_check.vehicle_plate_number}'
+        )
+        
+        flash('تم حفظ الملف/الرابط بنجاح', 'success')
+        return redirect(url_for('external_safety.admin_view_safety_check', check_id=check_id))
+        
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"خطأ في رفع الملف: {str(e)}")
+        flash('حدث خطأ في حفظ الملف', 'error')
+        return redirect(url_for('external_safety.admin_view_safety_check', check_id=check_id))
+
 @external_safety_bp.route('/admin/bulk-delete-safety-checks', methods=['POST'])
 def bulk_delete_safety_checks():
     """حذف عدة طلبات فحص سلامة جماعياً"""

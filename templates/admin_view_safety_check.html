@@ -391,6 +391,72 @@
             </div>
             {% endif %}
             
+            <!-- ملف PDF أو رابط الفحص -->
+            <h3 class="section-title">📎 ملف الفحص أو الرابط</h3>
+            <div class="notes-section" style="border-left-color: #3b82f6;">
+                {% if safety_check.pdf_file_path or safety_check.drive_pdf_link %}
+                <div style="display: flex; flex-wrap: wrap; gap: 15px; align-items: center;">
+                    {% if safety_check.pdf_file_path %}
+                    <a href="{{ url_for('static', filename='uploads/' + safety_check.pdf_file_path) }}" 
+                       target="_blank" 
+                       class="btn-primary" 
+                       style="text-decoration: none; font-size: 14px;">
+                        <i class="fas fa-file-pdf"></i> عرض ملف PDF المرفق
+                    </a>
+                    {% endif %}
+                    {% if safety_check.drive_pdf_link %}
+                    <a href="{{ safety_check.drive_pdf_link }}" 
+                       target="_blank" 
+                       class="btn-secondary" 
+                       style="text-decoration: none; font-size: 14px; background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: white; border: none;">
+                        <i class="fas fa-external-link-alt"></i> فتح الرابط الخارجي
+                    </a>
+                    {% endif %}
+                </div>
+                {% else %}
+                <p class="empty-notes" style="margin-bottom: 15px;">لا يوجد ملف PDF أو رابط مرفق بهذا الفحص</p>
+                {% endif %}
+                
+                <!-- نموذج إضافة ملف أو رابط جديد -->
+                <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(148, 163, 184, 0.2);">
+                    <h4 style="color: #18b2b0; margin-bottom: 15px; font-size: 14px;">
+                        <i class="fas fa-plus-circle"></i> إضافة / تحديث ملف أو رابط
+                    </h4>
+                    <form action="{{ url_for('external_safety.upload_safety_check_file', check_id=safety_check.id) }}" 
+                          method="POST" 
+                          enctype="multipart/form-data"
+                          style="display: flex; flex-direction: column; gap: 15px;">
+                        
+                        <!-- رفع ملف PDF -->
+                        <div>
+                            <label style="color: #94a3b8; font-size: 12px; display: block; margin-bottom: 6px;">
+                                <i class="fas fa-file-pdf"></i> رفع ملف PDF
+                            </label>
+                            <input type="file" 
+                                   name="pdf_file" 
+                                   accept=".pdf,application/pdf"
+                                   style="background: rgba(71, 85, 105, 0.3); border: 1px solid rgba(148, 163, 184, 0.3); border-radius: 8px; padding: 10px; color: #f1f5f9; width: 100%; font-size: 13px;">
+                        </div>
+                        
+                        <!-- أو إضافة رابط -->
+                        <div>
+                            <label style="color: #94a3b8; font-size: 12px; display: block; margin-bottom: 6px;">
+                                <i class="fas fa-link"></i> أو أضف رابط خارجي (Google Drive, Dropbox, إلخ)
+                            </label>
+                            <input type="url" 
+                                   name="external_link" 
+                                   placeholder="https://..."
+                                   value="{{ safety_check.drive_pdf_link or '' }}"
+                                   style="background: rgba(71, 85, 105, 0.3); border: 1px solid rgba(148, 163, 184, 0.3); border-radius: 8px; padding: 12px; color: #f1f5f9; width: 100%; font-size: 13px;">
+                        </div>
+                        
+                        <button type="submit" class="btn-primary" style="align-self: flex-start;">
+                            <i class="fas fa-save"></i> حفظ
+                        </button>
+                    </form>
+                </div>
+            </div>
+            
             <!-- الملاحظات -->
             {% if safety_check.notes %}
             <h3 class="section-title">📝 الملاحظات</h3>

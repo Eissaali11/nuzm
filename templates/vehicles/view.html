@@ -1447,6 +1447,7 @@
                                             <th>تاريخ الفحص</th>
                                             <th>الحالة</th>
                                             <th>الصور</th>
+                                            <th>ملف/رابط</th>
                                             <th>الإجراءات</th>
                                         </tr>
                                     </thead>
@@ -1471,6 +1472,32 @@
                                             </td>
                                             <td>
                                                 <span class="badge-enhanced" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); color: white;">{{ safety_check.safety_images | length }}</span>
+                                            </td>
+                                            <td>
+                                                {% if safety_check.pdf_file_path or safety_check.drive_pdf_link %}
+                                                <div class="d-flex gap-1">
+                                                    {% if safety_check.pdf_file_path %}
+                                                    <a href="{{ url_for('static', filename='uploads/' + safety_check.pdf_file_path) }}" 
+                                                       target="_blank" 
+                                                       class="btn btn-sm" 
+                                                       style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); color: white; border: none;"
+                                                       title="ملف PDF">
+                                                        <i class="fas fa-file-pdf"></i>
+                                                    </a>
+                                                    {% endif %}
+                                                    {% if safety_check.drive_pdf_link %}
+                                                    <a href="{{ safety_check.drive_pdf_link }}" 
+                                                       target="_blank" 
+                                                       class="btn btn-sm" 
+                                                       style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: white; border: none;"
+                                                       title="رابط خارجي">
+                                                        <i class="fas fa-external-link-alt"></i>
+                                                    </a>
+                                                    {% endif %}
+                                                </div>
+                                                {% else %}
+                                                <span class="text-muted">-</span>
+                                                {% endif %}
                                             </td>
                                             <td>
                                                 <div class="btn-group" role="group">
