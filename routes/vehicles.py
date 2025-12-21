@@ -3646,6 +3646,27 @@ def edit_handover(id):
                         handover.has_tools = has_tools
                         handover.updated_at = datetime.utcnow()
 
+                        # معالجة رسم الضرر على الهيكل إن وُجد
+                        damage_diagram_data = request.form.get('damage_diagram_data')
+                        if damage_diagram_data and damage_diagram_data.startswith('data:image/'):
+                            saved_diagram_path = save_base64_image(damage_diagram_data, 'diagrams')
+                            if saved_diagram_path:
+                                handover.damage_diagram_path = saved_diagram_path
+                                current_app.logger.info(f"تم حفظ رسم الضرر الجديد: {saved_diagram_path}")
+
+                        # معالجة التواقيع
+                        supervisor_signature_data = request.form.get('supervisor_signature_data')
+                        if supervisor_signature_data and supervisor_signature_data.startswith('data:image/'):
+                            saved_sig_path = save_base64_image(supervisor_signature_data, 'signatures')
+                            if saved_sig_path:
+                                handover.supervisor_signature_path = saved_sig_path
+
+                        driver_signature_data = request.form.get('driver_signature_data')
+                        if driver_signature_data and driver_signature_data.startswith('data:image/'):
+                            saved_sig_path = save_base64_image(driver_signature_data, 'signatures')
+                            if saved_sig_path:
+                                handover.driver_signature_path = saved_sig_path
+
                         # حفظ الصور الجديدة إن وُجدت
                         files = request.files.getlist('files')
                         for file in files:

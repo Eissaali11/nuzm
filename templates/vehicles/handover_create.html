@@ -732,6 +732,27 @@
                     scaleX: canvas.width / img.width,
                     scaleY: canvas.height / img.height
                 });
+                
+                // تحميل رسم الضرر الموجود في وضع التعديل
+                {% if edit_mode and handover and handover.damage_diagram_path %}
+                const existingDiagramUrl = "{{ url_for('static', filename=handover.damage_diagram_path.replace('static/', '')) if handover.damage_diagram_path else '' }}";
+                if (existingDiagramUrl) {
+                    fabric.Image.fromURL(existingDiagramUrl, function(existingImg) {
+                        // ضبط حجم الصورة لتناسب اللوحة
+                        existingImg.scaleToWidth(canvas.width);
+                        existingImg.scaleToHeight(canvas.height);
+                        existingImg.set({
+                            left: 0,
+                            top: 0,
+                            selectable: false,
+                            evented: false
+                        });
+                        canvas.add(existingImg);
+                        canvas.renderAll();
+                        console.log('تم تحميل رسم الضرر الموجود');
+                    }, { crossOrigin: 'anonymous' });
+                }
+                {% endif %}
             }, { crossOrigin: 'anonymous' });
 
             
@@ -779,12 +800,21 @@
             // 3. حفظ بيانات الرسم قبل إرسال النموذج
             const hiddenInput = document.getElementById('damage-diagram-data');
             
+            // متغير لتتبع ما إذا تم إجراء تغييرات على الرسم
+            let hasDrawingChanges = false;
+            
+            // تتبع أي رسم جديد
+            canvas.on('object:added', function() {
+                hasDrawingChanges = true;
+            });
+            canvas.on('path:created', function() {
+                hasDrawingChanges = true;
+            });
+            
             form.addEventListener('submit', function (event) {
-                // تحقق مما إذا كان قد تم الرسم على اللوحة
-                // canvas.getObjects() يرجع مصفوفة بالرسوم فقط (ليس الخلفية)
-                if (canvas.getObjects().length > 0) {
+                // تصدير اللوحة إذا كان هناك رسومات (سواء جديدة أو محملة)
+                if (canvas.getObjects().length > 0 || hasDrawingChanges) {
                     // تصدير اللوحة (مع الخلفية) إلى صورة Base64
-                    // نستخدم toDataURL بدون تحديد نوع الصورة لتصدير png افتراضياً
                     const imageDataURL = canvas.toDataURL({
                         format: 'png',
                         quality: 0.8
