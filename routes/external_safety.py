@@ -1659,6 +1659,19 @@ def edit_safety_check(check_id):
                         flash('يرجى رفع ملف بصيغة PDF فقط', 'error')
                         return render_template('admin_edit_safety_check.html', safety_check=safety_check)
             
+            # معالجة الرابط الخارجي (Google Drive, Dropbox, إلخ)
+            drive_pdf_link = request.form.get('drive_pdf_link', '').strip()
+            if drive_pdf_link:
+                # التحقق من صحة الرابط
+                if drive_pdf_link.startswith(('http://', 'https://')):
+                    safety_check.drive_pdf_link = drive_pdf_link
+                    current_app.logger.info(f'تم تحديث رابط خارجي للفحص {safety_check.id}: {drive_pdf_link[:50]}...')
+                else:
+                    flash('الرابط يجب أن يبدأ بـ http:// أو https://', 'warning')
+            elif 'drive_pdf_link' in request.form:
+                # إذا كان الحقل موجود لكن فارغ، نحذف الرابط
+                safety_check.drive_pdf_link = None
+            
             # معالجة رفع صور جديدة
             if 'new_images' in request.files:
                 new_images = request.files.getlist('new_images')

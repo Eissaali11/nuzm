@@ -103,6 +103,10 @@
                                                class="btn btn-sm" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); color: white; border: none;">
                                                 <i class="fas fa-eye"></i> عرض
                                             </a>
+                                            <a href="{{ url_for('external_safety.edit_safety_check', check_id=vehicle_safety_checks.id) }}" 
+                                               class="btn btn-sm" style="background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); color: white; border: none;">
+                                                <i class="fas fa-edit"></i> تعديل
+                                            </a>
                                             
                                             {% if vehicle_safety_checks.is_pending %}
                                             <form method="POST" 
