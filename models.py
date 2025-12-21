@@ -1120,6 +1120,25 @@ class VehicleHandoverImage(db.Model):
         """التحقق مما إذا كان الملف PDF"""
         file_path = self.get_path()
         return self.get_type() == 'pdf' or (file_path and file_path.lower().endswith('.pdf'))
+    
+    def file_exists(self):
+        """التحقق مما إذا كان الملف موجوداً فعلياً على القرص"""
+        import os
+        from flask import current_app
+        file_path = self.get_path()
+        if not file_path:
+            return False
+        
+        # محاولة إيجاد الملف في عدة مسارات محتملة
+        possible_paths = [
+            file_path,
+            os.path.join(current_app.root_path, file_path),
+        ]
+        
+        for path in possible_paths:
+            if os.path.exists(path):
+                return True
+        return False
 
 class VehicleChecklist(db.Model):
     """تشيك لست فحص السيارة"""

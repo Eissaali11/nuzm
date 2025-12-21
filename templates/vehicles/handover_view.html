@@ -467,7 +467,15 @@
                                     {% for image in images %}
                                         <div class="col-md-12 mb-3">
                                             <div class="handover-image">
-                                                {% if image.is_pdf() %}
+                                                {% if not image.file_exists() %}
+                                                    <!-- الملف غير موجود -->
+                                                    <div class="text-center p-4 bg-dark rounded border border-warning">
+                                                        <i class="fas fa-exclamation-triangle text-warning fa-3x mb-3"></i>
+                                                        <h6 class="text-warning mb-2">الملف غير متوفر</h6>
+                                                        <p class="text-muted small mb-0">{{ image.file_description or image.image_description or 'ملف مفقود' }}</p>
+                                                        <small class="text-muted d-block mt-2">يرجى إعادة رفع الملف</small>
+                                                    </div>
+                                                {% elif image.is_pdf() %}
                                                     <!-- عرض ملف PDF -->
                                                     <div class="pdf-preview text-center p-3 bg-dark rounded position-relative overflow-hidden" style="min-height: 200px;">
                                                         <!-- أيقونة PDF بالخلفية -->
