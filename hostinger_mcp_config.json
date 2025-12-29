@@ -1,0 +1,22 @@
+{
+  "inputs": [
+    {
+      "id": "api_token",
+      "type": "promptString",
+      "description": "أدخل مفتاح Hostinger API الخاص بك (مطلوب)"
+    }
+  ],
+  "servers": {
+    "hostinger-mcp": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "hostinger-api-mcp@latest"
+      ],
+      "env": {
+        "API_TOKEN": "5om43f07eSdSuSDBnXS3X53O17BviwydAd9myIEY5eb1e381"
+      }
+    }
+  }
+}
+
