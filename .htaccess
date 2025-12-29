@@ -1,0 +1,37 @@
+# إعدادات Apache لـ Hostinger (إذا كان يستخدم Apache)
+# ملاحظة: إذا كان Hostinger يستخدم Nginx، لن تحتاج هذا الملف
+
+# تفعيل mod_rewrite
+RewriteEngine On
+
+# توجيه جميع الطلبات إلى Python App
+# (Hostinger عادة يتعامل مع هذا تلقائياً في Python App)
+
+# حماية ملفات حساسة
+<FilesMatch "\.(env|pyc|py|log|sql|db)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# السماح بالوصول إلى static files
+<FilesMatch "\.(css|js|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$">
+    Order allow,deny
+    Allow from all
+</FilesMatch>
+
+# إعدادات الأداء
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType image/jpg "access plus 1 year"
+    ExpiresByType image/jpeg "access plus 1 year"
+    ExpiresByType image/gif "access plus 1 year"
+    ExpiresByType image/png "access plus 1 year"
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+</IfModule>
+
+# ضغط الملفات
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript
+</IfModule>
+

@@ -19,9 +19,20 @@ load_dotenv()  # تحميل المتغيرات البيئية من ملف .env
 from whatsapp_client import WhatsAppWrapper
 # ... استيراد مكتبات أخرى ...
 
+# Set up logging (يجب أن يكون قبل استخدام logger)
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+
 # إنشاء كائن واتساب واحد عند بدء تشغيل التطبيق
 # سيقوم الكلاس تلقائياً بقراءة المتغيرات من ملف .env
-whatsapp_service = WhatsAppWrapper()
+# محمي بـ try-except لتجنب الأخطاء إذا لم تكن المتغيرات موجودة
+whatsapp_service = None
+try:
+    whatsapp_service = WhatsAppWrapper()
+    logger.info("WhatsApp service initialized successfully")
+except (ValueError, Exception) as e:
+    logger.warning(f"WhatsApp service not initialized: {e}")
+    logger.info("You can set WHATSAPP_ACCESS_TOKEN and WHATSAPP_PHONE_NUMBER_ID in .env to enable WhatsApp features")
 
 # ... بقية كود التطبيق الخاص بك ...
 
@@ -41,10 +52,6 @@ ARABIC_CONFIG = {
 # استيراد مكتبة SQLAlchemy للتعامل مع MySQL
 import pymysql
 pymysql.install_as_MySQLdb()  # استخدام PyMySQL كبديل لـ MySQLdb
-
-# Set up logging
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
 
 # Base class for SQLAlchemy models
 class Base(DeclarativeBase):

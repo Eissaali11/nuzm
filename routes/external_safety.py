@@ -20,7 +20,7 @@ from sqlalchemy.orm import aliased, contains_eager
 from dotenv import load_dotenv
 import resend
 
-from whatsapp_client import WhatsAppWrapper # <-- استيراد الكلاس
+# تم نقل whatsapp_service إلى app.py لاستخدامه بشكل مركزي
 
 # دوال الإشعارات المحلية
 def create_safety_check_notification(user_id, vehicle_plate, supervisor_name, check_status, check_id):
@@ -187,7 +187,8 @@ def get_all_current_driversWithEmil():
 
 # قم بإنشاء نسخة واحدة من الكلاس على مستوى الـ Blueprint أو التطبيق
 # من الأفضل وضعها في __init__.py الخاص بالتطبيق و استيرادها
-whatsapp_service = WhatsAppWrapper() 
+# استيراد whatsapp_service من app بدلاً من إنشاء نسخة جديدة
+from app import whatsapp_service 
 
 # ----- أضف هذه الدالة الجديدة بجانب دالة send_vehicle_email -----
 
@@ -244,6 +245,9 @@ def send_vehicle_whatsapp():
     # فقط. الرابط الأساسي (e.g. https://nuzum.sa) تضعه عند تصميم القالب.
 
     # 3. استدعاء خدمة واتساب للإرسال
+    if not whatsapp_service:
+        return jsonify({'success': False, 'error': 'خدمة واتساب غير متاحة. يرجى إعداد WHATSAPP_ACCESS_TOKEN و WHATSAPP_PHONE_NUMBER_ID في ملف .env'}), 503
+    
     try:
         response = whatsapp_service.send_template_message(
             recipient_number=driver_phone, # رقم السائق مع رمز الدولة

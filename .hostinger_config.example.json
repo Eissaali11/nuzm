@@ -1,0 +1,19 @@
+{
+    "FtpHost": "ftp.yourdomain.com",
+    "FtpUser": "your_ftp_username",
+    "FtpPass": "your_ftp_password",
+    "RemotePath": "/public_html/nuzum/",
+    "Database": {
+        "Host": "localhost",
+        "Name": "nuzum_db",
+        "User": "nuzum_user",
+        "Password": "your_database_password",
+        "Port": 3306
+    },
+    "PythonApp": {
+        "Name": "nuzum",
+        "Version": "3.11",
+        "Port": 5000
+    }
+}
+
