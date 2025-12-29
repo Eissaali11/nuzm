@@ -1,0 +1,19 @@
+# Cursor Rules for Hostinger API Integration
+
+## Hostinger API Configuration
+
+API_TOKEN=5om43f07eSdSuSDBnXS3X53O17BviwydAd9myIEY5eb1e381
+API_BASE_URL=https://developers.hostinger.com/api
+
+## Deployment Settings
+
+DOMAIN=eissa.site
+GIT_REPOSITORY=https://github.com/Eissaali11/nuzm.git
+GIT_BRANCH=main
+
+## Notes
+
+- Use Git for file deployment (fastest and most reliable)
+- Use Hostinger API for monitoring and management
+- Never commit API tokens to Git
+
