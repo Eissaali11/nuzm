@@ -560,6 +560,18 @@
                                             <span>مستعرض Google Drive</span>
                                         </a>
                                     </li>
+                                    {% if current_user.role == UserRole.ADMIN %}
+                                    <li class="nav-item mb-1">
+                                        <a
+                                            href="{{ url_for('database_backup.backup_page') }}"
+                                            class="nav-link nav-link-custom {% if '/backup' in request.path %}active{% endif %}"
+                                            style="background: rgba(0, 212, 170, 0.05); border-right: 3px solid #00D4AA;"
+                                        >
+                                            <i class="fas fa-database me-2" style="color: #00D4AA;"></i>
+                                            <span>النسخ الاحتياطي</span>
+                                        </a>
+                                    </li>
+                                    {% endif %}
                                 </ul>
                             </li>
                             
