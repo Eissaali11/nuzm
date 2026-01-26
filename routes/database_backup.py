@@ -42,20 +42,28 @@ BACKUP_TABLES = {
 }
 
 def serialize_model(obj):
-    """تحويل كائن SQLAlchemy إلى قاموس"""
+    """تحويل كائن SQLAlchemy إلى قاموس مع تصدير جميع الأعمدة بدقة"""
     result = {}
     try:
-        for column in inspect(obj.__class__).columns:
+        # استخدام inspect للحصول على كافة الأعمدة بما في ذلك العلاقات إذا لزم الأمر
+        # لكن للنسخ الاحتياطي نركز على الأعمدة الفعلية في الجدول
+        mapper = inspect(obj.__class__)
+        for column in mapper.columns:
             value = getattr(obj, column.name)
+            
             if value is None:
                 result[column.name] = None
             elif isinstance(value, datetime):
                 result[column.name] = value.isoformat()
-            elif hasattr(value, 'isoformat'):
+            elif hasattr(value, 'isoformat'): # للتعامل مع Date أو Time
                 result[column.name] = value.isoformat()
             elif isinstance(value, bytes):
+                # لا يمكن تصدير البيانات الثنائية مباشرة في JSON، نحولها لـ None أو نتركها
                 result[column.name] = None
+            elif isinstance(value, (int, float, str, bool)):
+                result[column.name] = value
             else:
+                # محاولة تحويل أي أنواع أخرى لنص لضمان عدم فشل التصدير
                 try:
                     json.dumps(value)
                     result[column.name] = value
