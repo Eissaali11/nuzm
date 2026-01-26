@@ -154,10 +154,40 @@ def import_backup():
             return redirect(url_for('database_backup.backup_page'))
         
         content = file.read().decode('utf-8')
-        backup_data = json.loads(content)
+        try:
+            backup_data = json.loads(content)
+        except json.JSONDecodeError:
+            flash('ملف JSON غير صالح أو فارغ', 'error')
+            return redirect(url_for('database_backup.backup_page'))
         
-        if 'data' not in backup_data:
-            flash('ملف النسخة الاحتياطية غير صالح', 'error')
+        # Ensure we have a dictionary and handle different possible structures
+        if not isinstance(backup_data, dict):
+            flash('ملف النسخة الاحتياطية غير صالح (يجب أن يكون بتنسيق JSON Object)', 'error')
+            return redirect(url_for('database_backup.backup_page'))
+
+        if 'data' not in backup_data or not isinstance(backup_data['data'], dict):
+            # If it's a list, it might be a single table export
+            if isinstance(backup_data, list):
+                # We need to know which table this list belongs to. 
+                # Check metadata if available, otherwise we can't be sure.
+                flash('ملف النسخة الاحتياطية غير صالح (تنسيق القائمة غير مدعوم بدون معلومات الجدول)', 'error')
+                return redirect(url_for('database_backup.backup_page'))
+            
+            # If the JSON is just the records directly without the 'data' key (alternate format)
+            if isinstance(backup_data, dict):
+                # Check if it has a 'table_name' in metadata (single table export)
+                if 'metadata' in backup_data and 'table_name' in backup_data['metadata'] and isinstance(backup_data.get('data'), list):
+                    table_name = backup_data['metadata']['table_name']
+                    backup_data = {'data': {table_name: backup_data['data']}, 'metadata': backup_data.get('metadata', {})}
+                elif all(isinstance(v, list) for v in backup_data.values() if v is not None):
+                    backup_data = {'data': backup_data, 'metadata': {}}
+                else:
+                    flash('ملف النسخة الاحتياطية غير صالح (تنسيق غير مدعوم)', 'error')
+                    return redirect(url_for('database_backup.backup_page'))
+        
+        # Final check to ensure backup_data['data'] is a dict before calling .items()
+        if not isinstance(backup_data.get('data'), dict):
+            flash('ملف النسخة الاحتياطية غير صالح (بيانات الجدول يجب أن تكون قاموساً)', 'error')
             return redirect(url_for('database_backup.backup_page'))
         
         import_mode = request.form.get('import_mode', 'add')
