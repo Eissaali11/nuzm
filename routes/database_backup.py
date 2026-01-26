@@ -1,7 +1,8 @@
-from flask import Blueprint, render_template, request, jsonify, redirect, url_for, flash, send_file, Response
+from flask import Blueprint, render_template, request, jsonify, redirect, url_for, flash, send_file
 from flask_login import login_required, current_user
 from sqlalchemy import inspect
 from datetime import datetime
+from decimal import Decimal
 from models import (
     Employee, Vehicle, Department, User, Salary, Attendance, 
     MobileDevice, VehicleHandover, VehicleWorkshop, Document,
@@ -11,8 +12,9 @@ from models import (
 )
 import json
 import io
-import os
-from functools import wraps
+import logging
+
+logger = logging.getLogger(__name__)
 
 database_backup_bp = Blueprint('database_backup', __name__)
 
@@ -41,12 +43,19 @@ BACKUP_TABLES = {
     'safety_images': VehicleSafetyImage,
 }
 
+TABLE_ORDER = [
+    'departments', 'users', 'employees', 'vehicles', 'geofences',
+    'rental_properties', 'sim_cards', 'mobile_devices',
+    'documents', 'salaries', 'attendance', 'vehicle_handovers',
+    'vehicle_workshops', 'vehicle_accidents', 'employee_requests',
+    'property_payments', 'property_images', 'property_furnishings',
+    'geofence_sessions', 'voicehub_calls', 'external_safety_checks', 'safety_images'
+]
+
 def serialize_model(obj):
-    """تحويل كائن SQLAlchemy إلى قاموس مع تصدير جميع الأعمدة بدقة"""
+    """تحويل كائن SQLAlchemy إلى قاموس JSON بدقة احترافية"""
     result = {}
     try:
-        # استخدام inspect للحصول على كافة الأعمدة بما في ذلك العلاقات إذا لزم الأمر
-        # لكن للنسخ الاحتياطي نركز على الأعمدة الفعلية في الجدول
         mapper = inspect(obj.__class__)
         for column in mapper.columns:
             value = getattr(obj, column.name)
@@ -55,23 +64,52 @@ def serialize_model(obj):
                 result[column.name] = None
             elif isinstance(value, datetime):
                 result[column.name] = value.isoformat()
-            elif hasattr(value, 'isoformat'): # للتعامل مع Date أو Time
+            elif hasattr(value, 'isoformat'):
                 result[column.name] = value.isoformat()
             elif isinstance(value, bytes):
-                # لا يمكن تصدير البيانات الثنائية مباشرة في JSON، نحولها لـ None أو نتركها
                 result[column.name] = None
+            elif isinstance(value, Decimal):
+                result[column.name] = float(value)
             elif isinstance(value, (int, float, str, bool)):
                 result[column.name] = value
             else:
-                # محاولة تحويل أي أنواع أخرى لنص لضمان عدم فشل التصدير
                 try:
                     json.dumps(value)
                     result[column.name] = value
                 except (TypeError, ValueError):
                     result[column.name] = str(value)
     except Exception as e:
-        print(f"Error serializing {obj}: {e}")
+        logger.error(f"Error serializing {obj}: {e}")
     return result
+
+def parse_date_value(value):
+    """تحويل قيمة التاريخ من نص إلى كائن datetime مع الحفاظ على المنطقة الزمنية"""
+    if not value or not isinstance(value, str):
+        return value
+    try:
+        if 'T' in value:
+            cleaned = value.replace('Z', '+00:00')
+            try:
+                return datetime.fromisoformat(cleaned)
+            except:
+                return datetime.fromisoformat(cleaned.split('+')[0])
+        elif '-' in value and len(value) == 10:
+            return datetime.strptime(value, '%Y-%m-%d')
+        return value
+    except:
+        return None
+
+def get_model_columns(model):
+    """الحصول على أسماء الأعمدة وأنواعها للنموذج"""
+    mapper = inspect(model)
+    columns = {}
+    for column in mapper.columns:
+        col_type = str(column.type).upper()
+        columns[column.name] = {
+            'type': col_type,
+            'is_date': any(t in col_type for t in ['DATE', 'TIME', 'TIMESTAMP'])
+        }
+    return columns
 
 @database_backup_bp.route('/')
 @login_required
@@ -80,12 +118,13 @@ def backup_page():
     if current_user.role != UserRole.ADMIN:
         flash('غير مصرح لك بالدخول لهذه الصفحة', 'error')
         return redirect(url_for('admin_dashboard.index'))
+    
     table_stats = {}
     for table_name, model in BACKUP_TABLES.items():
         try:
             count = model.query.count()
             table_stats[table_name] = count
-        except Exception as e:
+        except Exception:
             table_stats[table_name] = 0
     
     return render_template('backup/index.html', 
@@ -98,6 +137,7 @@ def export_backup():
     """تصدير جميع البيانات كملف JSON"""
     if current_user.role != UserRole.ADMIN:
         return jsonify({'error': 'Unauthorized'}), 403
+    
     try:
         selected_tables = request.form.getlist('tables')
         if not selected_tables:
@@ -107,7 +147,7 @@ def export_backup():
             'metadata': {
                 'created_at': datetime.now().isoformat(),
                 'created_by': current_user.username if current_user.is_authenticated else 'System',
-                'version': '1.0',
+                'version': '2.0',
                 'total_tables': len(selected_tables)
             },
             'data': {}
@@ -144,144 +184,138 @@ def export_backup():
 @database_backup_bp.route('/import', methods=['POST'])
 @login_required
 def import_backup():
-    """استيراد البيانات من ملف JSON"""
+    """استيراد البيانات من ملف JSON مع تحسين الأداء"""
     if current_user.role != UserRole.ADMIN:
         return jsonify({'error': 'Unauthorized'}), 403
+    
     try:
         if 'backup_file' not in request.files:
             flash('لم يتم اختيار ملف', 'error')
             return redirect(url_for('database_backup.backup_page'))
         
         file = request.files['backup_file']
-        if file.filename == '':
+        if not file or file.filename == '':
             flash('لم يتم اختيار ملف', 'error')
-            return redirect(url_for('database_backup.backup_page'))
-        
-        if not file.filename.endswith('.json'):
-            flash('يجب أن يكون الملف بصيغة JSON', 'error')
             return redirect(url_for('database_backup.backup_page'))
         
         content = file.read().decode('utf-8')
         try:
             backup_data = json.loads(content)
         except json.JSONDecodeError:
-            flash('ملف JSON غير صالح أو فارغ', 'error')
+            flash('ملف JSON غير صالح', 'error')
             return redirect(url_for('database_backup.backup_page'))
         
-        # Ensure we have a dictionary and handle different possible structures
         if not isinstance(backup_data, dict):
-            flash('ملف النسخة الاحتياطية غير صالح (يجب أن يكون بتنسيق JSON Object)', 'error')
+            flash('ملف النسخة الاحتياطية غير صالح', 'error')
             return redirect(url_for('database_backup.backup_page'))
 
-        if 'data' not in backup_data or not isinstance(backup_data['data'], dict):
-            # If it's a list, it might be a single table export
-            if isinstance(backup_data, list):
-                # We need to know which table this list belongs to. 
-                # Check metadata if available, otherwise we can't be sure.
-                flash('ملف النسخة الاحتياطية غير صالح (تنسيق القائمة غير مدعوم بدون معلومات الجدول)', 'error')
+        if 'data' not in backup_data:
+            if all(isinstance(v, list) for v in backup_data.values() if isinstance(v, list)):
+                backup_data = {'data': backup_data}
+            elif 'metadata' in backup_data and 'table_name' in backup_data.get('metadata', {}):
+                table_name = backup_data['metadata']['table_name']
+                backup_data = {'data': {table_name: backup_data.get('data', [])}}
+            else:
+                flash('تنسيق ملف النسخة الاحتياطية غير مدعوم', 'error')
                 return redirect(url_for('database_backup.backup_page'))
-            
-            # If the JSON is just the records directly without the 'data' key (alternate format)
-            if isinstance(backup_data, dict):
-                # Check if it has a 'table_name' in metadata (single table export)
-                if 'metadata' in backup_data and 'table_name' in backup_data['metadata'] and isinstance(backup_data.get('data'), list):
-                    table_name = backup_data['metadata']['table_name']
-                    backup_data = {'data': {table_name: backup_data['data']}, 'metadata': backup_data.get('metadata', {})}
-                elif all(isinstance(v, list) for v in backup_data.values() if v is not None):
-                    backup_data = {'data': backup_data, 'metadata': {}}
-                else:
-                    flash('ملف النسخة الاحتياطية غير صالح (تنسيق غير مدعوم)', 'error')
-                    return redirect(url_for('database_backup.backup_page'))
-        
-        # Final check to ensure backup_data['data'] is a dict before calling .items()
+
         if not isinstance(backup_data.get('data'), dict):
-            flash('ملف النسخة الاحتياطية غير صالح (بيانات الجدول يجب أن تكون قاموساً)', 'error')
+            flash('بيانات الجداول يجب أن تكون بتنسيق صحيح', 'error')
             return redirect(url_for('database_backup.backup_page'))
         
         import_mode = request.form.get('import_mode', 'add')
         imported_counts = {}
         errors = []
         
-        for table_name, records in backup_data['data'].items():
+        ordered_tables = []
+        for t in TABLE_ORDER:
+            if t in backup_data['data']:
+                ordered_tables.append(t)
+        for t in backup_data['data'].keys():
+            if t not in ordered_tables and t in BACKUP_TABLES:
+                ordered_tables.append(t)
+
+        for table_name in ordered_tables:
+            records = backup_data['data'].get(table_name, [])
+            
+            if not isinstance(records, list):
+                continue
+            
             if table_name not in BACKUP_TABLES:
                 continue
             
-            if isinstance(records, dict) and 'error' in records:
-                continue
-            
             model = BACKUP_TABLES[table_name]
-            imported_count = 0
+            columns_info = get_model_columns(model)
+            valid_columns = set(columns_info.keys())
             
             try:
-                # Get columns for this model to handle potential extra data
-                mapper = inspect(model)
-                valid_columns = {c.key for c in mapper.attrs if hasattr(c, 'columns')}
-                
                 if import_mode == 'replace':
                     db.session.query(model).delete()
                     db.session.commit()
                 
-                for record in records:
-                    try:
-                        # Filter record to only include valid columns for this model
-                        filtered_record = {k: v for k, v in record.items() if k in valid_columns}
-                        
-                        if import_mode == 'add':
-                            # Try to get existing record by primary key if possible
-                            try:
-                                pk_values = [filtered_record.get(c.name) for c in mapper.primary_key]
-                                if all(v is not None for v in pk_values):
-                                    existing = db.session.get(model, pk_values[0] if len(pk_values) == 1 else tuple(pk_values))
-                                    if existing:
-                                        # Update existing record instead of skipping (prevents duplicates while keeping data fresh)
-                                        for k, v in filtered_record.items():
-                                            setattr(existing, k, v)
-                                        imported_count += 1
-                                        continue
-                            except Exception as e:
-                                print(f"Duplicate check error: {e}")
-                                pass
-                        
-                        for date_field in ['created_at', 'updated_at', 'date_joined', 'handover_date', 
-                                          'return_date', 'id_expiry', 'license_expiry', 'passport_expiry',
-                                          'contract_start', 'contract_end', 'registration_date']:
-                            if date_field in filtered_record and filtered_record[date_field]:
-                                try:
-                                    if isinstance(filtered_record[date_field], str):
-                                        if 'T' in filtered_record[date_field]:
-                                            filtered_record[date_field] = datetime.fromisoformat(filtered_record[date_field].replace('Z', '+00:00'))
-                                        else:
-                                            filtered_record[date_field] = datetime.strptime(filtered_record[date_field], '%Y-%m-%d')
-                                except:
-                                    filtered_record[date_field] = None
-                        
-                        new_obj = model(**filtered_record)
-                        db.session.merge(new_obj)
-                        imported_count += 1
-                        
-                    except Exception as e:
-                        errors.append(f"{table_name} record error: {str(e)}")
-                        continue
+                count = 0
+                batch_size = 100
+                batch_records = []
                 
-                db.session.commit()
-                imported_counts[table_name] = imported_count
+                for record in records:
+                    if not isinstance(record, dict):
+                        continue
+                    
+                    filtered_record = {}
+                    for k, v in record.items():
+                        if k not in valid_columns:
+                            continue
+                        
+                        if columns_info[k]['is_date'] and v:
+                            filtered_record[k] = parse_date_value(v)
+                        else:
+                            filtered_record[k] = v
+                    
+                    batch_records.append(filtered_record)
+                    
+                    if len(batch_records) >= batch_size:
+                        for rec in batch_records:
+                            try:
+                                db.session.merge(model(**rec))
+                                count += 1
+                            except Exception as e:
+                                logger.error(f"Record error in {table_name}: {e}")
+                        try:
+                            db.session.commit()
+                        except Exception as e:
+                            db.session.rollback()
+                            logger.error(f"Batch commit error in {table_name}: {e}")
+                        batch_records = []
+                
+                for rec in batch_records:
+                    try:
+                        db.session.merge(model(**rec))
+                        count += 1
+                    except Exception as e:
+                        logger.error(f"Record error in {table_name}: {e}")
+                
+                try:
+                    db.session.commit()
+                except Exception as e:
+                    db.session.rollback()
+                    logger.error(f"Final commit error in {table_name}: {e}")
+                
+                imported_counts[table_name] = count
                 
             except Exception as e:
                 db.session.rollback()
                 errors.append(f"{table_name}: {str(e)}")
+                logger.error(f"Table import error {table_name}: {e}")
         
         total_imported = sum(imported_counts.values())
         
         if errors:
-            flash(f'تم استيراد {total_imported} سجل مع بعض الأخطاء', 'warning')
+            flash(f'تم استيراد {total_imported} سجل مع بعض الأخطاء: {", ".join(errors[:3])}', 'warning')
         else:
             flash(f'تم استيراد {total_imported} سجل بنجاح', 'success')
         
         return redirect(url_for('database_backup.backup_page'))
         
-    except json.JSONDecodeError:
-        flash('ملف JSON غير صالح', 'error')
-        return redirect(url_for('database_backup.backup_page'))
     except Exception as e:
         db.session.rollback()
         flash(f'حدث خطأ أثناء الاستيراد: {str(e)}', 'error')
@@ -293,6 +327,7 @@ def export_single_table(table_name):
     """تصدير جدول واحد كملف JSON"""
     if current_user.role != UserRole.ADMIN:
         return jsonify({'error': 'Unauthorized'}), 403
+    
     if table_name not in BACKUP_TABLES:
         flash('الجدول غير موجود', 'error')
         return redirect(url_for('database_backup.backup_page'))
