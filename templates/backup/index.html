@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+{% block title %}النسخ الاحتياطي لقاعدة البيانات{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card" style="background: linear-gradient(135deg, #0D1117 0%, #161B22 100%); border: 1px solid rgba(0, 212, 170, 0.3);">
+                <div class="card-header" style="background: linear-gradient(135deg, #00D4AA 0%, #00D4FF 100%); border-radius: 10px 10px 0 0;">
+                    <h3 class="mb-0 text-dark">
+                        <i class="fas fa-database me-2"></i>
+                        النسخ الاحتياطي لقاعدة البيانات
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-4">
+                            <div class="card h-100" style="background: rgba(0, 212, 170, 0.1); border: 1px solid rgba(0, 212, 170, 0.3);">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-table fa-3x mb-3" style="color: #00D4AA;"></i>
+                                    <h4 class="text-white">{{ table_stats|length }}</h4>
+                                    <p class="text-muted mb-0">جدول</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-4">
+                            <div class="card h-100" style="background: rgba(0, 212, 255, 0.1); border: 1px solid rgba(0, 212, 255, 0.3);">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-list-alt fa-3x mb-3" style="color: #00D4FF;"></i>
+                                    <h4 class="text-white">{{ total_records|default(0) }}</h4>
+                                    <p class="text-muted mb-0">سجل</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-4">
+                            <div class="card h-100" style="background: rgba(0, 245, 212, 0.1); border: 1px solid rgba(0, 245, 212, 0.3);">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-clock fa-3x mb-3" style="color: #00F5D4;"></i>
+                                    <h4 class="text-white" id="current-time">--:--</h4>
+                                    <p class="text-muted mb-0">الوقت الحالي</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <div class="card h-100" style="background: linear-gradient(135deg, #0D1117 0%, #161B22 100%); border: 1px solid rgba(0, 212, 170, 0.3);">
+                <div class="card-header" style="border-bottom: 1px solid rgba(0, 212, 170, 0.3);">
+                    <h5 class="mb-0 text-white">
+                        <i class="fas fa-download me-2" style="color: #00D4AA;"></i>
+                        تصدير النسخة الاحتياطية
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form action="{{ url_for('database_backup.export_backup') }}" method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        
+                        <div class="mb-3">
+                            <label class="form-label text-white">اختر الجداول للتصدير:</label>
+                            <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                                <table class="table table-dark table-hover">
+                                    <thead style="position: sticky; top: 0; background: #161B22;">
+                                        <tr>
+                                            <th width="50">
+                                                <input type="checkbox" id="select-all" class="form-check-input" checked>
+                                            </th>
+                                            <th>اسم الجدول</th>
+                                            <th class="text-center">عدد السجلات</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for table_name, count in table_stats.items() %}
+                                        <tr>
+                                            <td>
+                                                <input type="checkbox" name="tables" value="{{ table_name }}" class="form-check-input table-checkbox" checked>
+                                            </td>
+                                            <td>{{ table_name }}</td>
+                                            <td class="text-center">
+                                                <span class="badge" style="background: linear-gradient(135deg, #00D4AA 0%, #00D4FF 100%);">
+                                                    {{ count }}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-lg w-100" style="background: linear-gradient(135deg, #00D4AA 0%, #00D4FF 100%); border: none; color: #0D1117; font-weight: bold;">
+                            <i class="fas fa-download me-2"></i>
+                            تصدير كملف JSON
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 mb-4">
+            <div class="card h-100" style="background: linear-gradient(135deg, #0D1117 0%, #161B22 100%); border: 1px solid rgba(255, 193, 7, 0.3);">
+                <div class="card-header" style="border-bottom: 1px solid rgba(255, 193, 7, 0.3);">
+                    <h5 class="mb-0 text-white">
+                        <i class="fas fa-upload me-2" style="color: #FFC107;"></i>
+                        استيراد نسخة احتياطية
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form action="{{ url_for('database_backup.import_backup') }}" method="POST" enctype="multipart/form-data">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        
+                        <div class="mb-3">
+                            <label class="form-label text-white">اختر ملف النسخة الاحتياطية:</label>
+                            <input type="file" name="backup_file" class="form-control bg-dark text-white border-secondary" accept=".json" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label text-white">طريقة الاستيراد:</label>
+                            <div class="form-check">
+                                <input type="radio" name="import_mode" value="add" class="form-check-input" id="mode-add" checked>
+                                <label class="form-check-label text-white" for="mode-add">
+                                    <i class="fas fa-plus-circle text-success me-1"></i>
+                                    إضافة (تجاهل السجلات الموجودة)
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input type="radio" name="import_mode" value="replace" class="form-check-input" id="mode-replace">
+                                <label class="form-check-label text-white" for="mode-replace">
+                                    <i class="fas fa-sync-alt text-warning me-1"></i>
+                                    استبدال (حذف البيانات القديمة)
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-warning" style="background: rgba(255, 193, 7, 0.1); border: 1px solid rgba(255, 193, 7, 0.3);">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <strong>تحذير:</strong> استيراد نسخة احتياطية قد يؤثر على البيانات الحالية. تأكد من أخذ نسخة احتياطية أولاً.
+                        </div>
+                        
+                        <button type="submit" class="btn btn-lg w-100" style="background: linear-gradient(135deg, #FFC107 0%, #FF9800 100%); border: none; color: #0D1117; font-weight: bold;">
+                            <i class="fas fa-upload me-2"></i>
+                            استيراد النسخة الاحتياطية
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card" style="background: linear-gradient(135deg, #0D1117 0%, #161B22 100%); border: 1px solid rgba(0, 212, 170, 0.3);">
+                <div class="card-header" style="border-bottom: 1px solid rgba(0, 212, 170, 0.3);">
+                    <h5 class="mb-0 text-white">
+                        <i class="fas fa-table me-2" style="color: #00D4AA;"></i>
+                        تصدير جدول واحد
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for table_name, count in table_stats.items() %}
+                        <div class="col-md-3 col-sm-6 mb-3">
+                            <a href="{{ url_for('database_backup.export_single_table', table_name=table_name) }}" class="btn btn-outline-info w-100">
+                                <i class="fas fa-file-export me-1"></i>
+                                {{ table_name }}
+                                <span class="badge bg-secondary ms-1">{{ count }}</span>
+                            </a>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('select-all').addEventListener('change', function() {
+        const checkboxes = document.querySelectorAll('.table-checkbox');
+        checkboxes.forEach(cb => cb.checked = this.checked);
+    });
+    
+    function updateTime() {
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        document.getElementById('current-time').textContent = timeStr;
+    }
+    updateTime();
+    setInterval(updateTime, 1000);
+});
+</script>
+{% endblock %}

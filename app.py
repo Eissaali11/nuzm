@@ -409,6 +409,7 @@ with app.app_context():
     from routes.drive_browser import drive_browser_bp
     from routes.attendance_api import attendance_api_bp
     from routes.api_accident_reports import api_accident_reports
+    from routes.database_backup import database_backup_bp
 
     # تعطيل حماية CSRF لطرق معينة
     csrf.exempt(voicehub_bp)
@@ -483,6 +484,9 @@ with app.app_context():
     # Power BI Dashboard
     from routes.powerbi_dashboard import powerbi_bp
     app.register_blueprint(powerbi_bp)
+    
+    # Database Backup - النسخ الاحتياطي
+    app.register_blueprint(database_backup_bp)
 
     @app.route('/uploads/<path:filename>')
     def uploaded_file(filename):
