@@ -7,7 +7,7 @@ from models import (
     MobileDevice, VehicleHandover, VehicleWorkshop, Document,
     VehicleAccident, EmployeeRequest, RentalProperty, PropertyPayment, 
     PropertyImage, PropertyFurnishing, Geofence, GeofenceSession, 
-    SimCard, VoiceHubCall, VehicleExternalSafetyCheck, VehicleSafetyImage, db
+    SimCard, VoiceHubCall, VehicleExternalSafetyCheck, VehicleSafetyImage, db, UserRole
 )
 import json
 import io
@@ -15,6 +15,52 @@ import os
 from functools import wraps
 
 database_backup_bp = Blueprint('database_backup', __name__)
+
+BACKUP_TABLES = {
+    'employees': Employee,
+    'vehicles': Vehicle,
+    'departments': Department,
+    'users': User,
+    'salaries': Salary,
+    'attendance': Attendance,
+    'mobile_devices': MobileDevice,
+    'vehicle_handovers': VehicleHandover,
+    'vehicle_workshops': VehicleWorkshop,
+    'documents': Document,
+    'vehicle_accidents': VehicleAccident,
+    'employee_requests': EmployeeRequest,
+    'rental_properties': RentalProperty,
+    'property_payments': PropertyPayment,
+    'property_images': PropertyImage,
+    'property_furnishings': PropertyFurnishing,
+    'geofences': Geofence,
+    'geofence_sessions': GeofenceSession,
+    'sim_cards': SimCard,
+    'voicehub_calls': VoiceHubCall,
+    'external_safety_checks': VehicleExternalSafetyCheck,
+    'safety_images': VehicleSafetyImage,
+}
+
+def serialize_model(obj):
+    """تحويل كائن SQLAlchemy إلى قاموس"""
+    result = {}
+    for column in inspect(obj.__class__).columns:
+        value = getattr(obj, column.name)
+        if value is None:
+            result[column.name] = None
+        elif isinstance(value, datetime):
+            result[column.name] = value.isoformat()
+        elif hasattr(value, 'isoformat'):
+            result[column.name] = value.isoformat()
+        elif isinstance(value, bytes):
+            result[column.name] = None
+        else:
+            try:
+                json.dumps(value)
+                result[column.name] = value
+            except (TypeError, ValueError):
+                result[column.name] = str(value)
+    return result
 
 @database_backup_bp.route('/')
 def backup_page():
