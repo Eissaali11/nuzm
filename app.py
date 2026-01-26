@@ -486,7 +486,7 @@ with app.app_context():
     app.register_blueprint(powerbi_bp)
     
     # Database Backup - النسخ الاحتياطي
-    app.register_blueprint(database_backup_bp)
+    app.register_blueprint(database_backup_bp, url_prefix='/backup')
 
     @app.route('/uploads/<path:filename>')
     def uploaded_file(filename):

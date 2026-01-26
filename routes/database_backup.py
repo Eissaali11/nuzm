@@ -14,7 +14,7 @@ import io
 import os
 from functools import wraps
 
-database_backup_bp = Blueprint('database_backup', __name__, url_prefix='/backup')
+database_backup_bp = Blueprint('database_backup', __name__)
 
 def admin_required(f):
     @wraps(f)
