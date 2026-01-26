@@ -225,8 +225,13 @@ def import_backup():
                                 if all(v is not None for v in pk_values):
                                     existing = db.session.get(model, pk_values[0] if len(pk_values) == 1 else tuple(pk_values))
                                     if existing:
+                                        # Update existing record instead of skipping (prevents duplicates while keeping data fresh)
+                                        for k, v in filtered_record.items():
+                                            setattr(existing, k, v)
+                                        imported_count += 1
                                         continue
-                            except:
+                            except Exception as e:
+                                print(f"Duplicate check error: {e}")
                                 pass
                         
                         for date_field in ['created_at', 'updated_at', 'date_joined', 'handover_date', 
