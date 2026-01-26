@@ -92,7 +92,7 @@
                             </div>
                         </div>
                         
-                        <button type="submit" class="btn btn-lg w-100" style="background: linear-gradient(135deg, #00D4AA 0%, #00D4FF 100%); border: none; color: #0D1117; font-weight: bold;">
+                        <button type="submit" class="btn btn-lg w-100" style="background: linear-gradient(135deg, #00D4AA 0%, #00D4FF 100%); border: none; color: #0D1117; font-weight: bold;" id="export-btn">
                             <i class="fas fa-download me-2"></i>
                             تصدير كملف JSON
                         </button>
@@ -110,7 +110,7 @@
                     </h5>
                 </div>
                 <div class="card-body">
-                    <form action="{{ url_for('database_backup.import_backup') }}" method="POST" enctype="multipart/form-data">
+                    <form action="{{ url_for('database_backup.import_backup') }}" method="POST" enctype="multipart/form-data" id="import-form">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         
                         <div class="mb-3">
@@ -141,7 +141,7 @@
                             <strong>تحذير:</strong> استيراد نسخة احتياطية قد يؤثر على البيانات الحالية. تأكد من أخذ نسخة احتياطية أولاً.
                         </div>
                         
-                        <button type="submit" class="btn btn-lg w-100" style="background: linear-gradient(135deg, #FFC107 0%, #FF9800 100%); border: none; color: #0D1117; font-weight: bold;">
+                        <button type="submit" class="btn btn-lg w-100" style="background: linear-gradient(135deg, #FFC107 0%, #FF9800 100%); border: none; color: #0D1117; font-weight: bold;" id="import-btn">
                             <i class="fas fa-upload me-2"></i>
                             استيراد النسخة الاحتياطية
                         </button>
@@ -164,7 +164,7 @@
                     <div class="row">
                         {% for table_name, count in table_stats.items() %}
                         <div class="col-md-3 col-sm-6 mb-3">
-                            <a href="{{ url_for('database_backup.export_single_table', table_name=table_name) }}" class="btn btn-outline-info w-100">
+                            <a href="{{ url_for('database_backup.export_single_table', table_name=table_name) }}" class="btn btn-outline-info w-100 single-export-link">
                                 <i class="fas fa-file-export me-1"></i>
                                 {{ table_name }}
                                 <span class="badge bg-secondary ms-1">{{ count }}</span>
@@ -185,10 +185,30 @@ document.addEventListener('DOMContentLoaded', function() {
         checkboxes.forEach(cb => cb.checked = this.checked);
     });
     
+    const importForm = document.getElementById('import-form');
+    const importBtn = document.getElementById('import-btn');
+    const exportBtn = document.getElementById('export-btn');
+
+    if (importForm) {
+        importForm.addEventListener('submit', function() {
+            importBtn.disabled = true;
+            importBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>جاري الاستيراد...';
+        });
+    }
+
+    if (exportBtn) {
+        exportBtn.addEventListener('click', function() {
+            setTimeout(() => {
+                // No easy way to detect download complete, but we can reset after a delay or just leave it
+            }, 2000);
+        });
+    }
+    
     function updateTime() {
         const now = new Date();
         const timeStr = now.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-        document.getElementById('current-time').textContent = timeStr;
+        const timeElem = document.getElementById('current-time');
+        if (timeElem) timeElem.textContent = timeStr;
     }
     updateTime();
     setInterval(updateTime, 1000);

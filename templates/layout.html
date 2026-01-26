@@ -409,11 +409,11 @@
                             %}
                             <li class="nav-item mb-1">
                                 <a
-                                    href="{{ url_for('admin_dashboard.analytics') }}"
-                                    class="nav-link nav-link-custom {% if '/departments/analytics' in request.path %}active{% endif %}"
+                                    href="{{ url_for('powerbi.dashboard') }}"
+                                    class="nav-link nav-link-custom {% if '/powerbi' in request.path %}active{% endif %}"
                                 >
                                     <i class="fas fa-chart-line me-2"></i>
-                                    <span>تحليلات الأقسام</span>
+                                    <span>لوحة التحليلات</span>
                                 </a>
                             </li>
                             {% if current_user.role == UserRole.ADMIN %}
@@ -427,10 +427,11 @@
                                 </a>
                             </li>
                             {% endif %}
-                            {% endif %} {# التحقق من صلاحيات الحضور #} {% if
+                            {% endif %} {# التحقق من صلاحيات التقارير #}
+                            {# التحقق من صلاحيات الموظفين #} {% if
                             current_user.role == UserRole.ADMIN or
-                            current_user|check_module_access(Module.ATTENDANCE)
-                            or current_user.assigned_department_id %}
+                            current_user|check_module_access(Module.EMPLOYEES)
+                            %}
                             <li class="nav-item mb-1">
                                 <a
                                     href="{{ url_for('attendance.index') }}"

@@ -7,7 +7,7 @@ from models import (
     MobileDevice, VehicleHandover, VehicleWorkshop, Document,
     VehicleAccident, EmployeeRequest, RentalProperty, PropertyPayment, 
     PropertyImage, PropertyFurnishing, Geofence, GeofenceSession, 
-    SimCard, VoiceHubCall, VehicleExternalSafetyCheck, VehicleSafetyImage, db, UserRole, Module, Permission
+    SimCard, VoiceHubCall, VehicleExternalSafetyCheck, VehicleSafetyImage, db, UserRole
 )
 import json
 import io
@@ -44,22 +44,25 @@ BACKUP_TABLES = {
 def serialize_model(obj):
     """تحويل كائن SQLAlchemy إلى قاموس"""
     result = {}
-    for column in inspect(obj.__class__).columns:
-        value = getattr(obj, column.name)
-        if value is None:
-            result[column.name] = None
-        elif isinstance(value, datetime):
-            result[column.name] = value.isoformat()
-        elif hasattr(value, 'isoformat'):
-            result[column.name] = value.isoformat()
-        elif isinstance(value, bytes):
-            result[column.name] = None
-        else:
-            try:
-                json.dumps(value)
-                result[column.name] = value
-            except (TypeError, ValueError):
-                result[column.name] = str(value)
+    try:
+        for column in inspect(obj.__class__).columns:
+            value = getattr(obj, column.name)
+            if value is None:
+                result[column.name] = None
+            elif isinstance(value, datetime):
+                result[column.name] = value.isoformat()
+            elif hasattr(value, 'isoformat'):
+                result[column.name] = value.isoformat()
+            elif isinstance(value, bytes):
+                result[column.name] = None
+            else:
+                try:
+                    json.dumps(value)
+                    result[column.name] = value
+                except (TypeError, ValueError):
+                    result[column.name] = str(value)
+    except Exception as e:
+        print(f"Error serializing {obj}: {e}")
     return result
 
 @database_backup_bp.route('/')
@@ -172,35 +175,49 @@ def import_backup():
             imported_count = 0
             
             try:
+                # Get columns for this model to handle potential extra data
+                mapper = inspect(model)
+                valid_columns = {c.key for c in mapper.attrs if hasattr(c, 'columns')}
+                
                 if import_mode == 'replace':
-                    model.query.delete()
+                    db.session.query(model).delete()
                     db.session.commit()
                 
                 for record in records:
                     try:
+                        # Filter record to only include valid columns for this model
+                        filtered_record = {k: v for k, v in record.items() if k in valid_columns}
+                        
                         if import_mode == 'add':
-                            existing = model.query.get(record.get('id'))
-                            if existing:
-                                continue
+                            # Try to get existing record by primary key if possible
+                            try:
+                                pk_values = [filtered_record.get(c.name) for c in mapper.primary_key]
+                                if all(v is not None for v in pk_values):
+                                    existing = db.session.get(model, pk_values[0] if len(pk_values) == 1 else tuple(pk_values))
+                                    if existing:
+                                        continue
+                            except:
+                                pass
                         
                         for date_field in ['created_at', 'updated_at', 'date_joined', 'handover_date', 
                                           'return_date', 'id_expiry', 'license_expiry', 'passport_expiry',
                                           'contract_start', 'contract_end', 'registration_date']:
-                            if date_field in record and record[date_field]:
+                            if date_field in filtered_record and filtered_record[date_field]:
                                 try:
-                                    if 'T' in str(record[date_field]):
-                                        record[date_field] = datetime.fromisoformat(record[date_field].replace('Z', '+00:00'))
-                                    else:
-                                        record[date_field] = datetime.strptime(record[date_field], '%Y-%m-%d')
+                                    if isinstance(filtered_record[date_field], str):
+                                        if 'T' in filtered_record[date_field]:
+                                            filtered_record[date_field] = datetime.fromisoformat(filtered_record[date_field].replace('Z', '+00:00'))
+                                        else:
+                                            filtered_record[date_field] = datetime.strptime(filtered_record[date_field], '%Y-%m-%d')
                                 except:
-                                    record[date_field] = None
+                                    filtered_record[date_field] = None
                         
-                        new_obj = model(**record)
+                        new_obj = model(**filtered_record)
                         db.session.merge(new_obj)
                         imported_count += 1
                         
                     except Exception as e:
-                        errors.append(f"{table_name}: {str(e)}")
+                        errors.append(f"{table_name} record error: {str(e)}")
                         continue
                 
                 db.session.commit()
