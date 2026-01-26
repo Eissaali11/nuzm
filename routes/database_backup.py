@@ -63,8 +63,12 @@ def serialize_model(obj):
     return result
 
 @database_backup_bp.route('/')
+@login_required
 def backup_page():
     """صفحة النسخ الاحتياطي"""
+    if current_user.role != UserRole.ADMIN:
+        flash('غير مصرح لك بالدخول لهذه الصفحة', 'error')
+        return redirect(url_for('admin_dashboard.index'))
     table_stats = {}
     for table_name, model in BACKUP_TABLES.items():
         try:
@@ -78,8 +82,11 @@ def backup_page():
                          total_records=sum(table_stats.values()))
 
 @database_backup_bp.route('/export', methods=['POST'])
+@login_required
 def export_backup():
     """تصدير جميع البيانات كملف JSON"""
+    if current_user.role != UserRole.ADMIN:
+        return jsonify({'error': 'Unauthorized'}), 403
     try:
         selected_tables = request.form.getlist('tables')
         if not selected_tables:
@@ -124,8 +131,11 @@ def export_backup():
         return redirect(url_for('database_backup.backup_page'))
 
 @database_backup_bp.route('/import', methods=['POST'])
+@login_required
 def import_backup():
     """استيراد البيانات من ملف JSON"""
+    if current_user.role != UserRole.ADMIN:
+        return jsonify({'error': 'Unauthorized'}), 403
     try:
         if 'backup_file' not in request.files:
             flash('لم يتم اختيار ملف', 'error')
@@ -218,8 +228,11 @@ def import_backup():
         return redirect(url_for('database_backup.backup_page'))
 
 @database_backup_bp.route('/export/<table_name>')
+@login_required
 def export_single_table(table_name):
     """تصدير جدول واحد كملف JSON"""
+    if current_user.role != UserRole.ADMIN:
+        return jsonify({'error': 'Unauthorized'}), 403
     if table_name not in BACKUP_TABLES:
         flash('الجدول غير موجود', 'error')
         return redirect(url_for('database_backup.backup_page'))
