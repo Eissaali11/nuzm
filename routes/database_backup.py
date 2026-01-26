@@ -7,7 +7,7 @@ from models import (
     MobileDevice, VehicleHandover, VehicleWorkshop, Document,
     VehicleAccident, EmployeeRequest, RentalProperty, PropertyPayment, 
     PropertyImage, PropertyFurnishing, Geofence, GeofenceSession, 
-    SimCard, VoiceHubCall, VehicleExternalSafetyCheck, VehicleSafetyImage, db, UserRole
+    SimCard, VoiceHubCall, VehicleExternalSafetyCheck, VehicleSafetyImage, db, UserRole, Module, Permission
 )
 import json
 import io

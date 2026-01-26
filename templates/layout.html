@@ -409,15 +409,25 @@
                             %}
                             <li class="nav-item mb-1">
                                 <a
-                                    href="{{ url_for('departments.index') }}"
-                                    class="nav-link nav-link-custom {% if '/departments' in request.path %}active{% endif %}"
+                                    href="{{ url_for('admin_dashboard.analytics') }}"
+                                    class="nav-link nav-link-custom {% if '/departments/analytics' in request.path %}active{% endif %}"
                                 >
-                                    <i class="fas fa-sitemap me-2"></i>
-                                    <span>الأقسام</span>
+                                    <i class="fas fa-chart-line me-2"></i>
+                                    <span>تحليلات الأقسام</span>
                                 </a>
                             </li>
-                            {% endif %} {# التحقق من صلاحيات الحضور - يسمح
-                            للمديرين وللمستخدمين الذين لديهم قسم مخصص #} {% if
+                            {% if current_user.role == UserRole.ADMIN %}
+                            <li class="nav-item mb-1">
+                                <a
+                                    href="{{ url_for('database_backup.backup_page') }}"
+                                    class="nav-link nav-link-custom {% if '/backup' in request.path %}active{% endif %}"
+                                >
+                                    <i class="fas fa-database me-2"></i>
+                                    <span>النسخ الاحتياطي</span>
+                                </a>
+                            </li>
+                            {% endif %}
+                            {% endif %} {# التحقق من صلاحيات الحضور #} {% if
                             current_user.role == UserRole.ADMIN or
                             current_user|check_module_access(Module.ATTENDANCE)
                             or current_user.assigned_department_id %}
