@@ -588,6 +588,17 @@
                             {% endif %}
                             
                             
+                            <li class="nav-item mb-1">
+                                <a
+                                    href="{{ url_for('database_backup.backup_page') }}"
+                                    class="nav-link nav-link-custom {% if '/backup' in request.path %}active{% endif %}"
+                                    style="background: rgba(0, 212, 170, 0.1) !important; border-right: 3px solid #00D4AA !important; margin-top: 5px;"
+                                >
+                                    <i class="fas fa-database me-2" style="color: #00D4AA !important;"></i>
+                                    <span>النسخ الاحتياطي</span>
+                                </a>
+                            </li>
+                            
                             {# إدارة العقارات المستأجرة #}
                             {% if current_user.role == UserRole.ADMIN %}
                             <li class="nav-item mb-1">
